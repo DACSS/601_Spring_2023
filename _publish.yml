@@ -1,0 +1,108 @@
+on:
+  workflow_dispatch:
+  push:
+    branches: submission
+
+name: Quarto Publish
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          # To install LaTeX to build PDF book 
+          tinytex: true 
+
+      - name: Install R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.2.1'
+
+      - name: Install R Dependencies
+        uses: actions/checkout@v3
+      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::countrycode
+            any::fastDummies
+            any::ggeasy
+            any::ggforce
+            any::gghighlight
+            any::ggridges
+            any::jsonlite
+            any::lubridate
+            any::maps
+            any::psych
+            any::readxl
+            any::rmarkdown
+            any::summarytools
+            any::tidyverse
+            any::tufte
+            any::treemap
+            any::viridis
+            any::wordcloud2
+            any::wesanderson
+            any::tmap
+            any::leaflet
+            any::treemap
+            any::tidytext
+            any::plotly
+            any::mapproj
+            any::dataRetrieval
+            any::babynames
+            any::rvest
+            any::tmaptools
+            any::wordcloud
+            any::tm
+            any::SnowballC
+            any::viridisLite
+            any::sf
+            any::tidycensus
+            any::tigris
+            any::RColorBrewer
+            any::tibble 
+            any::factoextra
+            any::naniar
+            any::corpus
+            any::tm
+            any::tmap
+            any::treemapify
+            any::wordcloud
+            any::dlookr
+            any::highcharter
+            any::countrycode
+            any::Hmisc
+            any::ggplotlyExtra
+            any::tidyquant
+            any::quantmod
+            any::gridExtra
+            any::timetk
+            any::xts
+            any::reshape2
+            any::stargazer
+            any::flexmix
+            any::ggrepel
+            any::flexmix
+            any::plm
+            any::GGally
+            any::ggfortify
+            any::moments
+            any::mapdata
+            any::maptools
+            any::mapproj
+          cache-version: 1
+   
+      - name: Render and Publish
+        uses: quarto-dev/quarto-actions/publish@v2
+        with:
+          target: gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

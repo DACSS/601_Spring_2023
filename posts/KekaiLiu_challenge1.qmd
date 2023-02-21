@@ -1,0 +1,101 @@
+---
+title: "Challenge 1 Birds"
+author: "Kekai Liu"
+desription: "Reading in birds.csv"
+date: "02/21/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - wildbirds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, using the correct R package and command.
+
+-   railroad_2012_clean_county.csv ⭐
+-   birds.csv ⭐⭐
+-   FAOstat\*.csv ⭐⭐
+-   wild_bird_data.xlsx ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐⭐
+
+Find the `_data` folder, located inside the `posts` folder. Then you can read in the data, using either one of the `readr` standard tidy read commands, or a specialized package such as `readxl`.
+
+The birds.csv file is read in using read_csv().
+
+```{r}
+birds <- read_csv("_data/birds.csv") #read in the data and assign it to birds
+```
+
+Add any comments or documentation as needed. More challenging data sets may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+This dataset has 30,977 rows and 14 columns. The 30,977 rows represent 30,977 observations or cases, and the 14 columns represent 14 variables: Domain Code, Domain, Area Code, Area, Element Code, Element, Item Code, Item, Year Code, Year, Unit, Value, Flag, and Flag Description. 
+
+```{r}
+str(birds) #produce a summary of the contents (dimensions, variables, variable types) of the data
+```
+
+The dataset covers 1961-2018; earlier years have less cases than recent years. 
+```{r}
+table((select(birds, Year))) #retrieve Year column from birds, calculate frequencies
+```
+The Flag Description provides information on the sources of data. 6,488 cases are aggregate data, 1,002 cases do not have data available, 1,213 cases are FAO imputed data, 10,007 cases are FAO estimates, 10,773 cases are from official data, and 1,494 cases are unofficial figures.
+```{r}
+table((select(birds, "Flag Description"))) #retrieve "Flag Description" column from birds, calculate frequencies
+```
+Of the 30,977 total cases, chickens comprised 13,074, ducks comprised 6,909, geese and guinea fowls comprised 4,136, pigeons and other birds comprised 1,165, and turkeys comprised 5,693.
+```{r}
+table((select(birds, Item))) #retrieve Item column from birds, calculate frequencies
+```
+The data only covers live animals.
+```{r}
+table((select(birds, Domain)))
+```
+These are the ten areas with the most number of cases. This output shows that the data includes supranational cases: Africa, Asia, Eastern Asia, Europe). There are several areas with the most number of cases overall, 290.
+```{r}
+head(sort(table((select(birds, Area))),decreasing=TRUE), n=10) #retrieve Area column from birds, calculate frequencies, sort in ascending order, display first ten
+```
+These are the ten areas with the least number of cases. South Sudan and Sudan jointly have the least number of cases overall with only seven.
+```{r}
+head(sort(table((select(birds, Area))),decreasing=FALSE), n=10) #retrieve Area column from birds, calculate frequencies, sort in descending order, display first ten
+```
+The data contains cases from 248 unique areas.
+```{r}
+nrow(unique(select(birds, Area))) #retrieve Area column from birds, identify unique Area values, calculate total number of unique Area values
+```
+Here is the five summary of the data. The smallest stock value is 0 units of 1000 Head, and the largest stock value is 23,707,134 units of 1000 Head. The mean or average across all cases is 99,411 units of 1000 Head.
+```{r}
+summary(select(birds, Value)) #retrieve Value column from birds, produce five number summary of Value
+```
+There are 1,036 cases with missing stock values.
+```{r}
+sum(is.na(select(birds, Value))) #retrieve Value column from birds, identify cases with missing values, total the number of cases with missing values
+```
+From this quick analysis, we can summarize this as a dataset of selected types of live bird stock measured in units of 1000 Head in 248 defined areas of the world in a calendar year. A case corresponds to the live stock of a type of bird in an area of the world in a calendar year.

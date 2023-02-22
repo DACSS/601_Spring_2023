@@ -1,0 +1,133 @@
+---
+title: "Reading datasets: railroad_2012_clean_county, birds, wild_birds_data"
+author: "Susmita Madineni"
+desription: "Analyzing railroad, birds and wild birds dataset"
+date: "02/20/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - hw1
+  - challenge1
+  - Susmita Madineni
+  - railroad_2012_clean_county, birds, wild bird_data
+  - readr, readxl
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Describing the railroad_2012_clean_county data
+
+This dataset gives the information about rail roads in different states, along with total number of employees and county information in the year 2012. It has mainly 3 columns - "state", "county", "total_employees". The dataset has 2930 rows and 3 columns.The reader can easily understand the data by looking at the first few rows. 
+
+```{r}
+# Reading railroad_2012_clean_county.csv dataset
+
+library(readr)
+railroad <- read_csv("_data/railroad_2012_clean_county.csv")
+view(railroad)
+# Preview the first few rows of the dataset
+head(railroad)
+
+# Understanding the dimensions of the dataset 
+dim(railroad)
+
+# Identifying the column names of the dataset 
+colnames(railroad)
+
+#Making a proportional table for state in the dataset
+prop.table(table(select(railroad, state)))
+
+#Filter county APO from the dataset 
+filter(railroad, county == "APO")
+
+#Filter the rows that has total_employees below 3 and above 100
+filter(railroad, `total_employees` < 3 | `total_employees` > 100)
+
+#Arranging railroad based on total_employees and selecting state, county columns,grouping them based on state and then slicing out first 10 rows (with piping)
+railroad %>%
+  arrange(desc(total_employees)) %>%
+  select(state,county)%>%
+  group_by(state) %>%
+  slice(1:10)
+```
+
+## Describing the birds dataset
+
+This dataset gives the information about value of 1000 heads of the birds like chicken, ducks, turkeys,etc in different countries across the world in different years(from 1961 to 2018). It has 14 columns - "Domain Code", "Domain", "Area Code", "Area", "Element Code", "Element","Item Code", "Item","Year Code", "Year", "Unit", "Value", "Flag", "Flag Description". The dataset has 30977 rows and 14 columns.The reader can  understand the data by looking at the first few rows. 
+
+```{r}
+# Reading birds.csv dataset
+
+library(readr)
+birds_data <- read_csv("_data/birds.csv")
+view(birds_data)
+# Preview the first few rows of the dataset
+head(birds_data)
+
+# Understanding the dimensions of the dataset 
+dim(birds_data)
+
+# Identifying the column names of the dataset 
+colnames(birds_data)
+
+#Making a proportional table for state in the dataset
+prop.table(table(select(birds_data, Area)))
+
+#Filter Area Code = 3 from the dataset 
+filter(birds_data, `Area Code` == 3)
+
+#Filter the rows that has Item Code as 1057 and Item as Chickens
+filter(birds_data, `Item Code` == 1057 & `Item` == "Chickens")
+
+#Arranging data based on Value and selecting Area, Item, Value columns, grouping them based on Area and then slicing out first 10 rows (with piping)
+birds_data %>%
+  arrange(desc(Value)) %>%
+  select(Area, Item, Value)%>%
+  group_by(Area) %>%
+  slice(1:10)
+
+
+```
+
+## Describing the wild_bird_data dataset
+
+This dataset gives the information wet body weight and population size of wild birds. It has 2 columns - "Reference", "Taken from Figure 1 of Nee et al.". The dataset has 147 rows and 2 columns.The reader can  understand the data by looking at the first few rows. 
+
+```{r}
+# Reading wild_bird_data.xlsx dataset
+
+library("readxl")
+wild_birds_data <- read_xlsx("_data/wild_bird_data.xlsx")
+view(wild_birds_data)
+# Preview the first few rows of the dataset
+head(wild_birds_data)
+
+# Understanding the dimensions of the dataset 
+dim(wild_birds_data)
+
+# Identifying the column names of the dataset 
+colnames(wild_birds_data)
+
+#Making a proportional table for Reference  in the dataset
+prop.table(table(select(wild_birds_data, Reference)))
+
+#Filter the rows that has Reference > 10 and Reference < 12
+filter(wild_birds_data, `Reference` > 10.0 & `Reference` < 12.0)
+
+#Arranging data based on Reference and selecting Reference and then slicing out first 10 rows (with piping)
+wild_birds_data %>%
+  arrange(desc(Reference)) %>%
+  select(Reference)%>%
+  slice(1:10)
+```

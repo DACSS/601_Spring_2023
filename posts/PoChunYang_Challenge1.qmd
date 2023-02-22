@@ -1,0 +1,89 @@
+---
+title: "railroad_2012_clean_county"
+author: "PoChun Yang"
+desription: "Analysing railroad clean county 2012"
+date: "02/21/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - railroads
+  - PoChunYang
+  - tidyverse
+  - summarytools
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+library(summarytools)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, using the correct R package and command.
+
+-   railroad_2012_clean_county.csv ⭐
+-   birds.csv ⭐⭐
+-   FAOstat\*.csv ⭐⭐
+-   wild_bird_data.xlsx ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐⭐
+
+Find the `_data` folder, located inside the `posts` folder. Then you can read in the data, using either one of the `readr` standard tidy read commands, or a specialized package such as `readxl`.
+
+```{r}
+railroad <- read.csv("_data/railroad_2012_clean_county.csv")
+# we want to skip two rows of the data
+skip_data<-read.csv("_data/railroad_2012_clean_county.csv",skip = 2)
+railroad
+skip_data
+```
+
+Add any comments or documentation as needed. More challenging data sets may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+We can get the state and county frequency shown out by using dfsummary command.
+In the USA, WASHINGTON is the most frequent naming county. 
+Moreover, the highest total number of employees is 8207.
+
+```{r}
+#| label: summary
+#head() this command show the first element to six element 
+head(railroad)
+#dim() show the railroad's row and column
+dim(railroad)
+# colnames() show the column names "state","county","total_empolyee"
+colnames(railroad)
+#use the select to get the state and total_employees without county
+select(railroad,"state","total_employees")
+# we use filter to show the TX's data
+filter(railroad,`state` == "TX")
+# show the summary of the railroad_2012_clean_county.csv
+dfSummary(railroad)
+# the command is that I want to get each state of the all employees
+railroad %>% 
+  group_by(state) %>% 
+  mutate(all=sum(total_employees))
+
+```

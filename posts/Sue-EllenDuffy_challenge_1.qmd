@@ -1,8 +1,8 @@
 ---
 title: "Challenge_1"
 author: "Sue-Ellen Duffy"
-desription: "Observing the Number of US Railroad Employees by County"
-date: "08/02/2022"
+desription: "Railroad Employees"
+date: "02/23/2023"
 format:
   html:
     toc: true
@@ -12,8 +12,7 @@ format:
 categories:
   - challenge_1
   - Sue-Ellen Duffy
-  - dataset railroad_2012_clean_county.csv
-
+  - Railroad Employee Dataset
 ---
 
 ```{r}
@@ -21,24 +20,49 @@ categories:
 #| warning: false
 
 library(tidyverse)
+library(readxl)
+library(summarytools)
 
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Description
-This data set displays the total number of railroad employees in the United States by count and state. 
+## Reading in the Data
 
-There are three columns as follows: state, county, total employees.
-
+I analyzed the "railroad_2012_county_clean.csv" data for Challenge 1. This data describes the Total Number of Railroad Employees by County and State in the United States in 2012. Upon first glance the data contains 3 columns and 2,930 rows. The columns are: state, county, and total_employees
 
 ```{r}
-"railroad_2012_clean_county"
+#Read in data and rename railroad_2012_clean_county as data
+data <- rename(read_csv("_data/railroad_2012_clean_county.csv"))
+#Preview data 
+data
 ```
 
-#Find the dimensions of railroad_2012_clean_county
+## Summary of Data
 
-  dim(railroad_2012_clean_county)
+Running the dfsummary(data) function shows us:
 
-#Get the col names of railroad_2012_clean_county
-  colnames(railroad_2012_clean_county)
+-   The data is complete: there are no missing data.
 
+-   Top ten states ranked with the most counties. Texas has the most counties of any other state, accounting for 7.5% of all counties in the United States.
+
+-   There are multiples of county names. We see in the following graph the top 10 county names that are used in the United States. (There are 31 Washington county names in this data plot, that's far more than I thought there were in the United States!)
+
+```{r}
+dfSummary(data)
+```
+
+```{r}
+#How many states are represented in the data?
+data %>%
+  select(state) %>%
+  n_distinct(.)
+```
+
+There are only 50 recognized states, so we need to dig a little deeper to find out what the three additional 'states' represent.
+
+```{r}
+#Show unique state data
+unique(data$state)
+```
+
+AE, AP, and DC are the three non-states cases. AE and AP are military addresses. DC is Washington DC.

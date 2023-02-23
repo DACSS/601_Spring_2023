@@ -1,0 +1,147 @@
+---
+title: "Challenge 1 - Railroad Employment"
+author: "Justine Shakespeare"
+desription: "Analysis of 2012 Railroad Employment Data"
+date: "02/15/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - railroads
+  - Justine Shakespeare
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Reading in the Data
+
+First we'll load the tidyverse and readxl packages and use the read_excel() function to read in the dataset. When I first loaded this dataset I noted that the data started on the third row, so I'll specify that R should skip the first two lines when I import the data.
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+RailroadEmployment <- read_excel("_data/StateCounty2012.xls", skip=2)
+```
+
+## Data Description
+
+This dataset contains information about the number of railroad employees by county and state in 2012. In these data, rows are individual counties and columns are the state, country, and number of employees. It is not clear from the dataset itself where this data is from/who published it.
+
+## Data Cleaning
+
+Before summarizing the data, we'll tidy it up a bit. Using the head() function we can see that the dataset includes 5 columns, but data is stored in only three.
+
+```{r}
+head(RailroadEmployment)
+```
+
+We can use the select() function to isolate only the columns with data and assign these to a new dataframe in R. We'll use `head()` to check our work.
+
+```{r}
+RailroadEmployment <- select(RailroadEmployment, STATE, COUNTY, TOTAL)
+
+head(RailroadEmployment)
+```
+
+Using the `n_distinct()` function we can see that there are 111 distinct values in the STATE column. Since we know there are 50 states in the US, this indicates there are some additional values that we may not have expected or want to keep for analysis. 
+
+```{r}
+RailroadEmployment %>%
+  select(STATE)%>%
+  n_distinct(.)
+```
+
+We can use piping and the functions `group_by()`, `summarize()`, and `print()` to inspect the values of the **STATE** column more closely to get an idea of what is stored here.
+
+```{r}
+RailroadEmployment %>% 
+  group_by(STATE) %>% 
+  summarize(mean(TOTAL)) %>% 
+  print(n=111)
+```
+
+There are a few issues we see here: It looks as if there are *Total* rows in this dataset - that is, there are rows that add up the total for each state. We don't need those in our data, since we can use R functions to total employees by state. It also looks as if **CANADA** is listed as a state. Assuming we are only interested in the US, let's remove that as well. 
+
+We can use the `filter()` and `grepl()` function to remove both the total rows and Canada from this dataset.
+
+
+```{r}
+RailroadEmployment <- RailroadEmployment %>% 
+  filter(!grepl("Total", STATE))
+
+RailroadEmployment <- RailroadEmployment %>% 
+  filter(!grepl("CANADA", STATE))
+```
+
+Finally, we noticed we had some NAs in both the **STATE** and the **TOTAL** columns. We can use the `na.omit()` function to remove these from the dataset. 
+
+```{r}
+RailroadEmployment <- print(na.omit(RailroadEmployment))
+```
+
+Let's run the same code chunk from earlier to check that our edits have been made and the data is clean.
+
+```{r}
+RailroadEmployment %>% 
+  group_by(STATE) %>% 
+  summarize(mean(TOTAL)) %>% 
+  print(n=111)
+```
+
+This is more like it! Now we have only 53 distinct values listed in the **STATE** columns: the 50 states, Washington DC (listed as DC), and two overseas military designations (listed as AE and AP)
+
+Let's move on to summarizing the data.
+
+------------------------------------------------------------------------
+
+## Data Summary
+
+Using the `dim()` function we can see below that the dataframe has 2,930 rows/observations and 3 columns/variables.
+
+```{r}
+dim(RailroadEmployment)
+```
+
+We can use the `head()` function to see more information about this dataset, including the column names, and the type of data stored in each column. The first two columns, **STATE** and **COUNTY**, are character variables, while the last column, **TOTAL**, is a double variable, which means it contains numeric data.
+
+```{r}
+head(RailroadEmployment)
+```
+
+Using the `summary()` function we can see that the **minimum number of employees in county is 1**, the **maximum is 8207**, the **median is 21 employees**, and the **mean is a little over 87 employees**.
+
+```{r}
+summary(RailroadEmployment)
+```
+
+Let's take a closer look at this dataset to get a sense of which **county** and which **state** each have the most railraod employees. We can use piping and the `arrange()` function in R to see which **counties** have the most railroad employees:
+
+```{r}
+RailroadEmployment %>% 
+  arrange(desc(TOTAL))
+```
+
+This shows that ***Cook County in Illinois*** has the most railroad employees. Given that the major city, Chicago is located in Cook County, this is not surprising. It is interesting that Cook county has almost twice as many railroad employees as the next county on the list, Tarrant county in Texas.
+
+This data can also shed light on which **states** have the most railroad employees. We can use piping and the `group_by()`, `summarize()`, `sum()` and `arrange()` functions to show the states with the most railroad employees:
+
+```{r}
+employees_by_state <- RailroadEmployment %>% 
+  group_by(STATE) %>% 
+  summarize(total_state_employees=sum(TOTAL))
+
+employees_by_state %>% 
+  arrange(desc(total_state_employees))
+```
+
+This shows that ***Texas*** is the state with the most railroad employees.

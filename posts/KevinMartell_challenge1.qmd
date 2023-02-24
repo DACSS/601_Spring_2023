@@ -1,0 +1,141 @@
+---
+title: "Challenge 1 Instructions"
+author: "Kevin Martell"
+description: "Reading in data and creating a post"
+date: "08/15/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - railroads
+  - faostat
+  - wildbirds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, using the correct R package and command.
+
+-   railroad_2012_clean_county.csv ⭐
+-   birds.csv ⭐⭐
+-   FAOstat\*.csv ⭐⭐
+-   wild_bird_data.xlsx ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐⭐
+
+Find the `_data` folder, located inside the `posts` folder. Then you can read in the data, using either one of the `readr` standard tidy read commands, or a specialized package such as `readxl`.
+
+```{r}
+# reading data using readr
+library(readr)
+(data <- read_csv("../posts/_data/railroad_2012_clean_county.csv"))
+```
+
+In case the data it's not parsed correctly at the column level, we can specify 
+the columns types using `spec()`
+
+```{r}
+spec(data)
+data_with_col_types <- read_csv("../posts/_data/railroad_2012_clean_county.csv",
+                  col_types = cols(
+                  state = col_character(),
+                  county = col_character(),
+                  total_employees = col_double()
+                ))
+# printing data
+data_with_col_types
+
+```
+
+Add any comments or documentation as needed. More challenging data sets may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+To know which county has the highest number of employees let's install a useful
+library for better data visualization.
+
+```{r}
+#| label: summary
+
+install.packages("ggplot2")
+library(ggplot2)
+
+```
+
+Let's check the data.
+```{r}
+summary(data)
+```
+
+Now let's use ggplot library to see which state has the highest number of 
+employees regardless the county.
+```{r}
+ggplot(data = data, aes(x = state, y = total_employees)) +
+  # adding a blue point for each total_employees number
+  geom_point(size = 1, color = "blue") + 
+  # drawing a straight line to the ponit 
+  geom_segment(aes(x = state, xend = state, y = 0, yend = total_employees)) +
+  # rotating the the name of the states by 90 degrees
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.1)
+)
+```
+Analysis of the graphic. 
+
+The graphic describes the total employees per county for each state regarless 
+the county(later we wil focus on the county). We can observe that Illinois has 
+the highest number of employees. Let's check more in detail that state.
+
+Filtering the data w have the following data
+```{r}
+vars <- c("state")
+cond <- c("IL")
+data_IL <- data %>%
+  filter(
+    .data[[vars[[1]]]] == cond[[1]]
+  )
+data_IL
+```
+
+Let's plot want we have.
+```{r, eval=FALSE}
+#view(data_IL)
+barplot(data_IL$total_employees)
+```
+
+By using the ggplot library, we have more control over how we want to see the
+data we care about.
+```{r}
+ggplot(data = data_IL, aes(x = county, y = total_employees)) +
+  geom_point(size = 1, color = "red") +
+  geom_segment((aes(x = county, xend = county, y = 0, yend = total_employees))) +
+  theme(axis.text.x = element_text(angle = 90, size = 3, vjust = 0.1))
+
+
+```
+We can conclude that Cook has the highest number of employees in the state of IL.
+
+
+

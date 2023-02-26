@@ -1,0 +1,127 @@
+---
+title: "Challenge 2 - FAO Stats, Chickens"
+author: "Megan Galarneau"
+desription: "Data wrangling: using group() and summarise()"
+date: "02/26/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    css: "styles.css"
+categories:
+  - challenge_2
+  - faostat_egg_chicken
+  - Megan Galarneau
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+1) Read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  Provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Table 1: EggOrChicken
+
+```{r}
+#initial data set import
+library(readr)
+EggOrChicken<-read_csv("_data/FAOSTAT_egg_chicken.csv")
+EggOrChicken
+```
+
+## Describe the data
+
+Through various R commands, I cleaned up the data set so I may work with it later on in this Challenge (EggAfChicken & ChickenBfEgg).
+
+Table 2: EggAfChicken
+
+```{r}
+#remove columns with "code" in the name
+EggAfChicken<-EggOrChicken%>%
+  select(-contains("Code"))
+```
+
+```{r}
+EggAfChicken<-rename(EggAfChicken, Country = Area)
+EggAfChicken
+```
+
+
+Table 3: ChickenBfEgg
+
+```{r}
+#create new element columns (Laying, Yield,& Production) and fill with corresponding values
+pivot_wider(EggAfChicken, names_from = "Element", values_from = "Value")
+```
+
+```{r}
+#assign new name to data set
+ChickenBfEgg<-pivot_wider(EggAfChicken, names_from = "Element", values_from = "Value")
+```
+
+There are 38,170 rows and 14 columns (9 without "Code" in the name) in this data set. The columns are Domain, Area, Element, Item, Year, Unit, Value, Flag, and Flag Description. Note, I renamed Area to Country for this assignment. The data set spans from 1961-2020 (not all years are represented for each country).
+
+The data sources include aggregate, may include official, semi-official, estimated or calculated data (3186 cases), calculated data (13344 cases), data not available (40 cases), FAO data based on imputation methodology (2079 cases), FAO estimate (10538 cases), official data (7548 cases), and unofficial figure (1435 cases).
+
+```{r}
+#data sources
+table((select(ChickenBfEgg, "Flag Description")))
+```
+
+Additionally, there are three element types regarding egg-laying that are analyzed in this Challenge: Laying, Production, and Yield of chicken eggs. From that, the item is chicken eggs, hen, in shell.
+
+## Provide Grouped Summary Statistics
+
+Using the ChickenBfEgg data set, I conducted exploratory data analysis on the values of "Laying, Yield, and Production" per Country. Each table contains the mean, median, min, max, standard deviation, variance & interquartile range.
+
+
+Table 1a: Laying 
+
+```{r}
+#mean, median, min, max, standard deviation, variance & interquartile range for Laying per Country
+ChickenBfEgg%>%
+group_by(Country)%>%
+summarize(mean.Laying = mean(Laying, na.rm = TRUE), median.Laying = median(Laying, na.rm = TRUE), min.Laying = min(Laying, na.rm = TRUE), max.Laying = max(Laying, na.rm = TRUE), sd.Laying = sd(Laying, na.rm = TRUE), var.Laying = var(Laying, na.rm = TRUE), IQR.Laying = IQR(Laying, na.rm = TRUE))
+
+```
+
+
+Table 2a: Yield
+
+```{r}
+#mean, median, min, max, standard deviation, variance & interquartile range for Yield per Country
+ChickenBfEgg%>%
+group_by(Country)%>%
+summarize(mean.Yield = mean(Yield, na.rm = TRUE), median.Yield = median(Yield, na.rm = TRUE), min.Yield = min(Yield, na.rm = TRUE), max.Yield = max(Yield, na.rm = TRUE), sd.Yield = sd(Yield, na.rm = TRUE), var.Yield = var(Yield, na.rm = TRUE), IQR.Yield = IQR(Yield, na.rm = TRUE))
+
+```
+
+
+Table 3a: Production
+
+```{r}
+#mean, median, min, max, standard deviation, variance & interquartile range for Production per Country
+ChickenBfEgg%>%
+group_by(Country)%>%
+summarize(mean.Production = mean(Production, na.rm = TRUE), median.Production = median(Production, na.rm = TRUE), min.Production = min(Production, na.rm = TRUE), max.Production = max(Production, na.rm = TRUE), sd.Production = sd(Production, na.rm = TRUE), var.Production = var(Production, na.rm = TRUE), IQR.Production = IQR(Production, na.rm = TRUE))
+
+```
+
+### Explain and Interpret
+
+I conclude from this analysis that this data set is reporting on egg-laying in three categories (laying, yield, and production) measured in units of 1000 Head globally (245 areas) from year to year.
+

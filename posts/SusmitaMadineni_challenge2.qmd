@@ -1,0 +1,204 @@
+---
+title: "Reading datasets: hotel_bookings.csv"
+author: "Susmita Madineni"
+desription: "Data wrangling: using group() and summarise() for hotel_bookings dataset"
+date: "02/27/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Susmita Madineni
+  - hotel_bookings
+  - readr
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in the Data
+
+Read in the following data set, available in the `posts/_data` folder:
+- hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+# Reading hotel_bookings.csv dataset
+
+library(readr)
+hotel_bookings_data <- read_csv("_data/hotel_bookings.csv")
+view(hotel_bookings_data)
+
+```
+
+```{r}
+# Preview the first few rows of the dataset
+head(hotel_bookings_data)
+
+# Understanding the dimensions of the dataset 
+dim(hotel_bookings_data)
+
+```
+```{r}
+# Identifying the column names of the dataset 
+colnames(hotel_bookings_data)
+
+# Changing column name to make it more readable
+colnames(hotel_bookings_data)[28] <- "average_daily_rate"
+
+# Identifying the data types of the columns
+table(sapply(hotel_bookings_data, function(x) typeof(x)))
+sapply(hotel_bookings_data, function(x) n_distinct(x))
+
+# Identifying unique values for columns - country, distribution_channel
+unique(hotel_bookings_data$hotel)
+
+unique(hotel_bookings_data$country)
+
+unique(hotel_bookings_data$distribution_channel)
+```
+## Describe the data
+
+This dataset gives the information about hotel reservations. It has 11930 rows and 32 columns. Based on the above, we can ionfer that there are 13 columns(variables) are of character datatype and 19 variables are of double datatype. Almost all the columns are readable for the user, except adr(column 28)  which stands for average daily rate. The hotel reservation data is provided for two types of hotels(Resort, City hotels) in various countries(178 countries) in years 2015, 2016 and 2017. Each observation in the dataset provides information of hotel category, reservation of the hotel information like arrival date(date, month, year, week), number of visitors(adult, children), country, number of days staying, meal, previous cancellations, reserved room types, customer type, number of special requests etc. Since every row and column in the dataset correspond to an observation, pivoting is not required.
+
+
+```{r}
+#| label: summary
+
+hotel_bookings_data <- mutate(
+  hotel_bookings_data, total_number_of_guests = adults + children + babies, 
+  total_days_stay = stays_in_weekend_nights + stays_in_week_nights
+)
+
+print(summary(hotel_bookings_data, varnumbers= FALSE, 
+                plain.ascii= FALSE, 
+                style= "grid", 
+                graph.magnif= 0.80, 
+                valid.col= TRUE),
+      method= 'render', 
+      table.classes= 'table-condensed')
+```
+
+```{r}
+#Filter country Code = 'PRT' from the dataset 
+filter(hotel_bookings_data, `country` == "PRT")
+
+#Filter the rows that has country as "PRT" and is not a repeated_guest
+filter(hotel_bookings_data, `country` == "PRT" & `is_repeated_guest` == 0)
+
+#Arranging data based on average_daily_rate and selecting hotel, country, average_daily_rate columns, grouping them based on country and then slicing out first 10 rows (with piping)
+hotel_bookings_data %>%
+  arrange(desc(average_daily_rate)) %>%
+  select(hotel, country, average_daily_rate)%>%
+  group_by(country) %>%
+  slice(1:10)
+```
+
+## Grouped Summary Statistics
+
+The above table shows descriptive statistics for the numeric variables present in the data. Based on the summary statistics, typically the reservations are made 104 days before the anticipated arrival date and 37% of the reservations are cancelled in reality. The length of the stay is typically 3.43 days and 1.97 guests are reserved for every reservation. 22.11% of the reservations are modified after they are made. The average daily rate for the hotels is $101.83. 
+
+
+```{r}
+hotel_bookings_data %>% 
+  arrange(desc(average_daily_rate)) %>% 
+  slice_head(n=10) %>% 
+  select(hotel, 
+         arrival_date_year, 
+         country, 
+         agent, 
+         total_number_of_guests, 
+         total_days_stay, 
+         reservation_status, 
+         average_daily_rate)
+```
+
+According to the summary table, the daily fee for a city hotel might reach upto $5400 per night while it costs only $508 per night for a resort. This might be beguine but let's perform some analysis.
+
+```{r}
+hotel_bookings_data %>% 
+  arrange(average_daily_rate) %>% 
+  slice_head(n=10) %>% 
+  select(hotel, arrival_date_year, 
+         country, 
+         agent, 
+         total_number_of_guests, 
+         total_days_stay, 
+         reservation_status, 
+         average_daily_rate)
+```
+
+If we observe the above table, the average daily rate for a city hotel is recorded as -6.38 which is incorrect. So, the row with average daily rate $5400 is an error. I will remove both observations.
+
+```{r}
+# filtering the observations for average daily rate > 0 and < 510
+hotel_bookings_data <- hotel_bookings_data %>% filter(average_daily_rate>=0 & average_daily_rate<=510)
+
+#Using group_by and summarise to understand the data of average daily rate for different types of hotels.
+hotel_bookings_data %>% 
+  select(hotel, average_daily_rate) %>% 
+  group_by(hotel) %>% 
+  summarise_if(is.numeric, list(min = min, max = max, mean = mean, std_dev = sd, median = median), na.rm = TRUE)
+
+```
+
+Based on the above statistics, we can say that mean average daily rate is more for city hotel than a resort hotel and standard deviation is less for a city hotel than a resort hotel.
+```{r}
+hotel_bookings_data %>% 
+  filter(reservation_status == "Check-Out") %>% 
+  select(country, total_number_of_guests) %>% 
+  group_by(country) %>% 
+  summarise_if(is.numeric, sum, na.rm = TRUE) %>% 
+  arrange(desc(total_number_of_guests)) %>% 
+  head(n=10)
+```
+
+```{r}
+hotel_bookings_data %>% 
+  filter(country %in% c("PRT", "GBR", "ESP", "FRA", "ITA")) %>% 
+  select(country,is_canceled) %>% 
+  group_by(country) %>% 
+  summarise_if(is.numeric, mean, na.rm = TRUE) %>% 
+  arrange(desc(is_canceled))
+```
+
+Based on the above tables,Portugal, Great Britain, France, Spain, Germany, Italy, Ireland, Belgium,Netherlands and the USA are top the list of countries with the most reservations. But we can also see that 56.63% of the reservations are cancelled in Portugal. Italy and Spain has 35.39% and 25.4% cancellations respectively. 
+
+
+```{r}
+hotel_bookings_data %>% 
+  select(country, average_daily_rate) %>% 
+  group_by(country) %>% 
+  summarise_if(is.numeric, mean, na.rm = TRUE) %>% 
+  arrange(desc(average_daily_rate)) %>% 
+  head(n=10)
+```
+
+The above table gives the list of top 10 most expensive hotels(based on the average daily rate, grouped based on the country). Most expensive hotels are found in Djibouti, Anguilla, Andorra, United States Minor Outlying Islands, and so on which implies that hotels in small countries with less visitors are more expensive. 
+
+```{r}
+# Verifying if any observations are made with zero average daily rate and counting the total observations
+
+hotel_bookings_data %>% 
+  filter(average_daily_rate == 0) %>% 
+  count()
+
+# Identifying the observations that has c and grouping them based on the country 
+hotel_bookings_data %>% 
+  filter(average_daily_rate == 0) %>% 
+  group_by(country) %>% 
+  count() %>% 
+  arrange(desc(n)) %>% 
+  head()
+```
+
+Based on the above table, there are 1959 observations with average daily rate as 0. Portugal has 1550 observations with average daily rate as zero, followed by Spain, Great Britain. Since Portugal has more observation with average daily rate as zero we need to investigate more about that. 

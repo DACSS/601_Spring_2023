@@ -1,0 +1,259 @@
+---
+title: "Challenge 2 Hotel Bookings"
+author: "Kekai Liu"
+desription: "Data wrangling: using group() and summarise()"
+date: "02/26/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2_Kekai
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(kableExtra)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+bookings <- read_csv("_data/hotel_bookings.csv") #read in the data; no special procedures are required as data is clean
+
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+The hotel_bookings.csv contains 119,390 rows and 32 columns. A case corresponds to a  hotel booking at a hotel, and the data covers hotel bookings at the City Hotel and Resort Hotel from 2015 to 2017. The columns correspond to variables providing descriptive and numeric information on each booking, such as the lead time (which indicates how far ahead of the intended stay date the booking was made), length of stay, the reservation history of the guest, the number of guests, the type of guests, country of origin of guests, additional perks requested, the status and type of the booking, the agent and/or company used to book (if applicable), and etc.
+
+```{r}
+#| label: summary
+str(bookings) #obtain a summary of data's variables
+
+#create for loop of table() to create frequency tables of all variables in data
+
+#for (i in colnames(bookings)){
+  #print(table(select(bookings, i)))
+#}
+
+```
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+
+#Recode arrival_date_month to numeric variable for convenience
+
+bookings$arrival_date_month <- recode(bookings$arrival_date_month, "January" = 1, "February" = 2, "March" = 3, "April" = 4, "May" = 5, "June" = 6, "July" = 7, "August" = 8, "September" = 9, "October" = 10, "November" = 11, "December" = 12)
+
+#Concatenate arrival_date_month and arrival_date_year
+
+bookings$arrival_date_month <- as.character(bookings$arrival_date_month)
+bookings$arrival_date_year <- as.character(bookings$arrival_date_year)
+bookings$arrival_date <- paste(bookings$arrival_date_year, bookings$arrival_date_month)
+
+#Calculate total days booked
+
+bookings$total_days_stays = bookings$stays_in_weekend_nights + bookings$stays_in_week_nights
+
+#Calculate total guests
+
+bookings$total_guests = bookings$adults + bookings$children + bookings$babies
+
+#Calculate total number of children and babies
+
+bookings$under_18_guests = bookings$children + bookings$babies
+```
+
+City Hotel has had more bookings than Resort Hotel for the entire period of the data; although the number of bookings differ, bookings at both hotels follow a similar seasonal pattern.
+```{r}
+
+#Find the total number of bookings at each hotel per each year-month
+
+bookings %>%
+  group_by(hotel, arrival_date) %>% #want to count the number of reservations at each hotelin a year and month
+  mutate(count = n()) %>% #this does the counting
+  select(hotel, arrival_date, count) %>% #this subsets the data into the columns we are interested in
+  ungroup() %>%
+  group_by(hotel, arrival_date) %>% #only want to keep top country per hotel per year and month
+  arrange(hotel, arrival_date, desc(count)) %>% #order from most reservations to least by hotel, year, month
+  unique() %>% #eliminate duplicate rows 
+  filter(row_number()==1) %>%
+  ggplot(aes(x=arrival_date, y=count, group=hotel, color=hotel)) +
+  geom_line() +
+  theme(axis.text=element_text(size=4.5)) +
+  ggtitle("Total Bookings in Year/Month") +
+  xlab("Year/Month") + ylab("Number of Bookings")
+
+```
+
+City Hotel has had more cancellations than Resort Hotel for the entire period of the data; although the number of cancellations differ, cancellations at both hotels follow a similar seasonal pattern.
+```{r}
+#Find the total number of cancellations at each hotel per each year-month
+
+bookings_canceled <- bookings[bookings$is_canceled==1,] #subset to cancellations
+
+bookings_canceled %>%
+  group_by(hotel, arrival_date, is_canceled) %>% #want to count the number of cancellations
+  mutate(count = n()) %>% #this does the counting
+  select(hotel, arrival_date, is_canceled, count) %>% #this subsets the data into the columns we are interested in
+  ungroup() %>%
+  group_by(hotel, arrival_date) %>% 
+  arrange(hotel, arrival_date, desc(count)) %>% #order from most reservations to least by hotel, year, month
+  unique() %>% #eliminate duplicate rows 
+  filter(row_number()==1) %>%
+  ggplot(aes(x=arrival_date, y=count, group=hotel, color=hotel)) +
+  geom_line() +
+  theme(axis.text=element_text(size=4.5)) +
+  ggtitle("Total Cancelled Bookings in Year/Month") +
+  xlab("Year/Month") + ylab("Number of Cancellations")
+```
+
+Portugal top bookings for both City Hotel and Resort Hotel.
+```{r}
+
+#Find the top ten countries that book the most at each hotel
+
+city <- bookings[bookings$hotel=="City Hotel",]
+
+resort <- bookings[bookings$hotel=="Resort Hotel",]
+
+city %>%
+   group_by(country) %>% #want to count the number of reservations per country
+   mutate(count = n()) %>% #this does the counting
+   select(country, count) %>% #this subsets the data into the columns we are interested in
+  arrange(desc(count)) %>% #order from most reservations to least
+   unique() %>% #eliminate duplicate rows 
+  ungroup() %>%
+   slice(1:10) %>% #identify the top five countries with the most reservations in a year and month for each hotel %>%
+   ggplot(aes(y=count, x=reorder(country, -count))) +
+  geom_bar(stat="identity") +
+  ggtitle("Top 10 Bookings by Country of Origin at City Hotel") +
+  xlab("Year/Month") + ylab("Number of Bookings")
+
+resort %>%
+   group_by(country) %>% #want to count the number of reservations per country
+   mutate(count = n()) %>% #this does the counting
+   select(country, count) %>% #this subsets the data into the columns we are interested in
+  arrange(desc(count)) %>% #order from most reservations to least
+   unique() %>% #eliminate duplicate rows 
+  ungroup() %>%
+   slice(1:10) %>% #identify the top five countries with the most reservations in a year and month for each hotel %>%
+   ggplot(aes(y=count, x=reorder(country, -count))) +
+  geom_bar(stat="identity") +
+  ggtitle("Top 10 Bookings by Country of Origin at Resort Hotel") +
+  xlab("Year/Month") + ylab("Number of Bookings")
+```
+
+For both City Hotel and Resort Hotel, transient customers book the most, followed by transient-party, contract, and group.
+```{r}
+
+#Find the most common customer_type at each hotel
+
+city %>%
+  group_by(customer_type) %>%
+  mutate(count = n()) %>%
+  select(customer_type, count) %>%
+  arrange(desc(count)) %>%
+  unique() %>% #eliminate duplicate rows
+  ggplot(aes(y=count, x=reorder(customer_type, -count))) +
+  geom_bar(stat="identity") +
+  ggtitle("Bookings by Customer Type at City Hotel") +
+  xlab("Year/Month") + ylab("Number of Bookings")
+
+resort %>%
+  group_by(customer_type) %>%
+  mutate(count = n()) %>%
+  select(customer_type, count) %>%
+  arrange(desc(count)) %>%
+  unique() %>% #eliminate duplicate rows
+  ungroup() %>%
+  ggplot(aes(y=count, x=reorder(customer_type, -count))) +
+  geom_bar(stat="identity") +
+  ggtitle("Bookings by Customer Type at Resort Hotel") +
+  xlab("Year/Month") + ylab("Number of Bookings")
+```
+
+```{r}
+
+#Find the mean and standard deviation days_in_waiting_list for hotel
+
+bookings %>% 
+  group_by(hotel) %>% #group data by hotel, year, month
+  select(hotel, days_in_waiting_list) %>% #keep the variables we are interested in
+  summarise(mean=mean(days_in_waiting_list), sd=sd(days_in_waiting_list), na.rm=TRUE) %>% #calculate the mean by hotel
+  kbl()
+
+boxplot(days_in_waiting_list~hotel,data=bookings, main="Days in Waiting List",xlab="Customer Type", ylab="Days")
+
+bookings %>% 
+  group_by(hotel) %>% #group data by hotel, year, month
+  select(hotel, days_in_waiting_list) %>% #keep the variables we are interested in
+  summarise(n = n(),
+            min = fivenum(days_in_waiting_list)[1],
+            Q1 = fivenum(days_in_waiting_list)[2],
+            median = fivenum(days_in_waiting_list)[3],
+            Q3 = fivenum(days_in_waiting_list)[4],
+            max = fivenum(days_in_waiting_list)[5]) %>%
+  kbl()
+
+#Find the mean and standard deviation days_in_waiting_list for hotel by customer_type
+
+bookings %>% 
+  group_by(hotel, customer_type) %>%
+    select(hotel, customer_type, days_in_waiting_list) %>% #keep the variables we are interested in
+  summarise(mean=mean(days_in_waiting_list), sd=sd(days_in_waiting_list), na.rm=TRUE) %>% #calculate the mean by hotel and customer_type
+  kbl()
+
+bookings %>% 
+  group_by(hotel, customer_type) %>%
+    select(hotel, customer_type, days_in_waiting_list) %>% #keep the variables we are interested in
+   summarise(n = n(),
+            min = fivenum(days_in_waiting_list)[1],
+            Q1 = fivenum(days_in_waiting_list)[2],
+            median = fivenum(days_in_waiting_list)[3],
+            Q3 = fivenum(days_in_waiting_list)[4],
+            max = fivenum(days_in_waiting_list)[5]) %>%
+  kbl()
+```
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.
+
+First, we compared the mean and standard deviation of days_in_waiting_list between City and Resort Hotel. Comparing the number of days in the waiting list between hotels is helpful, as it provides customers information on how quickly they can expect to get a room. The mean tells us that on average, customers can expect to wait three days at City Hotel versus half a day at Resort Hotel. The standard deviation of days_in_waiting_list for City Hotel is about three times higher than Resort Hotel. This implies that the wait time at City Hotel is also less consistent than Resort Hotel; it can vary widely.
+
+The plot shows that City Hotel has a wider range and higher max days in waiting list value. This corresponds to what was observed from the standard deviation. So, customers at the City Hotel can expect to wait significantly longer than customers at the Resort Hotel.
+
+Second, we compared the mean and standard deviation of days_in_waiting_list between City and Resort Hotel broken down by customer type. Breaking this comparison down by customer type is helpful, because it reveals whether certain customer types are more likely to wait longer. The means reveal that Transient-Party customers wait the longest for both City Hotel and Resort Hotel; City Hotel Transient-Party customers wait on average 8 days while Resort Hotel Transient-Party customers wait on average 2 and a half days. The standard deviation for City Hotel Transient-Party customers is twice that of the Resort Hotel Transient-Party customers, meaning that the average wait time for City Hotel Transient-Party customers varies by a large margin.
+
+Finally, the five number summary consisting of the minimum, first quartile, median, third quartile, and maximum reveals that the majority of customers (irregardless of customer type) do not wait. The third quartile is the 75th percentile, meaning that 75% of customers fall under this value, which happens to be 0 across all customer types and hotels. This means 75% of customers do not wait. The maximum reveals that Transient and Transient-Party customers at City Hotel account for the largest outliers - 391 and 379 days in the waiting list respectively - compared to 122 and 185 at Resort Hotel. These outliers are pulling up the mean days in waiting list upward for City Hotel; this explains why the mean and standard deviation at City Hotel is much higher than Resort Hotel.

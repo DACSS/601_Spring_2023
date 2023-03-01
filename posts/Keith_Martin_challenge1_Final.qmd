@@ -1,0 +1,84 @@
+---
+title: "Poultry Production Around the World 1960-2018"
+author: "Keith Martin"
+desription: "Keith Martin_Challenge 1"
+date: "02/20/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - wildbirds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+### pull the data from the _data folder
+library(readr)
+birds <- read_csv ("_data/birds.csv")
+view (birds)
+```
+
+**Introduction:**
+
+I analyzed the birds.csv data set. This data set contains the information about the type, country of origin, and amount of poultry that was produced around the world. This data is relatively straight forward based on the data values. I have included the first few rows below for reference.
+
+```{r}
+select(birds, "Area", "Item", "Year", "Value")
+```
+
+**Visualization Analysis:**
+
+```{r}
+Bird <- select(birds, "Item")
+table(Bird)
+prop.table(table(Bird))
+```
+
+I have included tables describing the type of poultry and their respective county. Additionally, I have included the proportions of each type of bird throughout the entirety of the data. As you can see from above, Chicken makes up about 42% of the poultry production, Ducks make up about 22%, Turkeys make up about 18%, Geese and Guinea fowls make up about 13% and Pigeons and other beards make up about 3.7%.
+
+```{r}
+### This section of code specifies the values on the below charts. 
+ggplot(data = birds, mapping = aes(x = Year, y = Value, color = Item)) +
+          geom_line() +
+        facet_wrap(vars(Item)) +
+### Titles of the below charts including a title for each axis
+  labs(title = "Poultry Production from 1960-2018",
+                                     x = "Year",
+                                     y = "Amount of Poultry") +
+### This section of code represents the texts formation of the below charts (Thanks, Megan!!)
+          theme_bw() +
+          theme(axis.text.x = element_text(colour = "grey20", size = 6, angle = 90, hjust = 0.5, vjust = 0.5),
+                                    axis.text.y = element_text(colour = "grey20", size = 6),
+                                        strip.text = element_text(face = "italic"),
+                                       text = element_text(size = 10))
+```
+
+The above code was borrowed from a similar analysis (Megan Galarneau). I believe this is probably the best way to efficiently represent the data in an attractive way.
+
+```{r}
+
+Bird <- select(birds, "Area")
+prop.table(table(Bird))
+
+```
+
+In this section, I have included each country and their respective poultry production. I attempted to use graphs, but I was unable to find an attractive way to include all the information without going through and combining the countries via region. My geography is a somewhat rusty.
+
+I have included above the proportions of the productions from each country listed in the data set. I have separated the two tables to avoid any confusion.
+
+**Conclusion:**
+
+I have come to the conclusion that this is a data set that is describing the poultry production of every country. It is separated via country, production, year and type of poultry produced.

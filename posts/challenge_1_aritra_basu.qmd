@@ -1,0 +1,75 @@
+---
+title: "Challenge 1"
+author: "Aritra Basu"
+desription: "Reading in data and creating a post"
+date: "02/28/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - Aritra Basu
+  - wildbirds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(dplyr)
+library(descr)
+library(summarytools)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Reading the Data
+I have decided to work on the dataset birds:
+```{r}
+library(readr)
+birds <- read.csv("_data/birds.csv")
+
+```
+
+## Describing the data
+Using the package descr, it can be seen that the dataset contains observations on birds from 1976 to 2018. We can see the frequency. The summary statistics, because of the nature of the variables is not very useful here.
+
+```{r}
+#install.packages('descr')
+#library(descr)
+descr(birds)
+```
+
+Using n_distinct, it can be observed that there are 248 distinct area codes.
+```{r}
+birds%>%
+  select(Area.Code)%>%
+  n_distinct(.)
+
+```
+
+Next, we could look at a cross sectional component by looking at the dataset for a particular year. Say, we want to filter chickens in 1962, and looking at area, items and value.
+```{r}
+birds%>%
+  select(Area, Item, Value, Year)%>%
+  filter(Year=="1962", Item=="Chickens")
+```
+Next, I identify the missing values for 1962.
+```{r}
+birds%>%
+  select(Area, Element, Item, Value, Year)%>%
+  filter(Year == "1962")%>%
+  filter(is.na(Value))
+```
+Trying another function: dfsummary. This function is provided by the package summary tools. 
+```{r}
+#install.packages('summarytools')
+#library(summarytools)
+dfSummary(birds, style="grid")
+```
+Here, I have used dfsummary for the entire dataset. It provides a clear description of the data.We can see that there are 30977 rows and 15 columns. As had been obseved before, there are 248 area codes. In the composition of birds, we can see that chickens comprise of 42.2% of the total, followed by ducks (22.3%), Geese and Guinea Fowls (13.4%), Pigeons (3.8%) and Turkeys (18.4%). From the flag description, it can be observed that 34.8% of the data have been obtained from official sources, 32.3% are FAO estimates, 20.9% comprise of other aggregation.

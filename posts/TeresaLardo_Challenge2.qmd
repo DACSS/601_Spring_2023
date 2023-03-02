@@ -1,0 +1,176 @@
+---
+title: "Challenge 2"
+author: "Teresa Lardo"
+description: "Grouping a dataset on hotel bookings and providing summary statistics"
+date: "02/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Teresa Lardo
+  - hotel_bookings
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+## Read in the Data
+
+For this challenge, I'll read in the csv file on hotel bookings.
+
+```{r}
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+library(readr)
+hotel_bookings <- read_csv("_data/hotel_bookings.csv", show_col_types = FALSE)
+```
+#### First 6 Rows
+```{r}
+head(hotel_bookings)
+```
+
+#### Last 6 Rows
+
+```{r}
+tail(hotel_bookings)
+```
+
+
+## Describe the data
+
+#### Dimensions
+```{r}
+#Find out the dimensions of the tibble
+dim(hotel_bookings)
+```
+
+#### Unique Hotels
+
+```{r}
+#Find out which hotels are listed in the hotel column
+unique(hotel_bookings$hotel)
+```
+
+
+The cases in this dataset are just under 120,000 individual bookings at two hotels
+(Resort Hotel and City Hotel) over the time period July 2015 through
+August 2017. There are 32 variables in this dataset, including:
+
+\- meal packages,
+
+\- how far in advance the booking was created (lead time),
+
+\- average daily rate,
+
+\- whether a booking was canceled or not,
+
+\- type of room reserved/assigned, and
+
+\- how many adults, children, and babies are associated with each
+booking.
+
+Because each variable ought to have a column, we can look at all the
+variables in this dataset by using the `colnames()` function.
+
+```{r}
+colnames(hotel_bookings)
+```
+
+The "is_canceled" and "reservation_status" columns clue us in to the
+fact that the cases are bookings *made* but not necessarily actual 
+*stays* at the hotels, as some customers canceled or no-showed. This
+indicates that the data was most likely gathered from the booking
+systems of the hotels themselves.
+
+```{r}
+# Show unique values under is_canceled column
+unique(hotel_bookings$is_canceled)
+
+# Show unique values under reservation_status column
+unique(hotel_bookings$reservation_status)
+```
+
+
+## Grouped Summary Statistics
+
+Because this dataset has so many variables, there are many potential
+ways to group data. We could group our data by hotel, by bookings that
+turned into actual *hotel stays* (where reservation_status is 'Check-Out'), by bookings that include children or
+babies (where the children or babies column is not '0'), by group
+bookings (where market_segment is 'groups'), by bookings with a full
+deposit (where deposit_type is 'Non Refund'), by bookings for which the
+reserved and assign room types differ (where reserved_room_type is not
+the same as the value in assigned_room_type), by bookings with different
+types of meal packages, etc.
+
+### When are the hotels in demand?
+
+Let's look at average lead time (number of days between booking and
+anticipated arrival date) to get clues into when during the year each
+hotel is more likely to be booked far in advanced. Let's also filter out bookings that were cancelled. 
+
+```{r}
+library(dplyr)
+hotel_bookings %>%
+  filter(reservation_status == "Check-Out") %>%
+  group_by(arrival_date_month, hotel) %>%
+  select(lead_time) %>%
+  summarize_all(mean) %>%
+  ungroup() %>%
+  arrange(desc(lead_time))
+```
+
+Reservations for September at Resort Hotel have the highest average lead
+time, with July reservations at City Hotel following behind. The lowest average lead times for City Hotel are in January, February, and Dcember. The lowest average lead times for Resort Hotel are in November, February, and January.
+
+## Central Tendency and Dispersion
+
+Despite the 32 different variables in this dataset, only 13 columns can
+be directly used to get means, medians, and modes. Other columns may
+appear to be numeric but answer Yes/No questions with 0 or 1, or list
+numbers referring to dates (such as week of the year or day of the
+month), which would not benefit from being averaged.
+
+### Hotel Stays
+
+I will filter for bookings that actually turned into hotel stays (where
+the reservation status is "Check-Out" as opposed to "No show" or
+"Canceled").
+
+```{r}
+#Create a vector containing the indices of the columns for summary statistics
+stat_cols <- c(3, 8:12, 18, 19, 22, 26, 28:30)
+
+#Load summarytools package to us descr()
+library(summarytools)
+
+hotel_stays <- hotel_bookings %>% 
+  filter(reservation_status == "Check-Out")
+
+descr(hotel_stays[stat_cols])
+
+```
+
+
+
+### Cancelled Bookings
+
+To contrast with the summary statistics of the bookings that turned into
+hotel stays, let's filter for only *cancelled* bookings at the two
+hotels.
+
+```{r}
+canceled_bookings <- hotel_bookings %>%
+  filter(is_canceled == 1) 
+
+descr(canceled_bookings[stat_cols])
+```
+
+
+I notice the mean & median values for **ADR** is different in the summary stats for hotel stays vs. cancelled bookings. The max ADR value in cancelled bookings is 5400 - possibly a reason that reservation was cancelled. 
+
+I also notice that the required car parking spaces variable seems to only have values of zero for the canceled bookings subset. This suggests that information about parking spaces is not collected until the check-in process when customers physically arrive to the hotels. 

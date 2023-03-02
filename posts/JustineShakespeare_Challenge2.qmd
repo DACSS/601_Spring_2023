@@ -1,0 +1,195 @@
+---
+title: "Challenge 2 - FAOStat Cattle & Dairy"
+author: "Justine Shakespeare"
+desription: "Data wrangling: using group() and summarise()"
+date: "03/1/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - faostat
+  - Justine Shakespeare
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Loading and cleaning the data 
+
+First we'll load the tidyverse package and read in the data. We'll focus on the FAOStat data on cattle and dairy.
+
+```{r echo=TRUE}
+
+FAOCD <- read_csv("_data/FAOSTAT_cattle_dairy.csv")
+
+```
+This data includes quantities of specific cattle and dairy elements (Milk Animals, Yield, and Production) organized by geographical region (including countries, regions, and continents) and year. A more detailed description of the variables in this dataset is provided below.
+
+Let's take a look at the dataset with the head() and dim() functions.
+
+```{r}
+dim(FAOCD)
+
+head(FAOCD)
+```
+
+The results of these functions tell us that we have a dataset with over 36,000 observations (rows) and 14 variables (columns). It looks like some of these columns contain redundant information (such as many of the columns with "Code" in the name) and/or they have the same value for all observations (indicating that they were likely taken from a larger dataset). Let's use the unique() function to determine if any of these columns hold just one value, in which case we can remove them for our analysis and keep this information as metadata for this dataset.
+
+```{r}
+unique(FAOCD$Domain)
+unique(FAOCD$`Domain Code`)
+unique(FAOCD$`Item Code`)
+unique(FAOCD$Item)
+unique(FAOCD$Flag)
+unique(FAOCD$`Flag Description`)
+```
+The first four of these columns contain just one value for all observations, so we can remove them when we trim down the dataset. Let's use the `group_by()`, `count()`, and `head()` functions to take a closer look at the relationship between the variables, *Flag* and *Flag Description*. 
+
+```{r}
+flagCheck <- FAOCD %>% 
+  group_by(Flag) %>% 
+  count(`Flag Description`)
+
+head(flagCheck, 10)
+```
+As implied by the names of these variables, the values in the Flag and Flag Description columns are directly related - Flag Description describes the notation in the Flag column. It looks as if these variables provide information about the source of the data in each relevant observation. In the interest of managing fewer variables while also not wanting to lose important context, let's drop Flag and keep the Flag Description variable. 
+
+But before we remove any columns, let's take a closer look at the relationship between the *Element*, *Value* and *Unit* variables. We assume that Unit describes the unit of measurement for the quantities in the Value column. We can use the `group_by()` and `count()` function to explore the relationship between Element and Unit.
+
+```{r}
+variableCheck <- FAOCD %>% 
+  group_by(Element) %>% 
+  count(`Unit`)
+
+head(variableCheck, 10)
+```
+
+It looks as if there are three values repeated in the Element column: Milk Animals, Production, and Yield. And each of these values corresponds to a particular Unit: Head, tonnes, and hg/An, respectively. Because of this relationship, if we'd like to reduce the number of variables we're dealing with we could create columns for each Element, and note the unit in the column name, rather than have a separate column for this information. 
+
+First, let's use the `select()` function to create a new dataframe that removes all of the columns we have decided we don't need:  the columns with "Code" in the name, the columns with only one value throughout the dataset, the Flag column, and finally the Unit column. We'll use `head()` to check out our new dataframe.
+
+```{r}
+FAOCD_subset <- select(FAOCD, Area, Element, Year, Value, `Flag Description`)
+
+head(FAOCD_subset)
+```
+
+Now let's use `pivot_wider()` to create columns for each of the values listed in the Elements column. Then we can use the `rename()` function to rename each of those columns to specify the unit (originally stored in the Unit column). We'll use `head()` to take a look at the final dataframe.
+
+```{r}
+FAOCD_Pivot <- pivot_wider(FAOCD_subset, names_from=Element, values_from = Value)
+
+FAOCD_Tidy <- rename(FAOCD_Pivot, "Milk Animals (Head)" = "Milk Animals", "Yield (hg/An)" = "Yield", "Production (tonnes)" = "Production")
+
+head(FAOCD_Tidy)
+```
+Now that we've transformed our data and made it easier to deal with, we can begin the analysis and exploration of the data itself.
+
+## Data exploration and analysis
+
+Let's get a sense of the data we have in this new dataframe with the `glimpse()` function.
+
+```{r}
+glimpse(FAOCD_Tidy)
+```
+Note that we went from over 36,000 rows to just over 27,000, and 14 columns to 6. 
+
+The variables we have remaining include four double (numeric) variables, including *Year*, and the three variables we transformed using `pivot_wider()`: *Milk Animals (Head)*, *Yield (hg/An)*, and *Production (tonnes)*. Presumably this data describes the quantity of these elements (Milk Animals, Yield and Production) for each indicated year and region. Let's use the `range()` function to see what time period this data covers.
+
+```{r}
+range(FAOCD_Tidy$Year)
+```
+
+This data covers a little less than the past 60 years or so, with the last 5 years (since 2018) not included.
+
+This dataframe also includes two character variables, *Area* and *Flag Description*. We have already discussed what the Flag Description variable tells us; since we're interested in comparing across countries and regions, let's use the `unique()` function to see what is in the *Area* column.
+
+```{r}
+unique(FAOCD_Tidy$Area)
+```
+
+Without going through this list exhaustively, it looks as if this variable contains all countries in the world, some historic geopolitical areas (such as "Sudan (former)" or "USSR") and larger regions of the world (such as "World", "Africa", and subsets of continents, such as "Caribbean", "Central Asia", etc.). 
+
+#### Cattle and dairy production by continent
+
+Let's first explore what this data can tell us about cattle and dairy production as a high level, let's create a dataframe with just the continents, using the `filter()` function. We'll use the `table()` function to check out how many observations we have for each continent in our resulting dataframe.
+
+```{r}
+FAOCD_Continents <- FAOCD_Tidy %>% 
+  filter(Area == "Oceania" | Area == "Europe" | Area == "Asia" | Area == "South America" | Area == "Northern America" | Area == "Africa")
+
+table(FAOCD_Continents$Area)
+```
+
+Let's take a look at the continents with the highest level of mean production since 2010, as well as the standard deviation and the median. To be able to better compare standard deviations across different continents, let's calculate a standard deviation proportion variable, which will show the standard deviation as a proportion of the mean. We can use the `filter()`, `group_by()`, `summarize()`, and `arrange()` functions to create this table.
+
+
+```{r}
+FAOCD_Continents_Since2010 <- FAOCD_Continents %>% 
+  filter(Year > 2010) %>% 
+  group_by(Area) %>% 
+  summarize("Mean Production" = mean(`Production (tonnes)`, na.rm = TRUE), 
+            "Standard Deviation of Production" = sd(`Production (tonnes)`, na.rm = TRUE),
+            "SD Proportion" = sd(`Production (tonnes)`, na.rm = TRUE)/mean(`Production (tonnes)`, na.rm = TRUE),
+            "Median Production" = median(`Production (tonnes)`, na.rm = TRUE)) %>% 
+  arrange(desc(`Mean Production`))
+
+head(FAOCD_Continents_Since2010, 10)
+```
+This table shows that since 2010 Europe has had the highest mean production levels, followed by Asia and Northern America. Europe also has the highest median production levels. It is interesting to note that the standard deviation is highest for Asia, indicating that production levels vary more each year in Asia than they do in the other continents. 
+
+To get a sense of how things have changed, let's take a look at the same metrics before 1980.
+
+```{r}
+FAOCD_Continents_Before1980 <- FAOCD_Continents %>% 
+  filter(Year < 1980) %>% 
+  group_by(Area) %>% 
+  summarize("Mean Production" = mean(`Production (tonnes)`, na.rm = TRUE), 
+            "Standard Deviation of Production" = sd(`Production (tonnes)`, na.rm = TRUE),
+            "SD Proportion" = sd(`Production (tonnes)`, na.rm = TRUE)/mean(`Production (tonnes)`, na.rm = TRUE),
+            "Median Production" = median(`Production (tonnes)`, na.rm = TRUE)) %>% 
+  arrange(desc(`Mean Production`))
+
+head(FAOCD_Continents_Before1980, 10)
+```
+This table shows data from 1961 to 1979, more than 30 years earlier than the data from the previous table we looked at (data since 2010). While most of the continents are ranked similarly to how they are in the more recent data, this new table shows us that North America used to produce more on average than Asia, and that Oceania used to produce more on average than Africa. In this dataset most of the continents have a higher standard deviation than they do in the more recent dataset, indicating that the variability of production over the years was higher back then than it has been in recent years.
+
+Finally, let's take a closer look at the larger dataset that includes countries, to see which countries have higher mean production levels in recent years. While we won't try to do an exhaustive cleaning of this data for this assignment, let's at least remove some of the higher level geographical observations in the Area variable, including "World" and the continents, so it's easier to focus on the countries in our analysis. 
+
+```{r}
+FAOCD_PrimarilyCountries <- FAOCD_Tidy %>% 
+  filter(Area != "World" & Area != "Oceania" & Area != "Europe" & Area != "Asia" & Area != "South America" & Area != "Northern America" & Area != "Africa" & Area != "Americas")
+``` 
+
+Let's check out the countries and smaller regions with the highest mean production levels. We'll use the `filter()`, `group_by()`, `summarize()`, and `arrange()` functions to create this table.
+
+```{r}
+FAOCD_PrimarilyCountries_Since2010 <- FAOCD_PrimarilyCountries %>% 
+  filter(Year > 2010) %>% 
+  group_by(Area) %>% 
+  summarize("Mean Production" = mean(`Production (tonnes)`, na.rm = TRUE), 
+            "Standard Deviation of Production" = sd(`Production (tonnes)`, na.rm = TRUE),
+            "SD Proportion" = sd(`Production (tonnes)`, na.rm = TRUE)/mean(`Production (tonnes)`, na.rm = TRUE),
+            "Median Production" = median(`Production (tonnes)`, na.rm = TRUE)) %>% 
+  arrange(desc(`Mean Production`))
+
+head(FAOCD_PrimarilyCountries_Since2010, 10)
+```
+Unsurprisingly, there are a lot of smaller geographical regions showing up at the top of this list. If we had more time we would thoroughly clean this data by comparing the list of countries in the Area column to a list of current countries in the world and remove all values that didn't match. But for now we can still see that there are a few countries showing up even in this list of the top ten, including the United States, India, mainland China, and Brazil. India looks to have a considerably higher standard deviation than the other countries on this list. 
+
+## Conclusion and further research
+
+As noted several times in this analysis, with more time I would more thoroughly clean the Area variable, so that we could more easily create tables focused on just countries, geographical regions, or continents. I also did not research the original dataset as thoroughly as I would have liked to, which would provide more information about each variable (specifically the Milk Animals, Production, and Yield) and provide more nuance to these findings. 
+
+There are so many different ways you could explore this data! Another area that would be worth exploring is the change over time of production and how this varies across countries and regions. Visualization could be used to better illustrate any patterns and trends discovered in the data. 

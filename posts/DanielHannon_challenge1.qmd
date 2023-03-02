@@ -1,0 +1,74 @@
+---
+title: "Challenge 1:Bird Data Analysis"
+author: "Daniel Hannon"
+desription: "Analyzed and Described the bird data set"
+date: "08/02/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - Daniel Hannon
+  - birds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#| label: read in data removing double rows
+bird_data <- read.csv("_data/birds.csv")%>%
+  select(-contains("code"))
+head(bird_data)
+```
+Upon first viewing, after removing redundant rows, we can see that the data set is about different poultry amounts in different regions of the world across different years. Each observation contains an area of the world, a year, and the type of poultry being collected. It also has information such as the value of the resource during that year, and a Flag and descriptor about how the data was gathered, which can be things like FAO Estimate or Unofficial data. 
+```{r}
+#| label: investigate the dataset 
+#look at the unique entries for each column
+select(bird_data, Area)%>%
+  n_distinct(.)
+select(bird_data, Item)%>%
+  table()%>%
+  prop.table()
+select(bird_data, Year)%>%
+  table()
+  
+```
+The data covers 248 unique areas, some countries, some continents, and even the world, contains information about 5 main groups of birds, and spans from the years 1961 to 2018. The number of data points collected for each year increases as the years increase. To check if we are missing any other critical data from the other columns we can look at a full summary of the table.
+
+```{r}
+#| label: generate a full summary of the data
+summarytools::dfSummary(bird_data,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.50, 
+                        valid.col    = FALSE)
+```
+
+Here we can see that all of the observations have the same value for Domain, Element, and Unit. So every observation is of live animals, and they all share the unit of 1000 head.
+
+```{r}
+#| label: look for changes in bird populations for the world
+
+world_data <- bird_data%>%
+  filter(Area== "World")%>%
+  group_by(Item)
+
+ggplot(world_data, aes(Year, Value)) + 
+      geom_point() + 
+      geom_smooth() + 
+      labs(title = "World Polutry Populations over Time")+
+      facet_wrap(vars(Item), scales = "free")
+  
+```
+We can see from above the worldwide changes in the recorded bird populations and that as a trend all bird counts have been steadily rising, with Pigeons and other birds taking a sharp decline in the late 1990's. 

@@ -1,0 +1,58 @@
+---
+title: "Challenge 1"
+author: "Tim Shores"
+desription: "Reading in data and creating a post"
+date: "02/25/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - wildbirds
+---
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+my_packages <- c("dplyr", "magrittr", "readxl", "summarytools") # create vector of packages
+invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## My content
+
+Challenge 1 pits us unfortunate students up against two tasks:
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+```{r}
+wbirds <- read_xlsx("../posts/_data/wild_bird_data.xlsx",skip=1) # read in data
+showing <- 42
+```
+
+I chose to read in wild_bird_data.xlsx, because wild birds are *exciting*. The wild bird file includes two rows of headings. I skipped the first row to tidy up my tibble, but it tells us that the data source is "Figure 1 of Nee et al." That led me to this May 1991 Nature article: [The relationship between abundance and body size in British birds](https://www.nature.com/articles/351312a0)
+
+The wild bird data set includes **`r nrow(wbirds)`** observations under **`r ncol(wbirds)`** variables. Here are the top **`r showing`** observations of British birds -- not just *any* wild birds:
+
+```{r}
+print(wbirds, n=showing)
+wb_col1_null <- wbirds %>% select(names(wbirds)[1]) %>% n_distinct(.)
+wb_col2_null <- wbirds %>% select(names(wbirds)[2]) %>% n_distinct(.)
+```
+
+The *`r names(wbirds)[1]`* variable has `r nrow(wbirds) - wb_col1_null` null values.
+
+The *`r names(wbirds)[2]`* variable has `r nrow(wbirds) - wb_col2_null` null values.
+
+Here's the summary:
+
+```{r}
+summary(wbirds)
+```

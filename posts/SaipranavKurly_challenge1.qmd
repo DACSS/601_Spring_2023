@@ -1,0 +1,82 @@
+---
+title: "Challenge 1"
+author: "Sai Pranav Kurly"
+desription: "Reading in data and creating a post"
+date: "03/01/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - railroads
+  - faostat
+  - wildbirds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+## Read in the Data
+
+We can read the railroad_2012_clean_county.csv dataset using the read_csv function. Below also shows the first few rows and the summary of the dataset.
+
+```{r}
+#Read the dataset
+dataframe <- read_csv("_data/railroad_2012_clean_county.csv")
+
+#Display the first few rows of the dataset
+head(dataframe)
+
+#Summarise the dataset
+dataframe %>%
+  summary(dataframe)
+```
+
+## Describe the data
+
+We see that the dataset is that of the employees in the railroad across the United States.There are 3 columns STATE, COUNTY, and TOTAL EMPLOYEES and a total of 2930 rows. 
+
+```{r}
+#Grouping the data by state in descending order of employees
+dataframe%>%
+  group_by(state)%>%
+  summarise(total=sum(total_employees))%>%
+  arrange(desc(total)) %>%
+slice(1:10)
+```
+Above shows the top 10 states where the most employees are present. We see from above that Texas has the highest number of employees. 
+
+```{r}
+#Filter state AE from the dataset 
+filter(dataframe, state == "TX")
+```
+ Above shows us a filtered veiw of TX.
+
+```{r}
+#Grouping the data by state in ascending order of employees
+dataframe%>%
+  group_by(state)%>%
+  summarise(total=sum(total_employees))%>%
+  arrange(total) %>%
+slice(1:10)
+```
+
+We see from above that AP has the lowest number of employees.  

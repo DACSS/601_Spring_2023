@@ -1,0 +1,151 @@
+---
+title: "Challenge 2 - FAO_Stat"
+author: "Joseph Vincent"
+description: "Data wrangling: using group() and summarise()"
+date: "03/01/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - faostat
+  - Joseph Vincent
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(summarytools)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Reading in and cleaning up the Data
+
+```{r}
+# reading in FAO stat, dairy cattle and assigning to FAO_Dairy
+FAO_Dairy <- read.csv("_data/FAOSTAT_cattle_dairy.csv")
+head(FAO_Dairy)
+
+# removing unchanging and duplicate variables
+# turning Element into variables to remove duplicate observations
+# renaming new variables to contain units
+# assigning to FAO_Dairy_Clean
+
+FAO_Dairy_Clean <- FAO_Dairy %>%
+  select('Area', 'Element', 'Year', 'Value') %>%
+  pivot_wider(names_from = 'Element', values_from = 'Value') %>%
+  rename('Milk Animals (heads)' = 'Milk Animals') %>%
+  rename('Yield (hg/AN)' = 'Yield') %>%
+  rename('Production (tonnes)' = 'Production')
+  
+head(FAO_Dairy_Clean)
+
+```
+
+## Describe the data
+
+This data set appears to be describing dairy production - specifically, whole milk production - by area and year.
+
+The earliest year is 1961 and the most recent year is 2018, though because the count of these years increases in the table below, this suggests that some countries either did not produce dairy or did not report data until later years.
+
+There are 36,449 observations, but only 222 of those represent unique areas. Area is typically country, but also contains some broader regions including continents and even the entire world.
+
+The original data set consists of 14 column names, but many of these variables are duplicates:
+For example, 'Element' and 'Element.Code' or 'Year' and 'Year.Code'.
+In addition to duplicates, there are a few that remain the same for each observation.
+For example, 'Domain' is always 'Livestock Primary' and 'Item' is always 'Milk, Whole fresh cow'.
+These suggest that the data comes from a larger dataset. For this analysis I removed these variables.
+
+There are dublicate observations as well. This is because of the variables 'Element' and 'Unit'. For each country and year, the number of cows, yield per cow and total milk production are listed as separate observations.
+For this analysis, I transformed the 'Element' variable into variables 'Milk Animals', 'Yield' and 'Production' and also included the units in each column name in order to get each obeservation onto its own row.
+
+The median number of cows per year/area is 295,000.
+The median tonnes of production is year/area is 9,001,419.
+
+
+```{r}
+#| label: summary
+# summarizing the original data set, viewing year and area in tables
+dfSummary(FAO_Dairy)
+table(select(FAO_Dairy, 'Year'))
+table(select(FAO_Dairy, 'Area'))
+
+#summarizing the clean data set
+dfSummary(FAO_Dairy_Clean)
+
+```
+
+## Provide Grouped Summary Statistics
+
+```{r}
+# creating tables for 1961 and 2018 production
+firstyear <- FAO_Dairy_Clean %>%
+  select('Area', 'Year', `Production (tonnes)`) %>%
+  filter(Year == "1961")
+
+lastyear <- FAO_Dairy_Clean %>%
+  select('Area', 'Year', `Production (tonnes)`) %>%
+  filter(Year == "2018")
+
+# calculating mean and median production for 1961 and 2018
+median(firstyear$`Production (tonnes)`)
+median(lastyear$`Production (tonnes)`)
+
+# How did production increase over time in Asia vs Europe
+# creating table of asian production
+Asiaproduction <- FAO_Dairy_Clean %>%
+  select('Area', 'Year', `Production (tonnes)`) %>%
+  filter(Area == "Asia") %>%
+  rename('Production' = 'Production (tonnes)')
+
+# mean and median of asian production over time
+mean(Asiaproduction$Production)
+median(Asiaproduction$Production)
+
+# graphing asian milk production from 1961-2018
+ggplot(data = Asiaproduction) +
+  geom_line(mapping = aes(x = Year, y = Production))
+
+# creating table of european production
+Europeproduction <- FAO_Dairy_Clean %>%
+  select('Area', 'Year', `Production (tonnes)`) %>%
+  filter(Area == "Europe") %>%
+  rename('Production' = 'Production (tonnes)')
+
+# mean and median of asian production over time
+mean(Europeproduction$Production)
+median(Europeproduction$Production)
+
+# graphing asian milk production from 1961-2018
+ggplot(data = Europeproduction) +
+  geom_line(mapping = aes(x = Year, y = Production))
+  
+
+
+```
+
+### Explain and Interpret
+
+# First year vs Last year
+First, I wanted to take a look at how milk production compared in the first year of data (1961) vs the last year of data (2018) for all areas.
+We'll focus on median production here, since mean would be skewed too heavily by the continent observations.
+The median production in 1961 for all areas was 100,368 tons.
+The median production in 2018 for all areas was 602,297 tons.
+As you can see, more milk is being produce per country in 2018.
+
+# Asia vs Europe
+Next, I wanted to compare two continents to see how their milk production compared.
+I looked at Asia and Europe.
+In Asia, the median production over all years was 55,479,513 tons.
+In Europe, the median production over all years was about 4 times higher, at 220,194,403 tons.
+
+When we graph the results, things get more interesting.
+Asia had an exponential growth in milk production over time.
+Europe had steady growth in milk production from the early sixties until about 1990, when milk production plunged. This has only recovered slightly in recent years.

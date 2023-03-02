@@ -1,0 +1,78 @@
+---
+title: "International Data on Bird Counts from 1960s-2010s"
+author: "Michele Carlin"
+desription: "Summarized data by decade"
+date: "02/17/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - Michele Carlin
+  - birds.csv
+---
+## Install packages
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+install.packages(summarytools)
+library(summarytools)
+```
+## Read in and view 'birds' dataset
+```{r}
+library(readr)
+birds <- read_csv ("C:/Users/CarlinML/DACSS-601/601_Spring_2023/posts/_data/birds.csv")
+View(birds)
+```
+## List of variables in dataset
+```{r}
+str(birds)
+```
+## dfSummary
+```{r}
+view(dfSummary(birds))
+```
+## Number of unique values in the variable 'Item'
+```{r}
+birds%>%
+  select(Item)%>%
+  n_distinct(.)
+```
+## Frequency table of 'Item'
+```{r}
+table(select(birds, Item))
+```
+## This dataset contains data on the number of bird 'units' by country from the 1960's to the 2010's. Data is available for various types of birds (e.g., chickens, ducks, turkeys, etc.).
+
+## Recoded 'Year' variable into 'Decade' variable
+```{r}
+birds<-birds%>%
+  mutate(Decade = case_when(
+         Year >= 1960 & Year < 1970 ~ "1960s",
+         Year >= 1970 & Year < 1980 ~ "1970s",
+         Year >= 1980 & Year < 1990 ~ "1980s",
+         Year >= 1990 & Year < 2000 ~ "1990s",
+         Year >= 2000 & Year < 2010 ~ "2000s",
+         Year >= 2010 ~ "2010s")
+  )
+table(select(birds, Decade))
+```
+## Created crosstabs of Item by Decade
+```{r}
+xtabs(~ Decade + Item, birds)
+```
+
+## Created graphic display of Bird Type by Decade
+```{r}
+ ggplot(birds, aes(x=Item, y=Value)) + 
+   geom_col()+
+   facet_wrap(vars(Decade), scales = "free_x") +
+   labs(title = "International Bird Counts by Decade", y = "Number", x = "Type of Bird")
+```

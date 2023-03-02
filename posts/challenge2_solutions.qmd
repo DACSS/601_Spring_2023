@@ -1,0 +1,323 @@
+---
+title: "Challenge 2 Solutions"
+author: "Meredith Rolfe"
+description: "Data wrangling: using group() and summarise()"
+date: "03/01/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: false
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - challenge_2
+  - solution
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE,
+                      message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+::: panel-tabset
+## Railroad ⭐
+
+The `railroad` data contain 2931 county-level aggregated counts of the number of railroad employees in 2012. *Counties* are embedded within *States*, and all 50 states plus Canada, overseas addresses in Asia and Europe, and Washington, DC are represented.
+
+::: callout-tip
+## Data Summaries
+
+This is a concise summary of more extensive work we did in Challenge 1, and is an example of how you should describe data in public-facing work. A "public-facing" version of your work contains all critical details needed to replicate your work, but doesn't contain a point-by-point rundown of the mental process you went through to get to that point. (Your internal analysis file should probably walk through that mental process, however!)
+:::
+
+### Read the data
+
+Here, we are just reusing the code from Challenge 1. We are using the excel version, to ensure that we get Canada, and are renaming the missing data in *county* for Canada so that we don't accidently filter that observation out.
+
+```{r}
+railroad<-read_excel("_data/StateCounty2012.xls",
+                     skip = 4,
+                     col_names= c("state", "delete",  "county",
+                                  "delete", "employees"))%>%
+  select(!contains("delete"))%>%
+  filter(!str_detect(state, "Total"))
+
+railroad<-head(railroad, -2)%>%
+  mutate(county = ifelse(state=="CANADA", "CANADA", county))
+
+railroad
+```
+
+### How many values does X take on?
+
+Now, lets practice grouping our data and using other `dplyr` commands that make data wrangling super easy. First, lets take a closer look at how we counted the number of unique *states* last week. First, we selected the *state* column. Then we used the `n_distinct` command - which replicates the base R commands length(unique(var)).
+
+::: callout-tip
+## across()
+
+Instead of counting the number of distinct values one at a time, I am doing an operation on two columns at the same time using `across.`
+:::
+
+```{r}
+railroad%>%
+  summarise(across(c(state,county), n_distinct))
+```
+
+Check this out - many counties have the same name! There are 2931 state-county cases, but only 1710 distinct county names. This is one reason it is so critical to understand "what is a case" when you are working with your data - otherwise you might accidentally collapse or group information that isn't intended to be grouped.
+
+### How many total X are in group Y?
+
+Suppose we want to know the total number of railroad employees was in 2012, what is the best way to sum up all of the values in the data? The `summarize` function is useful for doing calculations across some or all of a data set.
+
+```{r}
+railroad%>%
+  summarise(total_employees = sum(employees))
+```
+
+Around a quarter of a million people were employed in the railroad industry in 2012. While this may seem like a lot, it was a significant decrease in employment from [a few decades earlier](https://www.bls.gov/opub/mlr/2021/article/employment-in-rail-transportation-heads-downhill-between-november-2018-and-december-2020.htm), according to official Bureau of Labor Statistics (BLS) estimates.
+
+You may notice that the BLS estimates are significantly lower than the ones we are using, provided by the [Railroad Retirement Board.](https://catalog.data.gov/dataset?publisher=Railroad%20Retirement%20Board) Given that the Railroad Retirement Board has "gold-standard" data on railroad employees, this discrepancy suggests that many people who work in the railroad industry are being classified in a different way by BLS statistics.
+
+### Which X have the most Y?
+
+Suppose we are interested in which county names are duplicated most often, or in which states have the most railroad employees. We can use the same basic approach to answer both *"Which X have the most Y?"* style questions
+
+::: callout-tip
+## df-print: paged (YAML)
+
+When you are using `df-print: paged` in your yaml header, or are using tibbles, there is no need to rely on the `head(data)` command to limit your results to the top 10 of a list.
+:::
+
+```{r}
+railroad%>%
+  group_by(state)%>%
+  summarise(total_employees = sum(employees),
+            num_counties = n())%>%
+  arrange(desc(total_employees))
+```
+
+Looking at the top 10 states in terms of total railroad employment, a few trends emerge. Several of the top 10 states with geographical activity are highly populous and geographically large. California, Texas, New York, Pennsylvania, Ohio, Illinois, and Georgia are all amonst the top-10 largest states - so it would make sense if there are more railroad employees in large states.
+
+But railroads are spread out along geography, and thus we might also expect square mileage within a state to be related to state railroad employment - not just state population. For example, Texas is around 65% larger (in area) than California, and has around 50% more railroad employees.
+
+There appear to be multiple exceptions to both rules, however. If geography plus population were the primary factors explaining railroad employment, then California would be ranked higher than New York and Illinois, and New York would likely rank higher than Illinois. However, Illinois - Chicago in particular - is a hub of railroad activity, and thus Illinois' higher ranking is likely reflecting hub activity and employment. New York is a hub for the East Coast in particular. While California may have hubs of train activity in Los Angeles or San Francisco, the Northeast has a higher density of train stations and almost certainly generates more passenger and freight miles than the larger and more populous California.
+
+This final factor - the existence of heavily used train routes probably explains the high railroad employment in states like Nebraska, Indiana and Missouri - all of which lay along a major railway route between New York and Chicago, and then out to California. Anyway who has played Ticket to Ride probably recognizes many of these routes!
+
+::: callout-note
+## Go further
+
+A fun exercise once you are comfortable with joins and map-based visualizatinos would be to join the railroad employment data to information about state population and geographic area, and also mapping information about railway routes, to get more insight into the factors driving railroad employment.
+:::
+
+## FAOstat\* ⭐⭐⭐
+
+The FAOSTAT sheets are excerpts of the [FAOSTAT database](https://www.fao.org/faostat/en/#home) provided by the [Food and Agriculture Association](https://www.fao.org/home/en), an agency of the United Nations. We are using the file *birds.csv* that includes estimates of the stock of five different types of poultry (Chickens, Ducks, Geese and guinea fowls, Turkeys, and Pigeons/Others) for 248 areas for 58 years between 1961-2018. Estimated stocks are given in 1000 head.
+
+Because we know (from challenge 1) that several of those areas include aggregated data (e.g., ) we are going to remove the aggregations, remove the unnecessary variables, and only work with the grouping variables available in the data. In a future challenge, we will join back on more data from the FAO to recreate regional groupings.
+
+```{r}
+birds<-read_csv("_data/birds.csv")%>%
+  select(-c(contains("Code"), Element, Domain, Unit))%>%
+  filter(Flag!="A")
+birds
+```
+
+### What is the average of Y for X groups?
+
+Lets suppose we are starting off and know nothing about poultry stocks around the world, where could we start? Perhaps we could try to get a sense of the relative sizes of stocks of each of the five types of poultry, identified in the variable *Item*. Additionally, because some of the values may be missing, lets find out how many of the estimates are missing.
+
+```{r}
+birds%>%
+  group_by(Item)%>%
+  summarise(avg_stocks = mean(Value, na.rm=TRUE),
+            med_stocks = median(Value, na.rm=TRUE),
+            n_missing = sum(is.na(Value)))
+```
+
+On average, we can see that countries have far more chickens as livestock ($\bar{x}$=58.4million head) than other livestock birds (average stocks range between 2 and 10 million head). However, the information from the median stock counts suggest that there is significant variation across countries along with a strong right hand skew with regards to chicken stocks. The median number of chickens in a country is 3.8 million head - significantly less than the mean of almost 60 million. Overall, missing data doesn't seem to be a huge issue, so we will just use `na.rm=TRUE` and not worry too much about the missingness for now.
+
+It could be that stock head counts have changed over time, so lets try selecting two points in time and seeing whether or not average livestock counts are changing.
+
+::: callout-tip
+## pivot-wider
+
+It can be difficult to visually report data in tidy format. For example, it is tough to compare two values when they are on different rows. In this example, I use `pivot-wider` to swap a tidy grouping variable into multiple columns to be more "table-like." I then do some manual formatting to make it easy to compare the grouped estimates.
+:::
+
+```{r}
+t1<-birds%>%
+  filter(Year %in% c(1966, 2016))%>%
+  group_by(Year, Item)%>%
+  summarise(avg_stocks = mean(Value, na.rm=TRUE),
+            med_stocks = median(Value, na.rm=TRUE))%>%
+  pivot_wider(names_from = Year, values_from = c(avg_stocks, med_stocks))
+
+knitr::kable(t1,
+             digits=0,format.args = list(big.mark = ","),
+             col.names = c("Type", "1966", "2016",
+                           "1996", "2016"))%>%
+  kableExtra::kable_styling(htmltable_class = "lightable-minimal")%>%
+  kableExtra::add_header_above(c(" " = 1, "Mean Stock (1000)" = 2,
+                                 "Median Stock (1000)" = 2))
+```
+
+::: callout-tip
+## kable and kableExtra
+
+I manually adjust table formatting (column names, setting significant digits, adding a comma) using `kable` and add a header row using `kableExtra`. Because `df-print=paged` option is set to make it easier to scroll through longer data frames, I need to directly specify that I want to produce an htmltable - not a default kable/rmarkdown table - when I use kable and kableExtra formatting directly.
+:::
+
+Sure enough, it does look like stocks have changed significantly over time. The expansion of country-level chicken stocks over five decades between 1966 and 2016 are most noteworthy, with both average and median stock count going up by a factor of 4. Pigeons have never been very popular, and average stocks have actually decreased over the same time period while the other less popular bird - turkeys - saw significant incrases in stock count. Some countries increased specialization in goose and/or guinea fowl production, as the average stock count went up but the median went down over the same period.
+
+::: callout-note
+## Go further
+
+It could be really interesting to graph the rise and fall of poultry stocks overtime with these data, and match these changes to changes in population size and country GDP. Another option would be to match the countries back to regional groupings available from the UN FAO, a future "data join" challenge.
+:::
+
+## Hotel Bookings ⭐⭐⭐⭐
+
+This data set contains 119,390 hotel bookings from two hotels ("City Hotel" and "Resort Hotel") with an arrival date between July 2015 and August 2017 *(more detail needed)*, including bookings that were later cancelled. Each row contains extensive information about a single booking:
+
+-   the booking process (e.g., lead time, booking agent, deposit, changes made)
+-   booking details (e.g., scheduled arrival date, length of stay)
+-   guest requests (e.g., type of room, meal(s) included, car parking)
+-   booking channel (e.g., distribution, market segment, corporate affiliation for )
+-   guest information (e.g., child/adult, passport country)
+-   guest prior bookings (e.g., repeat customer, prior cancellations)
+
+The data are a de-identified extract of real hotel demand data, [made available by the authors.](https://www-sciencedirect-com.silk.library.umass.edu/science/article/pii/S2352340918315191)
+
+### Read and make sense of the data
+
+The hotel bookings data set is new to challenge 2, so we need to go through the same process we did during challenge 1 to find out more about the data. Lets read in the data and use the `summmaryTools` package to get an overview of the data set.
+
+```{r}
+bookings<-read_csv("_data/hotel_bookings.csv")
+
+print(summarytools::dfSummary(bookings,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+Wow - there is a lot of information available here. Lets scan it and see what jumps out. First we can see that the summary function claims that there are almost 32,000 duplicates in the data. However, this is likely an artifact of the way that the bookings have been de-identified, and may reflect bookings with identical details but different individuals who made the bookings.
+
+We can see that we are provided with limited information about the **hotel.** Hotels are identified only as "City" Hotel" or a "Resort Hotel". Maybe we have bookings from only two hotels? Lets tentatively add that to our data description.
+
+There is a flag for whether a booking is **cancelled**. This means that our universe of cases includes bookings where the guests showed up, as well as bookings that were later cancelled - we can add that to our data description.
+
+There are multiple fields with the **arrival date** - year, month, etc. For now, we can tell that the arrival date of the bookings ranges between 2015 and 2017. More precise identification of the date range could be more easily done next challenge when we can recode the arrival date information using `lubridate`.But maybe it is possible to find out which values of month co-occur with specific years?
+
+### Which values of Y are nested within X?
+
+To approach this question, we can narrow the dataset down to just the two variables of interest, and then use the `distinct` command.
+
+```{r}
+bookings%>%
+  select(arrival_date_year, arrival_date_month)%>%
+  distinct()
+```
+
+Great - now we now that all bookings have arrival dates between June 2015 and August 2017, and can add that to the data description. Just for fun, lets see if we can confirm that the dates are the same for both hotels.
+
+::: callout-tip
+## slice()
+
+This would be easier to investigate with proper date variables, but I am using `slice` to find the first and last row for each hotel, by position. This avoids printing out a long data list we have to scroll through, but would fail if the hotels had different sets of arrival month-year pairs.
+:::
+
+```{r}
+d<-bookings%>%
+  select(arrival_date_year, arrival_date_month)%>%
+  n_distinct()
+
+bookings%>%
+  select(hotel, arrival_date_year, arrival_date_month)%>%
+  distinct()%>%
+  slice(c(1, d, d+1, d*2))
+```
+
+Lets suppose we want to know whether or not the two hotels offer the same types of rooms? This is another query of the sort *Which values of X are nested in y?*
+
+```{r}
+bookings%>%
+  group_by(hotel)%>%
+  count(reserved_room_type)
+```
+
+In this case, however, it is tough to directly compare - it appears that the hotel-roomtype pairs are not as consistent as the year-month pairs for the same hotels. A quick `pivot-wider` makes this comparison a little easier to visualize. Here we can see that the Resort Hotel has two additional room types: "H" and "L".
+
+```{r}
+bookings%>%
+  group_by(hotel)%>%
+  count(reserved_room_type)%>%
+  pivot_wider(names_from= hotel, values_from = n)
+```
+
+### What is the average of Y for group X?
+
+The breakdown of rooms by hotel doesn't shed much light on the room codes and what they might mean. Lets see if we can find average number of occupants and average price for each room type, and see if we can learn more about our data.
+
+::: callout-tip
+## mean(., na.rm=TRUE)
+
+I am using the `mean` function with the option `na.rm=TRUE` to deal with the four NA values in the *children* field, identified in the summary table above.
+:::
+
+```{r}
+#| tbl-cap: Average Price and Occupancy, by hotel and room type
+
+t1<-bookings%>%
+  group_by(hotel, reserved_room_type)%>%
+  summarise(price = mean(adr),
+            adults = mean(adults),
+            children = mean(children+babies, na.rm=TRUE)
+            )%>%
+  pivot_wider(names_from= hotel, 
+              values_from = c(price, adults, children))
+
+knitr::kable(t1,
+             digits=1,
+             col.names = c("Type", "City", "Resort",
+                           "City", "Resort", "City", "Resort"))%>%
+  kableExtra::kable_styling(htmltable_class = "lightable-minimal")%>%
+  kableExtra::add_header_above(c("Room" = 1, "Price" = 2,
+                                 "Adults" = 2, "Children & Babies" = 2))
+```
+
+::: callout-tip
+## kable & kableExtra
+
+I manually adjust table formatting (column names, plus adding a header row) using `kable` and `kableExtra` package, respectively. Also, because `df-print=paged` is the option set in the YAML header, I need to directly specify that I want to produce an htmltable - not a default kable/rmarkdown table.
+:::
+
+Based on these descriptives broken down by hotel and room type, we can speculate that the "H" and "L" room types at the resort are likely some sort of multi-bedroom suite (because the average number of adults is over 2.) Similarly, we can speculate that the difference between ABC and DEF may be something related to room size or quality (e.g., number and size of beds) and/or related to meals included with the rooms - but this would require further investigation to pin down!
+
+::: callout-note
+## Go further
+
+There is lots more to explore in the hotel bookings dataset, but it will be a lot easier once we recode the date fields using `lubridate`.
+:::
+:::

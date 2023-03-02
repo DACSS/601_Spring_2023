@@ -1,0 +1,169 @@
+---
+title: "Challenge 2: Birds.csv"
+author: "Lauren Zichittella"
+description: "Data wrangling: using group() and summarise()"
+date: "03/01/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - birds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(stringr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one birds.csv. 
+Evaluate observations to identify any data cleaning steps that might be required including:
+- removal of non-informative rows/observations
+- improvement of variable names
+- removal of non-informative columns
+- removal of columns with constant values across all observations 
+
+```{r}
+birds <-read_csv("_data/birds.csv")
+birds
+head(birds)
+tail(birds)
+nrow(birds)
+summary(birds)
+str(birds)
+table(birds$Element)
+table(birds$`Flag Description`)
+
+```
+## Clean data
+
+This csv file is pretty straight forward so the focus of cleaning will be on making variable-based content easier to understand. To maintain a means of comparing the steps being completed in this section, I'll save these changes to a new dataframe. 
+
+New dataframe, birds_clean, includes 24,488 rows (30,976 in original) 
+Includes variables: area (internation region), item (bird), year(year observation captured), flag_description (method for capturing value), value (count of birds, unit 1000 heads)
+
+
+**Things to improve in this round **  
+- variable names - remove spaces, anything that doesn't help with understanding
+- Remove redundancies: presence of "code" and "code description" variables e.g. "area code" and "area." The actual code versions, non-English, will not help with this task so taking them out 
+- Remove variables that are constant across all observations: elements (all values are Stocks), domain (all values are Live Animals), unit (all values 1000 head)
+- Remove rows representing aggregate results  
+  
+**Things I would improve if skill and time permitted **  
+- presence and proportion of missing values (to add). Ideally, I'd like to save these observations to a separate dataframe so there would be an opportuity to analyze this data and determine whether removing is appropriate/retaining provides information necessary to understanding case 
+-  recode value of flag_description to change "Data not available FAO data based on imputation methodology " to "imputed" at a later date maybe
+
+```{r}
+birds <-read_csv("_data/birds.csv"
+                    , skip =2
+                    , col_names = c("Delete_Domain_Code", "Delete_domain", "Delete_Area_Code", "area", "Delete_Element_Code", "Delete_element", "Delete_Item_Code", "item", "Delete_Year_Code", "year", "Delete_unit", "value", "Delete_Flag", "flag_description"))
+
+birds_clean <- select(birds, !contains("Delete"))
+birds_clean <-birds_clean[!grepl("Aggregate", birds_clean$flag_description),]
+nrow(birds)
+nrow(birds_clean)
+
+```
+## Describe the data
+
+This dataframe represents the count (unit 1000) of live birds by region (international, not country based), and method for capture of information and year. 
+- Area are international and not limited to countries
+- Dataset spans years (varname =year) 1961-2018
+- Captures counts for the following types of birds (varname = item): chickens; turkey; ducks; geese and guinea fowl; pigeons & other birds. 
+- Employed the following methods for data capture (flag_description: estimation, imputation, official collection, unofficial figure. When data was not available, the method is specified as "Data not available" 
+
+Please see figures below for detail on distribution of these variable specific to their capture, not by "value" variable:
+- data capture consistently across areas
+- majority of birds characterized are chickens
+- observations distributed relatively consistently across years
+- values are very skewed in their distribution 
+- most values were captured officially or was an FAO estimate 
+
+
+
+```{r}
+
+summary(birds_clean)
+str(birds_clean)  
+
+
+birds_clean%>%
+  select(area)%>%
+  n_distinct(.)
+table(birds_clean$area)
+
+birds_clean%>%
+  select(item)%>%
+  n_distinct(.)
+table(birds_clean$item) 
+
+birds_clean%>%
+  select(flag_description)%>%
+  n_distinct(.)
+table(birds_clean$flag_description)  
+
+print(summarytools::dfSummary(birds_clean,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+
+hist(  birds_clean$value
+     , main="Distribution of Value Captured in Clean Birds Dataset"
+     , xlab="Count of birds, unit 1000 head"
+     , col = "red")
+
+```
+
+## Provide Grouped Summary Statistics
+
+Evaluate the distribution of value by year, item, flag_description. Do so to eyeball any major differences across that should be further investigated. Omit area because too granular to visualize 
+
+- Distribution of overall values by year relatively stable
+- The majority of "heads captured are chickens"
+- Type of capture (flag_description) is correlated with value - much higher mean for "unofficial entries" versus all other categories  
+
+```{r}
+birds_clean  %>%
+  group_by(year) %>%
+  summarise(mean_value = mean(value, na.rm=T), sd_value = sd(value, na.rm=T), med_value = median(value, na.rm=T), min_value = min(value, na.rm=T), max_value = max(value, na.rm=T))
+
+
+counts <- table(birds_clean$(year))
+barplot(value, main="Distribution of Value by Year"
+   xlab="Number of Gears")
+
+birds_clean  %>%
+  group_by(item) %>%
+  summarise(mean_value = mean(value, na.rm=T), sd_value = sd(value, na.rm=T), med_value = median(value, na.rm=T), min_value = min(value, na.rm=T), max_value = max(value, na.rm=T))
+
+birds_clean  %>%
+  group_by(flag_description) %>%
+  summarise(mean_value = mean(value), sd_value = sd(value), med_value = median(value), min_value = min(value), max_value = max(value))
+
+
+
+```
+

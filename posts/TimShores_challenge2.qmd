@@ -1,0 +1,154 @@
+---
+title: "Challenge 2 Solution"
+author: "Tim Shores"
+desription: "Data wrangling: using group() and summarise()"
+date: "03/2/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+my_packages <- c("tidyverse", "magrittr", "readxl", "summarytools", "knitr") # create vector of packages
+invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## My content
+
+Challenge 2 includes two tasks:
+
+1)  read in a dataset and describe it, and
+
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+Let's dig in!
+
+## Task 1) Read in and Describe the Data
+
+I chose to read in hotel_bookings.csv. One of my oldest friends has worked in hospitality for years. We have fallen out of touch. This post is dedicated to him.
+
+
+```{r}
+#| echo: true
+hotelbks <- read.csv(file = "../posts/_data/hotel_bookings.csv") # read in data
+hbrows <- prettyNum(nrow(hotelbks), big.mark = ",", scientific = FALSE)  # Apply comma-separated format
+hbcols <- prettyNum(ncol(hotelbks), big.mark = ",", scientific = FALSE)
+numtoprint <- 12
+monthtoprint <- "January"
+yeartoprint <- 2017
+
+```
+
+The hotel bookings set includes **`r hbrows`** observations under **`r hbcols`** variables. It shows operational business data from multiple hotels in multiple markets and countries, managed by multiple companies. The data is likely the product of market research produced by a third-party analyst or management consultant.
+
+Here's the first `r numtoprint` rows from the `r monthtoprint`, `r yeartoprint` subset of the hotel bookings data set, with a selection of columns to display market and demographic info.
+
+```{r}
+hotelsub <- subset(hotelbks, arrival_date_year == yeartoprint & arrival_date_month == monthtoprint, select = c(hotel, country, market_segment, adults, children, babies, is_canceled))
+hotelsub[1:numtoprint,]
+```
+
+## Task 2) Summary statistics and interpretations of groups within the data
+
+The **adr** column lists average daily rate for a single booking. Since this is data for a business, it makes sense to look at the daily rate a hotel can expect to earn from other grouped variables. I've done this below by grouping number of adults and number of children by average daily rate.
+
+
+```{r}
+hotelbks %>% 
+  group_by(adults) %>% 
+  summarise(meanADR = mean(adr, na.rm = TRUE), count = n())
+```
+
+
+```{r}
+hotelbks %>% 
+  group_by(children) %>% 
+  summarise(meanADR = mean(adr, na.rm = TRUE), count = n())
+```
+
+This analysis could help a hotel decide how much to invest in rooms and services appropriate for small or large numbers of adults or children. I can filter out groups with a small number of observations to make it easier to read:
+
+
+```{r}
+hotelbks %>% 
+  group_by(adults) %>% 
+  filter(n() > 50) %>% 
+  summarise(meanADR = mean(adr, na.rm = TRUE), count = n())
+```
+
+
+```{r}
+hotelbks %>% 
+  group_by(children) %>% 
+  filter(n() > 50) %>% 
+  summarise(meanADR = mean(adr, na.rm = TRUE), count = n())
+```
+
+I can do more work to explore the central tendency and dispersion of this data. Mean and median are built in. Finding mode takes a little more effort to create a function, but I'm fortunate that others who have encountered this problem before took the time to write up their solution on the interwebs.
+
+```{r}
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x) # unique list as an index
+  tab <- tabulate(match(x, u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+hotelbks %>% 
+  group_by(adults) %>% 
+  filter(n() > 50) %>% 
+  summarise(meanADR = mean(adr, na.rm = TRUE), medianADR = median(adr,na.rm = TRUE), modeADR = find_mode(adr), fiveNumADR = fivenum(adr, na.rm = TRUE), count = n()) %>%
+  tbl_df %>% 
+  print(n=40)
+```
+
+```{r}
+hotelbks %>% 
+  group_by(children) %>% 
+  filter(n() > 50) %>% 
+  summarise(meanADR = mean(adr, na.rm = TRUE), medianADR = median(adr, na.rm = TRUE), modeADR = find_mode(adr), fiveNumADR = fivenum(adr, na.rm = TRUE), count = n()) %>%
+  tbl_df %>% 
+  print(n=40)
+```
+
+The Tukey five number summary (minimum, lower quartile, median, upper quartile, and maximum) is interesting and easy to code with just one function, but fivenum() fits awkwardly into the grouped tibble format. It forces five rows for each group and it repeats the median value that's already displayed under the third variable.
+
+Since fivenum() returns a vector, I can rewrite my code to present each fivenum() vector element as its own variable. This creates a nicer table.
+
+```{r}
+hotelbks %>% 
+  group_by(adults) %>% 
+  filter(n() > 50) %>% 
+  summarise(meanADR = mean(adr, na.rm = TRUE), modeADR = find_mode(adr), minADR = fivenum(adr, na.rm = TRUE)[1], lowHingeADR = fivenum(adr, na.rm = TRUE)[2], medianADR = median(adr,na.rm = TRUE), upHingeADR = fivenum(adr, na.rm = TRUE)[4], maxADR = fivenum(adr, na.rm = TRUE)[5], count = n())
+```
+
+
+```{r}
+hotelbks %>% 
+  group_by(children) %>% 
+  filter(n() > 50) %>% 
+  summarise(meanADR = mean(adr, na.rm = TRUE), modeADR = find_mode(adr), minADR = fivenum(adr, na.rm = TRUE)[1], lowHingeADR = fivenum(adr, na.rm = TRUE)[2], medianADR = median(adr,na.rm = TRUE), upHingeADR = fivenum(adr, na.rm = TRUE)[4], maxADR = fivenum(adr, na.rm = TRUE)[5], count = n())
+```
+
+Finally, I can combine these tables, grouping both by adults and by children, and arranging by mean ADR to see which combinations of adult and children hotel guests bring in the highest and lowest daily rate.
+
+```{r}
+hotelbks %>% 
+  group_by(adults, children) %>% 
+  filter(n() > 50) %>% filter(adults != 0 || children != 0) %>% 
+  summarise(meanADR = mean(adr, na.rm = TRUE), modeADR = find_mode(adr), minADR = fivenum(adr, na.rm = TRUE)[1], lowHingeADR = fivenum(adr, na.rm = TRUE)[2], medianADR = median(adr,na.rm = TRUE), upHingeADR = fivenum(adr, na.rm = TRUE)[4], maxADR = fivenum(adr, na.rm = TRUE)[5], count = n()) %>% 
+  arrange(meanADR)
+```

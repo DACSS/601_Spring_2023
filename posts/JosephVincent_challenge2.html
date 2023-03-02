@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.335">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Joseph Vincent">
+<meta name="dcterms.date" content="2023-03-01">
+<meta name="description" content="Data wrangling: using group() and summarise()">
+
+<title>Challenge 2 - FAO_Stat</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../images/DACSS_Round_Network.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+<meta name="twitter:title" content="Challenge 2 - FAO_Stat">
+<meta name="twitter:description" content="Data wrangling: using group() and summarise()">
+<meta name="twitter:creator" content="@UMassDACSS">
+<meta name="twitter:site" content="@UMassDACSS">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../images/UMass White Wordmark Horiz.png" alt="" class="navbar-logo">
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/DACSS">
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html">
+ <span class="menu-text">Contributors</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://umass.edu/sbs/dacss">
+ <span class="menu-text">DACSS</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/DACSS"><i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+              <div class="quarto-toggle-container">
+                  <a href="" class="quarto-color-scheme-toggle nav-link" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+              </div>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#reading-in-and-cleaning-up-the-data" id="toc-reading-in-and-cleaning-up-the-data" class="nav-link active" data-scroll-target="#reading-in-and-cleaning-up-the-data">Reading in and cleaning up the Data</a></li>
+  <li><a href="#describe-the-data" id="toc-describe-the-data" class="nav-link" data-scroll-target="#describe-the-data">Describe the data</a></li>
+  <li><a href="#provide-grouped-summary-statistics" id="toc-provide-grouped-summary-statistics" class="nav-link" data-scroll-target="#provide-grouped-summary-statistics">Provide Grouped Summary Statistics</a>
+  <ul class="collapse">
+  <li><a href="#explain-and-interpret" id="toc-explain-and-interpret" class="nav-link" data-scroll-target="#explain-and-interpret">Explain and Interpret</a></li>
+  </ul></li>
+  <li><a href="#first-year-vs-last-year" id="toc-first-year-vs-last-year" class="nav-link" data-scroll-target="#first-year-vs-last-year">First year vs Last year</a></li>
+  <li><a href="#asia-vs-europe" id="toc-asia-vs-europe" class="nav-link" data-scroll-target="#asia-vs-europe">Asia vs Europe</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Challenge 2 - FAO_Stat</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">challenge_2</div>
+    <div class="quarto-category">faostat</div>
+    <div class="quarto-category">Joseph Vincent</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Data wrangling: using group() and summarise()
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Joseph Vincent </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 1, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(summarytools)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="reading-in-and-cleaning-up-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="reading-in-and-cleaning-up-the-data">Reading in and cleaning up the Data</h2>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># reading in FAO stat, dairy cattle and assigning to FAO_Dairy</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>FAO_Dairy <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"_data/FAOSTAT_cattle_dairy.csv"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(FAO_Dairy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Domain.Code            Domain Area.Code        Area Element.Code      Element
+1          QL Livestock Primary         2 Afghanistan         5318 Milk Animals
+2          QL Livestock Primary         2 Afghanistan         5420        Yield
+3          QL Livestock Primary         2 Afghanistan         5510   Production
+4          QL Livestock Primary         2 Afghanistan         5318 Milk Animals
+5          QL Livestock Primary         2 Afghanistan         5420        Yield
+6          QL Livestock Primary         2 Afghanistan         5510   Production
+  Item.Code                  Item Year.Code Year   Unit  Value Flag
+1       882 Milk, whole fresh cow      1961 1961   Head 700000    F
+2       882 Milk, whole fresh cow      1961 1961  hg/An   5000   Fc
+3       882 Milk, whole fresh cow      1961 1961 tonnes 350000    F
+4       882 Milk, whole fresh cow      1962 1962   Head 700000    F
+5       882 Milk, whole fresh cow      1962 1962  hg/An   5000   Fc
+6       882 Milk, whole fresh cow      1962 1962 tonnes 350000    F
+  Flag.Description
+1     FAO estimate
+2  Calculated data
+3     FAO estimate
+4     FAO estimate
+5  Calculated data
+6     FAO estimate</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># removing unchanging and duplicate variables</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># turning Element into variables to remove duplicate observations</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># renaming new variables to contain units</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># assigning to FAO_Dairy_Clean</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>FAO_Dairy_Clean <span class="ot">&lt;-</span> FAO_Dairy <span class="sc">%&gt;%</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Element'</span>, <span class="st">'Year'</span>, <span class="st">'Value'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">'Element'</span>, <span class="at">values_from =</span> <span class="st">'Value'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Milk Animals (heads)'</span> <span class="ot">=</span> <span class="st">'Milk Animals'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Yield (hg/AN)'</span> <span class="ot">=</span> <span class="st">'Yield'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Production (tonnes)'</span> <span class="ot">=</span> <span class="st">'Production'</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(FAO_Dairy_Clean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+  Area         Year `Milk Animals (heads)` `Yield (hg/AN)` `Production (tonnes)`
+  &lt;chr&gt;       &lt;int&gt;                  &lt;int&gt;           &lt;int&gt;                 &lt;int&gt;
+1 Afghanistan  1961                 700000            5000                350000
+2 Afghanistan  1962                 700000            5000                350000
+3 Afghanistan  1963                 780000            5128                400000
+4 Afghanistan  1964                 780000            5128                400000
+5 Afghanistan  1965                 870000            5172                450000
+6 Afghanistan  1966                 960000            5208                500000</code></pre>
+</div>
+</div>
+</section>
+<section id="describe-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="describe-the-data">Describe the data</h2>
+<p>This data set appears to be describing dairy production - specifically, whole milk production - by area and year.</p>
+<p>The earliest year is 1961 and the most recent year is 2018, though because the count of these years increases in the table below, this suggests that some countries either did not produce dairy or did not report data until later years.</p>
+<p>There are 36,449 observations, but only 222 of those represent unique areas. Area is typically country, but also contains some broader regions including continents and even the entire world.</p>
+<p>The original data set consists of 14 column names, but many of these variables are duplicates: For example, ‘Element’ and ‘Element.Code’ or ‘Year’ and ‘Year.Code’. In addition to duplicates, there are a few that remain the same for each observation. For example, ‘Domain’ is always ‘Livestock Primary’ and ‘Item’ is always ‘Milk, Whole fresh cow’. These suggest that the data comes from a larger dataset. For this analysis I removed these variables.</p>
+<p>There are dublicate observations as well. This is because of the variables ‘Element’ and ‘Unit’. For each country and year, the number of cows, yield per cow and total milk production are listed as separate observations. For this analysis, I transformed the ‘Element’ variable into variables ‘Milk Animals’, ‘Yield’ and ‘Production’ and also included the units in each column name in order to get each obeservation onto its own row.</p>
+<p>The median number of cows per year/area is 295,000. The median tonnes of production is year/area is 9,001,419.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># summarizing the original data set, viewing year and area in tables</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dfSummary</span>(FAO_Dairy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Data Frame Summary  
+FAO_Dairy  
+Dimensions: 36449 x 14  
+Duplicates: 0  
+
+----------------------------------------------------------------------------------------------------------------------------
+No   Variable           Stats / Values                   Freqs (% of Valid)      Graph                  Valid      Missing  
+---- ------------------ -------------------------------- ----------------------- ---------------------- ---------- ---------
+1    Domain.Code        1. QL                            36449 (100.0%)          IIIIIIIIIIIIIIIIIIII   36449      0        
+     [character]                                                                                        (100.0%)   (0.0%)   
+
+2    Domain             1. Livestock Primary             36449 (100.0%)          IIIIIIIIIIIIIIIIIIII   36449      0        
+     [character]                                                                                        (100.0%)   (0.0%)   
+
+3    Area.Code          Mean (sd) : 775.2 (1713.8)       232 distinct values     :                      36449      0        
+     [integer]          min &lt; med &lt; max:                                         :                      (100.0%)   (0.0%)   
+                        1 &lt; 141 &lt; 5504                                           :                                          
+                        IQR (CV) : 146 (2.2)                                     :                                          
+                                                                                 :                 .                        
+
+4    Area               1. Afghanistan                     174 ( 0.5%)                                  36449      0        
+     [character]        2. Africa                          174 ( 0.5%)                                  (100.0%)   (0.0%)   
+                        3. Albania                         174 ( 0.5%)                                                      
+                        4. Algeria                         174 ( 0.5%)                                                      
+                        5. American Samoa                  174 ( 0.5%)                                                      
+                        6. Americas                        174 ( 0.5%)                                                      
+                        7. Angola                          174 ( 0.5%)                                                      
+                        8. Antigua and Barbuda             174 ( 0.5%)                                                      
+                        9. Argentina                       174 ( 0.5%)                                                      
+                        10. Asia                           174 ( 0.5%)                                                      
+                        [ 222 others ]                   34709 (95.2%)           IIIIIIIIIIIIIIIIIII                        
+
+5    Element.Code       Mean (sd) : 5416 (78.5)          5318 : 12158 (33.4%)    IIIIII                 36449      0        
+     [integer]          min &lt; med &lt; max:                 5420 : 12121 (33.3%)    IIIIII                 (100.0%)   (0.0%)   
+                        5318 &lt; 5420 &lt; 5510               5510 : 12170 (33.4%)    IIIIII                                     
+                        IQR (CV) : 192 (0)                                                                                  
+
+6    Element            1. Milk Animals                  12158 (33.4%)           IIIIII                 36449      0        
+     [character]        2. Production                    12170 (33.4%)           IIIIII                 (100.0%)   (0.0%)   
+                        3. Yield                         12121 (33.3%)           IIIIII                                     
+
+7    Item.Code          1 distinct value                 882 : 36449 (100.0%)    IIIIIIIIIIIIIIIIIIII   36449      0        
+     [integer]                                                                                          (100.0%)   (0.0%)   
+
+8    Item               1. Milk, whole fresh cow         36449 (100.0%)          IIIIIIIIIIIIIIIIIIII   36449      0        
+     [character]                                                                                        (100.0%)   (0.0%)   
+
+9    Year.Code          Mean (sd) : 1990.4 (16.8)        58 distinct values      . . .   . :   : : :    36449      0        
+     [integer]          min &lt; med &lt; max:                                         : : : . : : : : : :    (100.0%)   (0.0%)   
+                        1961 &lt; 1991 &lt; 2018                                       : : : : : : : : : :                        
+                        IQR (CV) : 29 (0)                                        : : : : : : : : : :                        
+                                                                                 : : : : : : : : : :                        
+
+10   Year               Mean (sd) : 1990.4 (16.8)        58 distinct values      . . .   . :   : : :    36449      0        
+     [integer]          min &lt; med &lt; max:                                         : : : . : : : : : :    (100.0%)   (0.0%)   
+                        1961 &lt; 1991 &lt; 2018                                       : : : : : : : : : :                        
+                        IQR (CV) : 29 (0)                                        : : : : : : : : : :                        
+                                                                                 : : : : : : : : : :                        
+
+11   Unit               1. Head                          12158 (33.4%)           IIIIII                 36449      0        
+     [character]        2. hg/An                         12121 (33.3%)           IIIIII                 (100.0%)   (0.0%)   
+                        3. tonnes                        12170 (33.4%)           IIIIII                                     
+
+12   Value              Mean (sd) : 4410235 (25744621)   24088 distinct values   :                      36375      74       
+     [integer]          min &lt; med &lt; max:                                         :                      (99.8%)    (0.2%)   
+                        7 &lt; 43266 &lt; 683217055                                    :                                          
+                        IQR (CV) : 692151 (5.8)                                  :                                          
+                                                                                 :                                          
+
+13   Flag               1. (Empty string)                10044 (27.6%)           IIIII                  36449      0        
+     [character]        2. *                               810 ( 2.2%)                                  (100.0%)   (0.0%)   
+                        3. A                              3070 ( 8.4%)           I                                          
+                        4. F                              7045 (19.3%)           III                                        
+                        5. Fc                            13136 (36.0%)           IIIIIII                                    
+                        6. Im                             2270 ( 6.2%)           I                                          
+                        7. M                                74 ( 0.2%)                                                      
+
+14   Flag.Description   1. Aggregate, may include of      3070 ( 8.4%)           I                      36449      0        
+     [character]        2. Calculated data               13136 (36.0%)           IIIIIII                (100.0%)   (0.0%)   
+                        3. Data not available               74 ( 0.2%)                                                      
+                        4. FAO data based on imputat      2270 ( 6.2%)           I                                          
+                        5. FAO estimate                   7045 (19.3%)           III                                        
+                        6. Official data                 10044 (27.6%)           IIIII                                      
+                        7. Unofficial figure               810 ( 2.2%)                                                      
+----------------------------------------------------------------------------------------------------------------------------</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">select</span>(FAO_Dairy, <span class="st">'Year'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Year
+1961 1962 1963 1964 1965 1966 1967 1968 1969 1970 1971 1972 1973 1974 1975 1976 
+ 594  594  594  594  594  594  594  594  594  594  594  594  594  594  594  594 
+1977 1978 1979 1980 1981 1982 1983 1984 1985 1986 1987 1988 1989 1990 1991 1992 
+ 594  594  594  594  594  594  594  594  594  594  594  594  594  594  600  657 
+1993 1994 1995 1996 1997 1998 1999 2000 2001 2002 2003 2004 2005 2006 2007 2008 
+ 663  664  664  664  664  664  665  666  666  666  666  666  666  669  671  669 
+2009 2010 2011 2012 2013 2014 2015 2016 2017 2018 
+ 671  669  669  672  672  674  674  674  672  672 </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">select</span>(FAO_Dairy, <span class="st">'Area'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Area
+                                         Afghanistan 
+                                                 174 
+                                              Africa 
+                                                 174 
+                                             Albania 
+                                                 174 
+                                             Algeria 
+                                                 174 
+                                      American Samoa 
+                                                 174 
+                                            Americas 
+                                                 174 
+                                              Angola 
+                                                 174 
+                                 Antigua and Barbuda 
+                                                 174 
+                                           Argentina 
+                                                 174 
+                                             Armenia 
+                                                  81 
+                                                Asia 
+                                                 174 
+                                           Australia 
+                                                 174 
+                           Australia and New Zealand 
+                                                 174 
+                                             Austria 
+                                                 174 
+                                          Azerbaijan 
+                                                  81 
+                                             Bahamas 
+                                                 174 
+                                             Bahrain 
+                                                 174 
+                                          Bangladesh 
+                                                 174 
+                                            Barbados 
+                                                 174 
+                                             Belarus 
+                                                  81 
+                                             Belgium 
+                                                  57 
+                                  Belgium-Luxembourg 
+                                                 117 
+                                              Belize 
+                                                 174 
+                                               Benin 
+                                                 174 
+                                             Bermuda 
+                                                 174 
+                                              Bhutan 
+                                                 174 
+                    Bolivia (Plurinational State of) 
+                                                 174 
+                              Bosnia and Herzegovina 
+                                                  81 
+                                            Botswana 
+                                                 174 
+                                              Brazil 
+                                                 174 
+                              British Virgin Islands 
+                                                  52 
+                                   Brunei Darussalam 
+                                                  76 
+                                            Bulgaria 
+                                                 174 
+                                        Burkina Faso 
+                                                 174 
+                                             Burundi 
+                                                 174 
+                                          Cabo Verde 
+                                                 174 
+                                            Cambodia 
+                                                 174 
+                                            Cameroon 
+                                                 174 
+                                              Canada 
+                                                 174 
+                                           Caribbean 
+                                                 174 
+                            Central African Republic 
+                                                 174 
+                                     Central America 
+                                                 174 
+                                        Central Asia 
+                                                  81 
+                                                Chad 
+                                                 174 
+                                               Chile 
+                                                 150 
+                                China, Hong Kong SAR 
+                                                 174 
+                                     China, mainland 
+                                                 174 
+                           China, Taiwan Province of 
+                                                 174 
+                                            Colombia 
+                                                 174 
+                                             Comoros 
+                                                 174 
+                                               Congo 
+                                                 174 
+                                          Costa Rica 
+                                                 174 
+                                       Côte d'Ivoire 
+                                                 174 
+                                             Croatia 
+                                                  81 
+                                                Cuba 
+                                                 174 
+                                              Cyprus 
+                                                 174 
+                                             Czechia 
+                                                  78 
+                                      Czechoslovakia 
+                                                  96 
+               Democratic People's Republic of Korea 
+                                                 174 
+                    Democratic Republic of the Congo 
+                                                 174 
+                                             Denmark 
+                                                 174 
+                                            Djibouti 
+                                                 174 
+                                            Dominica 
+                                                 174 
+                                  Dominican Republic 
+                                                 174 
+                                      Eastern Africa 
+                                                 174 
+                                        Eastern Asia 
+                                                 174 
+                                      Eastern Europe 
+                                                 174 
+                                             Ecuador 
+                                                 174 
+                                               Egypt 
+                                                 174 
+                                         El Salvador 
+                                                 174 
+                                             Eritrea 
+                                                  78 
+                                             Estonia 
+                                                  81 
+                                            Eswatini 
+                                                 174 
+                                            Ethiopia 
+                                                  78 
+                                        Ethiopia PDR 
+                                                  96 
+                                              Europe 
+                                                 174 
+                         Falkland Islands (Malvinas) 
+                                                 174 
+                                                Fiji 
+                                                 174 
+                                             Finland 
+                                                 174 
+                                              France 
+                                                 174 
+                                       French Guyana 
+                                                 174 
+                                    French Polynesia 
+                                                 174 
+                                               Gabon 
+                                                 174 
+                                              Gambia 
+                                                 174 
+                                             Georgia 
+                                                  81 
+                                             Germany 
+                                                 174 
+                                               Ghana 
+                                                 174 
+                                              Greece 
+                                                 174 
+                                             Grenada 
+                                                 174 
+                                          Guadeloupe 
+                                                 174 
+                                           Guatemala 
+                                                 174 
+                                              Guinea 
+                                                 174 
+                                       Guinea-Bissau 
+                                                 174 
+                                              Guyana 
+                                                 174 
+                                               Haiti 
+                                                 174 
+                                            Honduras 
+                                                 174 
+                                             Hungary 
+                                                 174 
+                                             Iceland 
+                                                 174 
+                                               India 
+                                                 174 
+                                           Indonesia 
+                                                 174 
+                          Iran (Islamic Republic of) 
+                                                 174 
+                                                Iraq 
+                                                 174 
+                                             Ireland 
+                                                 174 
+                                              Israel 
+                                                 174 
+                                               Italy 
+                                                 174 
+                                             Jamaica 
+                                                 174 
+                                               Japan 
+                                                 174 
+                                              Jordan 
+                                                 174 
+                                          Kazakhstan 
+                                                  81 
+                                               Kenya 
+                                                 174 
+                                              Kuwait 
+                                                 174 
+                                          Kyrgyzstan 
+                                                  81 
+                    Lao People's Democratic Republic 
+                                                 174 
+                                              Latvia 
+                                                  81 
+                                             Lebanon 
+                                                 174 
+                                             Lesotho 
+                                                 174 
+                                             Liberia 
+                                                 174 
+                                               Libya 
+                                                 174 
+                                       Liechtenstein 
+                                                 174 
+                                           Lithuania 
+                                                  81 
+                                          Luxembourg 
+                                                  57 
+                                          Madagascar 
+                                                 174 
+                                              Malawi 
+                                                 174 
+                                            Malaysia 
+                                                 174 
+                                                Mali 
+                                                 174 
+                                               Malta 
+                                                 174 
+                                          Martinique 
+                                                 174 
+                                          Mauritania 
+                                                 174 
+                                           Mauritius 
+                                                 174 
+                                           Melanesia 
+                                                 174 
+                                              Mexico 
+                                                 174 
+                                       Middle Africa 
+                                                 174 
+                                            Mongolia 
+                                                 174 
+                                          Montenegro 
+                                                  39 
+                                          Montserrat 
+                                                 174 
+                                             Morocco 
+                                                 174 
+                                          Mozambique 
+                                                 174 
+                                             Myanmar 
+                                                 174 
+                                             Namibia 
+                                                 174 
+                                               Nepal 
+                                                 174 
+                                         Netherlands 
+                                                 174 
+                       Netherlands Antilles (former) 
+                                                 174 
+                                       New Caledonia 
+                                                 174 
+                                         New Zealand 
+                                                 174 
+                                           Nicaragua 
+                                                 174 
+                                               Niger 
+                                                 174 
+                                             Nigeria 
+                                                 174 
+                                                Niue 
+                                                 174 
+                                     North Macedonia 
+                                                  81 
+                                     Northern Africa 
+                                                 174 
+                                    Northern America 
+                                                 174 
+                                     Northern Europe 
+                                                 174 
+                                              Norway 
+                                                 174 
+                                             Oceania 
+                                                 174 
+                                                Oman 
+                                                 174 
+                                            Pakistan 
+                                                 174 
+                                           Palestine 
+                                                  81 
+                                              Panama 
+                                                 174 
+                                    Papua New Guinea 
+                                                 174 
+                                            Paraguay 
+                                                 174 
+                                                Peru 
+                                                 174 
+                                         Philippines 
+                                                 174 
+                                              Poland 
+                                                 174 
+                                           Polynesia 
+                                                 174 
+                                            Portugal 
+                                                 174 
+                                         Puerto Rico 
+                                                 174 
+                                               Qatar 
+                                                 174 
+                                   Republic of Korea 
+                                                 174 
+                                 Republic of Moldova 
+                                                  81 
+                                             Réunion 
+                                                 174 
+                                             Romania 
+                                                 174 
+                                  Russian Federation 
+                                                  81 
+                                              Rwanda 
+                                                 174 
+                                         Saint Lucia 
+                                                 174 
+                    Saint Vincent and the Grenadines 
+                                                 174 
+                                               Samoa 
+                                                 174 
+                               Sao Tome and Principe 
+                                                 174 
+                                        Saudi Arabia 
+                                                 174 
+                                             Senegal 
+                                                 174 
+                                              Serbia 
+                                                  39 
+                               Serbia and Montenegro 
+                                                  42 
+                                          Seychelles 
+                                                 174 
+                                        Sierra Leone 
+                                                 174 
+                                            Slovakia 
+                                                  78 
+                                            Slovenia 
+                                                  81 
+                                     Solomon Islands 
+                                                 174 
+                                             Somalia 
+                                                 174 
+                                        South Africa 
+                                                 174 
+                                       South America 
+                                                 174 
+                                         South Sudan 
+                                                  21 
+                                  South-eastern Asia 
+                                                 174 
+                                     Southern Africa 
+                                                 174 
+                                       Southern Asia 
+                                                 174 
+                                     Southern Europe 
+                                                 174 
+                                               Spain 
+                                                 174 
+                                           Sri Lanka 
+                                                 174 
+                                               Sudan 
+                                                  21 
+                                      Sudan (former) 
+                                                 153 
+                                            Suriname 
+                                                 174 
+                                              Sweden 
+                                                 174 
+                                         Switzerland 
+                                                 174 
+                                Syrian Arab Republic 
+                                                 174 
+                                          Tajikistan 
+                                                  81 
+                                            Thailand 
+                                                 174 
+                                                Togo 
+                                                 174 
+                                               Tonga 
+                                                 174 
+                                 Trinidad and Tobago 
+                                                 174 
+                                             Tunisia 
+                                                 174 
+                                              Turkey 
+                                                 174 
+                                        Turkmenistan 
+                                                  81 
+                                              Uganda 
+                                                 174 
+                                             Ukraine 
+                                                  81 
+                                United Arab Emirates 
+                                                 174 
+United Kingdom of Great Britain and Northern Ireland 
+                                                 174 
+                         United Republic of Tanzania 
+                                                 174 
+                            United States of America 
+                                                 174 
+                        United States Virgin Islands 
+                                                 174 
+                                             Uruguay 
+                                                 174 
+                                                USSR 
+                                                  93 
+                                          Uzbekistan 
+                                                  81 
+                                             Vanuatu 
+                                                 174 
+                  Venezuela (Bolivarian Republic of) 
+                                                 174 
+                                            Viet Nam 
+                                                 174 
+                           Wallis and Futuna Islands 
+                                                 174 
+                                      Western Africa 
+                                                 174 
+                                        Western Asia 
+                                                 174 
+                                      Western Europe 
+                                                 174 
+                                               World 
+                                                 174 
+                                               Yemen 
+                                                 174 
+                                        Yugoslav SFR 
+                                                  93 
+                                              Zambia 
+                                                 174 
+                                            Zimbabwe 
+                                                 174 </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">#summarizing the clean data set</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dfSummary</span>(FAO_Dairy_Clean)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Data Frame Summary  
+FAO_Dairy_Clean  
+Dimensions: 12170 x 5  
+Duplicates: 0  
+
+------------------------------------------------------------------------------------------------------------------------------
+No   Variable               Stats / Values                   Freqs (% of Valid)     Graph                 Valid      Missing  
+---- ---------------------- -------------------------------- ---------------------- --------------------- ---------- ---------
+1    Area                   1. Afghanistan                      58 ( 0.5%)                                12170      0        
+     [character]            2. Africa                           58 ( 0.5%)                                (100.0%)   (0.0%)   
+                            3. Albania                          58 ( 0.5%)                                                    
+                            4. Algeria                          58 ( 0.5%)                                                    
+                            5. American Samoa                   58 ( 0.5%)                                                    
+                            6. Americas                         58 ( 0.5%)                                                    
+                            7. Angola                           58 ( 0.5%)                                                    
+                            8. Antigua and Barbuda              58 ( 0.5%)                                                    
+                            9. Argentina                        58 ( 0.5%)                                                    
+                            10. Asia                            58 ( 0.5%)                                                    
+                            [ 222 others ]                   11590 (95.2%)          IIIIIIIIIIIIIIIIIII                       
+
+2    Year                   Mean (sd) : 1990.4 (16.8)        58 distinct values     . . .   . :   : : :   12170      0        
+     [integer]              min &lt; med &lt; max:                                        : : : . : : : : : :   (100.0%)   (0.0%)   
+                            1961 &lt; 1991 &lt; 2018                                      : : : : : : : : : :                       
+                            IQR (CV) : 29 (0)                                       : : : : : : : : : :                       
+                                                                                    : : : : : : : : : :                       
+
+3    Milk Animals (heads)   Mean (sd) : 4205410 (18041595)   7915 distinct values   :                     12121      49       
+     [integer]              min &lt; med &lt; max:                                        :                     (99.6%)    (0.4%)   
+                            8 &lt; 295000 &lt; 276573845                                  :                                         
+                            IQR (CV) : 1525233 (4.3)                                :                                         
+                                                                                    :                                         
+
+4    Yield (hg/AN)          Mean (sd) : 19329.1 (19361)      8365 distinct values   :                     12121      49       
+     [integer]              min &lt; med &lt; max:                                        :                     (99.6%)    (0.4%)   
+                            923 &lt; 13218 &lt; 134121                                    :                                         
+                            IQR (CV) : 21367 (1)                                    : .                                       
+                                                                                    : : : . .                                 
+
+5    Production (tonnes)    Mean (sd) : 9001419 (40268994)   9646 distinct values   :                     12133      37       
+     [integer]              min &lt; med &lt; max:                                        :                     (99.7%)    (0.3%)   
+                            7 &lt; 295500 &lt; 683217055                                  :                                         
+                            IQR (CV) : 2736860 (4.5)                                :                                         
+                                                                                    :                                         
+------------------------------------------------------------------------------------------------------------------------------</code></pre>
+</div>
+</div>
+</section>
+<section id="provide-grouped-summary-statistics" class="level2">
+<h2 class="anchored" data-anchor-id="provide-grouped-summary-statistics">Provide Grouped Summary Statistics</h2>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># creating tables for 1961 and 2018 production</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>firstyear <span class="ot">&lt;-</span> FAO_Dairy_Clean <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Year'</span>, <span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Year <span class="sc">==</span> <span class="st">"1961"</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>lastyear <span class="ot">&lt;-</span> FAO_Dairy_Clean <span class="sc">%&gt;%</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Year'</span>, <span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Year <span class="sc">==</span> <span class="st">"2018"</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co"># calculating mean and median production for 1961 and 2018</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="fu">median</span>(firstyear<span class="sc">$</span><span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 100368</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">median</span>(lastyear<span class="sc">$</span><span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 602297.5</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># How did production increase over time in Asia vs Europe</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># creating table of asian production</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>Asiaproduction <span class="ot">&lt;-</span> FAO_Dairy_Clean <span class="sc">%&gt;%</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Year'</span>, <span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Area <span class="sc">==</span> <span class="st">"Asia"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Production'</span> <span class="ot">=</span> <span class="st">'Production (tonnes)'</span>)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co"># mean and median of asian production over time</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Asiaproduction<span class="sc">$</span>Production)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 80628670</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">median</span>(Asiaproduction<span class="sc">$</span>Production)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 55479513</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># graphing asian milk production from 1961-2018</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> Asiaproduction) <span class="sc">+</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> Production))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="JosephVincent_challenge2_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># creating table of european production</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>Europeproduction <span class="ot">&lt;-</span> FAO_Dairy_Clean <span class="sc">%&gt;%</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Year'</span>, <span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Area <span class="sc">==</span> <span class="st">"Europe"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Production'</span> <span class="ot">=</span> <span class="st">'Production (tonnes)'</span>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co"># mean and median of asian production over time</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Europeproduction<span class="sc">$</span>Production)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 228904979</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">median</span>(Europeproduction<span class="sc">$</span>Production)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 220194403</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># graphing asian milk production from 1961-2018</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> Europeproduction) <span class="sc">+</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> Production))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="JosephVincent_challenge2_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<section id="explain-and-interpret" class="level3">
+<h3 class="anchored" data-anchor-id="explain-and-interpret">Explain and Interpret</h3>
+</section>
+</section>
+<section id="first-year-vs-last-year" class="level1">
+<h1>First year vs Last year</h1>
+<p>First, I wanted to take a look at how milk production compared in the first year of data (1961) vs the last year of data (2018) for all areas. We’ll focus on median production here, since mean would be skewed too heavily by the continent observations. The median production in 1961 for all areas was 100,368 tons. The median production in 2018 for all areas was 602,297 tons. As you can see, more milk is being produce per country in 2018.</p>
+</section>
+<section id="asia-vs-europe" class="level1">
+<h1>Asia vs Europe</h1>
+<p>Next, I wanted to compare two continents to see how their milk production compared. I looked at Asia and Europe. In Asia, the median production over all years was 55,479,513 tons. In Europe, the median production over all years was about 4 times higher, at 220,194,403 tons.</p>
+<p>When we graph the results, things get more interesting. Asia had an exponential growth in milk production over time. Europe had steady growth in milk production from the early sixties until about 1990, when milk production plunged. This has only recovered slightly in recent years.</p>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="DACSS/601_Spring_2023" data-repo-id="R_kgDOI4JcJA" data-category="Announcements" data-category-id="" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb28" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Challenge 2 - FAO_Stat"</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Joseph Vincent"</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Data wrangling: using group() and summarise()"</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "03/01/2023"</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="co">  - challenge_2</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="co">  - faostat</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a><span class="co">  - Joseph Vincent</span></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(summarytools)</span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span>
+<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reading in and cleaning up the Data</span></span>
+<span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-35"><a href="#cb28-35" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb28-36"><a href="#cb28-36" aria-hidden="true" tabindex="-1"></a><span class="co"># reading in FAO stat, dairy cattle and assigning to FAO_Dairy</span></span>
+<span id="cb28-37"><a href="#cb28-37" aria-hidden="true" tabindex="-1"></a>FAO_Dairy <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"_data/FAOSTAT_cattle_dairy.csv"</span>)</span>
+<span id="cb28-38"><a href="#cb28-38" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(FAO_Dairy)</span>
+<span id="cb28-39"><a href="#cb28-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-40"><a href="#cb28-40" aria-hidden="true" tabindex="-1"></a><span class="co"># removing unchanging and duplicate variables</span></span>
+<span id="cb28-41"><a href="#cb28-41" aria-hidden="true" tabindex="-1"></a><span class="co"># turning Element into variables to remove duplicate observations</span></span>
+<span id="cb28-42"><a href="#cb28-42" aria-hidden="true" tabindex="-1"></a><span class="co"># renaming new variables to contain units</span></span>
+<span id="cb28-43"><a href="#cb28-43" aria-hidden="true" tabindex="-1"></a><span class="co"># assigning to FAO_Dairy_Clean</span></span>
+<span id="cb28-44"><a href="#cb28-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-45"><a href="#cb28-45" aria-hidden="true" tabindex="-1"></a>FAO_Dairy_Clean <span class="ot">&lt;-</span> FAO_Dairy <span class="sc">%&gt;%</span></span>
+<span id="cb28-46"><a href="#cb28-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Element'</span>, <span class="st">'Year'</span>, <span class="st">'Value'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-47"><a href="#cb28-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">'Element'</span>, <span class="at">values_from =</span> <span class="st">'Value'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-48"><a href="#cb28-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Milk Animals (heads)'</span> <span class="ot">=</span> <span class="st">'Milk Animals'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-49"><a href="#cb28-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Yield (hg/AN)'</span> <span class="ot">=</span> <span class="st">'Yield'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-50"><a href="#cb28-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Production (tonnes)'</span> <span class="ot">=</span> <span class="st">'Production'</span>)</span>
+<span id="cb28-51"><a href="#cb28-51" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb28-52"><a href="#cb28-52" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(FAO_Dairy_Clean)</span>
+<span id="cb28-53"><a href="#cb28-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-54"><a href="#cb28-54" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb28-55"><a href="#cb28-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-56"><a href="#cb28-56" aria-hidden="true" tabindex="-1"></a><span class="fu">## Describe the data</span></span>
+<span id="cb28-57"><a href="#cb28-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-58"><a href="#cb28-58" aria-hidden="true" tabindex="-1"></a>This data set appears to be describing dairy production - specifically, whole milk production - by area and year.</span>
+<span id="cb28-59"><a href="#cb28-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-60"><a href="#cb28-60" aria-hidden="true" tabindex="-1"></a>The earliest year is 1961 and the most recent year is 2018, though because the count of these years increases in the table below, this suggests that some countries either did not produce dairy or did not report data until later years.</span>
+<span id="cb28-61"><a href="#cb28-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-62"><a href="#cb28-62" aria-hidden="true" tabindex="-1"></a>There are 36,449 observations, but only 222 of those represent unique areas. Area is typically country, but also contains some broader regions including continents and even the entire world.</span>
+<span id="cb28-63"><a href="#cb28-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-64"><a href="#cb28-64" aria-hidden="true" tabindex="-1"></a>The original data set consists of 14 column names, but many of these variables are duplicates:</span>
+<span id="cb28-65"><a href="#cb28-65" aria-hidden="true" tabindex="-1"></a>For example, 'Element' and 'Element.Code' or 'Year' and 'Year.Code'.</span>
+<span id="cb28-66"><a href="#cb28-66" aria-hidden="true" tabindex="-1"></a>In addition to duplicates, there are a few that remain the same for each observation.</span>
+<span id="cb28-67"><a href="#cb28-67" aria-hidden="true" tabindex="-1"></a>For example, 'Domain' is always 'Livestock Primary' and 'Item' is always 'Milk, Whole fresh cow'.</span>
+<span id="cb28-68"><a href="#cb28-68" aria-hidden="true" tabindex="-1"></a>These suggest that the data comes from a larger dataset. For this analysis I removed these variables.</span>
+<span id="cb28-69"><a href="#cb28-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-70"><a href="#cb28-70" aria-hidden="true" tabindex="-1"></a>There are dublicate observations as well. This is because of the variables 'Element' and 'Unit'. For each country and year, the number of cows, yield per cow and total milk production are listed as separate observations.</span>
+<span id="cb28-71"><a href="#cb28-71" aria-hidden="true" tabindex="-1"></a>For this analysis, I transformed the 'Element' variable into variables 'Milk Animals', 'Yield' and 'Production' and also included the units in each column name in order to get each obeservation onto its own row.</span>
+<span id="cb28-72"><a href="#cb28-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-73"><a href="#cb28-73" aria-hidden="true" tabindex="-1"></a>The median number of cows per year/area is 295,000.</span>
+<span id="cb28-74"><a href="#cb28-74" aria-hidden="true" tabindex="-1"></a>The median tonnes of production is year/area is 9,001,419.</span>
+<span id="cb28-75"><a href="#cb28-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-76"><a href="#cb28-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-79"><a href="#cb28-79" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb28-80"><a href="#cb28-80" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: summary</span></span>
+<span id="cb28-81"><a href="#cb28-81" aria-hidden="true" tabindex="-1"></a><span class="co"># summarizing the original data set, viewing year and area in tables</span></span>
+<span id="cb28-82"><a href="#cb28-82" aria-hidden="true" tabindex="-1"></a><span class="fu">dfSummary</span>(FAO_Dairy)</span>
+<span id="cb28-83"><a href="#cb28-83" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">select</span>(FAO_Dairy, <span class="st">'Year'</span>))</span>
+<span id="cb28-84"><a href="#cb28-84" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">select</span>(FAO_Dairy, <span class="st">'Area'</span>))</span>
+<span id="cb28-85"><a href="#cb28-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-86"><a href="#cb28-86" aria-hidden="true" tabindex="-1"></a><span class="co">#summarizing the clean data set</span></span>
+<span id="cb28-87"><a href="#cb28-87" aria-hidden="true" tabindex="-1"></a><span class="fu">dfSummary</span>(FAO_Dairy_Clean)</span>
+<span id="cb28-88"><a href="#cb28-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-89"><a href="#cb28-89" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb28-90"><a href="#cb28-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-91"><a href="#cb28-91" aria-hidden="true" tabindex="-1"></a><span class="fu">## Provide Grouped Summary Statistics</span></span>
+<span id="cb28-92"><a href="#cb28-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-95"><a href="#cb28-95" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb28-96"><a href="#cb28-96" aria-hidden="true" tabindex="-1"></a><span class="co"># creating tables for 1961 and 2018 production</span></span>
+<span id="cb28-97"><a href="#cb28-97" aria-hidden="true" tabindex="-1"></a>firstyear <span class="ot">&lt;-</span> FAO_Dairy_Clean <span class="sc">%&gt;%</span></span>
+<span id="cb28-98"><a href="#cb28-98" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Year'</span>, <span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-99"><a href="#cb28-99" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Year <span class="sc">==</span> <span class="st">"1961"</span>)</span>
+<span id="cb28-100"><a href="#cb28-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-101"><a href="#cb28-101" aria-hidden="true" tabindex="-1"></a>lastyear <span class="ot">&lt;-</span> FAO_Dairy_Clean <span class="sc">%&gt;%</span></span>
+<span id="cb28-102"><a href="#cb28-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Year'</span>, <span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-103"><a href="#cb28-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Year <span class="sc">==</span> <span class="st">"2018"</span>)</span>
+<span id="cb28-104"><a href="#cb28-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-105"><a href="#cb28-105" aria-hidden="true" tabindex="-1"></a><span class="co"># calculating mean and median production for 1961 and 2018</span></span>
+<span id="cb28-106"><a href="#cb28-106" aria-hidden="true" tabindex="-1"></a><span class="fu">median</span>(firstyear<span class="sc">$</span><span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>)</span>
+<span id="cb28-107"><a href="#cb28-107" aria-hidden="true" tabindex="-1"></a><span class="fu">median</span>(lastyear<span class="sc">$</span><span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>)</span>
+<span id="cb28-108"><a href="#cb28-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-109"><a href="#cb28-109" aria-hidden="true" tabindex="-1"></a><span class="co"># How did production increase over time in Asia vs Europe</span></span>
+<span id="cb28-110"><a href="#cb28-110" aria-hidden="true" tabindex="-1"></a><span class="co"># creating table of asian production</span></span>
+<span id="cb28-111"><a href="#cb28-111" aria-hidden="true" tabindex="-1"></a>Asiaproduction <span class="ot">&lt;-</span> FAO_Dairy_Clean <span class="sc">%&gt;%</span></span>
+<span id="cb28-112"><a href="#cb28-112" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Year'</span>, <span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-113"><a href="#cb28-113" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Area <span class="sc">==</span> <span class="st">"Asia"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-114"><a href="#cb28-114" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Production'</span> <span class="ot">=</span> <span class="st">'Production (tonnes)'</span>)</span>
+<span id="cb28-115"><a href="#cb28-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-116"><a href="#cb28-116" aria-hidden="true" tabindex="-1"></a><span class="co"># mean and median of asian production over time</span></span>
+<span id="cb28-117"><a href="#cb28-117" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Asiaproduction<span class="sc">$</span>Production)</span>
+<span id="cb28-118"><a href="#cb28-118" aria-hidden="true" tabindex="-1"></a><span class="fu">median</span>(Asiaproduction<span class="sc">$</span>Production)</span>
+<span id="cb28-119"><a href="#cb28-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-120"><a href="#cb28-120" aria-hidden="true" tabindex="-1"></a><span class="co"># graphing asian milk production from 1961-2018</span></span>
+<span id="cb28-121"><a href="#cb28-121" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> Asiaproduction) <span class="sc">+</span></span>
+<span id="cb28-122"><a href="#cb28-122" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> Production))</span>
+<span id="cb28-123"><a href="#cb28-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-124"><a href="#cb28-124" aria-hidden="true" tabindex="-1"></a><span class="co"># creating table of european production</span></span>
+<span id="cb28-125"><a href="#cb28-125" aria-hidden="true" tabindex="-1"></a>Europeproduction <span class="ot">&lt;-</span> FAO_Dairy_Clean <span class="sc">%&gt;%</span></span>
+<span id="cb28-126"><a href="#cb28-126" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">'Area'</span>, <span class="st">'Year'</span>, <span class="st">`</span><span class="at">Production (tonnes)</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-127"><a href="#cb28-127" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Area <span class="sc">==</span> <span class="st">"Europe"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-128"><a href="#cb28-128" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">'Production'</span> <span class="ot">=</span> <span class="st">'Production (tonnes)'</span>)</span>
+<span id="cb28-129"><a href="#cb28-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-130"><a href="#cb28-130" aria-hidden="true" tabindex="-1"></a><span class="co"># mean and median of asian production over time</span></span>
+<span id="cb28-131"><a href="#cb28-131" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(Europeproduction<span class="sc">$</span>Production)</span>
+<span id="cb28-132"><a href="#cb28-132" aria-hidden="true" tabindex="-1"></a><span class="fu">median</span>(Europeproduction<span class="sc">$</span>Production)</span>
+<span id="cb28-133"><a href="#cb28-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-134"><a href="#cb28-134" aria-hidden="true" tabindex="-1"></a><span class="co"># graphing asian milk production from 1961-2018</span></span>
+<span id="cb28-135"><a href="#cb28-135" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> Europeproduction) <span class="sc">+</span></span>
+<span id="cb28-136"><a href="#cb28-136" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> Year, <span class="at">y =</span> Production))</span>
+<span id="cb28-137"><a href="#cb28-137" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb28-138"><a href="#cb28-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-139"><a href="#cb28-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-140"><a href="#cb28-140" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb28-141"><a href="#cb28-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-142"><a href="#cb28-142" aria-hidden="true" tabindex="-1"></a><span class="fu">### Explain and Interpret</span></span>
+<span id="cb28-143"><a href="#cb28-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-144"><a href="#cb28-144" aria-hidden="true" tabindex="-1"></a><span class="fu"># First year vs Last year</span></span>
+<span id="cb28-145"><a href="#cb28-145" aria-hidden="true" tabindex="-1"></a>First, I wanted to take a look at how milk production compared in the first year of data (1961) vs the last year of data (2018) for all areas.</span>
+<span id="cb28-146"><a href="#cb28-146" aria-hidden="true" tabindex="-1"></a>We'll focus on median production here, since mean would be skewed too heavily by the continent observations.</span>
+<span id="cb28-147"><a href="#cb28-147" aria-hidden="true" tabindex="-1"></a>The median production in 1961 for all areas was 100,368 tons.</span>
+<span id="cb28-148"><a href="#cb28-148" aria-hidden="true" tabindex="-1"></a>The median production in 2018 for all areas was 602,297 tons.</span>
+<span id="cb28-149"><a href="#cb28-149" aria-hidden="true" tabindex="-1"></a>As you can see, more milk is being produce per country in 2018.</span>
+<span id="cb28-150"><a href="#cb28-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-151"><a href="#cb28-151" aria-hidden="true" tabindex="-1"></a><span class="fu"># Asia vs Europe</span></span>
+<span id="cb28-152"><a href="#cb28-152" aria-hidden="true" tabindex="-1"></a>Next, I wanted to compare two continents to see how their milk production compared.</span>
+<span id="cb28-153"><a href="#cb28-153" aria-hidden="true" tabindex="-1"></a>I looked at Asia and Europe.</span>
+<span id="cb28-154"><a href="#cb28-154" aria-hidden="true" tabindex="-1"></a>In Asia, the median production over all years was 55,479,513 tons.</span>
+<span id="cb28-155"><a href="#cb28-155" aria-hidden="true" tabindex="-1"></a>In Europe, the median production over all years was about 4 times higher, at 220,194,403 tons.</span>
+<span id="cb28-156"><a href="#cb28-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-157"><a href="#cb28-157" aria-hidden="true" tabindex="-1"></a>When we graph the results, things get more interesting.</span>
+<span id="cb28-158"><a href="#cb28-158" aria-hidden="true" tabindex="-1"></a>Asia had an exponential growth in milk production over time.</span>
+<span id="cb28-159"><a href="#cb28-159" aria-hidden="true" tabindex="-1"></a>Europe had steady growth in milk production from the early sixties until about 1990, when milk production plunged. This has only recovered slightly in recent years.</span>
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+</body></html>

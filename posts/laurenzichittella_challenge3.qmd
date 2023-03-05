@@ -1,0 +1,198 @@
+---
+title: "Challenge 3: Create a tidy organiceggpoultry dataset"
+author: "Lauren Zichittella"
+description: "Tidy Data: Pivoting"
+date: "03/05/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3 
+  - organiceggpoultry
+  - lauren zichittella  
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+library(dplyr) 
+library(stringr)
+library(tidyr)
+library(kableExtra)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+This data represents cost of eggs versus poultry spanning January 2004- December 13. Costs are broken down different for eggs versus chickens. 
+- Egg cost is categorized to differentiate cost of large versus x large items by units of 6 or 12 eggs. 
+- Poultry cost is characteirzed by whole versus parts represented and whether part includes skin and/or bone when applicable. 
+
+In a tidy version of this data, each observation would represent a single year, month, product (egg versus chicken), type of product (L, XL, Whole Chicken, etc) unit of product (1, 6, 0r 12), other detail (skin on, bone in, etc), and cost. Processing the data to this form would transition the data from being wide & short, that is having many columns and few observations), to being long and lean, few columns & many more observations. 
+
+
+
+## Step 1: Read in data, characterize identify steps to clean
+
+My goal with this chunk is to import a version of "data" that is as near as possible to the raw data but with enough cleaning to allow for evaluation necessary to refine to a "pretidy version" that will be coded in subsequent separate chunk.
+
+*Methods*
+1) Import data, skip header records and specify col name to allow easy analysis 
+2) utilize simple functions to evaluate distribution of values to answer following questions and inform next steps:
+- Is the colType appropriate for what is represented? This data looks to represent cost but "chix" columns imported as text
+- Are values of yearMonth distinct? First looks indicate rows where the value includes "Jan" also include the year. Would expect remaining values to be standard month names 
+
+*Wishlist/To do*
+- evaluate other sheets in xlsx to confirm they sourced figures from data  
+
+```{r}
+
+orig_organiceggpoultry <- read_xls(  "_data/organiceggpoultry.xls"
+                                     , sheet = "Data"
+                                     , col_names =  FALSE)
+
+orig_organiceggpoultry <- read_xls(  "_data/organiceggpoultry.xls"
+                                     , sheet = "Data"
+                                     , col_names = c("yearmonth", "eggcost_xl_12", "eggcost_xl_6", "eggcost_l_12", "eggcost_l_6", "delete", "chix_whole", "chix_boneskin_breast", "chix_bone_breast", "chix_whole_leg", "chix_thigh" ) 
+                                     , skip = 5)
+
+orig_organiceggpoultry
+
+orig_organiceggpoultry%>%
+    select(yearmonth)%>%
+    n_distinct
+orig_organiceggpoultry%>%
+    select(yearmonth)%>%
+    distinct
+
+print(summarytools::dfSummary(orig_organiceggpoultry,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+
+```
+## Step 2: Clean data better, identify steps to tidy  
+
+My goal with this chunk is produce a cleanest possible version of the data that will be the source for tidying
+
+The end result of this step is to have a dataframe that will allow for transposing where each row represents:
+  year of observation
+  Month of observation
+  Unit of measure (equivalent to variable name transposed i.e.eggcost_xl_12, eggcost_xl_6, etc)
+  value of observations/that is the cost of the item represented by row of data 
+  
+From this dataset, further tidying can be done to create a variables indicating:
+  whether value represents egg versus chicken
+  type of measure (something like L egg, XL egg, Part of chicken)
+  unit of measure (in order to differentiate between counts of 6 versus 12 eggs, chicken parts with skin on/bone in etc  )  
+
+*Methods*  
+1) Revise read_xls to specify column type as numeric for all variables with the exception of year month
+- note there is not a lot of variation in values for "chix" values but capturing in numeric will allow for summarizing results, keep things consistent across variables, make manipulation downstream easier (I think)
+2) rename variables representing cost to more easily parsed tokens where token 1 = product type (egg or chix) and token2 - "unit" (XLn where n = count, Whole, BSbreast = bone-in skin-on breast, etc)
+2) Clean up year month field. I'm thinking this will be most easily accomplished by create two new variables, year & month. Separating out year part might be nice for summarizing data for analysis  
+
+*Wishlist/To do*  
+- Find a better way to assign year. I had tried case_when to parse number for january and it gave annoying warnings. My plan was to get a value and use it to assign to subsequent via lag but no time to test out the best way to do that this time me around. I recognize every single way my current method is problematic but it works for this particular case well enough (maybe)
+
+```{r}
+
+pretidy_organiceggpoultry <- read_excel(  "_data/organiceggpoultry.xls"
+                                     , sheet = "Data"
+                                     , skip = 5
+                                     , col_names = c("yearmonth", "egg_xl12", "egg_xl6", "egg_l12", "egg_l6", "delete", "chix_whole", "chix_bsbreast", "chix_bbreast", "chix_leg", "chix_thigh" ) 
+                                     , col_types = c("text", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"))
+
+pretidy_organiceggpoultry <- select(pretidy_organiceggpoultry, !contains("delete"))
+is.data.frame(pretidy_organiceggpoultry)
+
+pretidy_organiceggpoultry <-
+  pretidy_organiceggpoultry %>% 
+  mutate(
+    month = case_when(
+      grepl("JAN", yearmonth,   ignore.case=TRUE) ~ "january",
+      grepl("FEB", yearmonth,   ignore.case=TRUE) ~ "february",  
+      grepl("MARCH", yearmonth, ignore.case=TRUE) ~ "march",
+      grepl("APRIL", yearmonth, ignore.case=TRUE) ~ "april",
+      grepl("MAY", yearmonth,   ignore.case=TRUE) ~ "may",
+      grepl("JUNE", yearmonth,  ignore.case=TRUE) ~ "june",
+      grepl("JULY", yearmonth,  ignore.case=TRUE) ~ "july",
+      grepl("AUG", yearmonth,   ignore.case=TRUE) ~ "august",
+      grepl("SEPT", yearmonth,  ignore.case=TRUE) ~ "september",
+      grepl("OCT", yearmonth,   ignore.case=TRUE) ~ "october",
+      grepl("NOV", yearmonth,   ignore.case=TRUE) ~ "november",
+      grepl("DEC", yearmonth,   ignore.case=TRUE) ~ "december",
+      TRUE ~ "ERROR" 
+      ) )
+  
+pretidy_organiceggpoultry%>%
+    select(month)%>%
+    distinct
+
+pretidy_organiceggpoultry <-
+  pretidy_organiceggpoultry %>% 
+  mutate(year = floor(row_number()/12) + 2004)
+
+pretidy_organiceggpoultry%>%
+    select(year)%>%
+    distinct
+
+is.data.frame(pretidy_organiceggpoultry)
+
+pretidy_organiceggpoultry <- select(pretidy_organiceggpoultry, !contains("yearmonth"))
+
+head(pretidy_organiceggpoultry)
+
+```
+## Step 3: Create tidy version of dataset  
+
+The goal of this chunk will be to pivot data from wide to long form. This will result in each observation representing a case or cost by year, month, and type of product. 
+
+*Methods*
+1) Utilize pivot longer to transpose data to long form, retain values of month & year, creating new variable 'product' named for the value variable translated, and cost  
+2) Try out the tidy version by creating a simple summary of cost by year
+
+*Wishlist/To do*  
+- Parse product type to create separate field for defining "source" as egg or chicken and unit. Should be pretty easy to do as these values are represented by single undercore-delimited token
+- Introduce step earlier on in that evaluates that each row in the pretidy dataset is distinct to validate transposition to long form resulted in expected dataset 
+
+```{r}
+tidy_organiceggpoultry <- 
+  pretidy_organiceggpoultry %>%
+  pivot_longer(
+    cols = c("egg_xl12", "egg_xl6", "egg_l12", "egg_l6", "chix_whole", "chix_bsbreast", "chix_bbreast", "chix_leg", "chix_thigh" ), 
+    names_to = "product",
+    values_to = "cost",
+    values_drop_na = FALSE    
+  )
+
+head(tidy_organiceggpoultry)
+
+tab1<- tidy_organiceggpoultry%>%
+  group_by(product)%>%
+     summarise(
+               min  = min(cost,    na.rm=TRUE), 
+               med  = median(cost, na.rm=TRUE), 
+               max  = max(cost,    na.rm=TRUE),                
+               mean = mean(cost,   na.rm=TRUE),  
+               sd   = sd(cost,     na.rm=TRUE), )
+
+knitr::kable(tab1,
+             digits=2,
+             col.names = c("Product Type", "Min", "Median", "Max", "Mean", "Standard Deviation"))%>%
+  kableExtra::kable_styling(htmltable_class = "lightable-minimal")%>%
+  kableExtra::add_header_above(c(" " = 1, "Cost Statistics" = 5))
+```

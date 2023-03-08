@@ -1,0 +1,104 @@
+---
+title: "Challenge 3 Instructions"
+author: "PoChunYang"
+desription: "Tidy Data: Pivoting"
+date: "03/07/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - PoChunYang
+  - eggs
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+
+When I use the read_excel data, it is not tidy for people to read. Therefore, I try my best to clean it. Finally the data would look like egg_tidy.csv. First of all, I skip the 4 columns. Then, I create one "date" row to copy the month data. Next, I used select to choose the data which I want. Moreover, use rename to let people easier read the data and  more comfortable for using Pivot in the next part. Finally, category for the year and some strange data.
+
+```{r}
+df <- read_excel("_data/organiceggpoultry.xls", sheet = "Data",skip=4)
+
+```
+
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+The data want to show the egg quality and chicken meat with price from 2004 to 2013 in USDA-certified organic eggs. In the Data, it give four different types of chicken and 5 different types of chicken part with the price per pound.
+
+First of all, I skip the 4 columns. Then, I create one "date" row to copy the month data. Next, I used select to choose the data which I want. Moreover, use rename to let people easier read the data and  more comfortable for using Pivot in the next part. Finally, category for the year and some strange data.
+
+```{r}
+df2<-df%>%
+  mutate(date=...1)%>%
+  select(12,2:5)
+df2<-df2%>%
+  rename(xlarge_dozen=2,xlarge_halfdozen=3,large_dozen=4,large_halfdozen=5)
+df2<-df2%>%
+  mutate(date=str_remove(date," /1"))
+egg<-df2%>%
+  separate(date, into=c("month","year"),sep=" ")%>%
+  fill(year)
+egg
+```
+
+## Anticipate the End Result
+I made the data become a tidy data. Then, I want to get the 2004 of the data.
+```{r}
+egg_data2004<- filter(egg,year == "2004",)
+egg_data2004
+```
+
+I want to compare each 4 types of eggs in January from 2004 to 2013. Finally, I want to compare the large dozen. It is clearly seen that we get the lowest price in 2004. Besides that, the price increased generally. It could make me understand that the commodity prices rising every year. 
+
+```{r}
+egg_Jan<-filter(egg,month == "Jan")
+select(egg_Jan,1:2,5)
+ggplot(egg_Jan,aes(year,large_dozen)) + geom_point()
+
+```
+
+
+
+## Pivot the Data
+
+I used the Pivot to get the different types of the data with their cost. In col, there are large spelling in four of the types. Thus, we could use the for the type of the egg. 
+
+
+```{r}
+#| tbl-cap: Pivoted Example
+pivot_longer(egg, col= contains("large"),
+              names_to="type_of_egg",
+              values_to = "cost")
+
+```
+
+
+
+

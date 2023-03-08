@@ -1,0 +1,103 @@
+---
+title: "Challenge 3 - Eggs"
+author: "Joseph Vincent"
+description: "Tidy Data: Pivoting"
+date: "03/08/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+  - Joseph Vincent
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(summarytools)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+Reading in:
+-   eggs_tidy.csv 
+
+```{r}
+eggs <- read_csv("_data/eggs_tidy.csv")
+head(eggs)
+```
+
+### Briefly describe the data
+
+```{r}
+print(summarytools::dfSummary(eggs,
+                              valid.col=FALSE), 
+      method = 'render')
+```
+
+This data set consists of average prices of eggs per pound (in cents) over a 9 year period, from 2004 through 2013. It is broken down further by month.
+
+The prices vary in any given year by carton and egg size. There are both large and extra large eggs, and dozen or half dozen carton varieties. The per pound price is different depending on the combination of these qualities.
+
+Before performing more analysis, we will tidy-up the data set by moving egg price into its own column/variable, and using the carton type to describe the case.
+
+### Challenge: Describe the final dimensions
+
+# Finding the existing dimensions of "eggs"
+```{r}
+#existing rows
+nrow(eggs)
+
+#existing columns
+ncol(eggs)
+
+#expected rows/cases
+nrow(eggs) * (ncol(eggs)-2)
+
+#expected columns 
+2 + 2
+
+```
+There are 120 rows in the current dataset, each representing a specific month-year. However, this structure means that there are four different prices in each row. We would like for each row/case to only contain one price, in accordance with Tidydata standards.
+
+There are currently 6 columns. 2 of these describe the case (Year and Month), and 4 of these are describing the carton and size of the eggs.
+
+After combining the 4 price columns into a single "Price per Pound" column, we would expect to see 480 rows.
+
+There will be 4 columns in the final data set, 2 existing descriptors (Year and Month) and 2 new columns (Carton Type and Price per Pound).
+
+### Challenge: Pivot the Chosen Data
+
+```{r}
+eggs_pivoted <- eggs %>%
+  pivot_longer(col = c(large_half_dozen, large_dozen, extra_large_half_dozen, extra_large_dozen),
+               names_to = "carton_type",
+               values_to = "price_per_pound")
+eggs_pivoted
+
+
+```
+
+As you can see, the final data set has the dimensions we expected (480 rows x 4 columns). Each row now describes a single case, which in this case is an average price for specific carton type in a month and year.
+
+# Doing some summary analysis on egg price by carton type
+
+```{r}
+eggs_pivoted %>%
+  group_by(carton_type) %>%
+  summarize(Mean = mean(price_per_pound),
+            Median = median(price_per_pound),
+            Max = max(price_per_pound),
+            Min = min(price_per_pound))
+```
+
+The average price per pound across all years was greatest for extra large eggs when sold in cartons of a dozen eggs.

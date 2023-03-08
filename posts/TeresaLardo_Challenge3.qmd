@@ -1,0 +1,79 @@
+---
+title: "Challenge 3: Animal Weights"
+author: "Teresa Lardo"
+description: "Tidy Data: Pivoting"
+date: "08/17/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - Teresa Lardo
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Read in data
+
+For this challenge, I'll read in the csv file on animal weights. 
+
+```{r}
+library(readr)
+animal_weight <- read_csv("_data/animal_weight.csv", show_col_types =  FALSE)
+head(animal_weight)
+
+```
+
+### Briefly describe the data
+
+```{r}
+dim(animal_weight)
+colnames(animal_weight)
+unique(animal_weight$`IPCC Area`)
+```
+
+The data set shows the weights of **16** different animal types (for agricultural use) for **9** different geographic regions. There are 16 different types of animal (including different uses for the same animal - such as chickens meant for broiling and chickens meant for laying eggs or dairy/nondairy cattle). The data set should be flipped so that instead of one long row giving 16 different weights for one geographic region, we only see one observation (animal weight) per row. 
+
+## Anticipate the End Result
+
+We'll use `pivot_longer()` to list each of the 16 animal types under a column called **Animals** and their weights under a column called **Weight** instead. This should result in a much longer version of our current tibble, where each IPCC area (geographic region) will appear 16 times - once per different type of animal - instead of once. As there are 9 IPCC areas listed now, this should end up being a tibble of 144 rows (observations) and 3 columns (IPCC area, Animals, and Weight). 
+
+
+## Pivot the Data
+
+Now we will pivot all of the columns describing animal weights (columns 2 through 17) so that the name of each of these columns (**Cattle - dairy** through **Llamas**) is contained under a new column titled **Animals**. The values listed under the original columns will move to another new column, titled **Weight**. 
+
+
+```{r}
+#| tbl-cap: Pivoted Example
+
+animal_weight<-pivot_longer(animal_weight, col = c(2:17),
+                 names_to="Animals",
+                 values_to = "Weight")
+animal_weight
+
+```
+
+### Check Dimensions of Pivoted Data
+
+Before pivoting, I calculated that the new dimensions would be 144 rows and 3 columns, where each row describes the weight of a type of agricultural animal in a geographic region. 
+
+```{r}
+dim(animal_weight)
+
+```
+
+Now that the data has been pivoted long, our resulting tibble dimensions are $144x3$ as expected.

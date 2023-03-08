@@ -1,0 +1,99 @@
+---
+title: "2004-2013 USDA Certified Organic Egg and Chicken Prices "
+author: "Michele Carlin"
+desription: "Imported, Tidied, and Summarized data"
+date: "03/04/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - Michele Carlin
+  - organiceggpoultry.xls
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(summarytools)
+library(dbplyr)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read in and view summary of 'organic egg poultry' dataset
+
+```{r}
+sheet_names <- excel_sheets("_data/organiceggpoultry.xls")
+sheet_names 
+organic_data<-read_xls("_data/organiceggpoultry.xls", skip = 5,            col_names= c("date", "xl_dozen", "xl_half", "lrg_dozen", "lrg_half", "delete", "chkn_whole", "chkn_boneless", "chkn_bonein", "chkn_legs", "chkn_thighs"))%>%
+  select(!contains("delete"))
+View(organic_data)
+view(dfSummary(organic_data))
+
+```
+
+This dataset contains 120 rows and 10 columns.  Each row is for a particular month and year, and contains average prices by carton for 4 different 'egg' categories (e.g., XL dozen, XL half dozen, etc.) as well as the average price per pound for 5 different 'chicken' categories (e.g., whole, boneless, thighs, etc.). In order to have each row be one observation, we will need to use 'pivot long' however before doing so, we need to tidy up some of the variables based on findings in Data Frame Summary (e.g., remove extra characters in 'date' field).
+
+
+Number of unique values in the variable 'date'
+
+```{r}
+table(select(organic_data, date))
+```
+Separate date variable into month and year, remove '/1' from date variable and then fill 'year' variable.
+
+```{r}
+organic_data <- organic_data %>% 
+  mutate(date = str_remove(date, " /1")) %>%
+  separate(col=date, into=c('month', 'year'), sep=' ') %>%
+    fill(year)
+ select(organic_data, month, year)
+```
+Pivot longer so that each row contains one observation.
+
+```{r}
+organic_data_long<-pivot_longer(organic_data, col = c(xl_dozen, xl_half, lrg_dozen, lrg_half, chkn_whole, chkn_boneless, chkn_bonein, chkn_legs, chkn_thighs),
+                 names_to="item",
+                 values_to = "value")
+```
+
+Couldn't pivot because some variables are numeric and others are string; filter out rows that have a value of 'too few' in chkn_bonein and chkn_thighs; check number of rows before and after.
+
+```{r}
+nrow(organic_data)
+organic_data <- organic_data %>%
+  filter(chkn_bonein != 'too few' & chkn_thighs != 'too few')
+nrow(organic_data)
+organic_data <- organic_data %>%
+  mutate(chkn_bonein = as.numeric(chkn_bonein)) %>%
+  mutate(chkn_thighs = as.numeric(chkn_thighs))
+str(organic_data)
+```
+Try 'pivot longer' now that all variables are numeric.
+
+```{r}
+organic_data_long <- pivot_longer(organic_data, col = c(xl_dozen, xl_half, lrg_dozen, lrg_half, chkn_whole, chkn_boneless, chkn_bonein, chkn_legs, chkn_thighs),
+                 names_to="item",
+                 values_to = "value")
+organic_data_long
+view(dfSummary(organic_data_long))
+```
+Summarize data - create new 'item_type' variable to group by.
+
+```{r}
+organic_data_long <- organic_data_long %>%
+ mutate(item_type = case_when(startsWith(item, "chkn") ~ "Chicken", TRUE ~ "Eggs"))
+view(dfSummary(organic_data_long))
+organic_data_long %>%
+group_by(item_type, item) %>%
+  summarise(Avg_Cost = mean(value),
+            Min_Cost = min(value),
+            Max_Cost = max(value))
+```

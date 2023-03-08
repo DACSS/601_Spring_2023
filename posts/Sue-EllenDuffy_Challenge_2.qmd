@@ -1,0 +1,116 @@
+---
+title: "Understanding the FAOSTAT Country Codes" 
+author: "Sue-Ellen Duffy" 
+desription: "Demonstrated some of the differences in FAOSTAT Country Codes" 
+date: "02/24/2023" 
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Sue-Ellen Duffy
+  - FAOSTAT
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| label: setup
+#| warning: false
+library(tidyverse)
+library(summarytools)
+library(readxl)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## FAOSTAT data
+
+This data set is simply the Country Profiles for the Food and
+Agriculture Organization Corporate Statistical Database (FAOSTAT).
+
+In this set of data, each column is describing the same data, but vary
+in who is describing or using that data. The United Nations Terminology
+Database, the Statistics Division of the United Nations Secretariat, and
+the International Organization for Standardization each have different
+ways of coding the same countries, so this database helps us understand
+which country or region or group of countries is being described in
+other FAO data sets.
+
+```{r}
+#Read in data and rename FAOSTAT_country_groups as groups
+data <- read_csv("_data/FAOSTAT_country_groups.csv")
+data
+```
+
+## Summarize the data
+
+Looking through this quick summary we see that there are 277 Countries
+in this data, that IS02 is missing data, that the M49 Code column is
+characterized as being characters (though they are all numeric) and
+while there are other data here, there are two charts of interests -
+Country Group and Country.
+
+IS02 is "missing data" because of the code NA which is their 2-alpha
+code for Nambia.
+
+M49 Code column is characterized as being characters even though they
+are all numeric.
+
+The Country Group tibble shows us the 10 Country Groups containing the
+most Countries.
+
+The Country tibble shows us the 10 Countries that were categorized into
+different Country Groups the most.
+
+```{r}
+dfSummary(data)
+```
+
+## How are the codes different?
+
+Take the United States of America for example. When filtering for
+"United States of America" we come out with 8 different rows of data.
+The Country Code, M49 Code, IS02 Code and IS03 Codes while unique to
+their specifics are unchanged for the 8 rows. The difference here, and
+why we get 8 different rows for the United States of America, is that
+their Country Group Code and Country Group are different. The Country
+Group Code is simply the number associated with the Country Group. It
+appears that Country Group is a categorical code, listing the USA as
+being part of the Americas, High-income economies, North and Central
+America, Annex I countries, etc.
+
+The Country Group would allow for quick and categorical data analysis,
+such as analyzing the countries by economics (high-income economies and
+low-income economies) or by region (Northern and Central America to the
+Americas.
+
+```{r}
+USA <- filter(data, `Country` == "United States of America")
+USA
+```
+## The "World"
+
+The one Country Group that contains all of the countries is "World",
+which consists of 277 Countries. If the goal was to analyze all the
+countries at once, the filter should be set to "World".
+
+```{r}
+world <- filter(data, `Country Group` == "World")
+world
+```
+
+## Anything Else Interesting?
+
+The M49 Codes with the suffix ".01" are characterized as being
+"unspecified (population)". I'm not entirely sure what that means, so it
+could be interesting to understand this further. Here is one example:
+
+```{r}
+data %>%
+  filter(`M49 Code` == "155.01") %>%
+select("Country Group", "Country", "M49 Code")
+```

@@ -1,0 +1,109 @@
+---
+title: "Challenge 3 - Organiceggpoultry Dataset"
+author: "Megan Galarneau"
+description: "Tidy Data: Pivoting"
+date: "03/07/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    css: "style.css"
+categories:
+  - challenge_3
+  - organiceggpoultry
+  - Megan Galarneau
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1. Read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2. Identify what needs to be done to tidy the current data
+3. Anticipate the shape of pivoted data
+4. Pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Upon reading in the data set, I made some initial changes to clean up the data frame and make it easier to use later on. Specifically, I removed/renamed the column headers and removed the empty column.
+
+```{r}
+ library(readxl) 
+raw_organiceggpoultry <- read_excel("_data/organiceggpoultry.xls", skip = 5, col_names = c("Date", "Eggxl_12", "Eggxl_6", "Egglg_12", "Egglg_6", "Remove", "Chkn_Whl", "Chkn_BSBrst", "Chkn_BnInBrst", "Chkn_WhlLg", "Chkn_Thigh")) %>%
+select(-c(Remove))
+```
+
+### Briefly describe the data
+
+This data set outlines the monthly prices (cents per pound) paid for USDA certified organic eggs & poultry from 2004-2013. There are four types of eggs: extra large dozen, extra large half dozen, large dozen, and large half dozen. There are also five types of chickens: whole, boneless/skinless breast, bone-in breast, whole legs, and thighs. This data set is sourced from the U.S. Department of Agriculture, Agricultural Marketing Service (AMS) Market News, Organic Poultry and Eggs (Weekly reports).
+
+In an ideal state, I am planning to pivot this data set so it neatly displays in one row the year, month, item, item type, and cost. Right now, even though I cleaned up the data, the reader cannot easily understand what story the data is telling.
+
+```{r}
+print(summarytools::dfSummary(raw_organiceggpoultry,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+```
+
+## Anticipate the End Result
+
+To reach the ideal state mentioned above, I will first need to break out the year and month from the date column. Additionally, there are non-numeric data points in the chicken columns so I will recode those as well. Each of these changes will ensure that I can properly pivot the data from wide to long in the last section.
+
+```{r}
+raw_organiceggpoultry <- raw_organiceggpoultry %>% separate(Date, into = c("Month", "Year"), sep = " ") %>%
+mutate(Year = as.integer(Year))%>%
+  fill(Year)
+```
+
+```{r}
+
+raw_organiceggpoultry<-raw_organiceggpoultry%>%
+  mutate(Chkn_BnInBrst = recode(Chkn_BnInBrst, `too few` = "0"),
+Chkn_Thigh = recode(Chkn_Thigh, `too few` = "0"))
+```
+
+```{r}
+raw_organiceggpoultry$Chkn_BnInBrst <- as.numeric(raw_organiceggpoultry$Chkn_BnInBrst)
+```
+
+```{r}
+raw_organiceggpoultry$Chkn_Thigh <-
+as.numeric(raw_organiceggpoultry$Chkn_Thigh)
+raw_organiceggpoultry
+```
+
+```{r}
+
+str(raw_organiceggpoultry)
+```
+
+
+## Pivot the Data
+
+I pivoted the data successfully from wide to long. I can check this by comparing it to the data table above. It now clearly outlines the breakdown of organic egg and poultry prices (cent per pound) by month from 2004-2013. A new "case" in this instance is the monthly price of a type of egg or poultry.
+
+```{r}
+raw_organiceggpoultry <-pivot_longer(raw_organiceggpoultry, col = c("Eggxl_12", "Eggxl_6", "Egglg_12", "Egglg_6", "Chkn_Whl", "Chkn_BSBrst", "Chkn_WhlLg", "Chkn_BnInBrst", "Chkn_Thigh"),
+                 names_to="Organic Eggs & Poultry",
+                 values_to = "Cost, Cent/Lb")
+raw_organiceggpoultry
+```

@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.335">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Megan Galarneau">
+<meta name="dcterms.date" content="2023-03-07">
+<meta name="description" content="Tidy Data: Pivoting">
+
+<title>Challenge 3 - Organiceggpoultry Dataset</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../images/DACSS_Round_Network.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+<link href="../site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="../site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+
+
+<link rel="stylesheet" href="style.css">
+<meta name="twitter:title" content="Challenge 3 - Organiceggpoultry Dataset">
+<meta name="twitter:description" content="Tidy Data: Pivoting">
+<meta name="twitter:creator" content="@UMassDACSS">
+<meta name="twitter:site" content="@UMassDACSS">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../images/UMass White Wordmark Horiz.png" alt="" class="navbar-logo">
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/DACSS">
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html">
+ <span class="menu-text">Contributors</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://umass.edu/sbs/dacss">
+ <span class="menu-text">DACSS</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/DACSS"><i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+              <div class="quarto-toggle-container">
+                  <a href="" class="quarto-color-scheme-toggle nav-link" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+              </div>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#challenge-overview" id="toc-challenge-overview" class="nav-link active" data-scroll-target="#challenge-overview">Challenge Overview</a></li>
+  <li><a href="#read-in-data" id="toc-read-in-data" class="nav-link" data-scroll-target="#read-in-data">Read in data</a>
+  <ul class="collapse">
+  <li><a href="#briefly-describe-the-data" id="toc-briefly-describe-the-data" class="nav-link" data-scroll-target="#briefly-describe-the-data">Briefly describe the data</a></li>
+  </ul></li>
+  <li><a href="#anticipate-the-end-result" id="toc-anticipate-the-end-result" class="nav-link" data-scroll-target="#anticipate-the-end-result">Anticipate the End Result</a></li>
+  <li><a href="#pivot-the-data" id="toc-pivot-the-data" class="nav-link" data-scroll-target="#pivot-the-data">Pivot the Data</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Challenge 3 - Organiceggpoultry Dataset</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">challenge_3</div>
+    <div class="quarto-category">organiceggpoultry</div>
+    <div class="quarto-category">Megan Galarneau</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Tidy Data: Pivoting
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Megan Galarneau </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 7, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="challenge-overview" class="level2">
+<h2 class="anchored" data-anchor-id="challenge-overview">Challenge Overview</h2>
+<p>Today’s challenge is to:</p>
+<ol type="1">
+<li>Read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)</li>
+<li>Identify what needs to be done to tidy the current data</li>
+<li>Anticipate the shape of pivoted data</li>
+<li>Pivot the data into tidy format using <code>pivot_longer</code></li>
+</ol>
+</section>
+<section id="read-in-data" class="level2">
+<h2 class="anchored" data-anchor-id="read-in-data">Read in data</h2>
+<p>Upon reading in the data set, I made some initial changes to clean up the data frame and make it easier to use later on. Specifically, I removed/renamed the column headers and removed the empty column.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a> <span class="fu">library</span>(readxl) </span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"_data/organiceggpoultry.xls"</span>, <span class="at">skip =</span> <span class="dv">5</span>, <span class="at">col_names =</span> <span class="fu">c</span>(<span class="st">"Date"</span>, <span class="st">"Eggxl_12"</span>, <span class="st">"Eggxl_6"</span>, <span class="st">"Egglg_12"</span>, <span class="st">"Egglg_6"</span>, <span class="st">"Remove"</span>, <span class="st">"Chkn_Whl"</span>, <span class="st">"Chkn_BSBrst"</span>, <span class="st">"Chkn_BnInBrst"</span>, <span class="st">"Chkn_WhlLg"</span>, <span class="st">"Chkn_Thigh"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(Remove))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="briefly-describe-the-data" class="level3">
+<h3 class="anchored" data-anchor-id="briefly-describe-the-data">Briefly describe the data</h3>
+<p>This data set outlines the monthly prices (cents per pound) paid for USDA certified organic eggs &amp; poultry from 2004-2013. There are four types of eggs: extra large dozen, extra large half dozen, large dozen, and large half dozen. There are also five types of chickens: whole, boneless/skinless breast, bone-in breast, whole legs, and thighs. This data set is sourced from the U.S. Department of Agriculture, Agricultural Marketing Service (AMS) Market News, Organic Poultry and Eggs (Weekly reports).</p>
+<p>In an ideal state, I am planning to pivot this data set so it neatly displays in one row the year, month, item, item type, and cost. Right now, even though I cleaned up the data, the reader cannot easily understand what story the data is telling.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(raw_organiceggpoultry,</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+
+<div class="container st-container">
+<h3 class="anchored">Data Frame Summary</h3>
+<h4 class="anchored">raw_organiceggpoultry</h4>
+<strong>Dimensions</strong>: 120 x 10
+  <br><strong>Duplicates</strong>: 8
+<br>
+<table class="table table-striped table-bordered st-table st-table-striped st-table-bordered st-multiline table-condensed">
+  <thead>
+    <tr>
+      <th align="center" class="st-protect-top-border"><strong>Variable</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Stats / Values</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Freqs (% of Valid)</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Graph</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Missing</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="left">Date
+[character]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">1. April</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">2. August</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">3. December</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">4. July</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">5. June</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">6. March</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">7. May</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">8. November</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">9. October</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">10. September</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">[ 12 others ]</td></tr></tbody></table></td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">10</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">20</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">16.7%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAB4AAAC8BAMAAACdygN0AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAAExJREFUSMdjYKAcKAGBoiAQQPnKxsbGQ5mP7h9BGMDBH27+Hw0PysJjpPt/NDxGVniMdP+PhsdoeTmaHmgbHmCAZB4IGA1RPrp/KAEAkUvE4w2CbmAAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMDhUMDM6NTE6MTkrMDA6MDCfzDyrAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTA4VDAzOjUxOjE5KzAwOjAw7pGEFwAAAABJRU5ErkJggg=="></td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="left">Eggxl_12
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 266.8 (22.8)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">230 ≤ 285.5 ≤ 290</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 44 (0.1)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">11 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAAEtJREFUWMPt1rENACAIRFFXcAPFEdx/Nwu93qtM8P8OktcSSslfvSxOzXRj7nA43L9O96ObTnscDofD4XA43Funf851mrO6MJPL3AJI+G0obx61DgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wMy0wOFQwMzo1MToxOSswMDowMJ/MPKsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDMtMDhUMDM6NTE6MTkrMDA6MDDukYQXAAAAAElFTkSuQmCC"></td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="left">Eggxl_6
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 164.2 (24.7)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">132 ≤ 185.5 ≤ 188.1</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 49.7 (0.2)</td></tr></tbody></table></td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">132.00  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">134.50  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">135.50  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">28</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">23.3%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">135.88 !</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">137.00  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">6</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">5.0%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">138.12 !</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">139.00  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">15</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">12.5%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">185.50  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">53</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">44.2%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">188.13  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">14</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">11.7%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 0 0 7px;border:0;margin:0" colspan="5">! rounded</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAADsAAACcBAMAAAAzEs7WAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAAH9JREFUWMPt1dENgCAMBFBGsBsIbAD776aJJoogTSwpqHe/74fmSmpM3zgqZgK/lEnEAw8GfsIkYneKzdnHI2AdZioR9g3+FpOI1xWrsY8BrMxMJVQOvv8/mUS8X5k73g5VACsyU0mTvq+Zk6dlAfdjprEW62DrmwoeiJnGemUBMYlKCNFgE5QAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMDhUMDM6NTE6MTkrMDA6MDCfzDyrAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTA4VDAzOjUxOjE5KzAwOjAw7pGEFwAAAABJRU5ErkJggg==">
+
+</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="left">Egglg_12
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 254.2 (18.5)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">225 ≤ 267.5 ≤ 277.5</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 34.5 (0.1)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">12 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAAGpJREFUWMPt1MEJwCAMhWFHaDdodYNm/93aB83BU03wUOR/IBjChwQkpayf/TtV8WIbd83MLhwOh8u4bvEEXNfA4XA4XMxp954J9xz7mdMoR8LpgsONOP2xjFN7hvP3o669NW6Oq8G4Wzk3T9FRt3uI4CwAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMDhUMDM6NTE6MTkrMDA6MDCfzDyrAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTA4VDAzOjUxOjE5KzAwOjAw7pGEFwAAAABJRU5ErkJggg=="></td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="left">Egglg_6
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 155.2 (22.6)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">126 ≤ 174.5 ≤ 178</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 45.1 (0.1)</td></tr></tbody></table></td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">126.00  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">128.50  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">29</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">24.2%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">129.75  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">131.00  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">3</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">2.5%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">131.12 !</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">132.00  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">15</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">12.5%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">133.50  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">3</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">2.5%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">173.25  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">6</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">5.0%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">174.50  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">47</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">39.2%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">178.00  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">14</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">11.7%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 0 0 7px;border:0;margin:0" colspan="5">! rounded</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAADYAAACsBAMAAADClkLLAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAAIpJREFUWMPt1MENwDAIA8CswAiBDdL9d6v6aokCqkgTocr+3g8jl7I/TIPAUhkFjZ/pTI47DTZt3q3D/cHSGwWNq20C+9S8WxPFLNMPwsZGQetWXJno9YctNK+HcLfVtkyb9QdbsrvMpkn/R7Bl5vVAo7zfXR21EzoNFjbv1nP9VeOXrsB2mNfDzpyEYUC39PhyuQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wMy0wOFQwMzo1MToxOSswMDowMJ/MPKsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDMtMDhUMDM6NTE6MTkrMDA6MDDukYQXAAAAAElFTkSuQmCC">
+
+</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="left">Chkn_Whl
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 230.5 (12.5)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">197.5 ≤ 235 ≤ 248</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 18 (0.1)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">12 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAAH9JREFUWMPt11EKgCAQBFCPkJ2g7Abu/e+WG4wRbcKGQcjMl7L7RPRHQxg/0UwqWc3K1HSbiND9zOllphdOJ/kzN+uubKeV5dGVLrGdDsZy9ZC8DhM6Ojo6Ojo6Ojq6Lu7yQzx+GLbDAxYOHRELZtth0MudL2mnu3W0XXIGbuTsafKXRW/6W10AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMDhUMDM6NTE6MTkrMDA6MDCfzDyrAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTA4VDAzOjUxOjE5KzAwOjAw7pGEFwAAAABJRU5ErkJggg=="></td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="left">Chkn_BSBrst
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 654.9 (23.3)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">637.5 ≤ 645.5 ≤ 703.8</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 0.4 (0)</td></tr></tbody></table></td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">637.50</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">17</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">14.2%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">641.00</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">642.30</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">642.50</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">10</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">8.3%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">644.00</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">645.50</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">67</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">55.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">700.00</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">9</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">7.5%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">703.75</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">14</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">11.7%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAEcAAACKBAMAAAAK6EpGAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAAH5JREFUWMPt1cENgCAMBVBGsBsIbqD776YYDhxoqQkxH/L/+SWUtJQQMJNKpJWtoON6cxLNh1wNFiufUCIi8iEZhhBvRzTxPD2JPZS3L9HCyDUFYoVLjAh/06nZq9eihggauRo8dp5iD+XCiRZGf/+cyTiwLlwtnQgauRqMlhtMQF5I2nYqBwAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wMy0wOFQwMzo1MToxOSswMDowMJ/MPKsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDMtMDhUMDM6NTE6MTkrMDA6MDDukYQXAAAAAElFTkSuQmCC"></td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="left">Chkn_BnInBrst
+[character]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">1. 390.5</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">2. too few</td></tr></tbody></table></td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">114</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">95.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">6</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">5.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAHAAAAAnBAMAAAAlRdE3AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAADlJREFUSMdjYBgZQIlkANWobEwiMBrVOKpxYDSSncgFSQYDphHoaPI0KhsbjWoc1TgkNJKdyIc7AAB2EMDZIV4xVAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wMy0wOFQwMzo1MToxOSswMDowMJ/MPKsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDMtMDhUMDM6NTE6MTkrMDA6MDDukYQXAAAAAElFTkSuQmCC"></td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="left">Chkn_WhlLg
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 203.1 (2)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">193.5 ≤ 203.5 ≤ 203.5</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 0 (0)</td></tr></tbody></table></td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">193.50  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">5</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">4.2%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">201.88 !</td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">1</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 2px 0 7px;margin:0;border:0" align="right">203.50  </td><td style="padding:0 2px;border:0;" align="left">:</td><td style="padding:0 4px 0 6px;margin:0;border:0" align="right">114</td><td style="padding:0;border:0" align="left">(</td><td style="padding:0 2px;margin:0;border:0" align="right">95.0%</td><td style="padding:0 4px 0 0;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 0 0 7px;border:0;margin:0" colspan="5">! rounded</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAHAAAAA5BAMAAAAcmbLcAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAAEdJREFUSMdjYBgZQElJUZA0ANWobDyqcVTjMNdIdu4gURcVNCqNahzVOKqR2hpJ1kd5RiYZwEs5EoHRqMZRjUNMI9m5Y7gDAD50A7SIeCT1AAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIzLTAzLTA4VDAzOjUxOjE5KzAwOjAwn8w8qwAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMy0wMy0wOFQwMzo1MToxOSswMDowMO6RhBcAAAAASUVORK5CYII=">
+
+</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="left">Chkn_Thigh
+[character]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">1. 199.5</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">2. 200.375</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">3. 203</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">4. 213</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">5. 215</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">6. 216.25</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">7. 219.19999999999999</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">8. 222</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">9. too few</td></tr></tbody></table></td>
+      <td align="left" style="padding:0;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">6</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">5.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">4</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">3.3%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">23</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">19.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">17</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">14.2%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">66</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">55.0%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr><tr style="background-color:transparent"><td style="padding:0 5px 0 7px;margin:0;border:0" align="right">1</td><td style="padding:0 2px 0 0;border:0;" align="left">(</td><td style="padding:0;border:0" align="right">0.8%</td><td style="padding:0 4px 0 2px;border:0" align="left">)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAEYAAACcBAMAAAAwpcD+AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMIAzMTNxJJEgAAAIRJREFUWMPt1bENwCAMRFFWuBFiNjD775aG0CA7TuQC0P36FUg2UMp6iQjMuqlNaQ4zkbnD64MRGhrDIMl46zzuhdLsZCIzBXLMaveCZh2DJCOjyzS1PdHsYCIzhdeP/fFMP7PSnGMic4cX/0GaF4MkI17TuzqnNFuayNzTdoyGxjArdQNlEHzU0hRbUgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wMy0wOFQwMzo1MToxOSswMDowMJ/MPKsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDMtMDhUMDM6NTE6MTkrMDA6MDDukYQXAAAAAElFTkSuQmCC"></td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+  </tbody>
+</table>
+<p>Generated by <a href="https://github.com/dcomtois/summarytools">summarytools</a> 1.0.1 (<a href="https://www.r-project.org/">R</a> version 4.2.2)<br>2023-03-07</p>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="anticipate-the-end-result" class="level2">
+<h2 class="anchored" data-anchor-id="anticipate-the-end-result">Anticipate the End Result</h2>
+<p>To reach the ideal state mentioned above, I will first need to break out the year and month from the date column. Additionally, there are non-numeric data points in the chicken columns so I will recode those as well. Each of these changes will ensure that I can properly pivot the data from wide to long in the last section.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry <span class="ot">&lt;-</span> raw_organiceggpoultry <span class="sc">%&gt;%</span> <span class="fu">separate</span>(Date, <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"Month"</span>, <span class="st">"Year"</span>), <span class="at">sep =</span> <span class="st">" "</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>(<span class="at">Year =</span> <span class="fu">as.integer</span>(Year))<span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fill</span>(Year)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry<span class="ot">&lt;-</span>raw_organiceggpoultry<span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Chkn_BnInBrst =</span> <span class="fu">recode</span>(Chkn_BnInBrst, <span class="st">`</span><span class="at">too few</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"0"</span>),</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">Chkn_Thigh =</span> <span class="fu">recode</span>(Chkn_Thigh, <span class="st">`</span><span class="at">too few</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"0"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry<span class="sc">$</span>Chkn_BnInBrst <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(raw_organiceggpoultry<span class="sc">$</span>Chkn_BnInBrst)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry<span class="sc">$</span>Chkn_Thigh <span class="ot">&lt;-</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as.numeric</span>(raw_organiceggpoultry<span class="sc">$</span>Chkn_Thigh)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["Month"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Year"],"name":[2],"type":["int"],"align":["right"]},{"label":["Eggxl_12"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["Eggxl_6"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Egglg_12"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["Egglg_6"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["Chkn_Whl"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["Chkn_BSBrst"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["Chkn_BnInBrst"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["Chkn_WhlLg"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["Chkn_Thigh"],"name":[11],"type":["dbl"],"align":["right"]}],"data":[{"1":"Jan","2":"2004","3":"230.000","4":"132.000","5":"230.000","6":"126.000","7":"197.500","8":"645.50","9":"0.0","10":"193.500","11":"0.000"},{"1":"February","2":"2004","3":"230.000","4":"134.500","5":"226.250","6":"128.500","7":"197.500","8":"642.50","9":"0.0","10":"193.500","11":"203.000"},{"1":"March","2":"2004","3":"230.000","4":"137.000","5":"225.000","6":"131.000","7":"209.000","8":"642.50","9":"0.0","10":"193.500","11":"203.000"},{"1":"April","2":"2004","3":"234.500","4":"137.000","5":"225.000","6":"131.000","7":"212.000","8":"642.50","9":"0.0","10":"193.500","11":"203.000"},{"1":"May","2":"2004","3":"236.000","4":"137.000","5":"225.000","6":"131.000","7":"214.500","8":"642.50","9":"0.0","10":"193.500","11":"203.000"},{"1":"June","2":"2004","3":"241.000","4":"137.000","5":"231.375","6":"133.500","7":"216.375","8":"641.00","9":"0.0","10":"201.875","11":"200.375"},{"1":"July","2":"2004","3":"241.000","4":"137.000","5":"233.500","6":"133.500","7":"217.000","8":"642.50","9":"390.5","10":"203.500","11":"199.500"},{"1":"August","2":"2004","3":"241.000","4":"137.000","5":"233.500","6":"133.500","7":"217.000","8":"642.50","9":"390.5","10":"203.500","11":"199.500"},{"1":"September","2":"2004","3":"241.000","4":"135.875","5":"233.500","6":"129.750","7":"217.000","8":"642.50","9":"390.5","10":"203.500","11":"199.500"},{"1":"October","2":"2004","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"642.50","9":"390.5","10":"203.500","11":"199.500"},{"1":"November","2":"2004","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"642.50","9":"390.5","10":"203.500","11":"199.500"},{"1":"December","2":"2004","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"642.50","9":"390.5","10":"203.500","11":"199.500"},{"1":"Jan","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"644.00","9":"390.5","10":"203.500","11":"213.000"},{"1":"February","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"March","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"April","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"May","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"June","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"July","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"August","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"September","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"October","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"November","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"December","2":"2005","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"Jan","2":"2006","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"February","2":"2006","3":"241.000","4":"135.500","5":"233.500","6":"128.500","7":"217.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"March","2":"2006","3":"241.375","4":"135.500","5":"233.500","6":"128.500","7":"219.625","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"April","2":"2006","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"May","2":"2006","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"June","2":"2006","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"July","2":"2006","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"August","2":"2006","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"September","2":"2006","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"October","2":"2006","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"November","2":"2006","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"December","2":"2006","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"Jan","2":"2007","3":"241.500","4":"135.500","5":"233.500","6":"128.500","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"February","2":"2007","3":"244.125","4":"138.125","5":"236.125","6":"131.125","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"March","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"April","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"May","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"June","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"July","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"August","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"September","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"October","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"November","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"December","2":"2007","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"Jan","2":"2008","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"February","2":"2008","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"March","2":"2008","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"April","2":"2008","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"May","2":"2008","3":"245.000","4":"139.000","5":"237.000","6":"132.000","7":"220.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"June","2":"2008","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"July","2":"2008","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"August","2":"2008","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"September","2":"2008","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"October","2":"2008","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"November","2":"2008","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"December","2":"2008","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"Jan","2":"2009","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"February","2":"2009","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"March","2":"2009","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"April","2":"2009","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"May","2":"2009","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"June","2":"2009","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"July","2":"2009","3":"285.500","4":"185.500","5":"277.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"August","2":"2009","3":"285.500","4":"185.500","5":"271.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"September","2":"2009","3":"285.500","4":"185.500","5":"271.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"October","2":"2009","3":"285.500","4":"185.500","5":"271.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"November","2":"2009","3":"285.500","4":"185.500","5":"271.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"December","2":"2009","3":"285.500","4":"185.500","5":"271.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"Jan","2":"2010","3":"285.500","4":"185.500","5":"271.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"February","2":"2010","3":"285.500","4":"185.500","5":"271.500","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"March","2":"2010","3":"285.500","4":"185.500","5":"268.000","6":"174.500","7":"248.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"April","2":"2010","3":"285.500","4":"185.500","5":"268.000","6":"174.500","7":"241.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"May","2":"2010","3":"285.500","4":"185.500","5":"268.000","6":"174.500","7":"235.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"June","2":"2010","3":"285.500","4":"185.500","5":"268.000","6":"174.500","7":"235.000","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"July","2":"2010","3":"285.500","4":"185.500","5":"268.000","6":"174.500","7":"241.500","8":"645.50","9":"390.5","10":"203.500","11":"222.000"},{"1":"August","2":"2010","3":"285.500","4":"185.500","5":"268.000","6":"174.500","7":"235.000","8":"642.30","9":"390.5","10":"203.500","11":"219.200"},{"1":"September","2":"2010","3":"285.500","4":"185.500","5":"268.000","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"October","2":"2010","3":"285.500","4":"185.500","5":"267.500","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"November","2":"2010","3":"285.500","4":"185.500","5":"267.500","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"December","2":"2010","3":"285.500","4":"185.500","5":"267.500","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"Jan","2":"2011","3":"285.500","4":"185.500","5":"267.500","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"February","2":"2011","3":"285.500","4":"185.500","5":"267.500","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"March","2":"2011","3":"285.500","4":"185.500","5":"267.500","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"April","2":"2011","3":"285.500","4":"185.500","5":"267.500","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"May","2":"2011","3":"285.500","4":"185.500","5":"267.500","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"June","2":"2011","3":"285.500","4":"185.500","5":"270.000","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"July","2":"2011","3":"285.500","4":"185.500","5":"270.000","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"August","2":"2011","3":"285.500","4":"185.500","5":"270.000","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"September","2":"2011","3":"285.500","4":"185.500","5":"270.000","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"October","2":"2011","3":"285.500","4":"185.500","5":"270.000","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"November","2":"2011","3":"285.500","4":"185.500","5":"270.000","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"December","2":"2011","3":"285.500","4":"185.500","5":"270.000","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"Jan","2":"2012","3":"285.500","4":"185.500","5":"267.500","6":"174.500","7":"235.000","8":"637.50","9":"390.5","10":"203.500","11":"215.000"},{"1":"February","2":"2012","3":"288.500","4":"185.500","5":"267.500","6":"174.500","7":"238.500","8":"700.00","9":"390.5","10":"203.500","11":"215.000"},{"1":"March","2":"2012","3":"288.500","4":"185.500","5":"267.500","6":"174.500","7":"238.500","8":"700.00","9":"390.5","10":"203.500","11":"215.000"},{"1":"April","2":"2012","3":"288.500","4":"185.500","5":"267.500","6":"174.500","7":"238.500","8":"700.00","9":"390.5","10":"203.500","11":"215.000"},{"1":"May","2":"2012","3":"288.500","4":"185.500","5":"267.500","6":"173.250","7":"238.500","8":"700.00","9":"390.5","10":"203.500","11":"215.000"},{"1":"June","2":"2012","3":"288.500","4":"185.500","5":"267.500","6":"173.250","7":"238.500","8":"700.00","9":"390.5","10":"203.500","11":"215.000"},{"1":"July","2":"2012","3":"288.500","4":"185.500","5":"267.500","6":"173.250","7":"238.500","8":"700.00","9":"390.5","10":"203.500","11":"215.000"},{"1":"August","2":"2012","3":"288.500","4":"185.500","5":"267.500","6":"173.250","7":"238.500","8":"700.00","9":"390.5","10":"203.500","11":"216.250"},{"1":"September","2":"2012","3":"288.500","4":"185.500","5":"267.500","6":"173.250","7":"238.500","8":"700.00","9":"390.5","10":"203.500","11":"216.250"},{"1":"October","2":"2012","3":"288.500","4":"185.500","5":"267.500","6":"173.250","7":"238.500","8":"700.00","9":"390.5","10":"203.500","11":"216.250"},{"1":"November","2":"2012","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"December","2":"2012","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"Jan","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"February","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"March","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"April","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"May","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"June","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"July","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"August","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"September","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"October","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"November","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"},{"1":"December","2":"2013","3":"290.000","4":"188.130","5":"267.500","6":"178.000","7":"238.500","8":"703.75","9":"390.5","10":"203.500","11":"216.250"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(raw_organiceggpoultry)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>tibble [120 × 11] (S3: tbl_df/tbl/data.frame)
+ $ Month        : chr [1:120] "Jan" "February" "March" "April" ...
+ $ Year         : int [1:120] 2004 2004 2004 2004 2004 2004 2004 2004 2004 2004 ...
+ $ Eggxl_12     : num [1:120] 230 230 230 234 236 ...
+ $ Eggxl_6      : num [1:120] 132 134 137 137 137 ...
+ $ Egglg_12     : num [1:120] 230 226 225 225 225 ...
+ $ Egglg_6      : num [1:120] 126 128 131 131 131 ...
+ $ Chkn_Whl     : num [1:120] 198 198 209 212 214 ...
+ $ Chkn_BSBrst  : num [1:120] 646 642 642 642 642 ...
+ $ Chkn_BnInBrst: num [1:120] 0 0 0 0 0 ...
+ $ Chkn_WhlLg   : num [1:120] 194 194 194 194 194 ...
+ $ Chkn_Thigh   : num [1:120] 0 203 203 203 203 ...</code></pre>
+</div>
+</div>
+</section>
+<section id="pivot-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="pivot-the-data">Pivot the Data</h2>
+<p>I pivoted the data successfully from wide to long. I can check this by comparing it to the data table above. It now clearly outlines the breakdown of organic egg and poultry prices (cent per pound) by month from 2004-2013. A new “case” in this instance is the monthly price of a type of egg or poultry.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry <span class="ot">&lt;-</span><span class="fu">pivot_longer</span>(raw_organiceggpoultry, <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"Eggxl_12"</span>, <span class="st">"Eggxl_6"</span>, <span class="st">"Egglg_12"</span>, <span class="st">"Egglg_6"</span>, <span class="st">"Chkn_Whl"</span>, <span class="st">"Chkn_BSBrst"</span>, <span class="st">"Chkn_WhlLg"</span>, <span class="st">"Chkn_BnInBrst"</span>, <span class="st">"Chkn_Thigh"</span>),</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">names_to=</span><span class="st">"Organic Eggs &amp; Poultry"</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">values_to =</span> <span class="st">"Cost, Cent/Lb"</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["Month"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Year"],"name":[2],"type":["int"],"align":["right"]},{"label":["Organic Eggs & Poultry"],"name":[3],"type":["chr"],"align":["left"]},{"label":["Cost, Cent/Lb"],"name":[4],"type":["dbl"],"align":["right"]}],"data":[{"1":"Jan","2":"2004","3":"Eggxl_12","4":"230.000"},{"1":"Jan","2":"2004","3":"Eggxl_6","4":"132.000"},{"1":"Jan","2":"2004","3":"Egglg_12","4":"230.000"},{"1":"Jan","2":"2004","3":"Egglg_6","4":"126.000"},{"1":"Jan","2":"2004","3":"Chkn_Whl","4":"197.500"},{"1":"Jan","2":"2004","3":"Chkn_BSBrst","4":"645.500"},{"1":"Jan","2":"2004","3":"Chkn_WhlLg","4":"193.500"},{"1":"Jan","2":"2004","3":"Chkn_BnInBrst","4":"0.000"},{"1":"Jan","2":"2004","3":"Chkn_Thigh","4":"0.000"},{"1":"February","2":"2004","3":"Eggxl_12","4":"230.000"},{"1":"February","2":"2004","3":"Eggxl_6","4":"134.500"},{"1":"February","2":"2004","3":"Egglg_12","4":"226.250"},{"1":"February","2":"2004","3":"Egglg_6","4":"128.500"},{"1":"February","2":"2004","3":"Chkn_Whl","4":"197.500"},{"1":"February","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"February","2":"2004","3":"Chkn_WhlLg","4":"193.500"},{"1":"February","2":"2004","3":"Chkn_BnInBrst","4":"0.000"},{"1":"February","2":"2004","3":"Chkn_Thigh","4":"203.000"},{"1":"March","2":"2004","3":"Eggxl_12","4":"230.000"},{"1":"March","2":"2004","3":"Eggxl_6","4":"137.000"},{"1":"March","2":"2004","3":"Egglg_12","4":"225.000"},{"1":"March","2":"2004","3":"Egglg_6","4":"131.000"},{"1":"March","2":"2004","3":"Chkn_Whl","4":"209.000"},{"1":"March","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"March","2":"2004","3":"Chkn_WhlLg","4":"193.500"},{"1":"March","2":"2004","3":"Chkn_BnInBrst","4":"0.000"},{"1":"March","2":"2004","3":"Chkn_Thigh","4":"203.000"},{"1":"April","2":"2004","3":"Eggxl_12","4":"234.500"},{"1":"April","2":"2004","3":"Eggxl_6","4":"137.000"},{"1":"April","2":"2004","3":"Egglg_12","4":"225.000"},{"1":"April","2":"2004","3":"Egglg_6","4":"131.000"},{"1":"April","2":"2004","3":"Chkn_Whl","4":"212.000"},{"1":"April","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"April","2":"2004","3":"Chkn_WhlLg","4":"193.500"},{"1":"April","2":"2004","3":"Chkn_BnInBrst","4":"0.000"},{"1":"April","2":"2004","3":"Chkn_Thigh","4":"203.000"},{"1":"May","2":"2004","3":"Eggxl_12","4":"236.000"},{"1":"May","2":"2004","3":"Eggxl_6","4":"137.000"},{"1":"May","2":"2004","3":"Egglg_12","4":"225.000"},{"1":"May","2":"2004","3":"Egglg_6","4":"131.000"},{"1":"May","2":"2004","3":"Chkn_Whl","4":"214.500"},{"1":"May","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"May","2":"2004","3":"Chkn_WhlLg","4":"193.500"},{"1":"May","2":"2004","3":"Chkn_BnInBrst","4":"0.000"},{"1":"May","2":"2004","3":"Chkn_Thigh","4":"203.000"},{"1":"June","2":"2004","3":"Eggxl_12","4":"241.000"},{"1":"June","2":"2004","3":"Eggxl_6","4":"137.000"},{"1":"June","2":"2004","3":"Egglg_12","4":"231.375"},{"1":"June","2":"2004","3":"Egglg_6","4":"133.500"},{"1":"June","2":"2004","3":"Chkn_Whl","4":"216.375"},{"1":"June","2":"2004","3":"Chkn_BSBrst","4":"641.000"},{"1":"June","2":"2004","3":"Chkn_WhlLg","4":"201.875"},{"1":"June","2":"2004","3":"Chkn_BnInBrst","4":"0.000"},{"1":"June","2":"2004","3":"Chkn_Thigh","4":"200.375"},{"1":"July","2":"2004","3":"Eggxl_12","4":"241.000"},{"1":"July","2":"2004","3":"Eggxl_6","4":"137.000"},{"1":"July","2":"2004","3":"Egglg_12","4":"233.500"},{"1":"July","2":"2004","3":"Egglg_6","4":"133.500"},{"1":"July","2":"2004","3":"Chkn_Whl","4":"217.000"},{"1":"July","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"July","2":"2004","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2004","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2004","3":"Chkn_Thigh","4":"199.500"},{"1":"August","2":"2004","3":"Eggxl_12","4":"241.000"},{"1":"August","2":"2004","3":"Eggxl_6","4":"137.000"},{"1":"August","2":"2004","3":"Egglg_12","4":"233.500"},{"1":"August","2":"2004","3":"Egglg_6","4":"133.500"},{"1":"August","2":"2004","3":"Chkn_Whl","4":"217.000"},{"1":"August","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"August","2":"2004","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2004","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2004","3":"Chkn_Thigh","4":"199.500"},{"1":"September","2":"2004","3":"Eggxl_12","4":"241.000"},{"1":"September","2":"2004","3":"Eggxl_6","4":"135.875"},{"1":"September","2":"2004","3":"Egglg_12","4":"233.500"},{"1":"September","2":"2004","3":"Egglg_6","4":"129.750"},{"1":"September","2":"2004","3":"Chkn_Whl","4":"217.000"},{"1":"September","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"September","2":"2004","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2004","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2004","3":"Chkn_Thigh","4":"199.500"},{"1":"October","2":"2004","3":"Eggxl_12","4":"241.000"},{"1":"October","2":"2004","3":"Eggxl_6","4":"135.500"},{"1":"October","2":"2004","3":"Egglg_12","4":"233.500"},{"1":"October","2":"2004","3":"Egglg_6","4":"128.500"},{"1":"October","2":"2004","3":"Chkn_Whl","4":"217.000"},{"1":"October","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"October","2":"2004","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2004","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2004","3":"Chkn_Thigh","4":"199.500"},{"1":"November","2":"2004","3":"Eggxl_12","4":"241.000"},{"1":"November","2":"2004","3":"Eggxl_6","4":"135.500"},{"1":"November","2":"2004","3":"Egglg_12","4":"233.500"},{"1":"November","2":"2004","3":"Egglg_6","4":"128.500"},{"1":"November","2":"2004","3":"Chkn_Whl","4":"217.000"},{"1":"November","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"November","2":"2004","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2004","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2004","3":"Chkn_Thigh","4":"199.500"},{"1":"December","2":"2004","3":"Eggxl_12","4":"241.000"},{"1":"December","2":"2004","3":"Eggxl_6","4":"135.500"},{"1":"December","2":"2004","3":"Egglg_12","4":"233.500"},{"1":"December","2":"2004","3":"Egglg_6","4":"128.500"},{"1":"December","2":"2004","3":"Chkn_Whl","4":"217.000"},{"1":"December","2":"2004","3":"Chkn_BSBrst","4":"642.500"},{"1":"December","2":"2004","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2004","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2004","3":"Chkn_Thigh","4":"199.500"},{"1":"Jan","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"Jan","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"Jan","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"Jan","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"Jan","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"Jan","2":"2005","3":"Chkn_BSBrst","4":"644.000"},{"1":"Jan","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"Jan","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"Jan","2":"2005","3":"Chkn_Thigh","4":"213.000"},{"1":"February","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"February","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"February","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"February","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"February","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"February","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"February","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"February","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"February","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"March","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"March","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"March","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"March","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"March","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"March","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"March","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"March","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"March","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"April","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"April","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"April","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"April","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"April","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"April","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"April","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"April","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"April","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"May","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"May","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"May","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"May","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"May","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"May","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"May","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"May","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"May","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"June","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"June","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"June","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"June","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"June","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"June","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"June","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"June","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"June","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"July","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"July","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"July","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"July","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"July","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"July","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"July","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"August","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"August","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"August","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"August","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"August","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"August","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"August","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"September","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"September","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"September","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"September","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"September","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"September","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"September","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"October","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"October","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"October","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"October","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"October","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"October","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"October","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"November","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"November","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"November","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"November","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"November","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"November","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"November","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"December","2":"2005","3":"Eggxl_12","4":"241.000"},{"1":"December","2":"2005","3":"Eggxl_6","4":"135.500"},{"1":"December","2":"2005","3":"Egglg_12","4":"233.500"},{"1":"December","2":"2005","3":"Egglg_6","4":"128.500"},{"1":"December","2":"2005","3":"Chkn_Whl","4":"217.000"},{"1":"December","2":"2005","3":"Chkn_BSBrst","4":"645.500"},{"1":"December","2":"2005","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2005","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2005","3":"Chkn_Thigh","4":"222.000"},{"1":"Jan","2":"2006","3":"Eggxl_12","4":"241.000"},{"1":"Jan","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"Jan","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"Jan","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"Jan","2":"2006","3":"Chkn_Whl","4":"217.000"},{"1":"Jan","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"Jan","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"Jan","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"Jan","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"February","2":"2006","3":"Eggxl_12","4":"241.000"},{"1":"February","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"February","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"February","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"February","2":"2006","3":"Chkn_Whl","4":"217.000"},{"1":"February","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"February","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"February","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"February","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"March","2":"2006","3":"Eggxl_12","4":"241.375"},{"1":"March","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"March","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"March","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"March","2":"2006","3":"Chkn_Whl","4":"219.625"},{"1":"March","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"March","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"March","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"March","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"April","2":"2006","3":"Eggxl_12","4":"241.500"},{"1":"April","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"April","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"April","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"April","2":"2006","3":"Chkn_Whl","4":"220.500"},{"1":"April","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"April","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"April","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"April","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"May","2":"2006","3":"Eggxl_12","4":"241.500"},{"1":"May","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"May","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"May","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"May","2":"2006","3":"Chkn_Whl","4":"220.500"},{"1":"May","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"May","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"May","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"May","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"June","2":"2006","3":"Eggxl_12","4":"241.500"},{"1":"June","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"June","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"June","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"June","2":"2006","3":"Chkn_Whl","4":"220.500"},{"1":"June","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"June","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"June","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"June","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"July","2":"2006","3":"Eggxl_12","4":"241.500"},{"1":"July","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"July","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"July","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"July","2":"2006","3":"Chkn_Whl","4":"220.500"},{"1":"July","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"July","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"August","2":"2006","3":"Eggxl_12","4":"241.500"},{"1":"August","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"August","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"August","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"August","2":"2006","3":"Chkn_Whl","4":"220.500"},{"1":"August","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"August","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"September","2":"2006","3":"Eggxl_12","4":"241.500"},{"1":"September","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"September","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"September","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"September","2":"2006","3":"Chkn_Whl","4":"220.500"},{"1":"September","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"September","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"October","2":"2006","3":"Eggxl_12","4":"241.500"},{"1":"October","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"October","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"October","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"October","2":"2006","3":"Chkn_Whl","4":"220.500"},{"1":"October","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"October","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"November","2":"2006","3":"Eggxl_12","4":"241.500"},{"1":"November","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"November","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"November","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"November","2":"2006","3":"Chkn_Whl","4":"220.500"},{"1":"November","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"November","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"December","2":"2006","3":"Eggxl_12","4":"241.500"},{"1":"December","2":"2006","3":"Eggxl_6","4":"135.500"},{"1":"December","2":"2006","3":"Egglg_12","4":"233.500"},{"1":"December","2":"2006","3":"Egglg_6","4":"128.500"},{"1":"December","2":"2006","3":"Chkn_Whl","4":"220.500"},{"1":"December","2":"2006","3":"Chkn_BSBrst","4":"645.500"},{"1":"December","2":"2006","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2006","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2006","3":"Chkn_Thigh","4":"222.000"},{"1":"Jan","2":"2007","3":"Eggxl_12","4":"241.500"},{"1":"Jan","2":"2007","3":"Eggxl_6","4":"135.500"},{"1":"Jan","2":"2007","3":"Egglg_12","4":"233.500"},{"1":"Jan","2":"2007","3":"Egglg_6","4":"128.500"},{"1":"Jan","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"Jan","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"Jan","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"Jan","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"Jan","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"February","2":"2007","3":"Eggxl_12","4":"244.125"},{"1":"February","2":"2007","3":"Eggxl_6","4":"138.125"},{"1":"February","2":"2007","3":"Egglg_12","4":"236.125"},{"1":"February","2":"2007","3":"Egglg_6","4":"131.125"},{"1":"February","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"February","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"February","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"February","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"February","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"March","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"March","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"March","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"March","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"March","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"March","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"March","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"March","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"March","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"April","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"April","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"April","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"April","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"April","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"April","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"April","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"April","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"April","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"May","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"May","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"May","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"May","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"May","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"May","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"May","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"May","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"May","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"June","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"June","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"June","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"June","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"June","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"June","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"June","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"June","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"June","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"July","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"July","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"July","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"July","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"July","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"July","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"July","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"August","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"August","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"August","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"August","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"August","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"August","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"August","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"September","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"September","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"September","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"September","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"September","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"September","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"September","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"October","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"October","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"October","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"October","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"October","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"October","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"October","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"November","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"November","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"November","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"November","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"November","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"November","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"November","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"December","2":"2007","3":"Eggxl_12","4":"245.000"},{"1":"December","2":"2007","3":"Eggxl_6","4":"139.000"},{"1":"December","2":"2007","3":"Egglg_12","4":"237.000"},{"1":"December","2":"2007","3":"Egglg_6","4":"132.000"},{"1":"December","2":"2007","3":"Chkn_Whl","4":"220.500"},{"1":"December","2":"2007","3":"Chkn_BSBrst","4":"645.500"},{"1":"December","2":"2007","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2007","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2007","3":"Chkn_Thigh","4":"222.000"},{"1":"Jan","2":"2008","3":"Eggxl_12","4":"245.000"},{"1":"Jan","2":"2008","3":"Eggxl_6","4":"139.000"},{"1":"Jan","2":"2008","3":"Egglg_12","4":"237.000"},{"1":"Jan","2":"2008","3":"Egglg_6","4":"132.000"},{"1":"Jan","2":"2008","3":"Chkn_Whl","4":"220.500"},{"1":"Jan","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"Jan","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"Jan","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"Jan","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"February","2":"2008","3":"Eggxl_12","4":"245.000"},{"1":"February","2":"2008","3":"Eggxl_6","4":"139.000"},{"1":"February","2":"2008","3":"Egglg_12","4":"237.000"},{"1":"February","2":"2008","3":"Egglg_6","4":"132.000"},{"1":"February","2":"2008","3":"Chkn_Whl","4":"220.500"},{"1":"February","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"February","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"February","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"February","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"March","2":"2008","3":"Eggxl_12","4":"245.000"},{"1":"March","2":"2008","3":"Eggxl_6","4":"139.000"},{"1":"March","2":"2008","3":"Egglg_12","4":"237.000"},{"1":"March","2":"2008","3":"Egglg_6","4":"132.000"},{"1":"March","2":"2008","3":"Chkn_Whl","4":"220.500"},{"1":"March","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"March","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"March","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"March","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"April","2":"2008","3":"Eggxl_12","4":"245.000"},{"1":"April","2":"2008","3":"Eggxl_6","4":"139.000"},{"1":"April","2":"2008","3":"Egglg_12","4":"237.000"},{"1":"April","2":"2008","3":"Egglg_6","4":"132.000"},{"1":"April","2":"2008","3":"Chkn_Whl","4":"220.500"},{"1":"April","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"April","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"April","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"April","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"May","2":"2008","3":"Eggxl_12","4":"245.000"},{"1":"May","2":"2008","3":"Eggxl_6","4":"139.000"},{"1":"May","2":"2008","3":"Egglg_12","4":"237.000"},{"1":"May","2":"2008","3":"Egglg_6","4":"132.000"},{"1":"May","2":"2008","3":"Chkn_Whl","4":"220.500"},{"1":"May","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"May","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"May","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"May","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"June","2":"2008","3":"Eggxl_12","4":"285.500"},{"1":"June","2":"2008","3":"Eggxl_6","4":"185.500"},{"1":"June","2":"2008","3":"Egglg_12","4":"277.500"},{"1":"June","2":"2008","3":"Egglg_6","4":"174.500"},{"1":"June","2":"2008","3":"Chkn_Whl","4":"248.000"},{"1":"June","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"June","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"June","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"June","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"July","2":"2008","3":"Eggxl_12","4":"285.500"},{"1":"July","2":"2008","3":"Eggxl_6","4":"185.500"},{"1":"July","2":"2008","3":"Egglg_12","4":"277.500"},{"1":"July","2":"2008","3":"Egglg_6","4":"174.500"},{"1":"July","2":"2008","3":"Chkn_Whl","4":"248.000"},{"1":"July","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"July","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"August","2":"2008","3":"Eggxl_12","4":"285.500"},{"1":"August","2":"2008","3":"Eggxl_6","4":"185.500"},{"1":"August","2":"2008","3":"Egglg_12","4":"277.500"},{"1":"August","2":"2008","3":"Egglg_6","4":"174.500"},{"1":"August","2":"2008","3":"Chkn_Whl","4":"248.000"},{"1":"August","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"August","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"September","2":"2008","3":"Eggxl_12","4":"285.500"},{"1":"September","2":"2008","3":"Eggxl_6","4":"185.500"},{"1":"September","2":"2008","3":"Egglg_12","4":"277.500"},{"1":"September","2":"2008","3":"Egglg_6","4":"174.500"},{"1":"September","2":"2008","3":"Chkn_Whl","4":"248.000"},{"1":"September","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"September","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"October","2":"2008","3":"Eggxl_12","4":"285.500"},{"1":"October","2":"2008","3":"Eggxl_6","4":"185.500"},{"1":"October","2":"2008","3":"Egglg_12","4":"277.500"},{"1":"October","2":"2008","3":"Egglg_6","4":"174.500"},{"1":"October","2":"2008","3":"Chkn_Whl","4":"248.000"},{"1":"October","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"October","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"November","2":"2008","3":"Eggxl_12","4":"285.500"},{"1":"November","2":"2008","3":"Eggxl_6","4":"185.500"},{"1":"November","2":"2008","3":"Egglg_12","4":"277.500"},{"1":"November","2":"2008","3":"Egglg_6","4":"174.500"},{"1":"November","2":"2008","3":"Chkn_Whl","4":"248.000"},{"1":"November","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"November","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"December","2":"2008","3":"Eggxl_12","4":"285.500"},{"1":"December","2":"2008","3":"Eggxl_6","4":"185.500"},{"1":"December","2":"2008","3":"Egglg_12","4":"277.500"},{"1":"December","2":"2008","3":"Egglg_6","4":"174.500"},{"1":"December","2":"2008","3":"Chkn_Whl","4":"248.000"},{"1":"December","2":"2008","3":"Chkn_BSBrst","4":"645.500"},{"1":"December","2":"2008","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2008","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2008","3":"Chkn_Thigh","4":"222.000"},{"1":"Jan","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"Jan","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"Jan","2":"2009","3":"Egglg_12","4":"277.500"},{"1":"Jan","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"Jan","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"Jan","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"Jan","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"Jan","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"Jan","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"February","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"February","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"February","2":"2009","3":"Egglg_12","4":"277.500"},{"1":"February","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"February","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"February","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"February","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"February","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"February","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"March","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"March","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"March","2":"2009","3":"Egglg_12","4":"277.500"},{"1":"March","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"March","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"March","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"March","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"March","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"March","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"April","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"April","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"April","2":"2009","3":"Egglg_12","4":"277.500"},{"1":"April","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"April","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"April","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"April","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"April","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"April","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"May","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"May","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"May","2":"2009","3":"Egglg_12","4":"277.500"},{"1":"May","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"May","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"May","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"May","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"May","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"May","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"June","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"June","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"June","2":"2009","3":"Egglg_12","4":"277.500"},{"1":"June","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"June","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"June","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"June","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"June","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"June","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"July","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"July","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"July","2":"2009","3":"Egglg_12","4":"277.500"},{"1":"July","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"July","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"July","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"July","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"August","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"August","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"August","2":"2009","3":"Egglg_12","4":"271.500"},{"1":"August","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"August","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"August","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"August","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"September","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"September","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"September","2":"2009","3":"Egglg_12","4":"271.500"},{"1":"September","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"September","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"September","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"September","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"October","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"October","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"October","2":"2009","3":"Egglg_12","4":"271.500"},{"1":"October","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"October","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"October","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"October","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"November","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"November","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"November","2":"2009","3":"Egglg_12","4":"271.500"},{"1":"November","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"November","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"November","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"November","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"December","2":"2009","3":"Eggxl_12","4":"285.500"},{"1":"December","2":"2009","3":"Eggxl_6","4":"185.500"},{"1":"December","2":"2009","3":"Egglg_12","4":"271.500"},{"1":"December","2":"2009","3":"Egglg_6","4":"174.500"},{"1":"December","2":"2009","3":"Chkn_Whl","4":"248.000"},{"1":"December","2":"2009","3":"Chkn_BSBrst","4":"645.500"},{"1":"December","2":"2009","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2009","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2009","3":"Chkn_Thigh","4":"222.000"},{"1":"Jan","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"Jan","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"Jan","2":"2010","3":"Egglg_12","4":"271.500"},{"1":"Jan","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"Jan","2":"2010","3":"Chkn_Whl","4":"248.000"},{"1":"Jan","2":"2010","3":"Chkn_BSBrst","4":"645.500"},{"1":"Jan","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"Jan","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"Jan","2":"2010","3":"Chkn_Thigh","4":"222.000"},{"1":"February","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"February","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"February","2":"2010","3":"Egglg_12","4":"271.500"},{"1":"February","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"February","2":"2010","3":"Chkn_Whl","4":"248.000"},{"1":"February","2":"2010","3":"Chkn_BSBrst","4":"645.500"},{"1":"February","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"February","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"February","2":"2010","3":"Chkn_Thigh","4":"222.000"},{"1":"March","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"March","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"March","2":"2010","3":"Egglg_12","4":"268.000"},{"1":"March","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"March","2":"2010","3":"Chkn_Whl","4":"248.000"},{"1":"March","2":"2010","3":"Chkn_BSBrst","4":"645.500"},{"1":"March","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"March","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"March","2":"2010","3":"Chkn_Thigh","4":"222.000"},{"1":"April","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"April","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"April","2":"2010","3":"Egglg_12","4":"268.000"},{"1":"April","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"April","2":"2010","3":"Chkn_Whl","4":"241.500"},{"1":"April","2":"2010","3":"Chkn_BSBrst","4":"645.500"},{"1":"April","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"April","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"April","2":"2010","3":"Chkn_Thigh","4":"222.000"},{"1":"May","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"May","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"May","2":"2010","3":"Egglg_12","4":"268.000"},{"1":"May","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"May","2":"2010","3":"Chkn_Whl","4":"235.000"},{"1":"May","2":"2010","3":"Chkn_BSBrst","4":"645.500"},{"1":"May","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"May","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"May","2":"2010","3":"Chkn_Thigh","4":"222.000"},{"1":"June","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"June","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"June","2":"2010","3":"Egglg_12","4":"268.000"},{"1":"June","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"June","2":"2010","3":"Chkn_Whl","4":"235.000"},{"1":"June","2":"2010","3":"Chkn_BSBrst","4":"645.500"},{"1":"June","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"June","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"June","2":"2010","3":"Chkn_Thigh","4":"222.000"},{"1":"July","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"July","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"July","2":"2010","3":"Egglg_12","4":"268.000"},{"1":"July","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"July","2":"2010","3":"Chkn_Whl","4":"241.500"},{"1":"July","2":"2010","3":"Chkn_BSBrst","4":"645.500"},{"1":"July","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2010","3":"Chkn_Thigh","4":"222.000"},{"1":"August","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"August","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"August","2":"2010","3":"Egglg_12","4":"268.000"},{"1":"August","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"August","2":"2010","3":"Chkn_Whl","4":"235.000"},{"1":"August","2":"2010","3":"Chkn_BSBrst","4":"642.300"},{"1":"August","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2010","3":"Chkn_Thigh","4":"219.200"},{"1":"September","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"September","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"September","2":"2010","3":"Egglg_12","4":"268.000"},{"1":"September","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"September","2":"2010","3":"Chkn_Whl","4":"235.000"},{"1":"September","2":"2010","3":"Chkn_BSBrst","4":"637.500"},{"1":"September","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2010","3":"Chkn_Thigh","4":"215.000"},{"1":"October","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"October","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"October","2":"2010","3":"Egglg_12","4":"267.500"},{"1":"October","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"October","2":"2010","3":"Chkn_Whl","4":"235.000"},{"1":"October","2":"2010","3":"Chkn_BSBrst","4":"637.500"},{"1":"October","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2010","3":"Chkn_Thigh","4":"215.000"},{"1":"November","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"November","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"November","2":"2010","3":"Egglg_12","4":"267.500"},{"1":"November","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"November","2":"2010","3":"Chkn_Whl","4":"235.000"},{"1":"November","2":"2010","3":"Chkn_BSBrst","4":"637.500"},{"1":"November","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2010","3":"Chkn_Thigh","4":"215.000"},{"1":"December","2":"2010","3":"Eggxl_12","4":"285.500"},{"1":"December","2":"2010","3":"Eggxl_6","4":"185.500"},{"1":"December","2":"2010","3":"Egglg_12","4":"267.500"},{"1":"December","2":"2010","3":"Egglg_6","4":"174.500"},{"1":"December","2":"2010","3":"Chkn_Whl","4":"235.000"},{"1":"December","2":"2010","3":"Chkn_BSBrst","4":"637.500"},{"1":"December","2":"2010","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2010","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2010","3":"Chkn_Thigh","4":"215.000"},{"1":"Jan","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"Jan","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"Jan","2":"2011","3":"Egglg_12","4":"267.500"},{"1":"Jan","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"Jan","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"Jan","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"Jan","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"Jan","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"Jan","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"February","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"February","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"February","2":"2011","3":"Egglg_12","4":"267.500"},{"1":"February","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"February","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"February","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"February","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"February","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"February","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"March","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"March","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"March","2":"2011","3":"Egglg_12","4":"267.500"},{"1":"March","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"March","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"March","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"March","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"March","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"March","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"April","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"April","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"April","2":"2011","3":"Egglg_12","4":"267.500"},{"1":"April","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"April","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"April","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"April","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"April","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"April","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"May","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"May","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"May","2":"2011","3":"Egglg_12","4":"267.500"},{"1":"May","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"May","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"May","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"May","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"May","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"May","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"June","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"June","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"June","2":"2011","3":"Egglg_12","4":"270.000"},{"1":"June","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"June","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"June","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"June","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"June","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"June","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"July","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"July","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"July","2":"2011","3":"Egglg_12","4":"270.000"},{"1":"July","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"July","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"July","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"July","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"August","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"August","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"August","2":"2011","3":"Egglg_12","4":"270.000"},{"1":"August","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"August","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"August","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"August","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"September","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"September","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"September","2":"2011","3":"Egglg_12","4":"270.000"},{"1":"September","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"September","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"September","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"September","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"October","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"October","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"October","2":"2011","3":"Egglg_12","4":"270.000"},{"1":"October","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"October","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"October","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"October","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"November","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"November","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"November","2":"2011","3":"Egglg_12","4":"270.000"},{"1":"November","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"November","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"November","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"November","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"December","2":"2011","3":"Eggxl_12","4":"285.500"},{"1":"December","2":"2011","3":"Eggxl_6","4":"185.500"},{"1":"December","2":"2011","3":"Egglg_12","4":"270.000"},{"1":"December","2":"2011","3":"Egglg_6","4":"174.500"},{"1":"December","2":"2011","3":"Chkn_Whl","4":"235.000"},{"1":"December","2":"2011","3":"Chkn_BSBrst","4":"637.500"},{"1":"December","2":"2011","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2011","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2011","3":"Chkn_Thigh","4":"215.000"},{"1":"Jan","2":"2012","3":"Eggxl_12","4":"285.500"},{"1":"Jan","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"Jan","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"Jan","2":"2012","3":"Egglg_6","4":"174.500"},{"1":"Jan","2":"2012","3":"Chkn_Whl","4":"235.000"},{"1":"Jan","2":"2012","3":"Chkn_BSBrst","4":"637.500"},{"1":"Jan","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"Jan","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"Jan","2":"2012","3":"Chkn_Thigh","4":"215.000"},{"1":"February","2":"2012","3":"Eggxl_12","4":"288.500"},{"1":"February","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"February","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"February","2":"2012","3":"Egglg_6","4":"174.500"},{"1":"February","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"February","2":"2012","3":"Chkn_BSBrst","4":"700.000"},{"1":"February","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"February","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"February","2":"2012","3":"Chkn_Thigh","4":"215.000"},{"1":"March","2":"2012","3":"Eggxl_12","4":"288.500"},{"1":"March","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"March","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"March","2":"2012","3":"Egglg_6","4":"174.500"},{"1":"March","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"March","2":"2012","3":"Chkn_BSBrst","4":"700.000"},{"1":"March","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"March","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"March","2":"2012","3":"Chkn_Thigh","4":"215.000"},{"1":"April","2":"2012","3":"Eggxl_12","4":"288.500"},{"1":"April","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"April","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"April","2":"2012","3":"Egglg_6","4":"174.500"},{"1":"April","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"April","2":"2012","3":"Chkn_BSBrst","4":"700.000"},{"1":"April","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"April","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"April","2":"2012","3":"Chkn_Thigh","4":"215.000"},{"1":"May","2":"2012","3":"Eggxl_12","4":"288.500"},{"1":"May","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"May","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"May","2":"2012","3":"Egglg_6","4":"173.250"},{"1":"May","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"May","2":"2012","3":"Chkn_BSBrst","4":"700.000"},{"1":"May","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"May","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"May","2":"2012","3":"Chkn_Thigh","4":"215.000"},{"1":"June","2":"2012","3":"Eggxl_12","4":"288.500"},{"1":"June","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"June","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"June","2":"2012","3":"Egglg_6","4":"173.250"},{"1":"June","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"June","2":"2012","3":"Chkn_BSBrst","4":"700.000"},{"1":"June","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"June","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"June","2":"2012","3":"Chkn_Thigh","4":"215.000"},{"1":"July","2":"2012","3":"Eggxl_12","4":"288.500"},{"1":"July","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"July","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"July","2":"2012","3":"Egglg_6","4":"173.250"},{"1":"July","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"July","2":"2012","3":"Chkn_BSBrst","4":"700.000"},{"1":"July","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2012","3":"Chkn_Thigh","4":"215.000"},{"1":"August","2":"2012","3":"Eggxl_12","4":"288.500"},{"1":"August","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"August","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"August","2":"2012","3":"Egglg_6","4":"173.250"},{"1":"August","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"August","2":"2012","3":"Chkn_BSBrst","4":"700.000"},{"1":"August","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2012","3":"Chkn_Thigh","4":"216.250"},{"1":"September","2":"2012","3":"Eggxl_12","4":"288.500"},{"1":"September","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"September","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"September","2":"2012","3":"Egglg_6","4":"173.250"},{"1":"September","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"September","2":"2012","3":"Chkn_BSBrst","4":"700.000"},{"1":"September","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2012","3":"Chkn_Thigh","4":"216.250"},{"1":"October","2":"2012","3":"Eggxl_12","4":"288.500"},{"1":"October","2":"2012","3":"Eggxl_6","4":"185.500"},{"1":"October","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"October","2":"2012","3":"Egglg_6","4":"173.250"},{"1":"October","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"October","2":"2012","3":"Chkn_BSBrst","4":"700.000"},{"1":"October","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2012","3":"Chkn_Thigh","4":"216.250"},{"1":"November","2":"2012","3":"Eggxl_12","4":"290.000"},{"1":"November","2":"2012","3":"Eggxl_6","4":"188.130"},{"1":"November","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"November","2":"2012","3":"Egglg_6","4":"178.000"},{"1":"November","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"November","2":"2012","3":"Chkn_BSBrst","4":"703.750"},{"1":"November","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2012","3":"Chkn_Thigh","4":"216.250"},{"1":"December","2":"2012","3":"Eggxl_12","4":"290.000"},{"1":"December","2":"2012","3":"Eggxl_6","4":"188.130"},{"1":"December","2":"2012","3":"Egglg_12","4":"267.500"},{"1":"December","2":"2012","3":"Egglg_6","4":"178.000"},{"1":"December","2":"2012","3":"Chkn_Whl","4":"238.500"},{"1":"December","2":"2012","3":"Chkn_BSBrst","4":"703.750"},{"1":"December","2":"2012","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2012","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2012","3":"Chkn_Thigh","4":"216.250"},{"1":"Jan","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"Jan","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"Jan","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"Jan","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"Jan","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"Jan","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"Jan","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"Jan","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"Jan","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"February","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"February","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"February","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"February","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"February","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"February","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"February","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"February","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"February","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"March","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"March","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"March","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"March","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"March","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"March","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"March","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"March","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"March","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"April","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"April","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"April","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"April","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"April","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"April","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"April","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"April","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"April","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"May","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"May","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"May","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"May","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"May","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"May","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"May","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"May","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"May","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"June","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"June","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"June","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"June","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"June","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"June","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"June","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"June","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"June","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"July","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"July","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"July","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"July","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"July","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"July","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"July","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"July","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"July","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"August","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"August","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"August","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"August","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"August","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"August","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"August","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"August","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"August","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"September","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"September","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"September","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"September","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"September","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"September","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"September","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"September","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"September","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"October","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"October","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"October","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"October","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"October","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"October","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"October","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"October","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"October","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"November","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"November","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"November","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"November","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"November","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"November","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"November","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"November","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"November","2":"2013","3":"Chkn_Thigh","4":"216.250"},{"1":"December","2":"2013","3":"Eggxl_12","4":"290.000"},{"1":"December","2":"2013","3":"Eggxl_6","4":"188.130"},{"1":"December","2":"2013","3":"Egglg_12","4":"267.500"},{"1":"December","2":"2013","3":"Egglg_6","4":"178.000"},{"1":"December","2":"2013","3":"Chkn_Whl","4":"238.500"},{"1":"December","2":"2013","3":"Chkn_BSBrst","4":"703.750"},{"1":"December","2":"2013","3":"Chkn_WhlLg","4":"203.500"},{"1":"December","2":"2013","3":"Chkn_BnInBrst","4":"390.500"},{"1":"December","2":"2013","3":"Chkn_Thigh","4":"216.250"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="DACSS/601_Spring_2023" data-repo-id="R_kgDOI4JcJA" data-category="Announcements" data-category-id="" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb11" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Challenge 3 - Organiceggpoultry Dataset"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Megan Galarneau"</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Tidy Data: Pivoting"</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "03/07/2023"</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">    df-print: paged</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co">    css: "style.css"</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="co">  - challenge_3</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="co">  - organiceggpoultry</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="co">  - Megan Galarneau</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a><span class="fu">## Challenge Overview</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>Today's challenge is to:</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Identify what needs to be done to tidy the current data</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Anticipate the shape of pivoted data</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Pivot the data into tidy format using <span class="in">`pivot_longer`</span></span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a><span class="fu">## Read in data</span></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>Upon reading in the data set, I made some initial changes to clean up the data frame and make it easier to use later on. Specifically, I removed/renamed the column headers and removed the empty column.</span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a> <span class="fu">library</span>(readxl) </span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"_data/organiceggpoultry.xls"</span>, <span class="at">skip =</span> <span class="dv">5</span>, <span class="at">col_names =</span> <span class="fu">c</span>(<span class="st">"Date"</span>, <span class="st">"Eggxl_12"</span>, <span class="st">"Eggxl_6"</span>, <span class="st">"Egglg_12"</span>, <span class="st">"Egglg_6"</span>, <span class="st">"Remove"</span>, <span class="st">"Chkn_Whl"</span>, <span class="st">"Chkn_BSBrst"</span>, <span class="st">"Chkn_BnInBrst"</span>, <span class="st">"Chkn_WhlLg"</span>, <span class="st">"Chkn_Thigh"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a><span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(Remove))</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a><span class="fu">### Briefly describe the data</span></span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>This data set outlines the monthly prices (cents per pound) paid for USDA certified organic eggs &amp; poultry from 2004-2013. There are four types of eggs: extra large dozen, extra large half dozen, large dozen, and large half dozen. There are also five types of chickens: whole, boneless/skinless breast, bone-in breast, whole legs, and thighs. This data set is sourced from the U.S. Department of Agriculture, Agricultural Marketing Service (AMS) Market News, Organic Poultry and Eggs (Weekly reports).</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>In an ideal state, I am planning to pivot this data set so it neatly displays in one row the year, month, item, item type, and cost. Right now, even though I cleaned up the data, the reader cannot easily understand what story the data is telling.</span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(raw_organiceggpoultry,</span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a><span class="fu">## Anticipate the End Result</span></span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a>To reach the ideal state mentioned above, I will first need to break out the year and month from the date column. Additionally, there are non-numeric data points in the chicken columns so I will recode those as well. Each of these changes will ensure that I can properly pivot the data from wide to long in the last section.</span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry <span class="ot">&lt;-</span> raw_organiceggpoultry <span class="sc">%&gt;%</span> <span class="fu">separate</span>(Date, <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"Month"</span>, <span class="st">"Year"</span>), <span class="at">sep =</span> <span class="st">" "</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>(<span class="at">Year =</span> <span class="fu">as.integer</span>(Year))<span class="sc">%&gt;%</span></span>
+<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fill</span>(Year)</span>
+<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry<span class="ot">&lt;-</span>raw_organiceggpoultry<span class="sc">%&gt;%</span></span>
+<span id="cb11-89"><a href="#cb11-89" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Chkn_BnInBrst =</span> <span class="fu">recode</span>(Chkn_BnInBrst, <span class="st">`</span><span class="at">too few</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"0"</span>),</span>
+<span id="cb11-90"><a href="#cb11-90" aria-hidden="true" tabindex="-1"></a><span class="at">Chkn_Thigh =</span> <span class="fu">recode</span>(Chkn_Thigh, <span class="st">`</span><span class="at">too few</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"0"</span>))</span>
+<span id="cb11-91"><a href="#cb11-91" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-92"><a href="#cb11-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-95"><a href="#cb11-95" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb11-96"><a href="#cb11-96" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry<span class="sc">$</span>Chkn_BnInBrst <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(raw_organiceggpoultry<span class="sc">$</span>Chkn_BnInBrst)</span>
+<span id="cb11-97"><a href="#cb11-97" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-98"><a href="#cb11-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-101"><a href="#cb11-101" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb11-102"><a href="#cb11-102" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry<span class="sc">$</span>Chkn_Thigh <span class="ot">&lt;-</span></span>
+<span id="cb11-103"><a href="#cb11-103" aria-hidden="true" tabindex="-1"></a><span class="fu">as.numeric</span>(raw_organiceggpoultry<span class="sc">$</span>Chkn_Thigh)</span>
+<span id="cb11-104"><a href="#cb11-104" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry</span>
+<span id="cb11-105"><a href="#cb11-105" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-106"><a href="#cb11-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-109"><a href="#cb11-109" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb11-110"><a href="#cb11-110" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(raw_organiceggpoultry)</span>
+<span id="cb11-111"><a href="#cb11-111" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-112"><a href="#cb11-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-113"><a href="#cb11-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-114"><a href="#cb11-114" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pivot the Data</span></span>
+<span id="cb11-115"><a href="#cb11-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-116"><a href="#cb11-116" aria-hidden="true" tabindex="-1"></a>I pivoted the data successfully from wide to long. I can check this by comparing it to the data table above. It now clearly outlines the breakdown of organic egg and poultry prices (cent per pound) by month from 2004-2013. A new "case" in this instance is the monthly price of a type of egg or poultry.</span>
+<span id="cb11-117"><a href="#cb11-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-120"><a href="#cb11-120" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb11-121"><a href="#cb11-121" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry <span class="ot">&lt;-</span><span class="fu">pivot_longer</span>(raw_organiceggpoultry, <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"Eggxl_12"</span>, <span class="st">"Eggxl_6"</span>, <span class="st">"Egglg_12"</span>, <span class="st">"Egglg_6"</span>, <span class="st">"Chkn_Whl"</span>, <span class="st">"Chkn_BSBrst"</span>, <span class="st">"Chkn_WhlLg"</span>, <span class="st">"Chkn_BnInBrst"</span>, <span class="st">"Chkn_Thigh"</span>),</span>
+<span id="cb11-122"><a href="#cb11-122" aria-hidden="true" tabindex="-1"></a>                 <span class="at">names_to=</span><span class="st">"Organic Eggs &amp; Poultry"</span>,</span>
+<span id="cb11-123"><a href="#cb11-123" aria-hidden="true" tabindex="-1"></a>                 <span class="at">values_to =</span> <span class="st">"Cost, Cent/Lb"</span>)</span>
+<span id="cb11-124"><a href="#cb11-124" aria-hidden="true" tabindex="-1"></a>raw_organiceggpoultry</span>
+<span id="cb11-125"><a href="#cb11-125" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+</body></html>

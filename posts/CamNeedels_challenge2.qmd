@@ -1,0 +1,143 @@
+---
+title: "Challenge 2 submission"
+author: "Cameron Needels"
+desription: "Data wrangling: using filter(), dfSummary(), and summarise()"
+date: "03/1/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - CamNeedels
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(summarytools)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Data set used
+
+I used the railroads dataset from 2012. Here's what I found!
+
+```{r}
+#creating the dataset while also practicing permanently changing one of the variable names at the top
+
+library(readr)
+railroads <- read.csv("B:/Needels/Documents/DACCS 601/601_Spring_2023/posts/_data/railroad_2012_clean_county.csv")
+railroads <- rename(railroads, counties = county)
+railroads
+```
+
+
+## General information about data set
+
+This data set took trains from certain states and asked for the total number of employees in each county.The mean amount of employees is 87.2 and the standard deviation is 283.6. The min is 1, the median is 21, and the max is 8207 employees. Below is how I found this data. 
+
+
+```{r}
+#the manual version of finding median for railroads
+railroads %>%
+  summarize_all(median, na.rm = TRUE)
+
+#the manual version of finding mean for railroads
+railroads %>%
+  summarize_all(mean, na.rm = TRUE)
+
+#the manual version of finding the IQR for railroads
+railroads %>%
+  summarize_all(IQR, na.rm = TRUE)
+```
+
+
+```{r}
+#an general summary of the data set for railroads
+dfSummary(railroads)
+```
+
+
+## Texas Information
+
+7.5% of the counties on the list are Texas (TX) and there are
+221 counties from TX total. I decided to focus on texas as they have the most amount of counties and conducted averages for texas on my own.
+
+Tex has a min of 1 employee, a median of 17 employees, and a max of 4235 employees. The mean amount of employees in texas is 89.8 with a standard deviation of 350.1. The IQR in texas is 50 as well.
+
+
+
+```{r}
+#I create a new object called texas which takes the original railroads data set and
+# makes it only states with texas to be included.
+TEXAS <- filter(railroads, state == "TX")
+
+#the manual version of finding the median for TX
+TEXAS %>%
+  summarize_all(median, na.rm = TRUE)
+
+#the manual version of finding the mean for TX
+TEXAS %>%
+  summarize_all(mean, na.rm = TRUE)
+
+#the manual version of finding the IQR for TX
+TEXAS %>%
+  summarize_all(IQR, na.rm = TRUE)
+```
+
+```{r}
+#a general summary for the texas portion of the data set
+dfSummary(TEXAS)
+```
+## Washington County Information
+
+I went with washington as a filter/category to focus on because it is the most common county name and I thought it would be interesting to look into washingtons in different places. 
+
+Washington counties have a minimum of 3 employees, a median of 26 employees, and a maximum of 207 employees. They also have a mean of 45.8 employees with a standard deviation of 55.2. The IQR for washington counties is 37.
+
+```{r}
+#creating a new filter that only takes into account counties named
+#washington as it has the highest amount of names in the data set
+WASHINGTON <- filter(railroads, counties == "WASHINGTON")
+
+#the manual version of finding the median for Washington Counties
+WASHINGTON %>%
+  summarize_all(median, na.rm = TRUE)
+
+#the manual version of finding the mean for Washington Counties
+WASHINGTON %>%
+  summarize_all(mean, na.rm = TRUE)
+
+#the manual version of finding the IQR for Washington Counties
+WASHINGTON %>%
+  summarize_all(IQR, na.rm = TRUE)
+```
+
+
+
+```{r}
+#the df summary for the washington county data points ONLY
+
+dfSummary(WASHINGTON)
+```
+
+## Conclusion
+
+I conclude that this data set has conducted studies on employee
+numbers from 50 different states and has taken data from 2930 total counties in this data set.
+
+
+
+
+
+
+

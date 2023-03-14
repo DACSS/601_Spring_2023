@@ -1,0 +1,94 @@
+---
+title: "Challenge 2"
+author: "Khadijat Adeleye"
+desription: "Data wrangling: using group() and summarise()"
+date: "03/14/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - faostat
+  - hotel_bookings
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+knitr::opts_chunk$set(echo=TRUE,warning=FALSE,message=FALSE)
+```
+```{r}
+bookings<-read_csv("_data/hotel_bookings.csv")
+view(bookings)
+```
+###Description of Dataset
+The data set contains 119,390 hotel bookings from two hotels (“City Hotel” and “Resort Hotel”) with an arrival date between July 2015 and August 201. Each observation represents a hotel booking.The dataset contains room type, date of arrival, meals, distribution channel, nationalities , transaction and length of stay of every booking.
+
+```{r}
+print(summarytools::dfSummary(bookings,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',table.classes = 'table-condensed')
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+bookings%>% select(arrival_date_year, arrival_date_month)%>% distinct()
+```
+
+
+```{r}
+d<-bookings%>%
+  select(arrival_date_year, arrival_date_month)%>%
+  n_distinct
+
+bookings%>%
+  select(hotel, arrival_date_year, arrival_date_month)%>%
+  distinct()%>%
+  slice(c(1, d, d+1, d*2))
+```
+```{r}
+bookings%>%
+  group_by(hotel)%>%
+  count(reserved_room_type)
+```
+
+```{r}
+bookings%>%
+  group_by(hotel)%>%
+  count(reserved_room_type)%>%
+  pivot_wider(names_from= hotel, values_from = n)
+```
+```{r}
+t1<-bookings%>%
+  group_by(hotel, reserved_room_type)%>%
+  summarise(price = mean(adr),
+            adults = mean(adults),
+            children = mean(children+babies, na.rm=TRUE)
+            )%>%
+  pivot_wider(names_from= hotel, 
+              values_from = c(price, adults, children))
+
+knitr::kable(t1,
+             digits=1,
+             col.names = c("Type", "City", "Resort",
+                           "City", "Resort", "City", "Resort"))%>%
+  kableExtra::kable_styling(htmltable_class = "lightable-minimal")%>%
+  kableExtra::add_header_above(c("Room" = 1, "Price" = 2,
+                                 "Adults" = 2, "Children & Babies" = 2))
+```
+###Explain and Interpret
+  *Understanding the type of  hotelbooking according to the type of rooms.Also identifying the difference in price of room between resort and City hotel. From the table above,both resort and city hotel has no booking from adult and children for Type P.  
+  In  both Resort and city hotel, Room type G has the highest mean. Although Room type A has the least mean price, but it is not accommodated by children.*

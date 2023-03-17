@@ -1,0 +1,107 @@
+---
+title: "Challenge_2"
+author: "XinyangMao"
+description: "Data wrangling: using group() and summarise()"
+date: "03/17/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - XinyangMao
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+-   hotel_bookings.csv
+```{r}
+df <- read.csv("_data/hotel_bookings.csv")
+data <- na.omit(df)
+```
+
+In this challenge,I chose hotel_bookings.csv to analysis.
+
+## Describe the data
+
+We can see that there are 119390 rows and 32 columns in this dataset.
+
+```{r}
+#| label: summary
+dim(data)
+```
+The structure of the data set also tells us the number of rows and columns, but it provides even more information. It tells us the column names, the class of each column (what kind of data is stored in it), and the first few observations of each variable.
+```{r}
+str(data)
+```
+
+The summary provides descriptive statistics including the min, max, mean, median, and quartiles of each column. For example, we can see in this data set that the mean rate of is_canaceled is 37.04% and the maximum number of baby is 10.
+```{r}
+summary(data)
+```
+## Provide Grouped Summary Statistics
+
+We can see there are lots of variables now,we can use cor() function to show the relationships between these variables.Obviously,we can find that for arrival_date_year variables,the most related numeric variable is arrival_date_week_number.But all of the numeric variables seem don't have strong relationships.
+
+```{r}
+library(dplyr)
+data <- select(data,-where(is.character))
+cor(data)
+```
+According to the dataset,we can notice that it provide the number of adults, children and baby.Let's take a look at the relationship between the type of occupant and the month of occupancy.
+```{r}
+df %>%
+  select(arrival_date_month,children,adults,babies)%>%
+  group_by(arrival_date_month)
+```
+We can use arrange(),desc(),select(),group_by() and slice() to show which months have most children guests below.
+The result is the largest number of children be hosted in a hotel happened in July,the less time happened in September.
+```{r}
+df %>%
+  arrange(desc(children))%>%
+  select(arrival_date_month,children)%>%
+  group_by(arrival_date_month)%>%
+  slice(1)%>%
+  arrange(desc(children))
+
+```
+Same,for adults,they're October and January.
+```{r}
+df %>%
+  arrange(desc(adults))%>%
+  select(arrival_date_month,adults)%>%
+  group_by(arrival_date_month)%>%
+  slice(1)%>%
+  arrange(desc(adults))
+```
+As for babies,the maximum number happened in October too.
+```{r}
+df %>%
+  arrange(desc(babies))%>%
+  select(arrival_date_month,babies)%>%
+  group_by(arrival_date_month)%>%
+  slice(1)%>%
+  arrange(desc(babies))
+```
+### Explain and Interpret
+Some interesting findings are that hotel stays for adults and babies are relatively similar, with the most and least occurring in October and January, respectively, probably because October is a good month to travel and January is usually colder. For children, the highest number of children occurred in July, probably during the summer holidays.
+

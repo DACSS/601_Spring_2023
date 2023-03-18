@@ -1,0 +1,107 @@
+---
+title: "Tidy Australian Marriage data"
+author: "Sahan Prasad Podduturi Reddy"
+desription: "Tidy Data: Pivoting"
+date: "03/18/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - australian_marriage
+  - Sahan Prasad Podduturi Reddy
+---
+## Introduction
+
+I was trying to analyze the 'australian_marriage\*.xls' dataset by splitting the dataset into two separate dataframes and then tidying the data to interpret the results. This dataset summarizes the responses given by eligible participants of the Australian Marriage Law Postal Survey, 2017. We first start by importing the necessary libraries and setting the working directory to point to the location where the spreadsheet is located.
+
+```{r}
+#| label: Introduction
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+library(DescTools)
+library(kableExtra)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+setwd("D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data")
+```
+
+## Read in the Data
+
+Looking at the dataset, we can see that the data can be split up into two separate dataframes which makes it much easier to understand the context of the data we are trying to analyze. We use read_excel() to read in the excel sheet and then use "sheet=2" and "skip=6" as parameters. This removes the first six lines of the sheet as we import data into our dataframe. We can then assign a different column name to each column using colnames().We then use slice() to get only the data regarding the states/territories and ignore the remaining text in the spreadsheet.
+
+```{r}
+#| label: ReadFile
+#| warning: false
+#| message: false
+
+setwd("D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data")
+dataframe <- read_excel("australian_marriage_law_postal_survey_2017_-_response_final.xls", sheet = 2, skip = 6)
+dataframe <- slice(dataframe, 1:9)
+colnames(dataframe) <- c("State/Territory", "Response Clear Yes", "Response Clear Yes %", "Response Clear No", "Response Clear No %", "Response Clear Total", "Response Clear Total %", "Blank", "Response Clear Total Eligible", "Response Clear Total Eligible %", "Response Not Clear Total Eligible", "Response Not Clear Total Eligible %", "No Response", "No Response %", "Total", "Total %")
+print(dataframe)
+```
+
+## Brief Description
+We first create a subset containing information on total number of 1)clear responses, 2)unclear responses, and 3)no responses by eligible participants in the survey over different states/territories. Then from this subset, we select only the participants from the "Clear Response" column and analyze their responses to the survey in another dataframe.
+
+In our third dataframe, we take the number of clear responses and sort them by 'Yes' and 'No' Response per each state and calculate how much they account for over the total Response Count. This is the data that we are trying to tidy. We are trying to clean this data because the format can be better. Currently we have separate columns for 'Yes' and 'No' response counts. We can easily group these into a name column named "Response" holding the response value using pivot_longer() and place the response counts in a separate Response Count column. This makes it much simpler to interpret the data at a glance.
+
+We can use nrow() and ncol() to find that the current dataset we're working with has 9 rows and 4 cols.
+
+```{r}
+#| label: Description
+#| warning: false
+#| message: false
+
+dataframe2 <- select(dataframe, "State/Territory", "Response Clear Total Eligible", "Response Clear Total Eligible %", "Response Not Clear Total Eligible", "Response Not Clear Total Eligible %", "No Response", "No Response %", "Total", "Total %")
+colnames(dataframe2) <- c("State/Territory", "Clear Response", "Clear Response %", "Unclear Response", "Unclear Response %", "No Response", "No Response %", "Total Eligible Participants", "Total %")
+
+kable(select(dataframe2, "State/Territory", "Clear Response", "Unclear Response", "No Response", "Total Eligible Participants"), "html") %>% 
+  column_spec(2, background = "yellow")
+
+dataframe3 <- select(dataframe, "State/Territory", "Response Clear Yes", "Response Clear Yes %", "Response Clear No", "Response Clear No %")
+colnames(dataframe3) <- c("State/Territory", "Yes", "Yes %", "No", "No %")
+print(dataframe3)
+nrow(dataframe3)
+ncol(dataframe3)
+```
+
+
+## Anticipate the data
+We are first going to pivot the data based on columns "Yes" and "No" using the pivot_longer() command. 
+Using nrow() and ncol(), we find that we have 9 rows and 5 cols in our dataframe. Using pivot_longer, we are pivoting 2 variable names into the names_to column - "Response". So we will end up with 9*(2) = 18 rows in the dataframe. The cols will remain the same(5 columns) because we are removing 2 cols and adding 2 cols with the "names_to" and "values_to" attributes.
+
+Next we will want to substitute "Yes %" and "No %" with a single column - "Percentage Response Count" for the dataframe such that column value for a particular row is equal to value in "Yes %" if "Response == Yes", otherwise value will be equal to value in 
+"No %". Thus overall, we will lose one column and end up with 4 columns.
+
+Initial Dimensions = 9 x 5
+Final Prediction = 18 x 4
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+We first use the pivot_longer() function to pivot the "Yes" and "No" columns and then apply the mutate() function to get the "Percentage Response Count" column. In the end, we print out the number of rows and columns to verify our prediction. 
+
+
+```{r}
+#| label: Pivot
+#| warning: false
+#| message: false
+
+dataframe4 <- dataframe3 %>% pivot_longer(cols=c("Yes","No"), names_to = "Response", values_to = "Response Count") %>%
+  mutate(`Percentage Response Count` = case_when(
+    Response == "Yes" ~ `Yes %`,
+    Response == "No" ~ `No %`
+  )) %>%
+  select(-"Yes %", -"No %")
+
+print(dataframe4)
+nrow(dataframe4)
+ncol(dataframe4)
+```

@@ -26,7 +26,7 @@ categories:
 #| warning: false
 #| message: false
 
-my_packages <- c("tidyverse", "readxl", "knitr") # create vector of packages
+my_packages <- c("tidyverse", "readxl", "knitr", "zoo") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
 
@@ -42,7 +42,7 @@ Challenge 4 includes four tasks:
 3)  identify variables that need to be mutated
 4)  mutate variables and sanity check all mutations
 
-## Task 1) Read in and Describe the Data
+## Task 1) Read in, Tidy, and Describe the Data
 
 I chose to read in the organic egg file, organiceggpoultry.xls. I use the same process as in [my Challenge 3 submission](https://dacss.github.io/601_Spring_2023/posts/TimShores_challenge3.html){.external target="_blank"}. I left out the details in this post, and show only the first 18 of 1,080 lines of the final data frame.
 
@@ -64,7 +64,7 @@ df_eggPoultryData <- df_eggPoultryData %>%
   separate_wider_delim(month, delim = " ", names = c("month", "year"), too_few = "align_start", too_many = "merge") %>% 
   mutate(month = replace(month, month == 'Jan', 'January')) %>%
   mutate(year = replace(year, year == '/1', NA)) %>%
-  fill(year) %>% # tidy the month column and separate year into its own column. The source data labels the year only on January, implying the year for the other months. It's important to make both month and year explicit for each observation so we don't end up with analysis that makes it difficult to identify the year.
+  fill(year) %>% # tidy the month column and separate year into its own column. 
   pivot_longer(cols = -c(month,year), names_to = "item", values_to = "price") %>% # to pivot the egg and chicken product column headings into row values under a new `item` column, with their values listed in a `price` column
   mutate(item = str_remove_all(item, '\\n')) %>% # tidy up item values and make labels consistent
   mutate(item = str_remove_all(item, '1/2 Dozen')) %>%
@@ -80,29 +80,27 @@ df_eggPoultryData <- df_eggPoultryData %>%
   print(n=18) # print a sample of the table
 ```
 
-
-
 ### Briefly describe the data
 
-## Tidy Data (as needed)
+The data describes the price of several types of USDA certified organic egg and chicken products from the years 2004 to 2013. The price was paid by 'first receivers', described in a footnote as "those entities that purchases the processed product from the poultry or egg company, such as a retailer, distributor, or manufacturer." The cited data sources are the U.S. Department of Agriculture, Agricultural Marketing Service (AMS) Market News, Organic Poultry and Eggs (Weekly reports).
 
-Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+The data includes `r ncol(df_eggPoultryData)` variables (date, 4 egg carton items and 5 chicken items, and an empty column) with prices for `r ncol(df_eggPoultryData) - 2` items for each month of 10 years in `r nrow(df_eggPoultryData) - 4` rows.
 
-```{r}
-
-
-```
-
-Any additional comments?
 
 ## Identify variables that need to be mutated
 
-Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+In the Tidying code block above, I pivot the source data columns to a single `item` column. I then use several mutate functions to make the data more consistent and apply labels from other metadata taken from the original header.
 
-Document your work here.
+I also use mutate to create a month and year column, but these variables are still character data types. 
+
+The `lubridate` package wants to use dates or datetimes. It can do calculations with periods such as months, but the output is still dates or datetimes rather than months. I could pick the 1st of each month to work around this limitation, but there's another option ...
+
+The `zoo` package `yearmon` class can return a year and month combo to represent dates on in monthly units. I like that! I decided to use `zoo` instead of `lubridate` for this specific case.
 
 ```{r}
-
+df_eggPoultryData$month <- as.yearmon(paste(df_eggPoultryData$year, df_eggPoultryData$month), "%Y %B")
+df_eggPoultryData <- subset(df_eggPoultryData, select = -c(year))
+print(df_eggPoultryData, n=18)
 ```
 
-Any additional comments?
+I con

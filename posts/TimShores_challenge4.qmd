@@ -46,14 +46,15 @@ Challenge 4 includes four tasks:
 
 I chose to read in the organic egg file, organiceggpoultry.xls. I use the same process as in [my Challenge 3 submission](https://dacss.github.io/601_Spring_2023/posts/TimShores_challenge3.html){.external target="_blank"}. I left out the details in this post, and show only the first 18 of 1,080 lines of the final data frame.
 
+I also use `mutate` and `case_match` to convert `price` strings to `0`. I could also remove these rows but I think it's better to leave them and document that `0` means there were too few cases to make an observation.
+
 ```{r}
 listEggDFs <- map(set_names(excel_sheets("../posts/_data/organiceggpoultry.xls")),
 read_xls, path = "../posts/_data/organiceggpoultry.xls") # read in all sheets as dataframes in a list
 
 df_eggPoultryData <- map(names(listEggDFs), ~assign(.x, listEggDFs[[.x]], envir = .GlobalEnv))[[1]] # assign the first df in the list to a separate df
 
-productname <- c(df_eggPoultryData[2,1],df_eggPoultryData[2,7]) # Store header values in list variables for use after pivot.
-unitname <- c(df_eggPoultryData[3,1],df_eggPoultryData[3,7])
+productname <- c(word(df_eggPoultryData[2,1], -1),word(df_eggPoultryData[2,7], -1)) # Store last word from header values in list variables for use after pivot.
 
 colnames(df_eggPoultryData) <- df_eggPoultryData[4, ] # Assign values from the 4th populated row to column names
 colnames(df_eggPoultryData)[1] <- "month" # source data has no name in date column
@@ -69,14 +70,11 @@ df_eggPoultryData <- df_eggPoultryData %>%
   mutate(item = str_remove_all(item, '\\n')) %>% # tidy up item values and make labels consistent
   mutate(item = str_remove_all(item, '1/2 Dozen')) %>%
   mutate(item = str_replace_all(item, 'Doz\\.','Dozen')) %>%
-  mutate(product = case_when( # assign the egg and chicken product and unit variables that I recorded earlier according to each egg and chicken item
+  mutate(product = case_when( # assign the egg and chicken product variables that I recorded earlier according to each egg and chicken item
     str_detect(item, regex("^[EL]")) ~ productname[[1]],
     str_detect(item, regex("^[BTW]")) ~ productname[[2]]
     )) %>% 
-  mutate(unit = case_when( 
-    str_detect(item, regex("^[EL]")) ~ unitname[[1]],
-    str_detect(item, regex("^[BTW]")) ~ unitname[[2]]
-    )) %>%
+  mutate(price = case_match(price, "too few" ~ NA, .default = as.double(price))) %>% # make column all double and NA
   print(n=18) # print a sample of the table
 ```
 
@@ -87,7 +85,7 @@ The data describes the price of several types of USDA certified organic egg and 
 The data includes `r ncol(df_eggPoultryData)` variables (date, 4 egg carton items and 5 chicken items, and an empty column) with prices for `r ncol(df_eggPoultryData) - 2` items for each month of 10 years in `r nrow(df_eggPoultryData) - 4` rows.
 
 
-## Identify variables that need to be mutated
+## Task 2) Identify variables that need to be mutated
 
 In the Tidying code block above, I pivot the source data columns to a single `item` column. I then use several mutate functions to make the data more consistent and apply labels from other metadata taken from the original header.
 
@@ -98,9 +96,84 @@ The `lubridate` package wants to use dates or datetimes. It can do calculations 
 The `zoo` package `yearmon` class can return a year and month combo to represent dates on in monthly units. I like that! I decided to use `zoo` instead of `lubridate` for this specific case.
 
 ```{r}
-df_eggPoultryData$month <- as.yearmon(paste(df_eggPoultryData$year, df_eggPoultryData$month), "%Y %B")
-df_eggPoultryData <- subset(df_eggPoultryData, select = -c(year))
-print(df_eggPoultryData, n=18)
+df_eggPoultryData$monthYear <- as.yearmon(paste(df_eggPoultryData$year, df_eggPoultryData$month), "%Y %B") # turn combine month and year strings into a yearmon data type column
+df_eggPoultryData <- subset(df_eggPoultryData, select = -c(month, year)) %>%
+  relocate(monthYear) %>% # we no longer need the month and year string columns
+  print(n=18)
 ```
 
-I con
+Now I can summarize price information by item. There are 9 items, so this table has only 9 rows. (I also updated the `find_mode` function from the version I used in Challenge 2 -- it now omits NA values, which makes the calculation of mode consistent with how I'm using other summary calculations.)
+
+```{r}
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+df_eggPoultryData %>% 
+  group_by(item) %>% 
+  summarise(
+    meanPrice = mean(price, na.rm = TRUE), 
+    modePrice = find_mode(price), 
+    minPrice = fivenum(price, na.rm = TRUE)[1], 
+    lowHingePrice = fivenum(price, na.rm = TRUE)[2], 
+    medianPrice = median(price, na.rm = TRUE), 
+    upHungePrice = fivenum(price, na.rm = TRUE)[4], 
+    maxPrice = fivenum(price, na.rm = TRUE)[5], 
+    count = n()
+    )
+```
+
+Or by month and item (this time using `lubridate`!). I expect this table to show 108 rows = 9 items * 12 months.
+
+```{r}
+df_eggPoultryData %>% 
+  group_by(month = month(monthYear, label = TRUE), item) %>% 
+  summarise(
+    meanPrice = mean(price, na.rm = TRUE), 
+    modePrice = find_mode(price), 
+    minPrice = fivenum(price, na.rm = TRUE)[1], 
+    lowHingePrice = fivenum(price, na.rm = TRUE)[2], 
+    medianPrice = median(price, na.rm = TRUE), 
+    upHungePrice = fivenum(price, na.rm = TRUE)[4], 
+    maxPrice = fivenum(price, na.rm = TRUE)[5], 
+    count = n()
+    )
+```
+
+Or by product. One row each for eggs and chicken.
+
+```{r}
+df_eggPoultryData %>% 
+  group_by(product) %>% 
+  summarise(
+    meanPrice = mean(price, na.rm = TRUE), 
+    modePrice = find_mode(price), 
+    minPrice = fivenum(price, na.rm = TRUE)[1], 
+    lowHingePrice = fivenum(price, na.rm = TRUE)[2], 
+    medianPrice = median(price, na.rm = TRUE), 
+    upHungePrice = fivenum(price, na.rm = TRUE)[4], 
+    maxPrice = fivenum(price, na.rm = TRUE)[5], 
+    count = n()
+    )
+```
+
+Or by year and product. Ten years of eggs and chicken, in 20 rows.
+
+```{r}
+df_eggPoultryData %>% 
+  group_by(year = year(monthYear), product) %>% 
+  summarise(
+    meanPrice = mean(price, na.rm = TRUE), 
+    modePrice = find_mode(price), 
+    minPrice = fivenum(price, na.rm = TRUE)[1], 
+    lowHingePrice = fivenum(price, na.rm = TRUE)[2], 
+    medianPrice = median(price, na.rm = TRUE), 
+    upHungePrice = fivenum(price, na.rm = TRUE)[4], 
+    maxPrice = fivenum(price, na.rm = TRUE)[5], 
+    count = n()
+    )
+```

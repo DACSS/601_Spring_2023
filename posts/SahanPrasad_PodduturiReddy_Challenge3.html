@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.335">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Sahan Prasad Podduturi Reddy">
+<meta name="dcterms.date" content="2023-03-18">
+
+<title>Tidy Australian Marriage data</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../images/DACSS_Round_Network.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+<script src="../site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="../site_libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+
+
+<meta name="twitter:title" content="Tidy Australian Marriage data">
+<meta name="twitter:description" content="I was trying to analyze the ‘australian_marriage*.xls’ dataset by splitting the dataset into two separate dataframes and then tidying the data to interpret the results.">
+<meta name="twitter:creator" content="@UMassDACSS">
+<meta name="twitter:site" content="@UMassDACSS">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../images/UMass White Wordmark Horiz.png" alt="" class="navbar-logo">
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/DACSS">
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html">
+ <span class="menu-text">Contributors</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://umass.edu/sbs/dacss">
+ <span class="menu-text">DACSS</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/DACSS"><i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+              <div class="quarto-toggle-container">
+                  <a href="" class="quarto-color-scheme-toggle nav-link" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+              </div>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#read-in-the-data" id="toc-read-in-the-data" class="nav-link" data-scroll-target="#read-in-the-data">Read in the Data</a></li>
+  <li><a href="#brief-description" id="toc-brief-description" class="nav-link" data-scroll-target="#brief-description">Brief Description</a></li>
+  <li><a href="#anticipate-the-data" id="toc-anticipate-the-data" class="nav-link" data-scroll-target="#anticipate-the-data">Anticipate the data</a></li>
+  <li><a href="#pivot-the-data" id="toc-pivot-the-data" class="nav-link" data-scroll-target="#pivot-the-data">Pivot the Data</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Tidy Australian Marriage data</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">challenge_3</div>
+    <div class="quarto-category">australian_marriage</div>
+    <div class="quarto-category">Sahan Prasad Podduturi Reddy</div>
+  </div>
+  </div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Sahan Prasad Podduturi Reddy </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 18, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>I was trying to analyze the ‘australian_marriage*.xls’ dataset by splitting the dataset into two separate dataframes and then tidying the data to interpret the results. This dataset summarizes the responses given by eligible participants of the Australian Marriage Law Postal Survey, 2017. We first start by importing the necessary libraries and setting the working directory to point to the location where the spreadsheet is located.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DescTools)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="read-in-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="read-in-the-data">Read in the Data</h2>
+<p>Looking at the dataset, we can see that the data can be split up into two separate dataframes which makes it much easier to understand the context of the data we are trying to analyze. We use read_excel() to read in the excel sheet and then use “sheet=2” and “skip=6” as parameters. This removes the first six lines of the sheet as we import data into our dataframe. We can then assign a different column name to each column using colnames().We then use slice() to get only the data regarding the states/territories and ignore the remaining text in the spreadsheet.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dataframe <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"australian_marriage_law_postal_survey_2017_-_response_final.xls"</span>, <span class="at">sheet =</span> <span class="dv">2</span>, <span class="at">skip =</span> <span class="dv">6</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>dataframe <span class="ot">&lt;-</span> <span class="fu">slice</span>(dataframe, <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dataframe) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"State/Territory"</span>, <span class="st">"Response Clear Yes"</span>, <span class="st">"Response Clear Yes %"</span>, <span class="st">"Response Clear No"</span>, <span class="st">"Response Clear No %"</span>, <span class="st">"Response Clear Total"</span>, <span class="st">"Response Clear Total %"</span>, <span class="st">"Blank"</span>, <span class="st">"Response Clear Total Eligible"</span>, <span class="st">"Response Clear Total Eligible %"</span>, <span class="st">"Response Not Clear Total Eligible"</span>, <span class="st">"Response Not Clear Total Eligible %"</span>, <span class="st">"No Response"</span>, <span class="st">"No Response %"</span>, <span class="st">"Total"</span>, <span class="st">"Total %"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(dataframe)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 9 × 16
+  State/…¹ Respo…² Respo…³ Respo…⁴ Respo…⁵ Respo…⁶ Respo…⁷ Blank Respo…⁸ Respo…⁹
+  &lt;chr&gt;      &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;lgl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+1 New Sou… 2374362    57.8 1736838    42.2  4.11e6     100 NA     4.11e6    79.2
+2 Victoria 2145629    64.9 1161098    35.1  3.31e6     100 NA     3.31e6    81.4
+3 Queensl… 1487060    60.7  961015    39.3  2.45e6     100 NA     2.45e6    77.7
+4 South A…  592528    62.5  356247    37.5  9.49e5     100 NA     9.49e5    79.5
+5 Western…  801575    63.7  455924    36.3  1.26e6     100 NA     1.26e6    78.3
+6 Tasmania  191948    63.6  109655    36.4  3.02e5     100 NA     3.02e5    79.5
+7 Norther…   48686    60.6   31690    39.4  8.04e4     100 NA     8.04e4    58.2
+8 Austral…  175459    74     61520    26    2.37e5     100 NA     2.37e5    82.3
+9 Austral… 7817247    61.6 4873987    38.4  1.27e7     100 NA     1.27e7    79.3
+# … with 6 more variables: `Response Not Clear Total Eligible` &lt;dbl&gt;,
+#   `Response Not Clear Total Eligible %` &lt;dbl&gt;, `No Response` &lt;dbl&gt;,
+#   `No Response %` &lt;dbl&gt;, Total &lt;dbl&gt;, `Total %` &lt;dbl&gt;, and abbreviated
+#   variable names ¹​`State/Territory`, ²​`Response Clear Yes`,
+#   ³​`Response Clear Yes %`, ⁴​`Response Clear No`, ⁵​`Response Clear No %`,
+#   ⁶​`Response Clear Total`, ⁷​`Response Clear Total %`,
+#   ⁸​`Response Clear Total Eligible`, ⁹​`Response Clear Total Eligible %`</code></pre>
+</div>
+</div>
+</section>
+<section id="brief-description" class="level2">
+<h2 class="anchored" data-anchor-id="brief-description">Brief Description</h2>
+<p>We first create a subset containing information on total number of 1)clear responses, 2)unclear responses, and 3)no responses by eligible participants in the survey over different states/territories. Then from this subset, we select only the participants from the “Clear Response” column and analyze their responses to the survey in another dataframe.</p>
+<p>In our third dataframe, we take the number of clear responses and sort them by ‘Yes’ and ‘No’ Response per each state and calculate how much they account for over the total Response Count. This is the data that we are trying to tidy. We are trying to clean this data because the format can be better. Currently we have separate columns for ‘Yes’ and ‘No’ response counts. We can easily group these into a name column named “Response” holding the response value using pivot_longer() and place the response counts in a separate Response Count column. This makes it much simpler to interpret the data at a glance.</p>
+<p>We can use nrow() and ncol() to find that the current dataset we’re working with has 9 rows and 4 cols.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>dataframe2 <span class="ot">&lt;-</span> <span class="fu">select</span>(dataframe, <span class="st">"State/Territory"</span>, <span class="st">"Response Clear Total Eligible"</span>, <span class="st">"Response Clear Total Eligible %"</span>, <span class="st">"Response Not Clear Total Eligible"</span>, <span class="st">"Response Not Clear Total Eligible %"</span>, <span class="st">"No Response"</span>, <span class="st">"No Response %"</span>, <span class="st">"Total"</span>, <span class="st">"Total %"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dataframe2) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"State/Territory"</span>, <span class="st">"Clear Response"</span>, <span class="st">"Clear Response %"</span>, <span class="st">"Unclear Response"</span>, <span class="st">"Unclear Response %"</span>, <span class="st">"No Response"</span>, <span class="st">"No Response %"</span>, <span class="st">"Total Eligible Participants"</span>, <span class="st">"Total %"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">select</span>(dataframe2, <span class="st">"State/Territory"</span>, <span class="st">"Clear Response"</span>, <span class="st">"Unclear Response"</span>, <span class="st">"No Response"</span>, <span class="st">"Total Eligible Participants"</span>), <span class="st">"html"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_spec</span>(<span class="dv">2</span>, <span class="at">background =</span> <span class="st">"yellow"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+
+<table>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> State/Territory </th>
+   <th style="text-align:right;"> Clear Response </th>
+   <th style="text-align:right;"> Unclear Response </th>
+   <th style="text-align:right;"> No Response </th>
+   <th style="text-align:right;"> Total Eligible Participants </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> New South Wales </td>
+   <td style="text-align:right;background-color: yellow !important;"> 4111200 </td>
+   <td style="text-align:right;"> 11036 </td>
+   <td style="text-align:right;"> 1065445 </td>
+   <td style="text-align:right;"> 5187681 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Victoria </td>
+   <td style="text-align:right;background-color: yellow !important;"> 3306727 </td>
+   <td style="text-align:right;"> 11028 </td>
+   <td style="text-align:right;"> 743634 </td>
+   <td style="text-align:right;"> 4061389 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Queensland </td>
+   <td style="text-align:right;background-color: yellow !important;"> 2448075 </td>
+   <td style="text-align:right;"> 7088 </td>
+   <td style="text-align:right;"> 695710 </td>
+   <td style="text-align:right;"> 3150873 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> South Australia </td>
+   <td style="text-align:right;background-color: yellow !important;"> 948775 </td>
+   <td style="text-align:right;"> 2778 </td>
+   <td style="text-align:right;"> 242027 </td>
+   <td style="text-align:right;"> 1193580 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Western Australia </td>
+   <td style="text-align:right;background-color: yellow !important;"> 1257499 </td>
+   <td style="text-align:right;"> 3188 </td>
+   <td style="text-align:right;"> 346333 </td>
+   <td style="text-align:right;"> 1607020 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Tasmania </td>
+   <td style="text-align:right;background-color: yellow !important;"> 301603 </td>
+   <td style="text-align:right;"> 805 </td>
+   <td style="text-align:right;"> 77020 </td>
+   <td style="text-align:right;"> 379428 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Northern Territory(b) </td>
+   <td style="text-align:right;background-color: yellow !important;"> 80376 </td>
+   <td style="text-align:right;"> 229 </td>
+   <td style="text-align:right;"> 57496 </td>
+   <td style="text-align:right;"> 138101 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Australian Capital Territory(c) </td>
+   <td style="text-align:right;background-color: yellow !important;"> 236979 </td>
+   <td style="text-align:right;"> 534 </td>
+   <td style="text-align:right;"> 50595 </td>
+   <td style="text-align:right;"> 288108 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Australia </td>
+   <td style="text-align:right;background-color: yellow !important;"> 12691234 </td>
+   <td style="text-align:right;"> 36686 </td>
+   <td style="text-align:right;"> 3278260 </td>
+   <td style="text-align:right;"> 16006180 </td>
+  </tr>
+</tbody>
+</table>
+
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dataframe3 <span class="ot">&lt;-</span> <span class="fu">select</span>(dataframe, <span class="st">"State/Territory"</span>, <span class="st">"Response Clear Yes"</span>, <span class="st">"Response Clear Yes %"</span>, <span class="st">"Response Clear No"</span>, <span class="st">"Response Clear No %"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dataframe3) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"State/Territory"</span>, <span class="st">"Yes"</span>, <span class="st">"Yes %"</span>, <span class="st">"No"</span>, <span class="st">"No %"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(dataframe3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 9 × 5
+  `State/Territory`                   Yes `Yes %`      No `No %`
+  &lt;chr&gt;                             &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;
+1 New South Wales                 2374362    57.8 1736838   42.2
+2 Victoria                        2145629    64.9 1161098   35.1
+3 Queensland                      1487060    60.7  961015   39.3
+4 South Australia                  592528    62.5  356247   37.5
+5 Western Australia                801575    63.7  455924   36.3
+6 Tasmania                         191948    63.6  109655   36.4
+7 Northern Territory(b)             48686    60.6   31690   39.4
+8 Australian Capital Territory(c)  175459    74     61520   26  
+9 Australia                       7817247    61.6 4873987   38.4</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(dataframe3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 9</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ncol</span>(dataframe3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+</div>
+</section>
+<section id="anticipate-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="anticipate-the-data">Anticipate the data</h2>
+<p>We are first going to pivot the data based on columns “Yes” and “No” using the pivot_longer() command. Using nrow() and ncol(), we find that we have 9 rows and 5 cols in our dataframe. Using pivot_longer, we are pivoting 2 variable names into the names_to column - “Response”. So we will end up with 9*(2) = 18 rows in the dataframe. The cols will remain the same(5 columns) because we are removing 2 cols and adding 2 cols with the “names_to” and “values_to” attributes.</p>
+<p>Next we will want to substitute “Yes %” and “No %” with a single column - “Percentage Response Count” for the dataframe such that column value for a particular row is equal to value in “Yes %” if “Response == Yes”, otherwise value will be equal to value in “No %”. Thus overall, we will lose one column and end up with 4 columns.</p>
+<p>Initial Dimensions = 9 x 5 Final Prediction = 18 x 4</p>
+</section>
+<section id="pivot-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="pivot-the-data">Pivot the Data</h2>
+<p>Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a “sanity” check. We first use the pivot_longer() function to pivot the “Yes” and “No” columns and then apply the mutate() function to get the “Percentage Response Count” column. In the end, we print out the number of rows and columns to verify our prediction.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>dataframe4 <span class="ot">&lt;-</span> dataframe3 <span class="sc">%&gt;%</span> <span class="fu">pivot_longer</span>(<span class="at">cols=</span><span class="fu">c</span>(<span class="st">"Yes"</span>,<span class="st">"No"</span>), <span class="at">names_to =</span> <span class="st">"Response"</span>, <span class="at">values_to =</span> <span class="st">"Response Count"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">`</span><span class="at">Percentage Response Count</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">case_when</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    Response <span class="sc">==</span> <span class="st">"Yes"</span> <span class="sc">~</span> <span class="st">`</span><span class="at">Yes %</span><span class="st">`</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    Response <span class="sc">==</span> <span class="st">"No"</span> <span class="sc">~</span> <span class="st">`</span><span class="at">No %</span><span class="st">`</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">"Yes %"</span>, <span class="sc">-</span><span class="st">"No %"</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(dataframe4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 18 × 4
+   `State/Territory`               Response `Response Count` Percentage Respon…¹
+   &lt;chr&gt;                           &lt;chr&gt;               &lt;dbl&gt;               &lt;dbl&gt;
+ 1 New South Wales                 Yes               2374362                57.8
+ 2 New South Wales                 No                1736838                42.2
+ 3 Victoria                        Yes               2145629                64.9
+ 4 Victoria                        No                1161098                35.1
+ 5 Queensland                      Yes               1487060                60.7
+ 6 Queensland                      No                 961015                39.3
+ 7 South Australia                 Yes                592528                62.5
+ 8 South Australia                 No                 356247                37.5
+ 9 Western Australia               Yes                801575                63.7
+10 Western Australia               No                 455924                36.3
+11 Tasmania                        Yes                191948                63.6
+12 Tasmania                        No                 109655                36.4
+13 Northern Territory(b)           Yes                 48686                60.6
+14 Northern Territory(b)           No                  31690                39.4
+15 Australian Capital Territory(c) Yes                175459                74  
+16 Australian Capital Territory(c) No                  61520                26  
+17 Australia                       Yes               7817247                61.6
+18 Australia                       No                4873987                38.4
+# … with abbreviated variable name ¹​`Percentage Response Count`</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(dataframe4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 18</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ncol</span>(dataframe4)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 4</code></pre>
+</div>
+</div>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="DACSS/601_Spring_2023" data-repo-id="R_kgDOI4JcJA" data-category="Announcements" data-category-id="" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb17" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Tidy Australian Marriage data"</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Sahan Prasad Podduturi Reddy"</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="an">desription:</span><span class="co"> "Tidy Data: Pivoting"</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "03/18/2023"</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co">  - challenge_3</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="co">  - australian_marriage</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="co">  - Sahan Prasad Podduturi Reddy</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="fu">## Introduction</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>I was trying to analyze the 'australian_marriage<span class="sc">\*</span>.xls' dataset by splitting the dataset into two separate dataframes and then tidying the data to interpret the results. This dataset summarizes the responses given by eligible participants of the Australian Marriage Law Postal Survey, 2017. We first start by importing the necessary libraries and setting the working directory to point to the location where the spreadsheet is located.</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: Introduction</span></span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DescTools)</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data"</span>)</span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a><span class="fu">## Read in the Data</span></span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a>Looking at the dataset, we can see that the data can be split up into two separate dataframes which makes it much easier to understand the context of the data we are trying to analyze. We use read_excel() to read in the excel sheet and then use "sheet=2" and "skip=6" as parameters. This removes the first six lines of the sheet as we import data into our dataframe. We can then assign a different column name to each column using colnames().We then use slice() to get only the data regarding the states/territories and ignore the remaining text in the spreadsheet.</span>
+<span id="cb17-39"><a href="#cb17-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-42"><a href="#cb17-42" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-43"><a href="#cb17-43" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: ReadFile</span></span>
+<span id="cb17-44"><a href="#cb17-44" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb17-45"><a href="#cb17-45" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb17-46"><a href="#cb17-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-47"><a href="#cb17-47" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data"</span>)</span>
+<span id="cb17-48"><a href="#cb17-48" aria-hidden="true" tabindex="-1"></a>dataframe <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"australian_marriage_law_postal_survey_2017_-_response_final.xls"</span>, <span class="at">sheet =</span> <span class="dv">2</span>, <span class="at">skip =</span> <span class="dv">6</span>)</span>
+<span id="cb17-49"><a href="#cb17-49" aria-hidden="true" tabindex="-1"></a>dataframe <span class="ot">&lt;-</span> <span class="fu">slice</span>(dataframe, <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>)</span>
+<span id="cb17-50"><a href="#cb17-50" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dataframe) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"State/Territory"</span>, <span class="st">"Response Clear Yes"</span>, <span class="st">"Response Clear Yes %"</span>, <span class="st">"Response Clear No"</span>, <span class="st">"Response Clear No %"</span>, <span class="st">"Response Clear Total"</span>, <span class="st">"Response Clear Total %"</span>, <span class="st">"Blank"</span>, <span class="st">"Response Clear Total Eligible"</span>, <span class="st">"Response Clear Total Eligible %"</span>, <span class="st">"Response Not Clear Total Eligible"</span>, <span class="st">"Response Not Clear Total Eligible %"</span>, <span class="st">"No Response"</span>, <span class="st">"No Response %"</span>, <span class="st">"Total"</span>, <span class="st">"Total %"</span>)</span>
+<span id="cb17-51"><a href="#cb17-51" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(dataframe)</span>
+<span id="cb17-52"><a href="#cb17-52" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-53"><a href="#cb17-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-54"><a href="#cb17-54" aria-hidden="true" tabindex="-1"></a><span class="fu">## Brief Description</span></span>
+<span id="cb17-55"><a href="#cb17-55" aria-hidden="true" tabindex="-1"></a>We first create a subset containing information on total number of 1)clear responses, 2)unclear responses, and 3)no responses by eligible participants in the survey over different states/territories. Then from this subset, we select only the participants from the "Clear Response" column and analyze their responses to the survey in another dataframe.</span>
+<span id="cb17-56"><a href="#cb17-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-57"><a href="#cb17-57" aria-hidden="true" tabindex="-1"></a>In our third dataframe, we take the number of clear responses and sort them by 'Yes' and 'No' Response per each state and calculate how much they account for over the total Response Count. This is the data that we are trying to tidy. We are trying to clean this data because the format can be better. Currently we have separate columns for 'Yes' and 'No' response counts. We can easily group these into a name column named "Response" holding the response value using pivot_longer() and place the response counts in a separate Response Count column. This makes it much simpler to interpret the data at a glance.</span>
+<span id="cb17-58"><a href="#cb17-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-59"><a href="#cb17-59" aria-hidden="true" tabindex="-1"></a>We can use nrow() and ncol() to find that the current dataset we're working with has 9 rows and 4 cols.</span>
+<span id="cb17-60"><a href="#cb17-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-63"><a href="#cb17-63" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-64"><a href="#cb17-64" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: Description</span></span>
+<span id="cb17-65"><a href="#cb17-65" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb17-66"><a href="#cb17-66" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb17-67"><a href="#cb17-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-68"><a href="#cb17-68" aria-hidden="true" tabindex="-1"></a>dataframe2 <span class="ot">&lt;-</span> <span class="fu">select</span>(dataframe, <span class="st">"State/Territory"</span>, <span class="st">"Response Clear Total Eligible"</span>, <span class="st">"Response Clear Total Eligible %"</span>, <span class="st">"Response Not Clear Total Eligible"</span>, <span class="st">"Response Not Clear Total Eligible %"</span>, <span class="st">"No Response"</span>, <span class="st">"No Response %"</span>, <span class="st">"Total"</span>, <span class="st">"Total %"</span>)</span>
+<span id="cb17-69"><a href="#cb17-69" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dataframe2) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"State/Territory"</span>, <span class="st">"Clear Response"</span>, <span class="st">"Clear Response %"</span>, <span class="st">"Unclear Response"</span>, <span class="st">"Unclear Response %"</span>, <span class="st">"No Response"</span>, <span class="st">"No Response %"</span>, <span class="st">"Total Eligible Participants"</span>, <span class="st">"Total %"</span>)</span>
+<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-71"><a href="#cb17-71" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">select</span>(dataframe2, <span class="st">"State/Territory"</span>, <span class="st">"Clear Response"</span>, <span class="st">"Unclear Response"</span>, <span class="st">"No Response"</span>, <span class="st">"Total Eligible Participants"</span>), <span class="st">"html"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb17-72"><a href="#cb17-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_spec</span>(<span class="dv">2</span>, <span class="at">background =</span> <span class="st">"yellow"</span>)</span>
+<span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-74"><a href="#cb17-74" aria-hidden="true" tabindex="-1"></a>dataframe3 <span class="ot">&lt;-</span> <span class="fu">select</span>(dataframe, <span class="st">"State/Territory"</span>, <span class="st">"Response Clear Yes"</span>, <span class="st">"Response Clear Yes %"</span>, <span class="st">"Response Clear No"</span>, <span class="st">"Response Clear No %"</span>)</span>
+<span id="cb17-75"><a href="#cb17-75" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(dataframe3) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"State/Territory"</span>, <span class="st">"Yes"</span>, <span class="st">"Yes %"</span>, <span class="st">"No"</span>, <span class="st">"No %"</span>)</span>
+<span id="cb17-76"><a href="#cb17-76" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(dataframe3)</span>
+<span id="cb17-77"><a href="#cb17-77" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(dataframe3)</span>
+<span id="cb17-78"><a href="#cb17-78" aria-hidden="true" tabindex="-1"></a><span class="fu">ncol</span>(dataframe3)</span>
+<span id="cb17-79"><a href="#cb17-79" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-80"><a href="#cb17-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-81"><a href="#cb17-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-82"><a href="#cb17-82" aria-hidden="true" tabindex="-1"></a><span class="fu">## Anticipate the data</span></span>
+<span id="cb17-83"><a href="#cb17-83" aria-hidden="true" tabindex="-1"></a>We are first going to pivot the data based on columns "Yes" and "No" using the pivot_longer() command. </span>
+<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a>Using nrow() and ncol(), we find that we have 9 rows and 5 cols in our dataframe. Using pivot_longer, we are pivoting 2 variable names into the names_to column - "Response". So we will end up with 9*(2) = 18 rows in the dataframe. The cols will remain the same(5 columns) because we are removing 2 cols and adding 2 cols with the "names_to" and "values_to" attributes.</span>
+<span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a>Next we will want to substitute "Yes %" and "No %" with a single column - "Percentage Response Count" for the dataframe such that column value for a particular row is equal to value in "Yes %" if "Response == Yes", otherwise value will be equal to value in </span>
+<span id="cb17-87"><a href="#cb17-87" aria-hidden="true" tabindex="-1"></a>"No %". Thus overall, we will lose one column and end up with 4 columns.</span>
+<span id="cb17-88"><a href="#cb17-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-89"><a href="#cb17-89" aria-hidden="true" tabindex="-1"></a>Initial Dimensions = 9 x 5</span>
+<span id="cb17-90"><a href="#cb17-90" aria-hidden="true" tabindex="-1"></a>Final Prediction = 18 x 4</span>
+<span id="cb17-91"><a href="#cb17-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-92"><a href="#cb17-92" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pivot the Data</span></span>
+<span id="cb17-93"><a href="#cb17-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-94"><a href="#cb17-94" aria-hidden="true" tabindex="-1"></a>Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.</span>
+<span id="cb17-95"><a href="#cb17-95" aria-hidden="true" tabindex="-1"></a>We first use the pivot_longer() function to pivot the "Yes" and "No" columns and then apply the mutate() function to get the "Percentage Response Count" column. In the end, we print out the number of rows and columns to verify our prediction. </span>
+<span id="cb17-96"><a href="#cb17-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-97"><a href="#cb17-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-100"><a href="#cb17-100" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb17-101"><a href="#cb17-101" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: Pivot</span></span>
+<span id="cb17-102"><a href="#cb17-102" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb17-103"><a href="#cb17-103" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb17-104"><a href="#cb17-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-105"><a href="#cb17-105" aria-hidden="true" tabindex="-1"></a>dataframe4 <span class="ot">&lt;-</span> dataframe3 <span class="sc">%&gt;%</span> <span class="fu">pivot_longer</span>(<span class="at">cols=</span><span class="fu">c</span>(<span class="st">"Yes"</span>,<span class="st">"No"</span>), <span class="at">names_to =</span> <span class="st">"Response"</span>, <span class="at">values_to =</span> <span class="st">"Response Count"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb17-106"><a href="#cb17-106" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">`</span><span class="at">Percentage Response Count</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">case_when</span>(</span>
+<span id="cb17-107"><a href="#cb17-107" aria-hidden="true" tabindex="-1"></a>    Response <span class="sc">==</span> <span class="st">"Yes"</span> <span class="sc">~</span> <span class="st">`</span><span class="at">Yes %</span><span class="st">`</span>,</span>
+<span id="cb17-108"><a href="#cb17-108" aria-hidden="true" tabindex="-1"></a>    Response <span class="sc">==</span> <span class="st">"No"</span> <span class="sc">~</span> <span class="st">`</span><span class="at">No %</span><span class="st">`</span></span>
+<span id="cb17-109"><a href="#cb17-109" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
+<span id="cb17-110"><a href="#cb17-110" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">"Yes %"</span>, <span class="sc">-</span><span class="st">"No %"</span>)</span>
+<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-112"><a href="#cb17-112" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(dataframe4)</span>
+<span id="cb17-113"><a href="#cb17-113" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(dataframe4)</span>
+<span id="cb17-114"><a href="#cb17-114" aria-hidden="true" tabindex="-1"></a><span class="fu">ncol</span>(dataframe4)</span>
+<span id="cb17-115"><a href="#cb17-115" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+</body></html>

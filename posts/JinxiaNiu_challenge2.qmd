@@ -1,0 +1,68 @@
+---
+title: "Challenge 2 by Jinxia Niu"
+author: "Jinxia Niu"
+desription: "Data wrangling: using group() and summarise()"
+date: "03/14/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Jinxia Niu
+  - birds.csv
+
+---
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+birds <- read_csv("_data/birds.csv") %>%
+  select(-c(contains("Code"),Element,Domain,Unit))%>% 
+  filter(Flag!="A")
+View(birds)
+```
+
+## Describe the data
+
+Birds.csv that includes estimates of the stock of five different types of poultry (Chickens, Ducks, Geese and guinea fowls, Turkeys, and Pigeons/Others) for 248 areas for 58 years between 1961-2018. Estimated stocks are given in 1000 head.
+
+
+## Provide Grouped Summary Statistics
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+birds %>%
+  group_by(Item)%>%
+  summarise(avg_stocks = mean(Value, na.rm = TRUE))
+```
+### Explain and Interpret
+Try to understand the sizes of stocks of each of the five types of poultry in the dataset and try to understand which arears/countries has how many of poultry during this time. On average, we can see that countries have far more chickens as livestock (=58.4million head) than other livestock birds.
+
+```{r}
+birds %>%
+  group_by(Area)%>%
+  summarize(avg_stocks = mean(Value, na.rm = TRUE))
+
+```
+
+
+
+

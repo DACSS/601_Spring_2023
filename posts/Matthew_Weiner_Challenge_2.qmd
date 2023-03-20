@@ -1,0 +1,88 @@
+---
+title: "Challenge 2"
+author: "Matthew Weiner"
+description: "Data wrangling: using group() and summarise()"
+date: "03/20/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - Matthew_Weiner
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Introduction
+For this challege I chose to analyze the railroads dataset
+
+## Getting Started
+
+I first had to load in the needed package and then read in the CSV file. I then used the 'head()' command to quickly view the first few entries in the dataset.
+
+```{r}
+library(readr)
+rr <- read_csv("_data/railroad_2012_clean_county.csv")
+head(rr)
+
+```
+
+
+## Understand the Data
+
+To get a better idea of the contents of the dataset, I looked at the name of the columns.
+```{r}
+colnames(rr)
+```
+
+This shows us that there are 3 columns: "state", "county", and "total_employees".
+
+Based on the name of the columns and the name of the dataset, I am concluding that this data represents the number of railroad workers that are employed by each county in the United States. 
+
+This data was likely collected through some kind of government census of their employees as reailroad workers are often considered government employees. 
+
+## Grouping Results
+
+Through the use of dplyr commands such as `group_by()` and `summarize()`, we are able to get a better understanding of some details about our data.
+
+The following code block shows the mean number of employees per state in ascending order. I chose to display the head and tail of this resulting table as I believe it is interesting to see which states employ the most railroad workers and which states employ the least.
+
+
+```{r}
+average_employees_per_state <- rr %>% 
+  group_by(state) %>% 
+  summarize(mean_employees = mean(total_employees)) %>%
+  arrange(mean_employees)
+  head(average_employees_per_state)
+  tail(average_employees_per_state)
+  
+```
+
+We can then write a similar script to look at the median number of employees per state:
+
+```{r}
+median_employees_per_state <- rr %>% 
+  group_by(state) %>% 
+  summarize(med_employees = median(total_employees)) %>%
+  arrange(med_employees)
+  head(median_employees_per_state)
+  tail(median_employees_per_state)
+```
+
+When looking at the results of this query, we can see that the median numbers of the top 5 and bottom 5 states are all less than the results we found from the query of the mean number of employees. What this tells us is that the data is skewed to the right, i.e., there are some entries for each state that are substantially larger than the rest of the dataset causing the mean value to be inflated. 
+
+## Conclusion
+
+In this challenge, we took a look at the railroads dataset. Through our investigation we were able to determine what the data was describing, as well as look at some interesting results regarding the mean and median number of employees per state. This has allowed us to conclude that most states are skewed to the right, meaning that they each have counties with employee numbers that are much larger than the rest of the counties.

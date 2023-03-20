@@ -1,0 +1,147 @@
+---
+title: "Challenge 2"
+author: "Aritra Basu"
+description: "Data wrangling: using group() and summarise()"
+date: "03/18/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Aritra Basu
+  - faostat
+---
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(dplyr)
+library(descr)
+library(readr)
+library(summarytools)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Reading in the Data
+
+In this way, I have read in the data:
+```{r}
+faostat <- read.csv("_data/FAOSTAT_cattle_dairy.csv")
+
+```
+
+## Describing the Data
+
+```{r}
+view(dfSummary(faostat, style="grid", graph.magnif = 0.75, valid.col = FALSE))
+```
+Using dfsummary from the package summarytools, we can see that the dataset has 36449 rows and 14 columns. From dfsummary, we can see that the Area variable includes both unique region names as well as greater geographical aggregations. We can see that there are three Elements: milk animals, production and yield. The units are Head, hg/An and tonnes respectively. The data is for years 1961 to 2018, that is, 58 distinct years. 
+
+```{r}
+flag_description <- faostat %>% distinct(Flag.Description)
+```
+It can be observed that 
+
+Let us see what the unique regional units are:
+  
+```{r}
+unique_units <- faostat %>% distinct(Area)
+```
+It can be seen that there are 204 unique region names.
+`
+I will locate the distinct regions to eliminate overlaps.
+```{r}
+distinct_regions_identify <- faostat %>% distinct(Area, Area.Code)
+```
+I use this to only retain the unique regions. We have seen that the area codes of the unique regional units have area code less than 5000.
+```{r}
+faostat_filter <- faostat %>% filter(Area.Code < 5000)
+
+```
+
+```{r}
+faostat_summary1 <- faostat_filter  %>% 
+  filter(Element == "Milk Animals")  %>% 
+  group_by(Area)  %>% 
+  summarise(
+    Mean=mean(Value, na.rm = TRUE),
+    Quantile1 = quantile(Value, c(0.25), q1 = c(0.25), na.rm = TRUE),
+    Median=median(Value, na.rm = TRUE),
+    Quantile3 = quantile(Value, c(0.75), q3 = c(0.75), na.rm = TRUE),
+    SD=sd(Value, na.rm = TRUE),
+    min=min(Value, na.rm = TRUE),
+    max=max(Value, na.rm = TRUE),
+    )
+faostat_summary1
+```
+First, I have filtered Milk Animals, and then I grouped it using Area. Grouping by area is quite intuitive as we have observation for region for multiple years. We can observe the mean, values for the three quantiles, standard deviation, minimum and maximum. Next I also explicitly show the three quantiles by area.
+```{r}
+
+three_quantiles <- faostat_filter  %>% 
+  filter(Element == "Milk Animals")  %>% 
+  group_by(Area) %>% 
+  summarise(  Quantile1 = quantile(Value, c(0.25, 0.5, 0.75), na.rm = TRUE), q = c(0.25, 0.5, 0.75))
+three_quantiles
+            
+
+```
+A similar grouping could be done by filtering the data with elements production as well as yield.
+
+Grouping again by Area, but filtering using Yield would give us:
+
+```{r}
+faostat_summary3 <- faostat_filter  %>% 
+  filter(Element == "Yield")  %>% 
+  group_by(Area)  %>% 
+  summarise(
+    Mean=mean(Value, na.rm = TRUE),
+    Quantile1 = quantile(Value, c(0.25), q1 = c(0.25), na.rm = TRUE),
+    Median=median(Value, na.rm = TRUE),
+    Quantile3 = quantile(Value, c(0.75), q3 = c(0.75), na.rm = TRUE),
+    SD=sd(Value, na.rm = TRUE),
+    min=min(Value, na.rm = TRUE),
+    max=max(Value, na.rm = TRUE),
+    ) %>% 
+  arrange(desc(Mean))
+faostat_summary3
+
+```
+
+Here, I have arranged the output in descending order of mean. This allows us to arrange the countries according to the highest mean yields. We can see that Israel occupies the top of the list, while Cote d'Ivorie is at the bottom.
+
+```{r}
+faostat_summary4 <- faostat_filter  %>% 
+  filter(Element == "Yield")  %>% 
+  group_by(Year)  %>% 
+  summarise(
+    Mean=mean(Value, na.rm = TRUE),
+    Quantile1 = quantile(Value, c(0.25), q1 = c(0.25), na.rm = TRUE),
+    Median=median(Value, na.rm = TRUE),
+    Quantile3 = quantile(Value, c(0.75), q3 = c(0.75), na.rm = TRUE),
+    SD=sd(Value, na.rm = TRUE),
+    min=min(Value, na.rm = TRUE),
+    max=max(Value, na.rm = TRUE),
+    ) %>% 
+  arrange(desc(SD))
+faostat_summary4
+
+```
+This would be another alternative way of grouping the data, where Yield has been filtered, but instead of grouping the dataset by country, we have grouped it by year. This allows the possibility of looking at yield over the years. For example, we can see that 2017 was the year with the highest variance in yield while 1961 was the year with the lowest variance. 
+
+```{r}
+faostat_summary_Israel <- faostat_filter  %>% 
+  filter(Element == "Yield", Area=="Israel")  %>% 
+  group_by(Year)  %>% 
+  summarise(
+    Mean=mean(Value, na.rm = TRUE)
+   
+    ) 
+
+faostat_summary_Israel
+
+```

@@ -1,0 +1,129 @@
+---
+title: "Challenge 4: Hotel Bookings"
+author: "Teresa Lardo"
+description: "Using mutate and lubridate to consolidate data"
+date: "03/21/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - Teresa Lardo
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Read in data
+
+For this challenge, we'll read in the csv file on hotel bookings. 
+
+```{r}
+library(readr)
+hotel_bookings <- read_csv("_data/hotel_bookings.csv", show_col_types = FALSE)
+
+```
+
+### Briefly describe the data
+
+```{r}
+head(hotel_bookings, 10)
+tail(hotel_bookings, 10)
+```
+
+```{r}
+dim(hotel_bookings)
+```
+
+The data set describes just under 120,000 bookings at two hotels over the course of 2 years - July 2015 through August 2017. There are 32 variables. 
+
+## Identify variables that need to be mutated
+
+
+This data set has many variables, and some of them can be combined. For instance, the **arrival date** for each booking is broken into 4 different variables - year of arrival, month of arrival, day of the month of arrival, and week of the year of arrival. These could be used to break down the data and create visualizations showing which months or even weeks of the year are the most/least booked, but that's still a lot of variables just to answer the question "when does the customer plan to show up?" 
+
+### Create a single Arrival Date column
+
+We can use the `mutate()` and `make_date()` functions to turn some of these columns into a single column that lists the entire date in a date format. Because the column showing the expected month of arrival uses the names of the months - July, August, etc. - instead of the number of the month (1-12), the values in that column will also have to be altered so we can use the `make_date()` function. 
+
+```{r}
+# Load dplyr and lubridate from the library to enable the piping operator and the make_date function
+library(dplyr)
+library(lubridate)
+hotel_bookings <- hotel_bookings %>%
+# Use mutate and case_when to change the month values from names to numbers  
+    mutate(month = case_when(
+       arrival_date_month == "January" ~ 1,
+       arrival_date_month == "February" ~ 2,
+       arrival_date_month == "March" ~ 3,
+       arrival_date_month == "April" ~ 4,
+       arrival_date_month == "May" ~ 5,
+       arrival_date_month == "June" ~ 6,
+       arrival_date_month == "July" ~ 7,
+       arrival_date_month == "August" ~ 8,
+       arrival_date_month == "September" ~ 9,
+       arrival_date_month == "October" ~ 10,
+       arrival_date_month == "November" ~ 11,
+       arrival_date_month == "December" ~ 12,
+     )) %>%
+# Use the year, day, and new month columns to create a new column showing the entire arrival date
+    mutate(arrival_date = make_date(arrival_date_year, month, arrival_date_day_of_month)) %>%
+# Use select to remove the extraneous date columns
+    select(-c(arrival_date_year, arrival_date_month, arrival_date_day_of_month, month, arrival_date_week_number)) %>%
+# Use select to move the new arrival_date column closer to the left side of the data set
+    select(hotel, arrival_date, everything())
+
+```
+
+
+Because we've removed 4 of the original date columns (year, month, day, and week) and added one new column to show the entire date of expected arrival, the number of columns (variables) in our data set should change from **32** to **29**. 
+
+```{r}
+dim(hotel_bookings)
+```
+
+Using the `dim()` function confirms our new number of variables. 
+
+```{r}
+head(hotel_bookings)
+```
+
+### Combine Week & Weekend Night columns into a single Total Nights column
+
+One other thing we can do to make our data more concise is to combine the columns that show the number of weekend nights and week nights. We can mutate those two columns into one that shows simply the **total number of nights** of the booked stay. If we add a new Total Nights column and remove the two original columns, we should have **28** columns. 
+
+
+```{r}
+hotel_bookings <- hotel_bookings %>%
+# Mutate new column that adds the values from the weekend/week night columns
+  mutate(total_nights = stays_in_weekend_nights + stays_in_week_nights) %>%
+# Remove the original columns
+  select(-c(stays_in_weekend_nights, stays_in_week_nights)) %>%
+# Rearrange the order of the columns
+  select(hotel, arrival_date, is_canceled, lead_time, total_nights, everything())
+
+```
+
+Let's use the `dim()` function for a quick sanity check.
+
+```{r}
+dim(hotel_bookings)
+```
+
+**28** columns confirmed! 
+
+```{r}
+head(hotel_bookings)
+```

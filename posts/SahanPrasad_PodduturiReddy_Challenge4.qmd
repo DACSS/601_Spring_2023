@@ -1,0 +1,73 @@
+---
+title: "Tidy Federal Funds Rate information"
+author: "Sahan Prasad Podduturi Reddy"
+desription: "More data wrangling: pivoting"
+date: "03/20/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - fed_rates
+  - Sahan Prasad Podduturi Reddy
+---
+## Introduction
+
+I was trying to analyze the 'FedFundsRate.csv' dataset. This dataset summarizes the fluctuation in the federal funds rate over the years from 1954 to 2017 and how it impacts the unemployment rate and Inflation rate. We first start by importing the necessary libraries and setting the working directory to point to the location where the spreadsheet is located.
+
+```{r}
+#| label: Introduction
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+library(DescTools)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+setwd("D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data")
+```
+
+## Read in data
+
+We first read in the data using the read_csv() command. We can first start by removing any unwanted columns from our dataset. At first glance we can notice that the `Federal Funds Upper Target` and `Federal Funds Lower Target` columns contains lots of blank values. Only 103 instances are present for each. Also `Federal Funds Target Rate` can be ignored because we have the `Effective Federal Funds Rate` column which gives us the information we require. Thus we can remove these 3 columns as we read in the csv file.
+
+```{r}
+setwd("D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data")
+dataframe <- read_csv("FedFundsRate.csv") %>%
+  select(-"Federal Funds Upper Target", -"Federal Funds Lower Target", -"Federal Funds Target Rate")
+```
+
+## Tidy Data
+We do not need to necessarily pivot any columns here because the chosen format is already suitable for representing the data. We however need to deal with unspecified data values(N/A values) in the dataset. From the remaining columns that we are left with, we first remove all the rows from dataframe where `Effective Federal Funds Rate` is not specified. On doing this, we notice that only rows with "Day" column set to 1 are remaining. Thus, we can remove the "Day" column from the dataframe. We then go through the remaining dataframe values and set the N/A values in `Inflation Rate` and `Real GDP (Percent Change)` columns to 0.
+
+A dataframe containing information about the `Effective Federal Funds Rate` and the change in `Unemployment Rate` and `Inflation Rate` over the years. We group the rows by `Year` and output the mean of the above three columns over all 12 months. This gives us a nice year-by-year analysis of the readings.
+```{r}
+dataframe <- dataframe[!is.na(dataframe$`Effective Federal Funds Rate`), ] %>%
+  select(-"Day")
+
+dataframe$`Inflation Rate`[is.na(dataframe$`Inflation Rate`)] <- 0
+dataframe$Month <- month(dataframe$Month, label = TRUE, abbr = FALSE)
+print(dataframe)
+
+funds_dataframe <- dataframe %>%
+  select(-"Real GDP (Percent Change)") %>%
+  group_by(Year) %>%
+  select("Effective Federal Funds Rate", "Unemployment Rate", "Inflation Rate") %>%
+  summarise(`Effective Federal Funds Rate` = mean(`Effective Federal Funds Rate`, na.rm=TRUE),
+            `Unemployment Rate` = mean(`Unemployment Rate`, na.rm=TRUE),
+            `Inflation Rate` = mean(`Inflation Rate`, na.rm=TRUE))
+print(funds_dataframe)
+```
+## Identify variables that need to be mutated
+Real GDP (Percent Change) is calculated every 3 months so we create a dataframe for GDP analysis. Using the lubridate library's month() function, the month number is changed to the corresponding month name. The month name and the year are combined into a single column using the paste() function along with sep=" " as an argument.The GDP values are in the other column of the dataframe. This gives us a clean quarterly analysis of GDP over the years.
+
+```{r}
+gdp_dataframe <- dataframe[!is.na(dataframe$`Real GDP (Percent Change)`), ] %>%
+  mutate(`Month Year` = paste(Month, Year, sep = " ")) %>%
+  select("Month Year", "Real GDP (Percent Change)")
+print(gdp_dataframe)
+```
+

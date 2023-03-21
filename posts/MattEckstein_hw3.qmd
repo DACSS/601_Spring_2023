@@ -1,0 +1,79 @@
+---
+title: "Challenge 3"
+author: "Matt Eckstein"
+desription: "Challenge 3 - Matt Eckstein - Animal Weight"
+date: "03/17/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+
+  - challenge_2
+  - Matt Eckstein
+  - animal_weight.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Read in data
+
+```{r}
+animals <- read.csv("_data/animal_weight.csv")
+
+head(animals)
+
+summarize(animals)
+
+```
+
+## Briefly describe the data and Anticipate the End Result
+
+This data describes the average weights of common types of livestock across regions of the world. Its 17 columns make it somewhat difficult to read, and it could be more legible if it were grouped with only 3 columns and location-livestock type pairs as cases. 
+
+## Find current and future data dimensions
+
+```{r}
+nrow(animals)
+ncol(animals)
+```
+
+
+There are 17 columns, 16 of which are animals (variables) and not the column containing the names of the observations.
+
+There are 9 observations of 17 variables. I need 1 variable to identify a case, and there will be n * (k - number of variables used to identify a case) rows in the result.  9 * (17-1) = 144. So, we expect the result of our pivoting to have 144 rows.
+
+```{r}
+nrow(animals) * (ncol(animals)-1)
+```
+
+
+
+## Pivot the Data
+
+```{r}
+animals2 <- pivot_longer(animals, `Cattle...dairy`:`Llamas`, names_to = "type", values_to = "weights")
+```
+
+## Describe the final dimensions
+
+```{r}
+nrow(animals2)
+ncol(animals2)
+```
+The final table does in fact have 144 rows and 3 columns.
+
+## New cases and what makes the new data tidy
+
+Now that the data is pivoted, a case is a pairing of an IPCC area and an animal type. This data is tidy because every variable (IPCC area, animal type, and weight) is a column, and every observation (an area-type pairing) is a row.
+

@@ -1,0 +1,155 @@
+---
+title: "Keith Martin Challenge 3"
+author: "Keith Martin"
+description: "Tidy Data: Pivoting"
+date: "3/17/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(googlesheets4)
+library(readxl)
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+In this challenge, I decided to use the excel version of the Organice Poultry Data. Before I could read into the data, I needed to include libraries that allowed me to read in excel files.
+
+## Read in data
+
+After reading in the data, I noticed that there we're three different tabs within the excel file. I decided to use only the data tab as this was the first excel file I have read into R.
+
+
+```{r}
+### Loading in the libraries of the excel files
+excel_sheets("_data/organiceggpoultry.xls")
+```
+
+I decided to re-name the names of the columns so they we're more easily identified. This will become helpful later when I pivot the data longer. Additionally, there is a row that needed to be removed from the data that split the egg prices and the chicken prices. By re-naming the cells it is easier to analyze the data.
+
+```{r}
+
+raw_poulty<-read_excel("_data/organiceggpoultry.xls", 
+                         sheet = "Data",
+                          range =cell_limits(c(6,2),c(NA,12)),
+                          col_names = c("date", "XL_Dozen", "XL_1/2_Doz.", "L_Dozen", "L_1/2_Doz", "Remove", "Ckn_Whole", "Ckn_BS_Breast", "Ckn_Bone_Breast", "Ckn_Whole_legs", "Ckn_Thighs"),
+                      
+                                        
+                        )
+raw_poulty %>%
+  select(-c(Remove))
+
+```
+
+```{r}
+### Display the months for cleaning purposes
+raw_poulty %>%
+  count(date)
+```
+```{r}
+### remove that /1 from the February date
+raw_poulty_clean <-raw_poulty %>% 
+  mutate(date = str_remove(date, " /1"))
+### Separate the month and the year, fill the years in for the rest of the months
+raw_poulty_clean<-raw_poulty_clean %>%
+  separate(date, into=c("month", "year"), sep =" ")%>%
+  fill(year)
+raw_poulty_clean       
+```
+
+This data did not include the year for each month entry. There was also a mistake in the data that needed to be removed. 
+
+
+Additionally, the Chicken Bone Breast and the Chicken Thighs data containted characters rather than numbers. First, I had to change those words to 0. Then, I had to change them to a numerical number, rather than just a character.
+
+```{r}
+ckn_edited<- raw_poulty_clean %>%
+  mutate(Ckn_Bone_Breast = recode(Ckn_Bone_Breast, `too few` = "0"),
+      Ckn_Thighs = recode(Ckn_Thighs, `too few`="0"))
+ckn_edited
+```
+
+```{r}
+ckn_edited$Ckn_Bone_Breast<-as.numeric(ckn_edited$Ckn_Bone_Breast)
+ckn_edited$Ckn_Thighs<-as.numeric(ckn_edited$Ckn_Thighs)
+ckn_edited
+```
+
+The original clean data had 12 columns and 120 rows.
+```{r}
+ncol(ckn_edited)
+nrow(ckn_edited)
+```
+
+### Briefly describe the data
+
+I pivoted the data to make the type of item (egg, or chicken meat) show in one column rather than have each one in their own columns. This makes it much easier to analyse the summary statistics.
+```{r}
+###pivot the data to longer version for eggs data set
+eggs_longer<- pivot_longer(ckn_edited,  cols=c("XL_Dozen", "XL_1/2_Doz.", "L_Dozen", "L_1/2_Doz", "Ckn_Whole", "Ckn_BS_Breast", "Ckn_Bone_Breast", "Ckn_Whole_legs", "Ckn_Thighs"), 
+               names_to = "eggType/cknType",
+               values_to = "avgPrice"
+  )
+eggs_longer
+```
+I have included the summary statistics of price of chicken and eggs each year combined. 
+
+```{r}
+eggs_longer%>%
+  group_by(year)%>%
+  summarise (
+      sd_year = sd (avgPrice, na.rm=TRUE),
+      max_year = max(avgPrice, na.rm = TRUE),
+      min_year = min(avgPrice, na.rm = TRUE),
+      avg_year = mean (avgPrice, na.rm = TRUE),
+      med_year = median(avgPrice, na.rm = TRUE)
+        )
+```
+Additionally, I have calculated the summary statistics of each type of item sold. However, there are some limitations of this. There are two items, chicken bone in breast and chicken Thigs that did not have data for some of the years. This threw off the aveage and standard deviations for those year, but the median remains consistent.
+
+```{r}
+eggs_longer%>%
+  group_by(`eggType/cknType`)%>%
+  summarise (
+      sd_year = sd (avgPrice, na.rm=TRUE),
+      max_year = max(avgPrice, na.rm = TRUE),
+      min_year = min(avgPrice, na.rm = TRUE),
+      avg_year = mean (avgPrice, na.rm = TRUE),
+      med_year = median(avgPrice, na.rm = TRUE)
+        )
+```
+
+```{r}
+eggs_longer%>%
+  ggplot(aes(x=year, y=avgPrice, group=`eggType/cknType`, color=`eggType/cknType`)) +
+  geom_line() +
+  theme(axis.text=element_text(size=4.5)) +
+  ggtitle("Price Per Year") +
+  xlab("Year") + ylab("Price")
+```
+I have included a color coded grab that shows a visual representation of the price per item per year. 
+## Anticipate the End Result
+
+```{r}
+nrow(eggs_longer)
+ncol(eggs_longer)
+```
+
+The pivoted data has 5 rows and 1080 columns. 
+

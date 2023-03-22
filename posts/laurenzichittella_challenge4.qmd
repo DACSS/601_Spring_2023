@@ -1,0 +1,307 @@
+---
+title: "Challenge 4: FedFundRate.csv Clean Up"
+author: "Lauren Zichittella"
+description: "More data wrangling: pivoting"
+date: "03/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - fed_rates
+  - laurenzichittella
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+Read in FedFundRate.csv and utilize functions to understand dataset and formulate next steps in clean-up
+
+### Steps
+1) Import data set. Utilize functions to understand data structure
+2) Recreate data with better named columns to faciliate easier processing downstream
+3) Utilize "sanity checks" to confirm no errors in logic or understanding 
+4) Output basic characterization of dataset 
+
+### Next stepts
+1) Create tidy version of dataset where each row represents a distinct date and type measurement
+2) Further characterize data to inform any additional cleaning to be done and start planning for graphical display
+
+
+```{r}
+
+
+# Read in dataset and evaluate basics to understand any necessary basic cleanings that should be done before tidying
+
+   fedfundrate_raw <-read_csv("_data/FedFundsRate.csv")
+   colnames(fedfundrate_raw)
+   
+   
+   head(fedfundrate_raw)
+   tail(fedfundrate_raw)
+
+
+
+# Create pre-tidy version of data, changing variable names to make easier to reference in code 
+   fedfundrate_pretidy <-read_csv("_data/FedFundsRate.csv"
+                    , skip =1
+                    , col_names = c("year",	"month", "day", "fedfunds_targetrate", "fedfunds_targetupper",  "fedfunds_targetlower","fedfunds_effectiverate", "realgdp_percentchange",	"unemployment_rate", 	"inflation_rate"))
+   
+   # confirm updated read did not affect row count or column counts
+   nrow(fedfundrate_raw)
+   nrow(fedfundrate_pretidy)   
+   
+   ncol(fedfundrate_raw)
+   ncol(fedfundrate_pretidy)   
+
+# Output basic summary to describe dataset 
+   
+   # quick summary 
+   print(summarytools::dfSummary(fedfundrate_pretidy, 
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, ),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+  # Confirm date distinct by row 
+  fedfundrate_pretidy%>%
+      select(year,month,day)%>%
+             n_distinct()
+
+  # evaluate the count of records per year/month & distribution of day 
+  fedfundrate_pretidy  %>%
+    group_by(year,month) %>%
+       summarise(   n = n()
+                  , min(day, na.rm=T)
+                  , max_day = max(day, na.rm=T))%>%
+          arrange(year, month)
+
+  # evaluate the missingness of measures by year;
+    fedfundrate_pretidy  %>%
+    group_by(year) %>%
+       summarise( n = n(),
+                  na_count_fedfunds_targetrate    = sum(is.na(fedfunds_targetrate )),
+                  na_count_fedfunds_targetupper   = sum(is.na(fedfunds_targetupper)),
+                  na_count_fedfunds_targetlower   = sum(is.na(fedfunds_targetlower)), 
+                  na_count_fedfunds_effectiverate = sum(is.na(fedfunds_effectiverate )), 
+                  na_count_realgdp_percentchange  = sum(is.na(realgdp_percentchange)), 
+                  na_count_unemployment_rate      = sum(is.na(unemployment_rate )), 
+                  na_count_inflation_rate         = sum(is.na(inflation_rate)) )
+    
+   #evaluate mean and median measures by year 
+   fedfundrate_pretidy  %>%
+      group_by(year) %>%
+         summarise(avg_fedfunds_targetrate = mean(fedfunds_targetrate, na.rm=TRUE),
+                   med_fedfunds_targetrate = median(fedfunds_targetrate, na.rm=TRUE),
+                 
+                   avg_fedfunds_targetupper = mean(fedfunds_targetupper, na.rm=TRUE),
+                   med_fedfunds_targetupper = median(fedfunds_targetupper, na.rm=TRUE),
+                 
+                   avg_fedfunds_targetlower = mean(fedfunds_targetlower, na.rm=TRUE),
+                   med_fedfunds_targetlower = median(fedfunds_targetlower, na.rm=TRUE),
+                 
+                   avg_fedfunds_effectiverate = mean(fedfunds_effectiverate, na.rm=TRUE),
+                   med_fedfunds_effectiverate = median(fedfunds_effectiverate, na.rm=TRUE),
+                 
+                   avg_realgdp_percentchange= mean(realgdp_percentchange, na.rm=TRUE),
+                   med_realgdp_percentchange = median(realgdp_percentchange, na.rm=TRUE),
+                 
+                   avg_unemployment_rate = mean(unemployment_rate, na.rm=TRUE),
+                   med_unemployment_rate = median(unemployment_rate, na.rm=TRUE),
+                 
+                   avg_inflation_rate = mean(inflation_rate, na.rm=TRUE),
+                   med_inflation_rate = median(inflation_rate, na.rm=TRUE) )
+
+```
+## Tidy Data 
+
+The FedFundsRate dataset is a wide data set. To make it tidy, the data will need to be pivoted long and a new variable created to represent the type of measure per observation. 
+
+## Steps
+1) Pivot data longer to create one observation per distinct date (month, day, year) and type of measurement. Evaluate pivot results in the to confirm results as expected, proper number of rows and columns 
+2) Drop records with missing value for measure 
+3) Evaluate distribution of day by measure, year and month. Drop if single measure per each category to simplify going forward 
+4) Evaluate frequency of records by measure type, year, and month to identify measures populated for sample time period to graph for analysis
+
+## Next steps 
+1) Create single date variable by concatenating month, day, and year into single variable
+2) Mutate measure_varname to facilitate easier filtering to create graphics 
+3) Test out ggplot options for displaying data
+
+```{r}
+
+# Pivot longer to convert each measure to a row in the dataset #
+fedfundrate_tidy <- 
+  fedfundrate_pretidy %>%
+      pivot_longer( cols = c("fedfunds_targetrate", "fedfunds_targetupper", "fedfunds_targetlower","fedfunds_effectiverate", "realgdp_percentchange",	"unemployment_rate", 	"inflation_rate"), 
+                   names_to = "measure_varname",
+                   values_to = "measure_value",
+                   values_drop_na = FALSE    )
+
+   # View first and last obs of pivoted data
+   head(fedfundrate_tidy)
+   tail(fedfundrate_tidy)
+    
+   # Evaluate pivot results to confirm valid 
+      # row counts
+      nrow(fedfundrate_raw) 
+      nrow(fedfundrate_pretidy) 
+      nrow(fedfundrate_tidy)
+   
+
+      # column counts
+      ncol(fedfundrate_raw) 
+      ncol(fedfundrate_pretidy) 
+      ncol(fedfundrate_tidy)
+      
+      # calculation check
+      nrow(fedfundrate_pretidy) * 7
+      
+# Remove observations where measure value missing;
+  fedfundrate_tidy <- 
+     fedfundrate_tidy %>%
+        filter(!is.na(measure_value))    
+
+   # Capture change in row number, evaluate observations to confirm look as expected;
+   nrow(fedfundrate_tidy)
+   head(fedfundrate_tidy)
+   
+# Create table with frequency of day value  by measure, month, and year
+   ggplot(fedfundrate_tidy,aes(x = year, y =measure_value, fill = measure_varname)) +
+          geom_bar(stat = "identity", position = "dodge")
+```
+
+## Mutate variables
+
+Right now, type of measure is defined using one variable. I will mutate this single value to parse types in hopes of making graphics that are more focused. A single date variable will be created by concatenating what are now separatae columns for  month, day, and year into single field. This will make displaying changes over time simpler to code.  Finally, I will evaluate options for graphing results to inform best options for displaying relationship between measures or lack thereof.  
+
+### Steps
+
+1) Mutate measure_varname to create separate variable for measure type and measure calculation 
+2) Create single date variable from month, day, and year 
+3) Create histogram to evaluate values of percent change GDP and figure out how to display this measure alongside others
+4) Utilize  new variables to filter, plot data, figure out best choice to graph relationships across measures and types
+
+
+Next steps:
+
+Create final graphs to show relationship between federal fund rates & other measures 
+
+   a - Federal funds line graph: rate, lower target, upper target 
+   b - Federal funds line graph: rate * (GDP, Inflation rate, Unemployment rate)
+
+### Conclusion
+
+There is a lot of information in this dataset and it seems the best way to display is by plotting federal fund rate only, omiting target upper and lower because they are tightly correlated with the rate and their addition makes the visuals too dense. 
+
+```{r}
+
+# Create two new variables to represent measure type and calculation 
+   fedfundrate_tidy <- 
+      fedfundrate_tidy %>% 
+         separate(measure_varname, c("measure_type", "measure_calculation"), sep = "_") 
+
+  # confirm variables created as intended. 
+   head(fedfundrate_tidy)
+   
+# Create single date field by combining variables month, day, and year 
+   fedfundrate_tidy <- 
+     fedfundrate_tidy %>% 
+        mutate('measure_date' = make_date(year = year, month = month, day = day))
+   
+  # confirm variables created as intended.    
+   head(fedfundrate_tidy)
+   
+# Remove columns for month, day, and year 
+   fedfundrate_tidy <- 
+     fedfundrate_tidy %>% 
+          select(-year, -month, -day)
+   
+  # confirm variables removed as intended.   
+   head(fedfundrate_tidy)   
+   
+# evaluate distribution of records and year across values of measure_type
+   fedfundrate_tidy%>%
+      group_by(measure_type)%>%
+          summarise(num_records = n(),
+                    min_measure_date    = min(measure_date),
+                    max_measure_date    = max(measure_date))%>%
+              arrange(desc(num_records))
+   
+  # Look at histogram by measure calculation to evaluate distributions of rates versus percent change 
+  ggplot(fedfundrate_tidy,
+     aes(x = measure_value, color = measure_calculation)) +
+     geom_density()   
+   
+  
+   
+# isolate federal fund fed funds effective rate plus non-fedfunds measure   
+   fedfunds_graph <- 
+      fedfundrate_tidy%>%
+         filter(measure_type=="fedfunds" & measure_calculation == "effectiverate"| measure_type !="fedfunds"& measure_type !="realgdp")  
+   
+   head(fedfunds_graph)   
+   
+   # confirm correct records selected   
+   fedfunds_graph%>%
+      group_by (measure_type, measure_calculation )%>%
+          summarise(num_records = n())
+   
+# Create graph to show relationship between fed fund rate and other rate measures excluding % change GDP
+   
+   # bar chart - not great a great result. Next!
+   ggplot(fedfunds_graph,aes(x = measure_date, y =measure_value, fill = measure_type)) +
+          geom_bar(stat = "identity", position = "dodge")
+   
+   # line plot - this is better but hard to see trend. Next!
+  ggplot(fedfunds_graph, aes(x=measure_date, y=measure_value, group=measure_type, color=measure_type)) +
+    geom_line()
+  
+  # line plot with regression line. That's much better! 
+  ggplot(fedfunds_graph, aes(x = measure_date, y = measure_value, color = measure_type)) +
+  geom_point() +
+  geom_smooth(method = "lm", fill = NA)
+  
+
+```
+
+## Data Description 
+
+The FedFundRates dataset provides measures of economic conditions in the US between July 1, 1954 and March 16, 2017. Each row of data represents a distinct date (month, day, year) and can include up to 6 measurements including: federal fund target rate, federal fund upper & lower target rates, federal fund lower target rate, federal funds effective rate, GDP percent change, unemployment rate, and inflation rate. However, variable are not populated consistently across observations
+
+Graphs displayed below show the correlation between federal fund rates and measures for GDP, unemployment, and inflation. In short, how rates decrease alongside negative trends in economic health. 
+
+
+
+```{r}
+# filter dataframe to retain federal fund effective, GDP, unemployment, and inflation rates
+   fedfunds_final_graph <- 
+      fedfundrate_tidy%>%
+         filter(measure_type=="fedfunds" & measure_calculation == "effectiverate"| measure_type !="fedfunds") 
+   
+   # confirm correct records selected   
+      fedfunds_final_graph%>%
+         group_by (measure_type, measure_calculation )%>%
+            summarise(num_records = n())   
+   
+      head(fedfunds_final_graph)
+    
+  # line plot with regression line. That's much better! 
+  ggplot(fedfunds_final_graph, aes(x = measure_date, y = measure_value, color = measure_type)) +
+  geom_point() +
+  geom_smooth(method = "lm", fill = NA)  
+
+```

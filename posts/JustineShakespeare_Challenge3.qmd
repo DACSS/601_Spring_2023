@@ -43,34 +43,33 @@ This data shows the responses of eligible participants organized by region (stat
 
 ### Data Cleaning
 
-Before we attempt any pivoting, we should clean up this dataset a bit more. Assuming we're interested in the *results* of the survey and not so much in how many responses were clear, let's select just the relevant columns. We can also leave off the percentage columns, since we can calculate those ourselves with the raw counts. 
+Before we attempt any pivoting, we should clean up this dataset a bit more. Assuming we're interested in the *results* of the survey and not so much in how many responses were clear, let's select just the relevant columns. We can also leave off the percentage columns, since we can calculate those ourselves with the raw counts. We'll also drop the last few lines since they are endnotes. 
 
 ```{r}
-aussieMarriage <- select(aussieMarriage, "State_territory", "Yes", "No", "Total")
-
-aussieMarriage
+aussieMarriage1 <- select(aussieMarriage, "State_territory", "Yes", "No", "Total")
+aussieMarriage2 <- slice(aussieMarriage1, 1:(nrow(aussieMarriage) - 6))
+aussieMarriage2
 ```
-**Question for the group**: Is there a way to cut off a dataframe after a certain number of rows? How can I remove the endnotes?
 
 ### Data Review and Pivot
 
-Now that we have a clean dataset we can take a closer look. Using the `dim()` and `head()` functions we can see that we have 15 observations and 4 variables. If we leave off the endnotes we really only have 9 relevant observations. The 4 variables include the *state or territory* variable which indicates the region within Australia a vote is from. Then there is a *Yes* column with the number of "yes" votes, a *No* column with the number of "no" votes, and finally a *Total* column with the total number of votes. 
+Now that we have a clean dataset we can take a closer look. Using the `dim()` and `head()` functions we can see that we have 9 observations and 4 variables. The 4 variables include the *state or territory* variable which indicates the region within Australia a vote is from, including Australia at the end. Then there is a *Yes* column with the number of "yes" votes, a *No* column with the number of "no" votes, and finally a *Total* column with the total number of votes. 
 
 ```{r}
-dim(aussieMarriage)
+dim(aussieMarriage2)
 
-head(aussieMarriage, 10)
+head(aussieMarriage2, 10)
 ```
 Let's use the `pivot_longer()` function to move all of the *yes* and *no* votes to two columns called "Response" and "Count". We can also calculate the percentage using these counts and the total column.
 
 ```{r}
-aussieMarriagePL <- aussieMarriage %>% 
+aussieMarriagePL <- aussieMarriage2 %>% 
   pivot_longer(col = c("Yes", "No"),
                names_to = "Response",
                values_to = "Count") %>% 
   mutate("Percent" = Count/Total)
 
-aussieMarriageFinal <- select(aussieMarriagePL, State_territory, Response, Count, Percent, Total) # reording the columns so that Total shows up at the end.
+aussieMarriageFinal <- select(aussieMarriagePL, State_territory, Response, Count, Percent, Total) # reordering the columns so that Total shows up on the far right.
 
 head(aussieMarriageFinal, 20)
 ```

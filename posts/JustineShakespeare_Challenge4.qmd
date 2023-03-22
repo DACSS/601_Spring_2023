@@ -1,0 +1,73 @@
+---
+title: "Challenge 4: Federal Funds Rate"
+author: "Justine Shakespeare"
+description: "More data wrangling: mutate and lubridate"
+date: "03/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - Justine Shakespeare
+  - fed_rates
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+```{r}
+FedFundsRate <- read_csv("_data/FedFundsRate.csv")
+glimpse(FedFundsRate)
+```
+
+## Data description
+
+This dataset tracks several key metrics related to the United States economy, including several variables related to the federal funds target and effective rate, the change of real GDP, and the unemployment and inflation rates. This data is tracked over a period of time, which is delineated by three variables related to the date.
+
+## Identify variables that need to be mutated
+
+It doesn't look as if this data needs to be tidied. But there are some additional variables we could create for ease of use. First, let's create a variable that captures the date by using the `mutate()` and `make_date()` function and combining the three variables: **Year**, **Month**, and **Day**. We can reorder the variables when we print this updates dataset so that we just see the new **Date** column instead of the previous columns related to the date. 
+
+```{r}
+FFR_date <- mutate(FedFundsRate, Date = make_date(Year, Month, Day))
+select(FFR_date, Date, `Federal Funds Target Rate`, 
+       `Federal Funds Upper Target`, `Federal Funds Lower Target`, 
+       `Effective Federal Funds Rate`, `Real GDP (Percent Change)`, 
+       `Unemployment Rate`, `Inflation Rate`)
+```
+
+We can see that this variable was successfully created.
+
+It might also be interesting to create a variable that tracks the difference between the **Effective Federal Funds Rate** and the **Federal Funds Target Rate**. Let's use the `mutate()` function to create a new variable called "**Difference between target and effective FFR**". We'll reorder the data again when we print the updated dataframe so that we can see this new variable. 
+
+```{r}
+FFR_dif <- mutate(FFR_date, `Difference between target and effective FFR` = `Federal Funds Target Rate` - `Effective Federal Funds Rate`)
+select(FFR_dif, Date, `Difference between target and effective FFR`, 
+       `Federal Funds Target Rate`, `Federal Funds Upper Target`, 
+       `Federal Funds Lower Target`, `Effective Federal Funds Rate`, 
+       `Real GDP (Percent Change)`, `Unemployment Rate`, `Inflation Rate`)
+```
+This new variable doesn't have any data in the first rows because there is no data in the Federal Funds Target Rate column until later years. Let's create a new dataset object that removes all of the NAs from this new variable so we can see when we start having data there.
+
+```{r}
+FFR_dif_NArm <- FFR_dif[complete.cases(FFR_dif$`Difference between target and effective FFR`),]
+select(FFR_dif_NArm, Date, `Difference between target and effective FFR`, 
+       `Federal Funds Target Rate`, `Federal Funds Upper Target`, 
+       `Federal Funds Lower Target`, `Effective Federal Funds Rate`, 
+       `Real GDP (Percent Change)`, `Unemployment Rate`, `Inflation Rate`)
+```
+
+We can see the new variable with values, starting in 1982.

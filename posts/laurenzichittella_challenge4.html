@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.335">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Lauren Zichittella">
+<meta name="dcterms.date" content="2023-03-22">
+<meta name="description" content="More data wrangling: pivoting">
+
+<title>Challenge 4: FedFundRate.csv Clean Up</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../images/DACSS_Round_Network.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+<meta name="twitter:title" content="Challenge 4: FedFundRate.csv Clean Up">
+<meta name="twitter:description" content="More data wrangling: pivoting">
+<meta name="twitter:creator" content="@UMassDACSS">
+<meta name="twitter:site" content="@UMassDACSS">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../images/UMass White Wordmark Horiz.png" alt="" class="navbar-logo">
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/DACSS">
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html">
+ <span class="menu-text">Contributors</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://umass.edu/sbs/dacss">
+ <span class="menu-text">DACSS</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/DACSS"><i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+              <div class="quarto-toggle-container">
+                  <a href="" class="quarto-color-scheme-toggle nav-link" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+              </div>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#read-in-data" id="toc-read-in-data" class="nav-link active" data-scroll-target="#read-in-data">Read in data</a>
+  <ul class="collapse">
+  <li><a href="#steps" id="toc-steps" class="nav-link" data-scroll-target="#steps">Steps</a></li>
+  <li><a href="#next-stepts" id="toc-next-stepts" class="nav-link" data-scroll-target="#next-stepts">Next stepts</a></li>
+  </ul></li>
+  <li><a href="#tidy-data" id="toc-tidy-data" class="nav-link" data-scroll-target="#tidy-data">Tidy Data</a></li>
+  <li><a href="#steps-1" id="toc-steps-1" class="nav-link" data-scroll-target="#steps-1">Steps</a></li>
+  <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps">Next steps</a></li>
+  <li><a href="#mutate-variables" id="toc-mutate-variables" class="nav-link" data-scroll-target="#mutate-variables">Mutate variables</a>
+  <ul class="collapse">
+  <li><a href="#steps-2" id="toc-steps-2" class="nav-link" data-scroll-target="#steps-2">Steps</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  </ul></li>
+  <li><a href="#data-description" id="toc-data-description" class="nav-link" data-scroll-target="#data-description">Data Description</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Challenge 4: FedFundRate.csv Clean Up</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">challenge_4</div>
+    <div class="quarto-category">fed_rates</div>
+    <div class="quarto-category">laurenzichittella</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    More data wrangling: pivoting
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Lauren Zichittella </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 22, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="read-in-data" class="level2">
+<h2 class="anchored" data-anchor-id="read-in-data">Read in data</h2>
+<p>Read in FedFundRate.csv and utilize functions to understand dataset and formulate next steps in clean-up</p>
+<section id="steps" class="level3">
+<h3 class="anchored" data-anchor-id="steps">Steps</h3>
+<ol type="1">
+<li>Import data set. Utilize functions to understand data structure</li>
+<li>Recreate data with better named columns to faciliate easier processing downstream</li>
+<li>Utilize “sanity checks” to confirm no errors in logic or understanding</li>
+<li>Output basic characterization of dataset</li>
+</ol>
+</section>
+<section id="next-stepts" class="level3">
+<h3 class="anchored" data-anchor-id="next-stepts">Next stepts</h3>
+<ol type="1">
+<li>Create tidy version of dataset where each row represents a distinct date and type measurement</li>
+<li>Further characterize data to inform any additional cleaning to be done and start planning for graphical display</li>
+</ol>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in dataset and evaluate basics to understand any necessary basic cleanings that should be done before tidying</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>   fedfundrate_raw <span class="ot">&lt;-</span><span class="fu">read_csv</span>(<span class="st">"_data/FedFundsRate.csv"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">colnames</span>(fedfundrate_raw)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "Year"                         "Month"                       
+ [3] "Day"                          "Federal Funds Target Rate"   
+ [5] "Federal Funds Upper Target"   "Federal Funds Lower Target"  
+ [7] "Effective Federal Funds Rate" "Real GDP (Percent Change)"   
+ [9] "Unemployment Rate"            "Inflation Rate"              </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_raw)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 10
+   Year Month   Day Federal Fu…¹ Feder…² Feder…³ Effec…⁴ Real …⁵ Unemp…⁶ Infla…⁷
+  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+1  1954     7     1           NA      NA      NA    0.8      4.6     5.8      NA
+2  1954     8     1           NA      NA      NA    1.22    NA       6        NA
+3  1954     9     1           NA      NA      NA    1.06    NA       6.1      NA
+4  1954    10     1           NA      NA      NA    0.85     8       5.7      NA
+5  1954    11     1           NA      NA      NA    0.83    NA       5.3      NA
+6  1954    12     1           NA      NA      NA    1.28    NA       5        NA
+# … with abbreviated variable names ¹​`Federal Funds Target Rate`,
+#   ²​`Federal Funds Upper Target`, ³​`Federal Funds Lower Target`,
+#   ⁴​`Effective Federal Funds Rate`, ⁵​`Real GDP (Percent Change)`,
+#   ⁶​`Unemployment Rate`, ⁷​`Inflation Rate`</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>   <span class="fu">tail</span>(fedfundrate_raw)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 10
+   Year Month   Day Federal Fu…¹ Feder…² Feder…³ Effec…⁴ Real …⁵ Unemp…⁶ Infla…⁷
+  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+1  2016    12     1           NA    0.5     0.25    0.54      NA     4.7     2.2
+2  2016    12    14           NA    0.75    0.5    NA         NA    NA      NA  
+3  2017     1     1           NA    0.75    0.5     0.65      NA     4.8     2.3
+4  2017     2     1           NA    0.75    0.5     0.66      NA     4.7     2.2
+5  2017     3     1           NA    0.75    0.5    NA         NA    NA      NA  
+6  2017     3    16           NA    1       0.75   NA         NA    NA      NA  
+# … with abbreviated variable names ¹​`Federal Funds Target Rate`,
+#   ²​`Federal Funds Upper Target`, ³​`Federal Funds Lower Target`,
+#   ⁴​`Effective Federal Funds Rate`, ⁵​`Real GDP (Percent Change)`,
+#   ⁶​`Unemployment Rate`, ⁷​`Inflation Rate`</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create pre-tidy version of data, changing variable names to make easier to reference in code </span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>   fedfundrate_pretidy <span class="ot">&lt;-</span><span class="fu">read_csv</span>(<span class="st">"_data/FedFundsRate.csv"</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">skip =</span><span class="dv">1</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">col_names =</span> <span class="fu">c</span>(<span class="st">"year"</span>, <span class="st">"month"</span>, <span class="st">"day"</span>, <span class="st">"fedfunds_targetrate"</span>, <span class="st">"fedfunds_targetupper"</span>,  <span class="st">"fedfunds_targetlower"</span>,<span class="st">"fedfunds_effectiverate"</span>, <span class="st">"realgdp_percentchange"</span>,   <span class="st">"unemployment_rate"</span>,    <span class="st">"inflation_rate"</span>))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>   <span class="co"># confirm updated read did not affect row count or column counts</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">nrow</span>(fedfundrate_raw)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 904</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>   <span class="fu">nrow</span>(fedfundrate_pretidy)   </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 904</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ncol</span>(fedfundrate_raw)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ncol</span>(fedfundrate_pretidy)   </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Output basic summary to describe dataset </span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>   <span class="co"># quick summary </span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(fedfundrate_pretidy, </span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, ),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+
+<div class="container st-container">
+<h3 class="anchored">Data Frame Summary</h3>
+<h4 class="anchored">fedfundrate_pretidy</h4>
+<strong>Dimensions</strong>: 904 x 10
+  <br><strong>Duplicates</strong>: 0
+<br>
+<table class="table table-striped table-bordered st-table st-table-striped st-table-bordered st-multiline table-condensed">
+  <thead>
+    <tr>
+      <th align="center" class="st-protect-top-border"><strong>No</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Variable</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Stats / Values</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Freqs (% of Valid)</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Graph</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Valid</strong></th>
+      <th align="center" class="st-protect-top-border"><strong>Missing</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">1</td>
+      <td align="left">year
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 1986.7 (17.2)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">1954 ≤ 1987.5 ≤ 2017</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 28 (0)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">64 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoF9mBo3gAAAIdJREFUWMPt1W0KgCAMBmCPUJ2g7Abt/ndrskQDQzckyN73jx/0MFFM58bP/BDPKc1PFbcTHXB93MJnYHJEBFdzYXc3i+PRO04WqHcCvuTS30bn0u42ulDI4rIGrq+To89cuJj3FJ2UzF3hEzg4ODi4QZw8B3p3zbQ5rrFaHPfg/u28MtGNnBMKdOtreLlQwgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wMy0yMlQxNjo0MjowNSswMDowMB7QSgwAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDMtMjJUMTY6NDI6MDUrMDA6MDBvjfKwAAAAAElFTkSuQmCC"></td>
+      <td align="center">904
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">2</td>
+      <td align="left">month
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 6.6 (3.5)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">1 ≤ 7 ≤ 12</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 6 (0.5)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">12 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoLEdhF2QAAAHhJREFUWMPt1VEKgCAQRVGXUK6gdAfN/vdWMzhCCmH9BHIfCIO8I/NnCPMnXdnX8SzFZRHB4XA4HO4Pp3/X9sFpd8xF/x5taJ3epW4ji5Rnow6t03PUum9kt+LPPjobfKPqbkPnvF4bg65r4HA4HA6Ha116GXcz5wRiPdU5+m0ICAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wMy0yMlQxNjo0MjoxMSswMDowMCY1boEAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDMtMjJUMTY6NDI6MTErMDA6MDBXaNY9AAAAAElFTkSuQmCC"></td>
+      <td align="center">904
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">3</td>
+      <td align="left">day
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 3.6 (6.8)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">1 ≤ 1 ≤ 31</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 0 (1.9)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">29 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoLEdhF2QAAAEdJREFUWMPt17ENACAIBVFG0A30OwL772aBEltbclcQmkePWf0kzf5RO26543A4HA6Hw+FwOBwOV8TFd5zzLa/Gfp0+G1a/DRuzB6mhir3lAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIzLTAzLTIyVDE2OjQyOjExKzAwOjAwJjVugQAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMy0wMy0yMlQxNjo0MjoxMSswMDowMFdo1j0AAAAASUVORK5CYII="></td>
+      <td align="center">904
+(100.0%)</td>
+      <td align="center">0
+(0.0%)</td>
+    </tr>
+    <tr>
+      <td align="center">4</td>
+      <td align="left">fedfunds_targetrate
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 5.7 (2.6)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">1 ≤ 5.5 ≤ 11.5</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 4 (0.5)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">63 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoLEdhF2QAAAIpJREFUWMPt1sENgCAMBVBGECfQuoHsv5uUhIN8SaAmGMn/p0r61PQAODd/fJlVYnZfy1J1IYaOjo6Ojm5uB6dkozvKrl86vCQ0Ovj4o9O3i8Hpw/mFy+PodXl1pIPhgksd4GBI4FKHWosLZXEbrhhcKujo6N67vMP1Oi1GO/3XzeC0eOukM9nNnAs2ao8pUem0tgAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wMy0yMlQxNjo0MjoxMSswMDowMCY1boEAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDMtMjJUMTY6NDI6MTErMDA6MDBXaNY9AAAAAElFTkSuQmCC"></td>
+      <td align="center">462
+(51.1%)</td>
+      <td align="center">442
+(48.9%)</td>
+    </tr>
+    <tr>
+      <td align="center">5</td>
+      <td align="left">fedfunds_targetupper
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 0.3 (0.1)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">0.2 ≤ 0.2 ≤ 1</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 0 (0.5)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">4 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAGMAAABJBAMAAADbIoX2AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoLEdhF2QAAAFtJREFUSMft09EJACAIBNBGqA3KNqj9d+sjBziNCuTu24cIZ0qxIniqkj7hkJC8Io4mFzzZT3SphezzBwnJNeKoJTL7hYg0K+mThOQucdQSnT8j0NeTkEQkUbIAj7MdrIhLHwEAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMjJUMTY6NDI6MTErMDA6MDAmNW6BAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTIyVDE2OjQyOjExKzAwOjAwV2jWPQAAAABJRU5ErkJggg=="></td>
+      <td align="center">103
+(11.4%)</td>
+      <td align="center">801
+(88.6%)</td>
+    </tr>
+    <tr>
+      <td align="center">6</td>
+      <td align="left">fedfunds_targetlower
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 0.1 (0.1)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">0 ≤ 0 ≤ 0.8</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 0 (2.4)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">4 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAGMAAABJBAMAAADbIoX2AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoLEdhF2QAAAFtJREFUSMft09EJACAIBNBGqA3KNqj9d+sjBziNCuTu24cIZ0qxIniqkj7hkJC8Io4mFzzZT3SphezzBwnJNeKoJTL7hYg0K+mThOQucdQSnT8j0NeTkEQkUbIAj7MdrIhLHwEAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMjJUMTY6NDI6MTErMDA6MDAmNW6BAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTIyVDE2OjQyOjExKzAwOjAwV2jWPQAAAABJRU5ErkJggg=="></td>
+      <td align="center">103
+(11.4%)</td>
+      <td align="center">801
+(88.6%)</td>
+    </tr>
+    <tr>
+      <td align="center">7</td>
+      <td align="left">fedfunds_effectiverate
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 4.9 (3.6)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">0.1 ≤ 4.7 ≤ 19.1</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 4.2 (0.7)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">466 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoLEdhF2QAAAHxJREFUWMPt18EJwCAMBVBHqJ2gjRvU/XdrFZIexEjioUX+P+Sij4CikBDWT+TsVBJH2RqXn1xwHzm5NaNLvBuudfVQHS5LgYODg4PzufIBnw5XiteR1lRxSWsKBwf3X9d79CPXawo34Uhic+/ijKsT8GFzMimwI2PYrZwbLS6QijvliaoAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMjJUMTY6NDI6MTErMDA6MDAmNW6BAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTIyVDE2OjQyOjExKzAwOjAwV2jWPQAAAABJRU5ErkJggg=="></td>
+      <td align="center">752
+(83.2%)</td>
+      <td align="center">152
+(16.8%)</td>
+    </tr>
+    <tr>
+      <td align="center">8</td>
+      <td align="left">realgdp_percentchange
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 3.1 (3.6)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">-10 ≤ 3.1 ≤ 16.5</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 3.5 (1.1)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">113 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoLEdhF2QAAAF5JREFUWMPt1rENwCAMBVGPEDaAZAT23w2hxI3FF6G17hoantxYCLP8ldD91cq6S7inv+FwOBwOh8Phcjj1L9w5NReHm/lenbp4H4dbObVffsZ3zZ26r+bGeX+rlr8BeFFbGGuHQ68AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMjJUMTY6NDI6MTErMDA6MDAmNW6BAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTIyVDE2OjQyOjExKzAwOjAwV2jWPQAAAABJRU5ErkJggg=="></td>
+      <td align="center">250
+(27.7%)</td>
+      <td align="center">654
+(72.3%)</td>
+    </tr>
+    <tr>
+      <td align="center">9</td>
+      <td align="left">unemployment_rate
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 6 (1.6)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">3.4 ≤ 5.7 ≤ 10.8</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 2.1 (0.3)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">71 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoLEdhF2QAAAJ1JREFUWMPt1dsNgCAMBVBGkA0UR2D/3SRpqMijUDUkQO//SXmUotT80c8YYw5NZcu701pxqznXLK+cQ+JWc9AsfAdInLghXOkDrblS4X8cPj6mQzSWIz4m0hENELjwMDkuRAM5enCXHf2gxNnsqGhw2ZLivrj0KtpcSr2LhkSVeldF0UaZDksyHZbs52CpfAcluzq31P2+d1a8mzkX4o10HOx8OGQAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMjJUMTY6NDI6MTErMDA6MDAmNW6BAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTIyVDE2OjQyOjExKzAwOjAwV2jWPQAAAABJRU5ErkJggg=="></td>
+      <td align="center">752
+(83.2%)</td>
+      <td align="center">152
+(16.8%)</td>
+    </tr>
+    <tr>
+      <td align="center">10</td>
+      <td align="left">inflation_rate
+[numeric]</td>
+      <td align="left" style="padding:8;vertical-align:middle"><table style="border-collapse:collapse;border:none;margin:0"><tbody><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">Mean (sd) : 3.7 (2.6)</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">min ≤ med ≤ max:</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">0.6 ≤ 2.8 ≤ 13.6</td></tr><tr style="background-color:transparent"><td style="padding:0;margin:0;border:0" align="left">IQR (CV) : 2.7 (0.7)</td></tr></tbody></table></td>
+      <td align="left" style="vertical-align:middle">106 distinct values</td>
+      <td align="left" style="vertical-align:middle;padding:0;background-color:transparent;"><img style="border:none;background-color:transparent;padding:0;max-width:max-content;" src="data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPBAMAAAATslZYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAD1BMVEX////9/v2mpqbw8PD///+xh0SBAAAAAnRSTlMAAHaTzTgAAAABYktHRACIBR1IAAAAB3RJTUUH5wMWECoLEdhF2QAAAJFJREFUWMPt1cENgCAMBVBGECfQugHdfzdT4SCKtHChkv5Lg/EFkRKcmz/+ygoAu5dkyR0imvupo03vcojBnDlz5syNcILruuz4ac1pdSC6rt/uELWbOf2uduyrrjKtGse096djfusoF5fT7uJrahwto8fRKONtLhWZo2NBo1RkLrXb7WH8VM6VSnjse0s2N39O3CRVDOTy3YUAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDMtMjJUMTY6NDI6MTErMDA6MDAmNW6BAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTAzLTIyVDE2OjQyOjExKzAwOjAwV2jWPQAAAABJRU5ErkJggg=="></td>
+      <td align="center">710
+(78.5%)</td>
+      <td align="center">194
+(21.5%)</td>
+    </tr>
+  </tbody>
+</table>
+<p>Generated by <a href="https://github.com/dcomtois/summarytools">summarytools</a> 1.0.1 (<a href="https://www.r-project.org/">R</a> version 4.2.2)<br>2023-03-22</p>
+</div>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Confirm date distinct by row </span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  fedfundrate_pretidy<span class="sc">%&gt;%</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(year,month,day)<span class="sc">%&gt;%</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>             <span class="fu">n_distinct</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 904</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># evaluate the count of records per year/month &amp; distribution of day </span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  fedfundrate_pretidy  <span class="sc">%&gt;%</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(year,month) <span class="sc">%&gt;%</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>       <span class="fu">summarise</span>(   <span class="at">n =</span> <span class="fu">n</span>()</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>                  , <span class="fu">min</span>(day, <span class="at">na.rm=</span>T)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>                  , <span class="at">max_day =</span> <span class="fu">max</span>(day, <span class="at">na.rm=</span>T))<span class="sc">%&gt;%</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>          <span class="fu">arrange</span>(year, month)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 753 × 5
+# Groups:   year [64]
+    year month     n `min(day, na.rm = T)` max_day
+   &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt;                 &lt;dbl&gt;   &lt;dbl&gt;
+ 1  1954     7     1                     1       1
+ 2  1954     8     1                     1       1
+ 3  1954     9     1                     1       1
+ 4  1954    10     1                     1       1
+ 5  1954    11     1                     1       1
+ 6  1954    12     1                     1       1
+ 7  1955     1     1                     1       1
+ 8  1955     2     1                     1       1
+ 9  1955     3     1                     1       1
+10  1955     4     1                     1       1
+# … with 743 more rows</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># evaluate the missingness of measures by year;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    fedfundrate_pretidy  <span class="sc">%&gt;%</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>       <span class="fu">summarise</span>( <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_fedfunds_targetrate    =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(fedfunds_targetrate )),</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_fedfunds_targetupper   =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(fedfunds_targetupper)),</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_fedfunds_targetlower   =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(fedfunds_targetlower)), </span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_fedfunds_effectiverate =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(fedfunds_effectiverate )), </span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_realgdp_percentchange  =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(realgdp_percentchange)), </span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_unemployment_rate      =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(unemployment_rate )), </span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_inflation_rate         =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(inflation_rate)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 64 × 9
+    year     n na_count_fedfun…¹ na_co…² na_co…³ na_co…⁴ na_co…⁵ na_co…⁶ na_co…⁷
+   &lt;dbl&gt; &lt;int&gt;             &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;
+ 1  1954     6                 6       6       6       0       4       0       6
+ 2  1955    12                12      12      12       0       8       0      12
+ 3  1956    12                12      12      12       0       8       0      12
+ 4  1957    12                12      12      12       0       8       0      12
+ 5  1958    12                12      12      12       0       8       0       0
+ 6  1959    12                12      12      12       0       8       0       0
+ 7  1960    12                12      12      12       0       8       0       0
+ 8  1961    12                12      12      12       0       8       0       0
+ 9  1962    12                12      12      12       0       8       0       0
+10  1963    12                12      12      12       0       8       0       0
+# … with 54 more rows, and abbreviated variable names
+#   ¹​na_count_fedfunds_targetrate, ²​na_count_fedfunds_targetupper,
+#   ³​na_count_fedfunds_targetlower, ⁴​na_count_fedfunds_effectiverate,
+#   ⁵​na_count_realgdp_percentchange, ⁶​na_count_unemployment_rate,
+#   ⁷​na_count_inflation_rate</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>   <span class="co">#evaluate mean and median measures by year </span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>   fedfundrate_pretidy  <span class="sc">%&gt;%</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summarise</span>(<span class="at">avg_fedfunds_targetrate =</span> <span class="fu">mean</span>(fedfunds_targetrate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_fedfunds_targetrate =</span> <span class="fu">median</span>(fedfunds_targetrate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_fedfunds_targetupper =</span> <span class="fu">mean</span>(fedfunds_targetupper, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_fedfunds_targetupper =</span> <span class="fu">median</span>(fedfunds_targetupper, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_fedfunds_targetlower =</span> <span class="fu">mean</span>(fedfunds_targetlower, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_fedfunds_targetlower =</span> <span class="fu">median</span>(fedfunds_targetlower, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_fedfunds_effectiverate =</span> <span class="fu">mean</span>(fedfunds_effectiverate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_fedfunds_effectiverate =</span> <span class="fu">median</span>(fedfunds_effectiverate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_realgdp_percentchange=</span> <span class="fu">mean</span>(realgdp_percentchange, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_realgdp_percentchange =</span> <span class="fu">median</span>(realgdp_percentchange, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_unemployment_rate =</span> <span class="fu">mean</span>(unemployment_rate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_unemployment_rate =</span> <span class="fu">median</span>(unemployment_rate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_inflation_rate =</span> <span class="fu">mean</span>(inflation_rate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_inflation_rate =</span> <span class="fu">median</span>(inflation_rate, <span class="at">na.rm=</span><span class="cn">TRUE</span>) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 64 × 15
+    year avg_f…¹ med_f…² avg_f…³ med_f…⁴ avg_f…⁵ med_f…⁶ avg_f…⁷ med_f…⁸ avg_r…⁹
+   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+ 1  1954     NaN      NA     NaN      NA     NaN      NA    1.01   0.955   6.3  
+ 2  1955     NaN      NA     NaN      NA     NaN      NA    1.78   1.66    6.62 
+ 3  1956     NaN      NA     NaN      NA     NaN      NA    2.73   2.74    2.08 
+ 4  1957     NaN      NA     NaN      NA     NaN      NA    3.10   3       0.425
+ 5  1958     NaN      NA     NaN      NA     NaN      NA    1.57   1.6     2.97 
+ 6  1959     NaN      NA     NaN      NA     NaN      NA    3.30   3.43    4.65 
+ 7  1960     NaN      NA     NaN      NA     NaN      NA    3.22   3.28    0.975
+ 8  1961     NaN      NA     NaN      NA     NaN      NA    1.96   1.99    6.35 
+ 9  1962     NaN      NA     NaN      NA     NaN      NA    2.71   2.82    4.32 
+10  1963     NaN      NA     NaN      NA     NaN      NA    3.18   3.01    5.18 
+# … with 54 more rows, 5 more variables: med_realgdp_percentchange &lt;dbl&gt;,
+#   avg_unemployment_rate &lt;dbl&gt;, med_unemployment_rate &lt;dbl&gt;,
+#   avg_inflation_rate &lt;dbl&gt;, med_inflation_rate &lt;dbl&gt;, and abbreviated
+#   variable names ¹​avg_fedfunds_targetrate, ²​med_fedfunds_targetrate,
+#   ³​avg_fedfunds_targetupper, ⁴​med_fedfunds_targetupper,
+#   ⁵​avg_fedfunds_targetlower, ⁶​med_fedfunds_targetlower,
+#   ⁷​avg_fedfunds_effectiverate, ⁸​med_fedfunds_effectiverate, …</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="tidy-data" class="level2">
+<h2 class="anchored" data-anchor-id="tidy-data">Tidy Data</h2>
+<p>The FedFundsRate dataset is a wide data set. To make it tidy, the data will need to be pivoted long and a new variable created to represent the type of measure per observation.</p>
+</section>
+<section id="steps-1" class="level2">
+<h2 class="anchored" data-anchor-id="steps-1">Steps</h2>
+<ol type="1">
+<li>Pivot data longer to create one observation per distinct date (month, day, year) and type of measurement. Evaluate pivot results in the to confirm results as expected, proper number of rows and columns</li>
+<li>Drop records with missing value for measure</li>
+<li>Evaluate distribution of day by measure, year and month. Drop if single measure per each category to simplify going forward</li>
+<li>Evaluate frequency of records by measure type, year, and month to identify measures populated for sample time period to graph for analysis</li>
+</ol>
+</section>
+<section id="next-steps" class="level2">
+<h2 class="anchored" data-anchor-id="next-steps">Next steps</h2>
+<ol type="1">
+<li>Create single date variable by concatenating month, day, and year into single variable</li>
+<li>Mutate measure_varname to facilitate easier filtering to create graphics</li>
+<li>Test out ggplot options for displaying data</li>
+</ol>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pivot longer to convert each measure to a row in the dataset #</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  fedfundrate_pretidy <span class="sc">%&gt;%</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">pivot_longer</span>( <span class="at">cols =</span> <span class="fu">c</span>(<span class="st">"fedfunds_targetrate"</span>, <span class="st">"fedfunds_targetupper"</span>, <span class="st">"fedfunds_targetlower"</span>,<span class="st">"fedfunds_effectiverate"</span>, <span class="st">"realgdp_percentchange"</span>,   <span class="st">"unemployment_rate"</span>,    <span class="st">"inflation_rate"</span>), </span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">names_to =</span> <span class="st">"measure_varname"</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">values_to =</span> <span class="st">"measure_value"</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">values_drop_na =</span> <span class="cn">FALSE</span>    )</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>   <span class="co"># View first and last obs of pivoted data</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+   year month   day measure_varname        measure_value
+  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;                          &lt;dbl&gt;
+1  1954     7     1 fedfunds_targetrate             NA  
+2  1954     7     1 fedfunds_targetupper            NA  
+3  1954     7     1 fedfunds_targetlower            NA  
+4  1954     7     1 fedfunds_effectiverate           0.8
+5  1954     7     1 realgdp_percentchange            4.6
+6  1954     7     1 unemployment_rate                5.8</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>   <span class="fu">tail</span>(fedfundrate_tidy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+   year month   day measure_varname        measure_value
+  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;                          &lt;dbl&gt;
+1  2017     3    16 fedfunds_targetupper            1   
+2  2017     3    16 fedfunds_targetlower            0.75
+3  2017     3    16 fedfunds_effectiverate         NA   
+4  2017     3    16 realgdp_percentchange          NA   
+5  2017     3    16 unemployment_rate              NA   
+6  2017     3    16 inflation_rate                 NA   </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>   <span class="co"># Evaluate pivot results to confirm valid </span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>      <span class="co"># row counts</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>      <span class="fu">nrow</span>(fedfundrate_raw) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 904</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>      <span class="fu">nrow</span>(fedfundrate_pretidy) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 904</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>      <span class="fu">nrow</span>(fedfundrate_tidy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 6328</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>      <span class="co"># column counts</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ncol</span>(fedfundrate_raw) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ncol</span>(fedfundrate_pretidy) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ncol</span>(fedfundrate_tidy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 5</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>      <span class="co"># calculation check</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>      <span class="fu">nrow</span>(fedfundrate_pretidy) <span class="sc">*</span> <span class="dv">7</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 6328</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove observations where measure value missing;</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>     fedfundrate_tidy <span class="sc">%&gt;%</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(measure_value))    </span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>   <span class="co"># Capture change in row number, evaluate observations to confirm look as expected;</span></span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">nrow</span>(fedfundrate_tidy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 3132</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+   year month   day measure_varname        measure_value
+  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;                          &lt;dbl&gt;
+1  1954     7     1 fedfunds_effectiverate          0.8 
+2  1954     7     1 realgdp_percentchange           4.6 
+3  1954     7     1 unemployment_rate               5.8 
+4  1954     8     1 fedfunds_effectiverate          1.22
+5  1954     8     1 unemployment_rate               6   
+6  1954     9     1 fedfunds_effectiverate          1.06</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create table with frequency of day value  by measure, month, and year</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(fedfundrate_tidy,<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span>measure_value, <span class="at">fill =</span> measure_varname)) <span class="sc">+</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>          <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>, <span class="at">position =</span> <span class="st">"dodge"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="laurenzichittella_challenge4_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="mutate-variables" class="level2">
+<h2 class="anchored" data-anchor-id="mutate-variables">Mutate variables</h2>
+<p>Right now, type of measure is defined using one variable. I will mutate this single value to parse types in hopes of making graphics that are more focused. A single date variable will be created by concatenating what are now separatae columns for month, day, and year into single field. This will make displaying changes over time simpler to code. Finally, I will evaluate options for graphing results to inform best options for displaying relationship between measures or lack thereof.</p>
+<section id="steps-2" class="level3">
+<h3 class="anchored" data-anchor-id="steps-2">Steps</h3>
+<ol type="1">
+<li>Mutate measure_varname to create separate variable for measure type and measure calculation</li>
+<li>Create single date variable from month, day, and year</li>
+<li>Create histogram to evaluate values of percent change GDP and figure out how to display this measure alongside others</li>
+<li>Utilize new variables to filter, plot data, figure out best choice to graph relationships across measures and types</li>
+</ol>
+<p>Next steps:</p>
+<p>Create final graphs to show relationship between federal fund rates &amp; other measures</p>
+<p>a - Federal funds line graph: rate, lower target, upper target b - Federal funds line graph: rate * (GDP, Inflation rate, Unemployment rate)</p>
+</section>
+<section id="conclusion" class="level3">
+<h3 class="anchored" data-anchor-id="conclusion">Conclusion</h3>
+<p>There is a lot of information in this dataset and it seems the best way to display is by plotting federal fund rate only, omiting target upper and lower because they are tightly correlated with the rate and their addition makes the visuals too dense.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create two new variables to represent measure type and calculation </span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>   fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>      fedfundrate_tidy <span class="sc">%&gt;%</span> </span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">separate</span>(measure_varname, <span class="fu">c</span>(<span class="st">"measure_type"</span>, <span class="st">"measure_calculation"</span>), <span class="at">sep =</span> <span class="st">"_"</span>) </span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># confirm variables created as intended. </span></span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 6
+   year month   day measure_type measure_calculation measure_value
+  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;        &lt;chr&gt;                       &lt;dbl&gt;
+1  1954     7     1 fedfunds     effectiverate                0.8 
+2  1954     7     1 realgdp      percentchange                4.6 
+3  1954     7     1 unemployment rate                         5.8 
+4  1954     8     1 fedfunds     effectiverate                1.22
+5  1954     8     1 unemployment rate                         6   
+6  1954     9     1 fedfunds     effectiverate                1.06</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create single date field by combining variables month, day, and year </span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>   fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>     fedfundrate_tidy <span class="sc">%&gt;%</span> </span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate</span>(<span class="st">'measure_date'</span> <span class="ot">=</span> <span class="fu">make_date</span>(<span class="at">year =</span> year, <span class="at">month =</span> month, <span class="at">day =</span> day))</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># confirm variables created as intended.    </span></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 7
+   year month   day measure_type measure_calculation measure_value measure_date
+  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;        &lt;chr&gt;                       &lt;dbl&gt; &lt;date&gt;      
+1  1954     7     1 fedfunds     effectiverate                0.8  1954-07-01  
+2  1954     7     1 realgdp      percentchange                4.6  1954-07-01  
+3  1954     7     1 unemployment rate                         5.8  1954-07-01  
+4  1954     8     1 fedfunds     effectiverate                1.22 1954-08-01  
+5  1954     8     1 unemployment rate                         6    1954-08-01  
+6  1954     9     1 fedfunds     effectiverate                1.06 1954-09-01  </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove columns for month, day, and year </span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>   fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>     fedfundrate_tidy <span class="sc">%&gt;%</span> </span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>          <span class="fu">select</span>(<span class="sc">-</span>year, <span class="sc">-</span>month, <span class="sc">-</span>day)</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># confirm variables removed as intended.   </span></span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)   </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 4
+  measure_type measure_calculation measure_value measure_date
+  &lt;chr&gt;        &lt;chr&gt;                       &lt;dbl&gt; &lt;date&gt;      
+1 fedfunds     effectiverate                0.8  1954-07-01  
+2 realgdp      percentchange                4.6  1954-07-01  
+3 unemployment rate                         5.8  1954-07-01  
+4 fedfunds     effectiverate                1.22 1954-08-01  
+5 unemployment rate                         6    1954-08-01  
+6 fedfunds     effectiverate                1.06 1954-09-01  </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate distribution of records and year across values of measure_type</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>   fedfundrate_tidy<span class="sc">%&gt;%</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span>(measure_type)<span class="sc">%&gt;%</span></span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>          <span class="fu">summarise</span>(<span class="at">num_records =</span> <span class="fu">n</span>(),</span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">min_measure_date    =</span> <span class="fu">min</span>(measure_date),</span>
+<span id="cb54-6"><a href="#cb54-6" aria-hidden="true" tabindex="-1"></a>                    <span class="at">max_measure_date    =</span> <span class="fu">max</span>(measure_date))<span class="sc">%&gt;%</span></span>
+<span id="cb54-7"><a href="#cb54-7" aria-hidden="true" tabindex="-1"></a>              <span class="fu">arrange</span>(<span class="fu">desc</span>(num_records))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 4
+  measure_type num_records min_measure_date max_measure_date
+  &lt;chr&gt;              &lt;int&gt; &lt;date&gt;           &lt;date&gt;          
+1 fedfunds            1420 1954-07-01       2017-03-16      
+2 unemployment         752 1954-07-01       2017-02-01      
+3 inflation            710 1958-01-01       2017-02-01      
+4 realgdp              250 1954-07-01       2016-10-01      </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Look at histogram by measure calculation to evaluate distributions of rates versus percent change </span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(fedfundrate_tidy,</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>     <span class="fu">aes</span>(<span class="at">x =</span> measure_value, <span class="at">color =</span> measure_calculation)) <span class="sc">+</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>     <span class="fu">geom_density</span>()   </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="laurenzichittella_challenge4_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="co"># isolate federal fund fed funds effective rate plus non-fedfunds measure   </span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>   fedfunds_graph <span class="ot">&lt;-</span> </span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>      fedfundrate_tidy<span class="sc">%&gt;%</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">filter</span>(measure_type<span class="sc">==</span><span class="st">"fedfunds"</span> <span class="sc">&amp;</span> measure_calculation <span class="sc">==</span> <span class="st">"effectiverate"</span><span class="sc">|</span> measure_type <span class="sc">!=</span><span class="st">"fedfunds"</span><span class="sc">&amp;</span> measure_type <span class="sc">!=</span><span class="st">"realgdp"</span>)  </span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfunds_graph)   </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 4
+  measure_type measure_calculation measure_value measure_date
+  &lt;chr&gt;        &lt;chr&gt;                       &lt;dbl&gt; &lt;date&gt;      
+1 fedfunds     effectiverate                0.8  1954-07-01  
+2 unemployment rate                         5.8  1954-07-01  
+3 fedfunds     effectiverate                1.22 1954-08-01  
+4 unemployment rate                         6    1954-08-01  
+5 fedfunds     effectiverate                1.06 1954-09-01  
+6 unemployment rate                         6.1  1954-09-01  </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>   <span class="co"># confirm correct records selected   </span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>   fedfunds_graph<span class="sc">%&gt;%</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span> (measure_type, measure_calculation )<span class="sc">%&gt;%</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>          <span class="fu">summarise</span>(<span class="at">num_records =</span> <span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 3
+# Groups:   measure_type [3]
+  measure_type measure_calculation num_records
+  &lt;chr&gt;        &lt;chr&gt;                     &lt;int&gt;
+1 fedfunds     effectiverate               752
+2 inflation    rate                        710
+3 unemployment rate                        752</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create graph to show relationship between fed fund rate and other rate measures excluding % change GDP</span></span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>   <span class="co"># bar chart - not great a great result. Next!</span></span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(fedfunds_graph,<span class="fu">aes</span>(<span class="at">x =</span> measure_date, <span class="at">y =</span>measure_value, <span class="at">fill =</span> measure_type)) <span class="sc">+</span></span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>          <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>, <span class="at">position =</span> <span class="st">"dodge"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="laurenzichittella_challenge4_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid" width="672"></p>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>   <span class="co"># line plot - this is better but hard to see trend. Next!</span></span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(fedfunds_graph, <span class="fu">aes</span>(<span class="at">x=</span>measure_date, <span class="at">y=</span>measure_value, <span class="at">group=</span>measure_type, <span class="at">color=</span>measure_type)) <span class="sc">+</span></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="laurenzichittella_challenge4_files/figure-html/unnamed-chunk-4-3.png" class="img-fluid" width="672"></p>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># line plot with regression line. That's much better! </span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(fedfunds_graph, <span class="fu">aes</span>(<span class="at">x =</span> measure_date, <span class="at">y =</span> measure_value, <span class="at">color =</span> measure_type)) <span class="sc">+</span></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">fill =</span> <span class="cn">NA</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="laurenzichittella_challenge4_files/figure-html/unnamed-chunk-4-4.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+<section id="data-description" class="level2">
+<h2 class="anchored" data-anchor-id="data-description">Data Description</h2>
+<p>The FedFundRates dataset provides measures of economic conditions in the US between July 1, 1954 and March 16, 2017. Each row of data represents a distinct date (month, day, year) and can include up to 6 measurements including: federal fund target rate, federal fund upper &amp; lower target rates, federal fund lower target rate, federal funds effective rate, GDP percent change, unemployment rate, and inflation rate. However, variable are not populated consistently across observations</p>
+<p>Graphs displayed below show the correlation between federal fund rates and measures for GDP, unemployment, and inflation. In short, how rates decrease alongside negative trends in economic health.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="co"># filter dataframe to retain federal fund effective, GDP, unemployment, and inflation rates</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>   fedfunds_final_graph <span class="ot">&lt;-</span> </span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>      fedfundrate_tidy<span class="sc">%&gt;%</span></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">filter</span>(measure_type<span class="sc">==</span><span class="st">"fedfunds"</span> <span class="sc">&amp;</span> measure_calculation <span class="sc">==</span> <span class="st">"effectiverate"</span><span class="sc">|</span> measure_type <span class="sc">!=</span><span class="st">"fedfunds"</span>) </span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>   <span class="co"># confirm correct records selected   </span></span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>      fedfunds_final_graph<span class="sc">%&gt;%</span></span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>         <span class="fu">group_by</span> (measure_type, measure_calculation )<span class="sc">%&gt;%</span></span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>            <span class="fu">summarise</span>(<span class="at">num_records =</span> <span class="fu">n</span>())   </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 3
+# Groups:   measure_type [4]
+  measure_type measure_calculation num_records
+  &lt;chr&gt;        &lt;chr&gt;                     &lt;int&gt;
+1 fedfunds     effectiverate               752
+2 inflation    rate                        710
+3 realgdp      percentchange               250
+4 unemployment rate                        752</code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>      <span class="fu">head</span>(fedfunds_final_graph)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 4
+  measure_type measure_calculation measure_value measure_date
+  &lt;chr&gt;        &lt;chr&gt;                       &lt;dbl&gt; &lt;date&gt;      
+1 fedfunds     effectiverate                0.8  1954-07-01  
+2 realgdp      percentchange                4.6  1954-07-01  
+3 unemployment rate                         5.8  1954-07-01  
+4 fedfunds     effectiverate                1.22 1954-08-01  
+5 unemployment rate                         6    1954-08-01  
+6 fedfunds     effectiverate                1.06 1954-09-01  </code></pre>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># line plot with regression line. That's much better! </span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(fedfunds_final_graph, <span class="fu">aes</span>(<span class="at">x =</span> measure_date, <span class="at">y =</span> measure_value, <span class="at">color =</span> measure_type)) <span class="sc">+</span></span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">fill =</span> <span class="cn">NA</span>)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="laurenzichittella_challenge4_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="DACSS/601_Spring_2023" data-repo-id="R_kgDOI4JcJA" data-category="Announcements" data-category-id="" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb69" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Challenge 4: FedFundRate.csv Clean Up"</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Lauren Zichittella"</span></span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "More data wrangling: pivoting"</span></span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "03/22/2023"</span></span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
+<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a><span class="co">  - challenge_4</span></span>
+<span id="cb69-14"><a href="#cb69-14" aria-hidden="true" tabindex="-1"></a><span class="co">  - fed_rates</span></span>
+<span id="cb69-15"><a href="#cb69-15" aria-hidden="true" tabindex="-1"></a><span class="co">  - laurenzichittella</span></span>
+<span id="cb69-16"><a href="#cb69-16" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb69-17"><a href="#cb69-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-20"><a href="#cb69-20" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb69-21"><a href="#cb69-21" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb69-22"><a href="#cb69-22" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb69-23"><a href="#cb69-23" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb69-24"><a href="#cb69-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-25"><a href="#cb69-25" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb69-26"><a href="#cb69-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-27"><a href="#cb69-27" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span>
+<span id="cb69-28"><a href="#cb69-28" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb69-29"><a href="#cb69-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-30"><a href="#cb69-30" aria-hidden="true" tabindex="-1"></a><span class="fu">## Read in data</span></span>
+<span id="cb69-31"><a href="#cb69-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-32"><a href="#cb69-32" aria-hidden="true" tabindex="-1"></a>Read in FedFundRate.csv and utilize functions to understand dataset and formulate next steps in clean-up</span>
+<span id="cb69-33"><a href="#cb69-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-34"><a href="#cb69-34" aria-hidden="true" tabindex="-1"></a><span class="fu">### Steps</span></span>
+<span id="cb69-35"><a href="#cb69-35" aria-hidden="true" tabindex="-1"></a>1) Import data set. Utilize functions to understand data structure</span>
+<span id="cb69-36"><a href="#cb69-36" aria-hidden="true" tabindex="-1"></a>2) Recreate data with better named columns to faciliate easier processing downstream</span>
+<span id="cb69-37"><a href="#cb69-37" aria-hidden="true" tabindex="-1"></a>3) Utilize "sanity checks" to confirm no errors in logic or understanding </span>
+<span id="cb69-38"><a href="#cb69-38" aria-hidden="true" tabindex="-1"></a>4) Output basic characterization of dataset </span>
+<span id="cb69-39"><a href="#cb69-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-40"><a href="#cb69-40" aria-hidden="true" tabindex="-1"></a><span class="fu">### Next stepts</span></span>
+<span id="cb69-41"><a href="#cb69-41" aria-hidden="true" tabindex="-1"></a>1) Create tidy version of dataset where each row represents a distinct date and type measurement</span>
+<span id="cb69-42"><a href="#cb69-42" aria-hidden="true" tabindex="-1"></a>2) Further characterize data to inform any additional cleaning to be done and start planning for graphical display</span>
+<span id="cb69-43"><a href="#cb69-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-44"><a href="#cb69-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-47"><a href="#cb69-47" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb69-48"><a href="#cb69-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in dataset and evaluate basics to understand any necessary basic cleanings that should be done before tidying</span></span>
+<span id="cb69-49"><a href="#cb69-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-50"><a href="#cb69-50" aria-hidden="true" tabindex="-1"></a>   fedfundrate_raw <span class="ot">&lt;-</span><span class="fu">read_csv</span>(<span class="st">"_data/FedFundsRate.csv"</span>)</span>
+<span id="cb69-51"><a href="#cb69-51" aria-hidden="true" tabindex="-1"></a>   <span class="fu">colnames</span>(fedfundrate_raw)</span>
+<span id="cb69-52"><a href="#cb69-52" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-53"><a href="#cb69-53" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-54"><a href="#cb69-54" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_raw)</span>
+<span id="cb69-55"><a href="#cb69-55" aria-hidden="true" tabindex="-1"></a>   <span class="fu">tail</span>(fedfundrate_raw)</span>
+<span id="cb69-56"><a href="#cb69-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-57"><a href="#cb69-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-58"><a href="#cb69-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-59"><a href="#cb69-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Create pre-tidy version of data, changing variable names to make easier to reference in code </span></span>
+<span id="cb69-60"><a href="#cb69-60" aria-hidden="true" tabindex="-1"></a>   fedfundrate_pretidy <span class="ot">&lt;-</span><span class="fu">read_csv</span>(<span class="st">"_data/FedFundsRate.csv"</span></span>
+<span id="cb69-61"><a href="#cb69-61" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">skip =</span><span class="dv">1</span></span>
+<span id="cb69-62"><a href="#cb69-62" aria-hidden="true" tabindex="-1"></a>                    , <span class="at">col_names =</span> <span class="fu">c</span>(<span class="st">"year"</span>, <span class="st">"month"</span>, <span class="st">"day"</span>, <span class="st">"fedfunds_targetrate"</span>, <span class="st">"fedfunds_targetupper"</span>,  <span class="st">"fedfunds_targetlower"</span>,<span class="st">"fedfunds_effectiverate"</span>, <span class="st">"realgdp_percentchange"</span>,   <span class="st">"unemployment_rate"</span>,    <span class="st">"inflation_rate"</span>))</span>
+<span id="cb69-63"><a href="#cb69-63" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-64"><a href="#cb69-64" aria-hidden="true" tabindex="-1"></a>   <span class="co"># confirm updated read did not affect row count or column counts</span></span>
+<span id="cb69-65"><a href="#cb69-65" aria-hidden="true" tabindex="-1"></a>   <span class="fu">nrow</span>(fedfundrate_raw)</span>
+<span id="cb69-66"><a href="#cb69-66" aria-hidden="true" tabindex="-1"></a>   <span class="fu">nrow</span>(fedfundrate_pretidy)   </span>
+<span id="cb69-67"><a href="#cb69-67" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-68"><a href="#cb69-68" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ncol</span>(fedfundrate_raw)</span>
+<span id="cb69-69"><a href="#cb69-69" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ncol</span>(fedfundrate_pretidy)   </span>
+<span id="cb69-70"><a href="#cb69-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-71"><a href="#cb69-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Output basic summary to describe dataset </span></span>
+<span id="cb69-72"><a href="#cb69-72" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-73"><a href="#cb69-73" aria-hidden="true" tabindex="-1"></a>   <span class="co"># quick summary </span></span>
+<span id="cb69-74"><a href="#cb69-74" aria-hidden="true" tabindex="-1"></a>   <span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(fedfundrate_pretidy, </span>
+<span id="cb69-75"><a href="#cb69-75" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb69-76"><a href="#cb69-76" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb69-77"><a href="#cb69-77" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, ),</span>
+<span id="cb69-78"><a href="#cb69-78" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb69-79"><a href="#cb69-79" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span>
+<span id="cb69-80"><a href="#cb69-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-81"><a href="#cb69-81" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Confirm date distinct by row </span></span>
+<span id="cb69-82"><a href="#cb69-82" aria-hidden="true" tabindex="-1"></a>  fedfundrate_pretidy<span class="sc">%&gt;%</span></span>
+<span id="cb69-83"><a href="#cb69-83" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(year,month,day)<span class="sc">%&gt;%</span></span>
+<span id="cb69-84"><a href="#cb69-84" aria-hidden="true" tabindex="-1"></a>             <span class="fu">n_distinct</span>()</span>
+<span id="cb69-85"><a href="#cb69-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-86"><a href="#cb69-86" aria-hidden="true" tabindex="-1"></a>  <span class="co"># evaluate the count of records per year/month &amp; distribution of day </span></span>
+<span id="cb69-87"><a href="#cb69-87" aria-hidden="true" tabindex="-1"></a>  fedfundrate_pretidy  <span class="sc">%&gt;%</span></span>
+<span id="cb69-88"><a href="#cb69-88" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(year,month) <span class="sc">%&gt;%</span></span>
+<span id="cb69-89"><a href="#cb69-89" aria-hidden="true" tabindex="-1"></a>       <span class="fu">summarise</span>(   <span class="at">n =</span> <span class="fu">n</span>()</span>
+<span id="cb69-90"><a href="#cb69-90" aria-hidden="true" tabindex="-1"></a>                  , <span class="fu">min</span>(day, <span class="at">na.rm=</span>T)</span>
+<span id="cb69-91"><a href="#cb69-91" aria-hidden="true" tabindex="-1"></a>                  , <span class="at">max_day =</span> <span class="fu">max</span>(day, <span class="at">na.rm=</span>T))<span class="sc">%&gt;%</span></span>
+<span id="cb69-92"><a href="#cb69-92" aria-hidden="true" tabindex="-1"></a>          <span class="fu">arrange</span>(year, month)</span>
+<span id="cb69-93"><a href="#cb69-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-94"><a href="#cb69-94" aria-hidden="true" tabindex="-1"></a>  <span class="co"># evaluate the missingness of measures by year;</span></span>
+<span id="cb69-95"><a href="#cb69-95" aria-hidden="true" tabindex="-1"></a>    fedfundrate_pretidy  <span class="sc">%&gt;%</span></span>
+<span id="cb69-96"><a href="#cb69-96" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb69-97"><a href="#cb69-97" aria-hidden="true" tabindex="-1"></a>       <span class="fu">summarise</span>( <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb69-98"><a href="#cb69-98" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_fedfunds_targetrate    =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(fedfunds_targetrate )),</span>
+<span id="cb69-99"><a href="#cb69-99" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_fedfunds_targetupper   =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(fedfunds_targetupper)),</span>
+<span id="cb69-100"><a href="#cb69-100" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_fedfunds_targetlower   =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(fedfunds_targetlower)), </span>
+<span id="cb69-101"><a href="#cb69-101" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_fedfunds_effectiverate =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(fedfunds_effectiverate )), </span>
+<span id="cb69-102"><a href="#cb69-102" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_realgdp_percentchange  =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(realgdp_percentchange)), </span>
+<span id="cb69-103"><a href="#cb69-103" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_unemployment_rate      =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(unemployment_rate )), </span>
+<span id="cb69-104"><a href="#cb69-104" aria-hidden="true" tabindex="-1"></a>                  <span class="at">na_count_inflation_rate         =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(inflation_rate)) )</span>
+<span id="cb69-105"><a href="#cb69-105" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb69-106"><a href="#cb69-106" aria-hidden="true" tabindex="-1"></a>   <span class="co">#evaluate mean and median measures by year </span></span>
+<span id="cb69-107"><a href="#cb69-107" aria-hidden="true" tabindex="-1"></a>   fedfundrate_pretidy  <span class="sc">%&gt;%</span></span>
+<span id="cb69-108"><a href="#cb69-108" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb69-109"><a href="#cb69-109" aria-hidden="true" tabindex="-1"></a>         <span class="fu">summarise</span>(<span class="at">avg_fedfunds_targetrate =</span> <span class="fu">mean</span>(fedfunds_targetrate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-110"><a href="#cb69-110" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_fedfunds_targetrate =</span> <span class="fu">median</span>(fedfunds_targetrate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-111"><a href="#cb69-111" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb69-112"><a href="#cb69-112" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_fedfunds_targetupper =</span> <span class="fu">mean</span>(fedfunds_targetupper, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-113"><a href="#cb69-113" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_fedfunds_targetupper =</span> <span class="fu">median</span>(fedfunds_targetupper, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-114"><a href="#cb69-114" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb69-115"><a href="#cb69-115" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_fedfunds_targetlower =</span> <span class="fu">mean</span>(fedfunds_targetlower, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-116"><a href="#cb69-116" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_fedfunds_targetlower =</span> <span class="fu">median</span>(fedfunds_targetlower, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-117"><a href="#cb69-117" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb69-118"><a href="#cb69-118" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_fedfunds_effectiverate =</span> <span class="fu">mean</span>(fedfunds_effectiverate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-119"><a href="#cb69-119" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_fedfunds_effectiverate =</span> <span class="fu">median</span>(fedfunds_effectiverate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-120"><a href="#cb69-120" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb69-121"><a href="#cb69-121" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_realgdp_percentchange=</span> <span class="fu">mean</span>(realgdp_percentchange, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-122"><a href="#cb69-122" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_realgdp_percentchange =</span> <span class="fu">median</span>(realgdp_percentchange, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-123"><a href="#cb69-123" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb69-124"><a href="#cb69-124" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_unemployment_rate =</span> <span class="fu">mean</span>(unemployment_rate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-125"><a href="#cb69-125" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_unemployment_rate =</span> <span class="fu">median</span>(unemployment_rate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-126"><a href="#cb69-126" aria-hidden="true" tabindex="-1"></a>                 </span>
+<span id="cb69-127"><a href="#cb69-127" aria-hidden="true" tabindex="-1"></a>                   <span class="at">avg_inflation_rate =</span> <span class="fu">mean</span>(inflation_rate, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb69-128"><a href="#cb69-128" aria-hidden="true" tabindex="-1"></a>                   <span class="at">med_inflation_rate =</span> <span class="fu">median</span>(inflation_rate, <span class="at">na.rm=</span><span class="cn">TRUE</span>) )</span>
+<span id="cb69-129"><a href="#cb69-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-130"><a href="#cb69-130" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb69-131"><a href="#cb69-131" aria-hidden="true" tabindex="-1"></a><span class="fu">## Tidy Data </span></span>
+<span id="cb69-132"><a href="#cb69-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-133"><a href="#cb69-133" aria-hidden="true" tabindex="-1"></a>The FedFundsRate dataset is a wide data set. To make it tidy, the data will need to be pivoted long and a new variable created to represent the type of measure per observation. </span>
+<span id="cb69-134"><a href="#cb69-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-135"><a href="#cb69-135" aria-hidden="true" tabindex="-1"></a><span class="fu">## Steps</span></span>
+<span id="cb69-136"><a href="#cb69-136" aria-hidden="true" tabindex="-1"></a>1) Pivot data longer to create one observation per distinct date (month, day, year) and type of measurement. Evaluate pivot results in the to confirm results as expected, proper number of rows and columns </span>
+<span id="cb69-137"><a href="#cb69-137" aria-hidden="true" tabindex="-1"></a>2) Drop records with missing value for measure </span>
+<span id="cb69-138"><a href="#cb69-138" aria-hidden="true" tabindex="-1"></a>3) Evaluate distribution of day by measure, year and month. Drop if single measure per each category to simplify going forward </span>
+<span id="cb69-139"><a href="#cb69-139" aria-hidden="true" tabindex="-1"></a>4) Evaluate frequency of records by measure type, year, and month to identify measures populated for sample time period to graph for analysis</span>
+<span id="cb69-140"><a href="#cb69-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-141"><a href="#cb69-141" aria-hidden="true" tabindex="-1"></a><span class="fu">## Next steps </span></span>
+<span id="cb69-142"><a href="#cb69-142" aria-hidden="true" tabindex="-1"></a>1) Create single date variable by concatenating month, day, and year into single variable</span>
+<span id="cb69-143"><a href="#cb69-143" aria-hidden="true" tabindex="-1"></a>2) Mutate measure_varname to facilitate easier filtering to create graphics </span>
+<span id="cb69-144"><a href="#cb69-144" aria-hidden="true" tabindex="-1"></a>3) Test out ggplot options for displaying data</span>
+<span id="cb69-145"><a href="#cb69-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-148"><a href="#cb69-148" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb69-149"><a href="#cb69-149" aria-hidden="true" tabindex="-1"></a><span class="co"># Pivot longer to convert each measure to a row in the dataset #</span></span>
+<span id="cb69-150"><a href="#cb69-150" aria-hidden="true" tabindex="-1"></a>fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb69-151"><a href="#cb69-151" aria-hidden="true" tabindex="-1"></a>  fedfundrate_pretidy <span class="sc">%&gt;%</span></span>
+<span id="cb69-152"><a href="#cb69-152" aria-hidden="true" tabindex="-1"></a>      <span class="fu">pivot_longer</span>( <span class="at">cols =</span> <span class="fu">c</span>(<span class="st">"fedfunds_targetrate"</span>, <span class="st">"fedfunds_targetupper"</span>, <span class="st">"fedfunds_targetlower"</span>,<span class="st">"fedfunds_effectiverate"</span>, <span class="st">"realgdp_percentchange"</span>,   <span class="st">"unemployment_rate"</span>,    <span class="st">"inflation_rate"</span>), </span>
+<span id="cb69-153"><a href="#cb69-153" aria-hidden="true" tabindex="-1"></a>                   <span class="at">names_to =</span> <span class="st">"measure_varname"</span>,</span>
+<span id="cb69-154"><a href="#cb69-154" aria-hidden="true" tabindex="-1"></a>                   <span class="at">values_to =</span> <span class="st">"measure_value"</span>,</span>
+<span id="cb69-155"><a href="#cb69-155" aria-hidden="true" tabindex="-1"></a>                   <span class="at">values_drop_na =</span> <span class="cn">FALSE</span>    )</span>
+<span id="cb69-156"><a href="#cb69-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-157"><a href="#cb69-157" aria-hidden="true" tabindex="-1"></a>   <span class="co"># View first and last obs of pivoted data</span></span>
+<span id="cb69-158"><a href="#cb69-158" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)</span>
+<span id="cb69-159"><a href="#cb69-159" aria-hidden="true" tabindex="-1"></a>   <span class="fu">tail</span>(fedfundrate_tidy)</span>
+<span id="cb69-160"><a href="#cb69-160" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb69-161"><a href="#cb69-161" aria-hidden="true" tabindex="-1"></a>   <span class="co"># Evaluate pivot results to confirm valid </span></span>
+<span id="cb69-162"><a href="#cb69-162" aria-hidden="true" tabindex="-1"></a>      <span class="co"># row counts</span></span>
+<span id="cb69-163"><a href="#cb69-163" aria-hidden="true" tabindex="-1"></a>      <span class="fu">nrow</span>(fedfundrate_raw) </span>
+<span id="cb69-164"><a href="#cb69-164" aria-hidden="true" tabindex="-1"></a>      <span class="fu">nrow</span>(fedfundrate_pretidy) </span>
+<span id="cb69-165"><a href="#cb69-165" aria-hidden="true" tabindex="-1"></a>      <span class="fu">nrow</span>(fedfundrate_tidy)</span>
+<span id="cb69-166"><a href="#cb69-166" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-167"><a href="#cb69-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-168"><a href="#cb69-168" aria-hidden="true" tabindex="-1"></a>      <span class="co"># column counts</span></span>
+<span id="cb69-169"><a href="#cb69-169" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ncol</span>(fedfundrate_raw) </span>
+<span id="cb69-170"><a href="#cb69-170" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ncol</span>(fedfundrate_pretidy) </span>
+<span id="cb69-171"><a href="#cb69-171" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ncol</span>(fedfundrate_tidy)</span>
+<span id="cb69-172"><a href="#cb69-172" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb69-173"><a href="#cb69-173" aria-hidden="true" tabindex="-1"></a>      <span class="co"># calculation check</span></span>
+<span id="cb69-174"><a href="#cb69-174" aria-hidden="true" tabindex="-1"></a>      <span class="fu">nrow</span>(fedfundrate_pretidy) <span class="sc">*</span> <span class="dv">7</span></span>
+<span id="cb69-175"><a href="#cb69-175" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb69-176"><a href="#cb69-176" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove observations where measure value missing;</span></span>
+<span id="cb69-177"><a href="#cb69-177" aria-hidden="true" tabindex="-1"></a>  fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb69-178"><a href="#cb69-178" aria-hidden="true" tabindex="-1"></a>     fedfundrate_tidy <span class="sc">%&gt;%</span></span>
+<span id="cb69-179"><a href="#cb69-179" aria-hidden="true" tabindex="-1"></a>        <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(measure_value))    </span>
+<span id="cb69-180"><a href="#cb69-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-181"><a href="#cb69-181" aria-hidden="true" tabindex="-1"></a>   <span class="co"># Capture change in row number, evaluate observations to confirm look as expected;</span></span>
+<span id="cb69-182"><a href="#cb69-182" aria-hidden="true" tabindex="-1"></a>   <span class="fu">nrow</span>(fedfundrate_tidy)</span>
+<span id="cb69-183"><a href="#cb69-183" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)</span>
+<span id="cb69-184"><a href="#cb69-184" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-185"><a href="#cb69-185" aria-hidden="true" tabindex="-1"></a><span class="co"># Create table with frequency of day value  by measure, month, and year</span></span>
+<span id="cb69-186"><a href="#cb69-186" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(fedfundrate_tidy,<span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span>measure_value, <span class="at">fill =</span> measure_varname)) <span class="sc">+</span></span>
+<span id="cb69-187"><a href="#cb69-187" aria-hidden="true" tabindex="-1"></a>          <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>, <span class="at">position =</span> <span class="st">"dodge"</span>)</span>
+<span id="cb69-188"><a href="#cb69-188" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb69-189"><a href="#cb69-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-190"><a href="#cb69-190" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mutate variables</span></span>
+<span id="cb69-191"><a href="#cb69-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-192"><a href="#cb69-192" aria-hidden="true" tabindex="-1"></a>Right now, type of measure is defined using one variable. I will mutate this single value to parse types in hopes of making graphics that are more focused. A single date variable will be created by concatenating what are now separatae columns for  month, day, and year into single field. This will make displaying changes over time simpler to code.  Finally, I will evaluate options for graphing results to inform best options for displaying relationship between measures or lack thereof.  </span>
+<span id="cb69-193"><a href="#cb69-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-194"><a href="#cb69-194" aria-hidden="true" tabindex="-1"></a><span class="fu">### Steps</span></span>
+<span id="cb69-195"><a href="#cb69-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-196"><a href="#cb69-196" aria-hidden="true" tabindex="-1"></a>1) Mutate measure_varname to create separate variable for measure type and measure calculation </span>
+<span id="cb69-197"><a href="#cb69-197" aria-hidden="true" tabindex="-1"></a>2) Create single date variable from month, day, and year </span>
+<span id="cb69-198"><a href="#cb69-198" aria-hidden="true" tabindex="-1"></a>3) Create histogram to evaluate values of percent change GDP and figure out how to display this measure alongside others</span>
+<span id="cb69-199"><a href="#cb69-199" aria-hidden="true" tabindex="-1"></a>4) Utilize  new variables to filter, plot data, figure out best choice to graph relationships across measures and types</span>
+<span id="cb69-200"><a href="#cb69-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-201"><a href="#cb69-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-202"><a href="#cb69-202" aria-hidden="true" tabindex="-1"></a>Next steps:</span>
+<span id="cb69-203"><a href="#cb69-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-204"><a href="#cb69-204" aria-hidden="true" tabindex="-1"></a>Create final graphs to show relationship between federal fund rates &amp; other measures </span>
+<span id="cb69-205"><a href="#cb69-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-206"><a href="#cb69-206" aria-hidden="true" tabindex="-1"></a>   a - Federal funds line graph: rate, lower target, upper target </span>
+<span id="cb69-207"><a href="#cb69-207" aria-hidden="true" tabindex="-1"></a>   b - Federal funds line graph: rate * (GDP, Inflation rate, Unemployment rate)</span>
+<span id="cb69-208"><a href="#cb69-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-209"><a href="#cb69-209" aria-hidden="true" tabindex="-1"></a><span class="fu">### Conclusion</span></span>
+<span id="cb69-210"><a href="#cb69-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-211"><a href="#cb69-211" aria-hidden="true" tabindex="-1"></a>There is a lot of information in this dataset and it seems the best way to display is by plotting federal fund rate only, omiting target upper and lower because they are tightly correlated with the rate and their addition makes the visuals too dense. </span>
+<span id="cb69-212"><a href="#cb69-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-215"><a href="#cb69-215" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb69-216"><a href="#cb69-216" aria-hidden="true" tabindex="-1"></a><span class="co"># Create two new variables to represent measure type and calculation </span></span>
+<span id="cb69-217"><a href="#cb69-217" aria-hidden="true" tabindex="-1"></a>   fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb69-218"><a href="#cb69-218" aria-hidden="true" tabindex="-1"></a>      fedfundrate_tidy <span class="sc">%&gt;%</span> </span>
+<span id="cb69-219"><a href="#cb69-219" aria-hidden="true" tabindex="-1"></a>         <span class="fu">separate</span>(measure_varname, <span class="fu">c</span>(<span class="st">"measure_type"</span>, <span class="st">"measure_calculation"</span>), <span class="at">sep =</span> <span class="st">"_"</span>) </span>
+<span id="cb69-220"><a href="#cb69-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-221"><a href="#cb69-221" aria-hidden="true" tabindex="-1"></a>  <span class="co"># confirm variables created as intended. </span></span>
+<span id="cb69-222"><a href="#cb69-222" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)</span>
+<span id="cb69-223"><a href="#cb69-223" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-224"><a href="#cb69-224" aria-hidden="true" tabindex="-1"></a><span class="co"># Create single date field by combining variables month, day, and year </span></span>
+<span id="cb69-225"><a href="#cb69-225" aria-hidden="true" tabindex="-1"></a>   fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb69-226"><a href="#cb69-226" aria-hidden="true" tabindex="-1"></a>     fedfundrate_tidy <span class="sc">%&gt;%</span> </span>
+<span id="cb69-227"><a href="#cb69-227" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate</span>(<span class="st">'measure_date'</span> <span class="ot">=</span> <span class="fu">make_date</span>(<span class="at">year =</span> year, <span class="at">month =</span> month, <span class="at">day =</span> day))</span>
+<span id="cb69-228"><a href="#cb69-228" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-229"><a href="#cb69-229" aria-hidden="true" tabindex="-1"></a>  <span class="co"># confirm variables created as intended.    </span></span>
+<span id="cb69-230"><a href="#cb69-230" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)</span>
+<span id="cb69-231"><a href="#cb69-231" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-232"><a href="#cb69-232" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove columns for month, day, and year </span></span>
+<span id="cb69-233"><a href="#cb69-233" aria-hidden="true" tabindex="-1"></a>   fedfundrate_tidy <span class="ot">&lt;-</span> </span>
+<span id="cb69-234"><a href="#cb69-234" aria-hidden="true" tabindex="-1"></a>     fedfundrate_tidy <span class="sc">%&gt;%</span> </span>
+<span id="cb69-235"><a href="#cb69-235" aria-hidden="true" tabindex="-1"></a>          <span class="fu">select</span>(<span class="sc">-</span>year, <span class="sc">-</span>month, <span class="sc">-</span>day)</span>
+<span id="cb69-236"><a href="#cb69-236" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-237"><a href="#cb69-237" aria-hidden="true" tabindex="-1"></a>  <span class="co"># confirm variables removed as intended.   </span></span>
+<span id="cb69-238"><a href="#cb69-238" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfundrate_tidy)   </span>
+<span id="cb69-239"><a href="#cb69-239" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-240"><a href="#cb69-240" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate distribution of records and year across values of measure_type</span></span>
+<span id="cb69-241"><a href="#cb69-241" aria-hidden="true" tabindex="-1"></a>   fedfundrate_tidy<span class="sc">%&gt;%</span></span>
+<span id="cb69-242"><a href="#cb69-242" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span>(measure_type)<span class="sc">%&gt;%</span></span>
+<span id="cb69-243"><a href="#cb69-243" aria-hidden="true" tabindex="-1"></a>          <span class="fu">summarise</span>(<span class="at">num_records =</span> <span class="fu">n</span>(),</span>
+<span id="cb69-244"><a href="#cb69-244" aria-hidden="true" tabindex="-1"></a>                    <span class="at">min_measure_date    =</span> <span class="fu">min</span>(measure_date),</span>
+<span id="cb69-245"><a href="#cb69-245" aria-hidden="true" tabindex="-1"></a>                    <span class="at">max_measure_date    =</span> <span class="fu">max</span>(measure_date))<span class="sc">%&gt;%</span></span>
+<span id="cb69-246"><a href="#cb69-246" aria-hidden="true" tabindex="-1"></a>              <span class="fu">arrange</span>(<span class="fu">desc</span>(num_records))</span>
+<span id="cb69-247"><a href="#cb69-247" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-248"><a href="#cb69-248" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Look at histogram by measure calculation to evaluate distributions of rates versus percent change </span></span>
+<span id="cb69-249"><a href="#cb69-249" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(fedfundrate_tidy,</span>
+<span id="cb69-250"><a href="#cb69-250" aria-hidden="true" tabindex="-1"></a>     <span class="fu">aes</span>(<span class="at">x =</span> measure_value, <span class="at">color =</span> measure_calculation)) <span class="sc">+</span></span>
+<span id="cb69-251"><a href="#cb69-251" aria-hidden="true" tabindex="-1"></a>     <span class="fu">geom_density</span>()   </span>
+<span id="cb69-252"><a href="#cb69-252" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-253"><a href="#cb69-253" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb69-254"><a href="#cb69-254" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-255"><a href="#cb69-255" aria-hidden="true" tabindex="-1"></a><span class="co"># isolate federal fund fed funds effective rate plus non-fedfunds measure   </span></span>
+<span id="cb69-256"><a href="#cb69-256" aria-hidden="true" tabindex="-1"></a>   fedfunds_graph <span class="ot">&lt;-</span> </span>
+<span id="cb69-257"><a href="#cb69-257" aria-hidden="true" tabindex="-1"></a>      fedfundrate_tidy<span class="sc">%&gt;%</span></span>
+<span id="cb69-258"><a href="#cb69-258" aria-hidden="true" tabindex="-1"></a>         <span class="fu">filter</span>(measure_type<span class="sc">==</span><span class="st">"fedfunds"</span> <span class="sc">&amp;</span> measure_calculation <span class="sc">==</span> <span class="st">"effectiverate"</span><span class="sc">|</span> measure_type <span class="sc">!=</span><span class="st">"fedfunds"</span><span class="sc">&amp;</span> measure_type <span class="sc">!=</span><span class="st">"realgdp"</span>)  </span>
+<span id="cb69-259"><a href="#cb69-259" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-260"><a href="#cb69-260" aria-hidden="true" tabindex="-1"></a>   <span class="fu">head</span>(fedfunds_graph)   </span>
+<span id="cb69-261"><a href="#cb69-261" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-262"><a href="#cb69-262" aria-hidden="true" tabindex="-1"></a>   <span class="co"># confirm correct records selected   </span></span>
+<span id="cb69-263"><a href="#cb69-263" aria-hidden="true" tabindex="-1"></a>   fedfunds_graph<span class="sc">%&gt;%</span></span>
+<span id="cb69-264"><a href="#cb69-264" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span> (measure_type, measure_calculation )<span class="sc">%&gt;%</span></span>
+<span id="cb69-265"><a href="#cb69-265" aria-hidden="true" tabindex="-1"></a>          <span class="fu">summarise</span>(<span class="at">num_records =</span> <span class="fu">n</span>())</span>
+<span id="cb69-266"><a href="#cb69-266" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-267"><a href="#cb69-267" aria-hidden="true" tabindex="-1"></a><span class="co"># Create graph to show relationship between fed fund rate and other rate measures excluding % change GDP</span></span>
+<span id="cb69-268"><a href="#cb69-268" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-269"><a href="#cb69-269" aria-hidden="true" tabindex="-1"></a>   <span class="co"># bar chart - not great a great result. Next!</span></span>
+<span id="cb69-270"><a href="#cb69-270" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(fedfunds_graph,<span class="fu">aes</span>(<span class="at">x =</span> measure_date, <span class="at">y =</span>measure_value, <span class="at">fill =</span> measure_type)) <span class="sc">+</span></span>
+<span id="cb69-271"><a href="#cb69-271" aria-hidden="true" tabindex="-1"></a>          <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>, <span class="at">position =</span> <span class="st">"dodge"</span>)</span>
+<span id="cb69-272"><a href="#cb69-272" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-273"><a href="#cb69-273" aria-hidden="true" tabindex="-1"></a>   <span class="co"># line plot - this is better but hard to see trend. Next!</span></span>
+<span id="cb69-274"><a href="#cb69-274" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(fedfunds_graph, <span class="fu">aes</span>(<span class="at">x=</span>measure_date, <span class="at">y=</span>measure_value, <span class="at">group=</span>measure_type, <span class="at">color=</span>measure_type)) <span class="sc">+</span></span>
+<span id="cb69-275"><a href="#cb69-275" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>()</span>
+<span id="cb69-276"><a href="#cb69-276" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb69-277"><a href="#cb69-277" aria-hidden="true" tabindex="-1"></a>  <span class="co"># line plot with regression line. That's much better! </span></span>
+<span id="cb69-278"><a href="#cb69-278" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(fedfunds_graph, <span class="fu">aes</span>(<span class="at">x =</span> measure_date, <span class="at">y =</span> measure_value, <span class="at">color =</span> measure_type)) <span class="sc">+</span></span>
+<span id="cb69-279"><a href="#cb69-279" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb69-280"><a href="#cb69-280" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">fill =</span> <span class="cn">NA</span>)</span>
+<span id="cb69-281"><a href="#cb69-281" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb69-282"><a href="#cb69-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-283"><a href="#cb69-283" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb69-284"><a href="#cb69-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-285"><a href="#cb69-285" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Description </span></span>
+<span id="cb69-286"><a href="#cb69-286" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-287"><a href="#cb69-287" aria-hidden="true" tabindex="-1"></a>The FedFundRates dataset provides measures of economic conditions in the US between July 1, 1954 and March 16, 2017. Each row of data represents a distinct date (month, day, year) and can include up to 6 measurements including: federal fund target rate, federal fund upper &amp; lower target rates, federal fund lower target rate, federal funds effective rate, GDP percent change, unemployment rate, and inflation rate. However, variable are not populated consistently across observations</span>
+<span id="cb69-288"><a href="#cb69-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-289"><a href="#cb69-289" aria-hidden="true" tabindex="-1"></a>Graphs displayed below show the correlation between federal fund rates and measures for GDP, unemployment, and inflation. In short, how rates decrease alongside negative trends in economic health. </span>
+<span id="cb69-290"><a href="#cb69-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-291"><a href="#cb69-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-292"><a href="#cb69-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-295"><a href="#cb69-295" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb69-296"><a href="#cb69-296" aria-hidden="true" tabindex="-1"></a><span class="co"># filter dataframe to retain federal fund effective, GDP, unemployment, and inflation rates</span></span>
+<span id="cb69-297"><a href="#cb69-297" aria-hidden="true" tabindex="-1"></a>   fedfunds_final_graph <span class="ot">&lt;-</span> </span>
+<span id="cb69-298"><a href="#cb69-298" aria-hidden="true" tabindex="-1"></a>      fedfundrate_tidy<span class="sc">%&gt;%</span></span>
+<span id="cb69-299"><a href="#cb69-299" aria-hidden="true" tabindex="-1"></a>         <span class="fu">filter</span>(measure_type<span class="sc">==</span><span class="st">"fedfunds"</span> <span class="sc">&amp;</span> measure_calculation <span class="sc">==</span> <span class="st">"effectiverate"</span><span class="sc">|</span> measure_type <span class="sc">!=</span><span class="st">"fedfunds"</span>) </span>
+<span id="cb69-300"><a href="#cb69-300" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-301"><a href="#cb69-301" aria-hidden="true" tabindex="-1"></a>   <span class="co"># confirm correct records selected   </span></span>
+<span id="cb69-302"><a href="#cb69-302" aria-hidden="true" tabindex="-1"></a>      fedfunds_final_graph<span class="sc">%&gt;%</span></span>
+<span id="cb69-303"><a href="#cb69-303" aria-hidden="true" tabindex="-1"></a>         <span class="fu">group_by</span> (measure_type, measure_calculation )<span class="sc">%&gt;%</span></span>
+<span id="cb69-304"><a href="#cb69-304" aria-hidden="true" tabindex="-1"></a>            <span class="fu">summarise</span>(<span class="at">num_records =</span> <span class="fu">n</span>())   </span>
+<span id="cb69-305"><a href="#cb69-305" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb69-306"><a href="#cb69-306" aria-hidden="true" tabindex="-1"></a>      <span class="fu">head</span>(fedfunds_final_graph)</span>
+<span id="cb69-307"><a href="#cb69-307" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb69-308"><a href="#cb69-308" aria-hidden="true" tabindex="-1"></a>  <span class="co"># line plot with regression line. That's much better! </span></span>
+<span id="cb69-309"><a href="#cb69-309" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(fedfunds_final_graph, <span class="fu">aes</span>(<span class="at">x =</span> measure_date, <span class="at">y =</span> measure_value, <span class="at">color =</span> measure_type)) <span class="sc">+</span></span>
+<span id="cb69-310"><a href="#cb69-310" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb69-311"><a href="#cb69-311" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">fill =</span> <span class="cn">NA</span>)  </span>
+<span id="cb69-312"><a href="#cb69-312" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-313"><a href="#cb69-313" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+</body></html>

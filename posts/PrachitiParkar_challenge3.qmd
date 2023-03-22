@@ -1,0 +1,135 @@
+---
+title: "Challenge 3"
+author: "Prachiti Parkar"
+description: "Tidy Data: Pivoting"
+date: "03/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - eggs
+  - australian_marriage
+  - usa_households
+  - sce_labor
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+
+library(readr)
+eggs_tidy_data <- read_csv("_data/eggs_tidy.csv",col_names = c("month", "year","xlarge_dozen",
+                               "xlarge_halfdozen", "large_dozen",
+                               "large_halfdozen"))
+eggs_tidy_data = eggs_tidy_data[-1,]
+view(eggs_tidy_data)
+head(eggs_tidy_data)
+dim(eggs_tidy_data)
+
+# Summary of the dataset
+summary(eggs_tidy_data)
+```
+
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+
+The dataset contains 6 columns and 120 rows. The dataset can be pivoted to size (extra large and large) and quantity (dozen and half_dozen) and the values shifted to prices. This would be better since it would be better to read data as per quantity and size.
+
+## Anticipate the End Result
+
+
+The end result for our dataset would be to see large and xlarge under size column and halfdozen and dozen under quantity column and its respective values under a new column called price.
+
+### Example: find current and future data dimensions
+
+
+
+```{r}
+
+```
+rows = 120*4 (4 columns pivoted) = 480
+columns = 5 (4 columns made into 3 -> size quantity and price)
+
+### Challenge: Describe the final dimensions
+
+Document your work here.
+
+```{r}
+
+
+```
+The final dimensions would be 480*5
+
+
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+### Example
+
+```{r}
+#| tbl-cap: Pivoted Example
+
+#df<-pivot_longer(df, col = c(outgoing, incoming),
+#                 names_to="trade_direction",
+#                 values_to = "trade_value")
+#df
+
+eggs_pivot_data<-pivot_longer(eggs_tidy_data, cols = contains("dozen"),
+                              names_to= c("size", "quantity"),
+                              names_sep = "_",
+                              values_to = "price")
+
+
+head(eggs_pivot_data)
+
+```
+
+Yes, once it is pivoted long, our resulting data are $480x5$ - exactly what we expected!
+
+### Challenge: Pivot the Chosen Data
+
+Document your work here. What will a new "case" be once you have pivoted the data? How does it meet requirements for tidy data?
+
+```{r}
+
+
+```
+
+The new case would be easily readable. Also one can add medium (size) and halfdozen (quantity) and it would be easy to add to our dataset without any addition of columns.
+
+Any additional comments?

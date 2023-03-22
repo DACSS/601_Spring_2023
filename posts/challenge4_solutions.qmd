@@ -1,0 +1,305 @@
+---
+title: "Challenge 4 Solutions"
+author: "Meredith Rolfe"
+description: "More data wrangling: mutate"
+date: "03/22/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: "styles.css"
+categories:
+  - challenge_4
+  - abc_poll
+  - eggs
+  - fed_rates
+  - hotel_bookings
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+Two tidyverse packages will be used heavily today: [`lubridate`](https://lubridate.tidyverse.org/) (which is not automatically loaded) and [`stringr`](https://stringr.tidyverse.org/) (which is part of core tidyverse).
+
+::: panel-tabset
+## ABC Poll ⭐
+
+```{r}
+abc_poll_orig<-read_csv("_data/abc_poll_2021.csv")
+
+# political questions
+abc_poll_orig%>%
+  select(starts_with("Q"))%>%
+  colnames(.)
+
+# all but one demographer
+abc_poll_orig%>%
+  select(starts_with("pp"))%>%
+  colnames(.)
+
+# national poll
+n_distinct(abc_poll_orig$ppstaten)
+```
+
+The ABC Poll appears to be a national sample survey (presumably from 2019) with 527 respondents. There are 10 political attitudes questions, plus party identification, in addition to 15 demographic variables (some with re-coded information) and 5 survey administration variables.
+
+```{r}
+print(summarytools::dfSummary(abc_poll_orig,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+::: panel-tabset
+#### Mutate PartyID
+
+There are lots of string variables that might need to be modified for analysis or visualization. For example, the party id variable has "A Democrat" not the more standard language. Plus, there is a response "skipped" that should be treated as missing data. Lets see if we can fix it.
+
+```{r}
+#starting point
+table(abc_poll_orig$QPID)
+
+#mutate
+abc_poll<-abc_poll_orig%>%
+  mutate(partyid = str_remove(QPID, "A[n]* "),
+         partyid = na_if(partyid, "Skipped"))%>%
+  select(-QPID)
+
+#sanity check
+table(abc_poll$partyid)
+```
+
+### Ethnic Identity
+
+The ethnic identity variable is long and could be tough to include in graphs, lets see if we can modify it - but we would need to include a table note to explain what the data labels mean (e.g., that racial labels mean non-hispanic, and that hispanic responses don't indicate race.)
+
+```{r}
+#starting point
+table(abc_poll$ppethm)
+
+#mutate
+abc_poll<-abc_poll%>%
+  mutate(ethnic = str_remove(ppethm, ", Non-Hispanic"))%>%
+  select(-ppethm)
+
+#sanity check
+table(abc_poll$ethnic)
+```
+
+## Removing "Skipped"
+
+What about the political variables that all have "Skipped" - a value that should probably be replaced with `NA` for analysis. Lets use the `across` function to make this easier.
+
+```{r}
+abc_poll<-abc_poll%>%
+  mutate(across(starts_with("Q"), ~ na_if(.x, "Skipped")))
+
+map(select(abc_poll, starts_with("Q1")), table)
+```
+
+## Factor order
+
+Finally, what if you would like the categories of your variable to appear in a specific order, like the education variable that is currently in alphabetical order?
+
+::: callout-tip
+## factor()
+
+The `factor` variable type links variable labels to an underlying numeric order, and allows you to maintain the specified order for tables and graphics. Character strings always appear in alphabetical order.
+:::
+
+```{r}
+table(abc_poll$ppeducat)
+edulabs <- unique(abc_poll$ppeducat)
+edulabs
+
+abc_poll<-abc_poll%>%
+  mutate(educ = factor(ppeducat, 
+                       levels=edulabs[c(4,1,3,2)]))%>%
+  select(-ppeducat)
+rm(edulabs)
+
+table(abc_poll$educ)
+```
+:::
+
+## Eggs ⭐⭐
+
+This section builds on the code available in the solution to Challenge 3, where we pivoted the organic eggs pricing data. The data reports the average price per carton paid to the farmer or producer for organic eggs (and organic chicken), reported monthly from 2004 to 20013. Average price is reported by carton type, which can vary in both size (x-large or large) and quantity (half-dozen or dozen.)
+
+### Read Data
+
+We are reading in half of the data from this workbook - the other half contains information about the price of organic chicken.
+
+```{r}
+eggs_orig<-read_excel("_data/organiceggpoultry.xls",
+                      sheet="Data",
+                      range =cell_limits(c(6,2),c(NA,6)),
+                      col_names = c("date", "xlarge_dozen",
+                               "xlarge_halfdozen", "large_dozen",
+                               "large_halfdozen")
+                 )
+
+```
+
+### Clean and Mutate
+
+We are going to be removing the note from the first column of the data, and splitting the year and month, and pivoting into long format prior to transforming the year and month columns into a date.
+
+```{r}
+eggs<-eggs_orig%>%
+  mutate(date = str_remove(date, " /1"))%>%
+  separate(date, into=c("month", "year"), sep=" ")%>%
+  fill(year) %>%
+  pivot_longer(cols=contains("large"),
+               names_to = c("size", "quantity"),
+               names_sep="_",
+               values_to = "price")
+```
+
+Now, we need to create a date from a month and year. I can see that the months are a mix of long month name and 3 character month (for January), and the years are four digit years. Do I need to adjust the string for month manually, or can lubridate fix things for me?
+
+I'm going to combine the month with the now complete year column, and the parse the "month-year" format using `my()`.
+
+```{r}
+eggs<-eggs%>%
+  mutate(date = str_c(month, year, sep=" "),
+         date = my(date))
+
+select(eggs, month, year, date)
+```
+
+Interesting - `lubridate` automatically fills in the first day of the month. Maybe we would prefer the last day, or even the middle of the month?
+
+Note that we can't easily use `make_datetime()` for this example, as we would then need to transform the irregular month names into numeric values.
+
+```{r}
+eggs<-eggs%>%
+  mutate(date = make_datetime(month, "15", year))
+
+select(eggs, month, year, date)
+```
+
+## Fed Rates ⭐⭐⭐
+
+This data set runs from July 1954 to March 2017, and includes daily macroeconomic indicators related to the *effective federal funds rate* - or [the interest rate at which banks lend money to each other](https://en.wikipedia.org/wiki/Federal_funds_rate) in order to meet mandated reserve requirements.
+
+A single case is a year-month-day, and there are 7 values that can be pivoted or not depending on the needs of the analyst. 4 values are related to the federal funds rate: *target*, *upper target*, *lower target*, and *effective*), while 3 are related macroeconomic indicators (*inflation*, $\bigtriangleup$ *GDP*, and *unemployment* rate.)
+
+For now, lets just focus on mutating the date.
+
+```{r}
+fed_rates_orig<-read_csv("_data/FedFundsRate.csv")
+
+fed_rates_orig
+```
+
+Once again, it looks like we will need to combine the year, month and date using `stringr::str_c()`, then we can use `lubridate` to transform into a date. Alternatively, because both month and day are numeric variables, we can use `make_datetime()`.
+
+```{r}
+fed_rates<-fed_rates_orig%>%
+  mutate(date = str_c(Year, Month, Day, sep="-"),
+         date = ymd(date))
+
+summary(fed_rates$date)
+```
+
+::: callout-note
+## Going Further
+
+You can now go through and figure out whether there are patterns in the missing-ness of specific indicators by date (maybe the values are only measured once a month or once a quarter, and we need to use `fill()`, or maybe there is something else going on?)
+:::
+
+## Hotel Bookings ⭐⭐⭐⭐
+
+This data set contains 119,390 hotel bookings from two hotels ("City Hotel" and "Resort Hotel") with an arrival date between July 2015 and August 2017 *(more detail needed)*, including bookings that were later cancelled. See Solution Set 2 for additional details. The data are a de-identified extract of real hotel demand data, [made available by the authors.](https://www-sciencedirect-com.silk.library.umass.edu/science/article/pii/S2352340918315191)
+
+```{r}
+bookings_orig<-read_csv("_data/hotel_bookings.csv")
+
+select(bookings_orig, starts_with("arrival"))
+```
+
+Last time we looked at these data, I went to pretty extraordinary lengths to confirm the dates covered by the data. Lets see how much easier that is if we set the date to a `date` type variable instead! Those are long variable names, thank goodness we can get rid of them. Note that we only need three pieces of information out of the four provided.
+
+Look how I can mess around with the format, and lubridate still recovers the date!
+
+```{r}
+bookings<-bookings_orig%>%
+  mutate(date_arrival = str_c(arrival_date_day_of_month,
+                              arrival_date_month,
+                              arrival_date_year, sep="/"),
+         date_arrival = dmy(date_arrival))%>%
+  select(-starts_with("arrival"))
+
+summary(bookings$date_arrival)
+```
+
+There are other relevant time variables in the data set that may be worth exploring. For example, we are given a *lead time* measure in days (integer), but we could recover a date with `lubridate`. This would allow us to more easily visually explore, for example, if some people were more likely to make bookings over the winter for summer trips, but in fall for winter trips - or some other seasonal pattern.
+
+```{r}
+bookings<-bookings%>%
+  mutate(date_booking = date_arrival-days(lead_time))
+
+summary(bookings$date_booking)
+```
+
+We can also go in the reverse order. So if we wanted to know how many days before a booking there was last a change in the reservation status, we can generate this by comparing arrival date to reservation status date.
+
+```{r}
+summary(bookings$reservation_status_date)
+
+bookings<-bookings%>%
+  mutate(change_days = interval(reservation_status_date,
+                                date_arrival),
+         change_days = change_days %/% days(1))
+
+summary(bookings$change_days)
+```
+
+## Debt ⭐⭐⭐⭐⭐
+
+This data set runs from the first quarter of 2003 to the second quarter of 2021, and includes quarterly measures of the total amount of household debt associated with 6 different types of loans - *mortgage*,*HE revolving*, *auto*, *credit card*, *student*, and *other* - plus a *total* household debt including all 6 loan types. This is another fantastic macroeconomic data product from the [New York Federal Reserve.](https://www.newyorkfed.org/microeconomics/hhdc) Detailed notes on the website reveal that the data are from an Equifax, and explain why data prior to 2003 is no longer part of the primary data publication.
+
+```{r}
+debt_orig<-read_excel("_data/debt_in_trillions.xlsx")
+
+debt_orig
+```
+
+A single case is a year-quarter, and there are 6 (or 7) values that can be pivoted or not depending on the needs of the analyst. The tricky part is figuring out how to tell R to treat the quarters as a date! We could take the long road and separate the year and quarter information, then fix the year to be numeric, recombine, etc. But lets use the more complex formats option of `parse_date` plus a little regular expression style knowledge and read the information directly.
+
+```{r}
+debt<-debt_orig%>%
+  mutate(date = parse_date_time(`Year and Quarter`, 
+                           orders="yq"))
+
+summary(debt$date)
+```
+
+Wow, isn't that super simple!
+:::

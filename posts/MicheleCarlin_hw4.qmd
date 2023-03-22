@@ -1,0 +1,103 @@
+---
+title: "2003-2021 Average Debt of Various Household Expenses"
+author: "Michele Carlin"
+desription: "Imported, Tidied, and Summarized data"
+date: "03/20/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - Michele Carlin
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(summarytools)
+library(dbplyr)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read in and view summary of 'debt_in_trillions' dataset.
+
+```{r}
+sheet_names <- excel_sheets("_data/debt_in_trillions.xlsx")
+sheet_names 
+debt_trillions <- read_xlsx ("_data/debt_in_trillions.xlsx")
+View(debt_trillions)
+view(dfSummary(debt_trillions))
+```
+
+This dataset contains 74 rows and 8 columns.  Each row represents a particular year/quarter and provides the average debt in trillions for various types of household expenses (e.g., mortgage, auto loan, credit card, etc.). 
+
+Pivot longer so that each row contains one observation.
+
+```{r}
+debt_trillions_long <- pivot_longer(debt_trillions, col = c(Mortgage, 'HE Revolving', 'Auto Loan', 'Credit Card', 'Student Loan', Other, Total),
+                 names_to="debt_type",
+                 values_to = "value")
+View(debt_trillions_long)
+view(dfSummary(debt_trillions_long))
+```
+
+Separate year and quarter into separate variables.
+Summarize average debt by type of debt.
+
+```{r}
+debt_trillions_long %>%
+  separate("Year and Quarter", c("year", "quarter"), ":") %>%
+ group_by(year, debt_type) %>%
+  summarise(Avg_Debt = mean(value),
+            Min_Debt = min(value),
+            Max_Debt = max(value))
+```
+
+Summarize total debt only by year.
+
+```{r}
+debt_trillions_long %>%
+  separate("Year and Quarter", c("year", "quarter"), ":") %>%
+  filter(debt_type == 'Total') %>%
+  group_by(year, debt_type) %>%
+  summarise(Avg_Debt = mean(value),
+            Min_Debt = min(value),
+            Max_Debt = max(value))
+```
+
+Read in and view summary of 'abc polls' dataset.
+
+```{r}
+abc_poll <- read_csv ("_data/abc_poll_2021.csv")
+View(abc_poll)
+view(dfSummary(abc_poll))
+```
+
+Remove 'skipped' answers from Q1_a variable.
+
+```{r}
+table(select(abc_poll, Q1_a))
+
+abc_poll <- abc_poll%>%
+  mutate(Q1_a = str_remove(Q1_a, "Skipped"))
+
+table(select(abc_poll, Q1_a))
+
+```
+
+
+Specify the order of the ppinc7 values.
+
+```{r}
+ppinc7 <- factor('ppinc7', ordered = TRUE, levels = c("$150,000 or more", "$100,000 to $149,999", "$75,000 to $99,999", "$50,000 to $74,999", "$25,000 to $49,999", "$10,000 to $24,999", "Less than $10,000"))
+ppinc7
+table(ppinc7)
+```

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.2.335">
+<meta name="generator" content="quarto-1.2.475">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -289,84 +289,76 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </section>
 <section id="data-cleaning" class="level3">
 <h3 class="anchored" data-anchor-id="data-cleaning">Data Cleaning</h3>
-<p>Before we attempt any pivoting, we should clean up this dataset a bit more. Assuming we’re interested in the <em>results</em> of the survey and not so much in how many responses were clear, let’s select just the relevant columns. We can also leave off the percentage columns, since we can calculate those ourselves with the raw counts.</p>
+<p>Before we attempt any pivoting, we should clean up this dataset a bit more. Assuming we’re interested in the <em>results</em> of the survey and not so much in how many responses were clear, let’s select just the relevant columns. We can also leave off the percentage columns, since we can calculate those ourselves with the raw counts. We’ll also drop the last few lines since they are endnotes.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>aussieMarriage <span class="ot">&lt;-</span> <span class="fu">select</span>(aussieMarriage, <span class="st">"State_territory"</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span>, <span class="st">"Total"</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>aussieMarriage</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>aussieMarriage1 <span class="ot">&lt;-</span> <span class="fu">select</span>(aussieMarriage, <span class="st">"State_territory"</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span>, <span class="st">"Total"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>aussieMarriage2 <span class="ot">&lt;-</span> <span class="fu">slice</span>(aussieMarriage1, <span class="dv">1</span><span class="sc">:</span>(<span class="fu">nrow</span>(aussieMarriage) <span class="sc">-</span> <span class="dv">6</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>aussieMarriage2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 15 × 4
-   State_territory                                           Yes      No   Total
-   &lt;chr&gt;                                                   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
- 1 New South Wales                                       2374362 1736838  4.11e6
- 2 Victoria                                              2145629 1161098  3.31e6
- 3 Queensland                                            1487060  961015  2.45e6
- 4 South Australia                                        592528  356247  9.49e5
- 5 Western Australia                                      801575  455924  1.26e6
- 6 Tasmania                                               191948  109655  3.02e5
- 7 Northern Territory(b)                                   48686   31690  8.04e4
- 8 Australian Capital Territory(c)                        175459   61520  2.37e5
- 9 Australia                                             7817247 4873987  1.27e7
-10 &lt;NA&gt;                                                       NA      NA NA     
-11 (a) Includes blank responses                               NA      NA NA     
-12 (b) Includes Christmas Island and the Cocos (Keeling…      NA      NA NA     
-13 (c) Includes Jervis Bay (within the Division of Fenn…      NA      NA NA     
-14 &lt;NA&gt;                                                       NA      NA NA     
-15 © Commonwealth of Australia 2017                           NA      NA NA     </code></pre>
+<pre><code># A tibble: 9 × 4
+  State_territory                     Yes      No    Total
+  &lt;chr&gt;                             &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;
+1 New South Wales                 2374362 1736838  4111200
+2 Victoria                        2145629 1161098  3306727
+3 Queensland                      1487060  961015  2448075
+4 South Australia                  592528  356247   948775
+5 Western Australia                801575  455924  1257499
+6 Tasmania                         191948  109655   301603
+7 Northern Territory(b)             48686   31690    80376
+8 Australian Capital Territory(c)  175459   61520   236979
+9 Australia                       7817247 4873987 12691234</code></pre>
 </div>
 </div>
-<p><strong>Question for the group</strong>: Is there a way to cut off a dataframe after a certain number of rows? How can I remove the endnotes?</p>
 </section>
 <section id="data-review-and-pivot" class="level3">
 <h3 class="anchored" data-anchor-id="data-review-and-pivot">Data Review and Pivot</h3>
-<p>Now that we have a clean dataset we can take a closer look. Using the <code>dim()</code> and <code>head()</code> functions we can see that we have 15 observations and 4 variables. If we leave off the endnotes we really only have 9 relevant observations. The 4 variables include the <em>state or territory</em> variable which indicates the region within Australia a vote is from. Then there is a <em>Yes</em> column with the number of “yes” votes, a <em>No</em> column with the number of “no” votes, and finally a <em>Total</em> column with the total number of votes.</p>
+<p>Now that we have a clean dataset we can take a closer look. Using the <code>dim()</code> and <code>head()</code> functions we can see that we have 9 observations and 4 variables. The 4 variables include the <em>state or territory</em> variable which indicates the region within Australia a vote is from, including Australia at the end. Then there is a <em>Yes</em> column with the number of “yes” votes, a <em>No</em> column with the number of “no” votes, and finally a <em>Total</em> column with the total number of votes.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(aussieMarriage)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(aussieMarriage2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 15  4</code></pre>
+<pre><code>[1] 9 4</code></pre>
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(aussieMarriage, <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(aussieMarriage2, <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 10 × 4
-   State_territory                     Yes      No    Total
-   &lt;chr&gt;                             &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;
- 1 New South Wales                 2374362 1736838  4111200
- 2 Victoria                        2145629 1161098  3306727
- 3 Queensland                      1487060  961015  2448075
- 4 South Australia                  592528  356247   948775
- 5 Western Australia                801575  455924  1257499
- 6 Tasmania                         191948  109655   301603
- 7 Northern Territory(b)             48686   31690    80376
- 8 Australian Capital Territory(c)  175459   61520   236979
- 9 Australia                       7817247 4873987 12691234
-10 &lt;NA&gt;                                 NA      NA       NA</code></pre>
+<pre><code># A tibble: 9 × 4
+  State_territory                     Yes      No    Total
+  &lt;chr&gt;                             &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;
+1 New South Wales                 2374362 1736838  4111200
+2 Victoria                        2145629 1161098  3306727
+3 Queensland                      1487060  961015  2448075
+4 South Australia                  592528  356247   948775
+5 Western Australia                801575  455924  1257499
+6 Tasmania                         191948  109655   301603
+7 Northern Territory(b)             48686   31690    80376
+8 Australian Capital Territory(c)  175459   61520   236979
+9 Australia                       7817247 4873987 12691234</code></pre>
 </div>
 </div>
 <p>Let’s use the <code>pivot_longer()</code> function to move all of the <em>yes</em> and <em>no</em> votes to two columns called “Response” and “Count”. We can also calculate the percentage using these counts and the total column.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>aussieMarriagePL <span class="ot">&lt;-</span> aussieMarriage <span class="sc">%&gt;%</span> </span>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>aussieMarriagePL <span class="ot">&lt;-</span> aussieMarriage2 <span class="sc">%&gt;%</span> </span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">col =</span> <span class="fu">c</span>(<span class="st">"Yes"</span>, <span class="st">"No"</span>),</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"Response"</span>,</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"Count"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">"Percent"</span> <span class="ot">=</span> Count<span class="sc">/</span>Total)</span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>aussieMarriageFinal <span class="ot">&lt;-</span> <span class="fu">select</span>(aussieMarriagePL, State_territory, Response, Count, Percent, Total) <span class="co"># reording the columns so that Total shows up at the end.</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>aussieMarriageFinal <span class="ot">&lt;-</span> <span class="fu">select</span>(aussieMarriagePL, State_territory, Response, Count, Percent, Total) <span class="co"># reordering the columns so that Total shows up on the far right.</span></span>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(aussieMarriageFinal, <span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 20 × 5
+<pre><code># A tibble: 18 × 5
    State_territory                 Response   Count Percent    Total
    &lt;chr&gt;                           &lt;chr&gt;      &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;
  1 New South Wales                 Yes      2374362   0.578  4111200
@@ -386,9 +378,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 15 Australian Capital Territory(c) Yes       175459   0.740   236979
 16 Australian Capital Territory(c) No         61520   0.260   236979
 17 Australia                       Yes      7817247   0.616 12691234
-18 Australia                       No       4873987   0.384 12691234
-19 &lt;NA&gt;                            Yes           NA  NA           NA
-20 &lt;NA&gt;                            No            NA  NA           NA</code></pre>
+18 Australia                       No       4873987   0.384 12691234</code></pre>
 </div>
 </div>
 <p>This new dataset shows the same information but organized differently. Now each observation shows the number of <em>Yes</em> or <em>No</em> votes in a state/territory, along with the <em>Percent</em> those votes represent out of the total in that region.</p>
@@ -745,39 +735,38 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a><span class="fu">### Data Cleaning</span></span>
 <span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>Before we attempt any pivoting, we should clean up this dataset a bit more. Assuming we're interested in the *results* of the survey and not so much in how many responses were clear, let's select just the relevant columns. We can also leave off the percentage columns, since we can calculate those ourselves with the raw counts. </span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>Before we attempt any pivoting, we should clean up this dataset a bit more. Assuming we're interested in the *results* of the survey and not so much in how many responses were clear, let's select just the relevant columns. We can also leave off the percentage columns, since we can calculate those ourselves with the raw counts. We'll also drop the last few lines since they are endnotes. </span>
 <span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>aussieMarriage <span class="ot">&lt;-</span> <span class="fu">select</span>(aussieMarriage, <span class="st">"State_territory"</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span>, <span class="st">"Total"</span>)</span>
-<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>aussieMarriage</span>
+<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>aussieMarriage1 <span class="ot">&lt;-</span> <span class="fu">select</span>(aussieMarriage, <span class="st">"State_territory"</span>, <span class="st">"Yes"</span>, <span class="st">"No"</span>, <span class="st">"Total"</span>)</span>
+<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>aussieMarriage2 <span class="ot">&lt;-</span> <span class="fu">slice</span>(aussieMarriage1, <span class="dv">1</span><span class="sc">:</span>(<span class="fu">nrow</span>(aussieMarriage) <span class="sc">-</span> <span class="dv">6</span>))</span>
+<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>aussieMarriage2</span>
 <span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>**Question for the group**: Is there a way to cut off a dataframe after a certain number of rows? How can I remove the endnotes?</span>
-<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a><span class="fu">### Data Review and Pivot</span></span>
-<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>Now that we have a clean dataset we can take a closer look. Using the <span class="in">`dim()`</span> and <span class="in">`head()`</span> functions we can see that we have 15 observations and 4 variables. If we leave off the endnotes we really only have 9 relevant observations. The 4 variables include the *state or territory* variable which indicates the region within Australia a vote is from. Then there is a *Yes* column with the number of "yes" votes, a *No* column with the number of "no" votes, and finally a *Total* column with the total number of votes. </span>
-<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(aussieMarriage)</span>
-<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(aussieMarriage, <span class="dv">10</span>)</span>
-<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>Let's use the <span class="in">`pivot_longer()`</span> function to move all of the *yes* and *no* votes to two columns called "Response" and "Count". We can also calculate the percentage using these counts and the total column.</span>
-<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a>aussieMarriagePL <span class="ot">&lt;-</span> aussieMarriage <span class="sc">%&gt;%</span> </span>
-<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">col =</span> <span class="fu">c</span>(<span class="st">"Yes"</span>, <span class="st">"No"</span>),</span>
-<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"Response"</span>,</span>
-<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"Count"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">"Percent"</span> <span class="ot">=</span> Count<span class="sc">/</span>Total)</span>
-<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a>aussieMarriageFinal <span class="ot">&lt;-</span> <span class="fu">select</span>(aussieMarriagePL, State_territory, Response, Count, Percent, Total) <span class="co"># reording the columns so that Total shows up at the end.</span></span>
-<span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(aussieMarriageFinal, <span class="dv">20</span>)</span>
-<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-88"><a href="#cb12-88" aria-hidden="true" tabindex="-1"></a>This new dataset shows the same information but organized differently. Now each observation shows the number of *Yes* or *No* votes in a state/territory, along with the *Percent* those votes represent out of the total in that region. </span>
+<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a><span class="fu">### Data Review and Pivot</span></span>
+<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>Now that we have a clean dataset we can take a closer look. Using the <span class="in">`dim()`</span> and <span class="in">`head()`</span> functions we can see that we have 9 observations and 4 variables. The 4 variables include the *state or territory* variable which indicates the region within Australia a vote is from, including Australia at the end. Then there is a *Yes* column with the number of "yes" votes, a *No* column with the number of "no" votes, and finally a *Total* column with the total number of votes. </span>
+<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(aussieMarriage2)</span>
+<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(aussieMarriage2, <span class="dv">10</span>)</span>
+<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>Let's use the <span class="in">`pivot_longer()`</span> function to move all of the *yes* and *no* votes to two columns called "Response" and "Count". We can also calculate the percentage using these counts and the total column.</span>
+<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a>aussieMarriagePL <span class="ot">&lt;-</span> aussieMarriage2 <span class="sc">%&gt;%</span> </span>
+<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">col =</span> <span class="fu">c</span>(<span class="st">"Yes"</span>, <span class="st">"No"</span>),</span>
+<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"Response"</span>,</span>
+<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"Count"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">"Percent"</span> <span class="ot">=</span> Count<span class="sc">/</span>Total)</span>
+<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a>aussieMarriageFinal <span class="ot">&lt;-</span> <span class="fu">select</span>(aussieMarriagePL, State_territory, Response, Count, Percent, Total) <span class="co"># reordering the columns so that Total shows up on the far right.</span></span>
+<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(aussieMarriageFinal, <span class="dv">20</span>)</span>
+<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a>This new dataset shows the same information but organized differently. Now each observation shows the number of *Yes* or *No* votes in a state/territory, along with the *Percent* those votes represent out of the total in that region. </span>
 </code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

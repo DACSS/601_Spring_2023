@@ -129,7 +129,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 <meta name="twitter:title" content="Challenge 2: Railroad Wrangling">
-<meta name="twitter:description" content="Looking at the original spreadsheet, we can see based on the title that this data is about the number of railroad employees in the United states, categorized by state and county.">
+<meta name="twitter:description" content="Looking at the original spreadsheet, we can see based on the title that this data is about the number of railroad employees in the United states, categorized by state and county for the year 2012.">
 <meta name="twitter:creator" content="@UMassDACSS">
 <meta name="twitter:site" content="@UMassDACSS">
 <meta name="twitter:card" content="summary">
@@ -187,7 +187,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
    
   <ul>
   <li><a href="#reading-in-the-data" id="toc-reading-in-the-data" class="nav-link active" data-scroll-target="#reading-in-the-data">Reading in the Data</a></li>
-  <li><a href="#summary-statistics" id="toc-summary-statistics" class="nav-link" data-scroll-target="#summary-statistics">Summary Statistics</a></li>
+  <li><a href="#summary-statistics" id="toc-summary-statistics" class="nav-link" data-scroll-target="#summary-statistics">Summary Statistics</a>
+  <ul class="collapse">
+  <li><a href="#state-level" id="toc-state-level" class="nav-link" data-scroll-target="#state-level">State level</a></li>
+  <li><a href="#county-level" id="toc-county-level" class="nav-link" data-scroll-target="#county-level">County Level</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -251,7 +255,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 1 CALENDAR YEAR 2012                              &lt;NA&gt;  NA    &lt;NA&gt;  NA    &lt;NA&gt; </code></pre>
 </div>
 </div>
-<p>Looking at the original spreadsheet, we can see based on the title that this data is about the number of railroad employees in the United states, categorized by state and county. The data does not start until line 3 and columns 2 and 4 contain no information, so we can read in the data, skip the first two rows and select out the empty columns.</p>
+<p>Looking at the original spreadsheet, we can see based on the title that this data is about the number of railroad employees in the United states, categorized by state and county for the year 2012. The data does not start until line 3 and columns 2 and 4 contain no information, so we can read in the data, skip the first two rows and select out the empty columns.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -302,23 +306,90 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 10 DC Total    279
 # … with 44 more rows</code></pre>
 </div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(removed_state_totals)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 3
+  STATE COUNTY               TOTAL
+  &lt;chr&gt; &lt;chr&gt;                &lt;dbl&gt;
+1 AE    APO                      2
+2 AK    ANCHORAGE                7
+3 AK    FAIRBANKS NORTH STAR     2
+4 AK    JUNEAU                   3
+5 AK    MATANUSKA-SUSITNA        2
+6 AK    SITKA                    1</code></pre>
+</div>
 </div>
 <p>The State totals should only have 50 observations, because there are only 50 states, but there is are 54. This is because Armed Forces Pacific, Armed Forces Europe, DC and the Grand Total are all saved in the frame. For the purposes of gaining insights about state totals specifically, these will be filtered out of the state_totals tibble before descriptive statistics are done.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>state_totals <span class="ot">&lt;-</span> state_totals <span class="sc">%&gt;%</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                <span class="fu">filter</span>(<span class="sc">!</span>STATE <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AE Total1"</span>, <span class="st">"AP Total1"</span>, <span class="st">"DC Total"</span>, <span class="st">"Grand Total"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>state_totals <span class="ot">&lt;-</span> state_totals <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                <span class="fu">filter</span>(<span class="sc">!</span>STATE <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AE Total1"</span>, <span class="st">"AP Total1"</span>, <span class="st">"DC Total"</span>, <span class="st">"Grand Total"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
 <section id="summary-statistics" class="level1">
 <h1>Summary Statistics</h1>
-<p>test test test test test test</p>
+<section id="state-level" class="level3">
+<h3 class="anchored" data-anchor-id="state-level">State level</h3>
+<p>First lets look at the statistics of the state totals:</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summarize</span>(state_totals, <span class="at">Mean =</span> <span class="fu">mean</span>(TOTAL), <span class="at">Median =</span> <span class="fu">median</span>(TOTAL), <span class="at">Minimum =</span><span class="fu">min</span>(TOTAL), <span class="at">Maximum =</span> <span class="fu">max</span>(TOTAL), <span class="at">Std =</span> <span class="fu">sd</span>(TOTAL), <span class="at">IQR=</span> <span class="fu">IQR</span>(TOTAL))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 6
+   Mean Median Minimum Maximum   Std   IQR
+  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1  5103  3712.       4   19839 4777.  4953</code></pre>
+</div>
+</div>
+<p>The totals for each state vary heavily, with a standard deviation of over 4.7 thousand compared to the mean of 5.1 thousand. It also looks like the values are skewed with a few very large states pulling the average up. This can be seen by the mean being almost half a standard deviation higher than the median, and can also be seen by the range of values going from 4 to 19839. In order to try to get a closer look at the county level, we can summarize over our other tibble.</p>
+</section>
+<section id="county-level" class="level3">
+<h3 class="anchored" data-anchor-id="county-level">County Level</h3>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summarize</span>(removed_state_totals, <span class="at">Mean =</span> <span class="fu">mean</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Median =</span> <span class="fu">median</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Minimum =</span><span class="fu">min</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Maximum =</span> <span class="fu">max</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Std =</span> <span class="fu">sd</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">IQR=</span> <span class="fu">IQR</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 6
+   Mean Median Minimum Maximum   Std   IQR
+  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1  87.4     21       1    8207  284.    58</code></pre>
+</div>
+</div>
+<p>Much like the State Total data, this data is highly varied and skewed. Again we can see that the mean is much higher than the mean, but in the case of this data the IQR is much smaller than the Standard Deviation. This also suggests that there are a few observations much higher than the average, and that these are skewing the data.</p>
+<div class="cell" data-warnings="false" data-messages="false">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>removed_state_totals <span class="sc">%&gt;%</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(STATE)<span class="sc">%&gt;%</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(TOTAL)<span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize_all</span>(mean, <span class="at">na.rm=</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">Mean =</span> <span class="fu">mean</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Median =</span> <span class="fu">median</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Minimum =</span><span class="fu">min</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Maximum =</span> <span class="fu">max</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Std =</span> <span class="fu">sd</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">IQR=</span> <span class="fu">IQR</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Adding missing grouping variables: `STATE`</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 6
+   Mean Median Minimum Maximum   Std   IQR
+  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1  116.   63.8       1     662  128.  89.3</code></pre>
+</div>
+</div>
+<p>The data above shows the descriptive statistics over the mean number of railroad employees per county per state. We can see that the range descreases, as the highest average number of workers per county in a state is 662, while the lowest is still 1. We can still see the skew from before, but it is less impactful with a lower standard deviation and a smaller gap between the median and mean. So while the average county has 87 workers according to the last summary, we can see that the average mean number of employees per county state wide is 115.</p>
 
 
 <!-- -->
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -623,103 +694,103 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <script src="https://giscus.app/client.js" data-repo="DACSS/601_Spring_2023" data-repo-id="R_kgDOI4JcJA" data-category="Announcements" data-category-id="" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
 </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="sourceCode" id="cb9" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Challenge 2: Railroad Wrangling"</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Daniel Hannon"</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="an">desription:</span><span class="co"> ""</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "03/07/2023"</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co">  - challenge_2</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">  - Daniel Hannon</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co">  - railroads</span></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a><span class="fu"># Reading in the Data</span></span>
-<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="in">```{r message = FALSE}</span></span>
-<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: read in the data</span></span>
-<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>railroad_data <span class="ot">&lt;-</span> readxl<span class="sc">::</span><span class="fu">read_excel</span>(<span class="st">"_data/StateCounty2012.xls"</span>)</span>
-<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="fu">slice</span>(railroad_data, <span class="dv">1</span>)</span>
-<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>Looking at the original spreadsheet, we can see based on the title that this data is about the number of railroad employees in the United states, categorized by state and county for the year 2012. The data does not start until line 3 and columns 2 and 4 contain no information, so we can read in the data, skip the first two rows and select out the empty columns.</span>
-<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a><span class="in">```{r message = FALSE}</span></span>
-<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: save the data in a useful form</span></span>
-<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>railroad_data <span class="ot">&lt;-</span>readxl<span class="sc">::</span><span class="fu">read_excel</span>(<span class="st">"_data/StateCounty2012.xls"</span>, <span class="at">skip=</span> <span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>                <span class="fu">select</span>(STATE, COUNTY, TOTAL)</span>
-<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(railroad_data)</span>
-<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>We can see that each observation is the number of railway workers for a given county in 2012. However, there also contains observations about the total for each state. These observations contain an N/A in the county space and use the word Total in the state column. We can filter these out to have a data frame for all the state totals and one for all the unique counties.</span>
-<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: Filter out the State Total Observations</span></span>
-<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a><span class="co">#A data frame of just totals</span></span>
-<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>state_totals <span class="ot">&lt;-</span> railroad_data <span class="sc">%&gt;%</span></span>
-<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>                <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"Total"</span>, STATE)) <span class="sc">%&gt;%</span></span>
-<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>                <span class="fu">select</span>(<span class="sc">!</span>COUNTY)</span>
-<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a><span class="co">#A data frame of no totals </span></span>
-<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>removed_state_totals <span class="ot">&lt;-</span> railroad_data <span class="sc">%&gt;%</span></span>
-<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"Total"</span>, STATE))</span>
-<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>state_totals</span>
-<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(removed_state_totals)</span>
-<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a><span class="in">```</span> </span>
-<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>The State totals should only have 50 observations, because there are only 50 states, but there is are 54. This is because Armed Forces Pacific, Armed Forces Europe, DC and the Grand Total are all saved in the frame. For the purposes of gaining insights about state totals specifically, these will be filtered out of the state_totals tibble before descriptive statistics are done. </span>
-<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: Filter out the Non-state observations</span></span>
-<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>state_totals <span class="ot">&lt;-</span> state_totals <span class="sc">%&gt;%</span></span>
-<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>                <span class="fu">filter</span>(<span class="sc">!</span>STATE <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AE Total1"</span>, <span class="st">"AP Total1"</span>, <span class="st">"DC Total"</span>, <span class="st">"Grand Total"</span>))</span>
-<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a><span class="fu"># Summary Statistics </span></span>
-<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### State level</span></span>
-<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>First lets look at the statistics of the state totals:</span>
-<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: get the descriptive stats over state totals </span></span>
-<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a><span class="fu">summarize</span>(state_totals, <span class="at">Mean =</span> <span class="fu">mean</span>(TOTAL), <span class="at">Median =</span> <span class="fu">median</span>(TOTAL), <span class="at">Minimum =</span><span class="fu">min</span>(TOTAL), <span class="at">Maximum =</span> <span class="fu">max</span>(TOTAL), <span class="at">Std =</span> <span class="fu">sd</span>(TOTAL), <span class="at">IQR=</span> <span class="fu">IQR</span>(TOTAL))</span>
-<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a>The totals for each state vary heavily, with a standard deviation of over 4.7 thousand compared to the mean of 5.1 thousand. It also looks like the values are skewed with a few very large states pulling the average up. This can be seen by the mean being almost half a standard deviation higher than the median, and can also be seen by the range of values going from 4 to 19839. In order to try to get a closer look at the county level, we can summarize over our other tibble. </span>
-<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a><span class="fu">### County Level</span></span>
-<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
-<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: get the descriptive stats over indivdual counties </span></span>
-<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a><span class="fu">summarize</span>(removed_state_totals, <span class="at">Mean =</span> <span class="fu">mean</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Median =</span> <span class="fu">median</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Minimum =</span><span class="fu">min</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Maximum =</span> <span class="fu">max</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Std =</span> <span class="fu">sd</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">IQR=</span> <span class="fu">IQR</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>))</span>
-<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a>Much like the State Total data, this data is highly varied and skewed. Again we can see that the mean is much higher than the mean, but in the case of this data the IQR is much smaller than the Standard Deviation. This also suggests that there are a few observations much higher than the average, and that these are skewing the data.</span>
-<span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a><span class="in">```{r warnings =FALSE, messages = FALSE}</span></span>
-<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: do descriptive stats on the average per state</span></span>
-<span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a>removed_state_totals <span class="sc">%&gt;%</span> </span>
-<span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(STATE)<span class="sc">%&gt;%</span></span>
-<span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(TOTAL)<span class="sc">%&gt;%</span></span>
-<span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize_all</span>(mean, <span class="at">na.rm=</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">Mean =</span> <span class="fu">mean</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Median =</span> <span class="fu">median</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Minimum =</span><span class="fu">min</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Maximum =</span> <span class="fu">max</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Std =</span> <span class="fu">sd</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">IQR=</span> <span class="fu">IQR</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>))</span>
-<span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a>          </span>
-<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a>The data above shows the descriptive statistics over the mean number of railroad employees per county per state. We can see that the range descreases, as the highest average number of workers per county in a state is 662, while the lowest is still 1. We can still see the skew from before, but it is less impactful with a lower standard deviation and a smaller gap between the median and mean. So while the average county has 87 workers according to the last summary, we can see that the average mean number of employees per county state wide is 115.</span>
+<div class="sourceCode" id="cb18" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Challenge 2: Railroad Wrangling"</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Daniel Hannon"</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="an">desription:</span><span class="co"> "Desribed and Analyzed the Railroad dataset"</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "03/07/2023"</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">  - challenge_2</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">  - Daniel Hannon</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co">  - railroads</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a><span class="fu"># Reading in the Data</span></span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a><span class="in">```{r message = FALSE}</span></span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: read in the data</span></span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>railroad_data <span class="ot">&lt;-</span> readxl<span class="sc">::</span><span class="fu">read_excel</span>(<span class="st">"_data/StateCounty2012.xls"</span>)</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a><span class="fu">slice</span>(railroad_data, <span class="dv">1</span>)</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>Looking at the original spreadsheet, we can see based on the title that this data is about the number of railroad employees in the United states, categorized by state and county for the year 2012. The data does not start until line 3 and columns 2 and 4 contain no information, so we can read in the data, skip the first two rows and select out the empty columns.</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a><span class="in">```{r message = FALSE}</span></span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: save the data in a useful form</span></span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>railroad_data <span class="ot">&lt;-</span>readxl<span class="sc">::</span><span class="fu">read_excel</span>(<span class="st">"_data/StateCounty2012.xls"</span>, <span class="at">skip=</span> <span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>                <span class="fu">select</span>(STATE, COUNTY, TOTAL)</span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(railroad_data)</span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>We can see that each observation is the number of railway workers for a given county in 2012. However, there also contains observations about the total for each state. These observations contain an N/A in the county space and use the word Total in the state column. We can filter these out to have a data frame for all the state totals and one for all the unique counties.</span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-47"><a href="#cb18-47" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: Filter out the State Total Observations</span></span>
+<span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-50"><a href="#cb18-50" aria-hidden="true" tabindex="-1"></a><span class="co">#A data frame of just totals</span></span>
+<span id="cb18-51"><a href="#cb18-51" aria-hidden="true" tabindex="-1"></a>state_totals <span class="ot">&lt;-</span> railroad_data <span class="sc">%&gt;%</span></span>
+<span id="cb18-52"><a href="#cb18-52" aria-hidden="true" tabindex="-1"></a>                <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"Total"</span>, STATE)) <span class="sc">%&gt;%</span></span>
+<span id="cb18-53"><a href="#cb18-53" aria-hidden="true" tabindex="-1"></a>                <span class="fu">select</span>(<span class="sc">!</span>COUNTY)</span>
+<span id="cb18-54"><a href="#cb18-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-55"><a href="#cb18-55" aria-hidden="true" tabindex="-1"></a><span class="co">#A data frame of no totals </span></span>
+<span id="cb18-56"><a href="#cb18-56" aria-hidden="true" tabindex="-1"></a>removed_state_totals <span class="ot">&lt;-</span> railroad_data <span class="sc">%&gt;%</span></span>
+<span id="cb18-57"><a href="#cb18-57" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"Total"</span>, STATE))</span>
+<span id="cb18-58"><a href="#cb18-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-59"><a href="#cb18-59" aria-hidden="true" tabindex="-1"></a>state_totals</span>
+<span id="cb18-60"><a href="#cb18-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-61"><a href="#cb18-61" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(removed_state_totals)</span>
+<span id="cb18-62"><a href="#cb18-62" aria-hidden="true" tabindex="-1"></a><span class="in">```</span> </span>
+<span id="cb18-63"><a href="#cb18-63" aria-hidden="true" tabindex="-1"></a>The State totals should only have 50 observations, because there are only 50 states, but there is are 54. This is because Armed Forces Pacific, Armed Forces Europe, DC and the Grand Total are all saved in the frame. For the purposes of gaining insights about state totals specifically, these will be filtered out of the state_totals tibble before descriptive statistics are done. </span>
+<span id="cb18-66"><a href="#cb18-66" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb18-67"><a href="#cb18-67" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: Filter out the Non-state observations</span></span>
+<span id="cb18-68"><a href="#cb18-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-69"><a href="#cb18-69" aria-hidden="true" tabindex="-1"></a>state_totals <span class="ot">&lt;-</span> state_totals <span class="sc">%&gt;%</span></span>
+<span id="cb18-70"><a href="#cb18-70" aria-hidden="true" tabindex="-1"></a>                <span class="fu">filter</span>(<span class="sc">!</span>STATE <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"AE Total1"</span>, <span class="st">"AP Total1"</span>, <span class="st">"DC Total"</span>, <span class="st">"Grand Total"</span>))</span>
+<span id="cb18-71"><a href="#cb18-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-72"><a href="#cb18-72" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb18-73"><a href="#cb18-73" aria-hidden="true" tabindex="-1"></a><span class="fu"># Summary Statistics </span></span>
+<span id="cb18-74"><a href="#cb18-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-75"><a href="#cb18-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### State level</span></span>
+<span id="cb18-76"><a href="#cb18-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-77"><a href="#cb18-77" aria-hidden="true" tabindex="-1"></a>First lets look at the statistics of the state totals:</span>
+<span id="cb18-80"><a href="#cb18-80" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb18-81"><a href="#cb18-81" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: get the descriptive stats over state totals </span></span>
+<span id="cb18-82"><a href="#cb18-82" aria-hidden="true" tabindex="-1"></a><span class="fu">summarize</span>(state_totals, <span class="at">Mean =</span> <span class="fu">mean</span>(TOTAL), <span class="at">Median =</span> <span class="fu">median</span>(TOTAL), <span class="at">Minimum =</span><span class="fu">min</span>(TOTAL), <span class="at">Maximum =</span> <span class="fu">max</span>(TOTAL), <span class="at">Std =</span> <span class="fu">sd</span>(TOTAL), <span class="at">IQR=</span> <span class="fu">IQR</span>(TOTAL))</span>
+<span id="cb18-83"><a href="#cb18-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-84"><a href="#cb18-84" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb18-85"><a href="#cb18-85" aria-hidden="true" tabindex="-1"></a>The totals for each state vary heavily, with a standard deviation of over 4.7 thousand compared to the mean of 5.1 thousand. It also looks like the values are skewed with a few very large states pulling the average up. This can be seen by the mean being almost half a standard deviation higher than the median, and can also be seen by the range of values going from 4 to 19839. In order to try to get a closer look at the county level, we can summarize over our other tibble. </span>
+<span id="cb18-86"><a href="#cb18-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-87"><a href="#cb18-87" aria-hidden="true" tabindex="-1"></a><span class="fu">### County Level</span></span>
+<span id="cb18-90"><a href="#cb18-90" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb18-91"><a href="#cb18-91" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: get the descriptive stats over indivdual counties </span></span>
+<span id="cb18-92"><a href="#cb18-92" aria-hidden="true" tabindex="-1"></a><span class="fu">summarize</span>(removed_state_totals, <span class="at">Mean =</span> <span class="fu">mean</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Median =</span> <span class="fu">median</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Minimum =</span><span class="fu">min</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Maximum =</span> <span class="fu">max</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Std =</span> <span class="fu">sd</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">IQR=</span> <span class="fu">IQR</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>))</span>
+<span id="cb18-93"><a href="#cb18-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-94"><a href="#cb18-94" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb18-95"><a href="#cb18-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-96"><a href="#cb18-96" aria-hidden="true" tabindex="-1"></a>Much like the State Total data, this data is highly varied and skewed. Again we can see that the mean is much higher than the mean, but in the case of this data the IQR is much smaller than the Standard Deviation. This also suggests that there are a few observations much higher than the average, and that these are skewing the data.</span>
+<span id="cb18-97"><a href="#cb18-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-98"><a href="#cb18-98" aria-hidden="true" tabindex="-1"></a><span class="in">```{r warnings =FALSE, messages = FALSE}</span></span>
+<span id="cb18-99"><a href="#cb18-99" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: do descriptive stats on the average per state</span></span>
+<span id="cb18-100"><a href="#cb18-100" aria-hidden="true" tabindex="-1"></a>removed_state_totals <span class="sc">%&gt;%</span> </span>
+<span id="cb18-101"><a href="#cb18-101" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(STATE)<span class="sc">%&gt;%</span></span>
+<span id="cb18-102"><a href="#cb18-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(TOTAL)<span class="sc">%&gt;%</span></span>
+<span id="cb18-103"><a href="#cb18-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize_all</span>(mean, <span class="at">na.rm=</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-104"><a href="#cb18-104" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">Mean =</span> <span class="fu">mean</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Median =</span> <span class="fu">median</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Minimum =</span><span class="fu">min</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Maximum =</span> <span class="fu">max</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">Std =</span> <span class="fu">sd</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>), <span class="at">IQR=</span> <span class="fu">IQR</span>(TOTAL, <span class="at">na.rm =</span><span class="cn">TRUE</span>))</span>
+<span id="cb18-105"><a href="#cb18-105" aria-hidden="true" tabindex="-1"></a>          </span>
+<span id="cb18-106"><a href="#cb18-106" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb18-107"><a href="#cb18-107" aria-hidden="true" tabindex="-1"></a>The data above shows the descriptive statistics over the mean number of railroad employees per county per state. We can see that the range descreases, as the highest average number of workers per county in a state is 662, while the lowest is still 1. We can still see the skew from before, but it is less impactful with a lower standard deviation and a smaller gap between the median and mean. So while the average county has 87 workers according to the last summary, we can see that the average mean number of employees per county state wide is 115.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

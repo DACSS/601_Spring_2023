@@ -1,0 +1,85 @@
+---
+title: "Challenge 3: Australian Marriages "
+author: "Daniel Hannon"
+desription: "Described and Made Tidy the Australian Marriage Dataset"
+date: "03/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - Daniel Hannon
+  - australian_marriage
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read in the Data
+```{r messages = FALSE}
+#| label: read in the data, renaming the columns to meaningful names
+state_and_territory <-readxl::read_excel("_data/australian_marriage_law_postal_survey_2017_-_response_final.xls", sheet= "Table 1", skip=7, n_max= 9, col_names = c("Division", "Yes Count", "Yes %", "No Count", "No %", "Clear Total Count", "Clear Count %", "White Space", "Clear Count", "Clear %", "Unclear Count", "Unclear %", "Non-response Count", "Non-response %", "Total Count", "Total %"))
+
+federal_electoral_divison <-readxl::read_excel("_data/australian_marriage_law_postal_survey_2017_-_response_final.xls", sheet= "Table 2", skip=7, n_max= 173, col_names = c("Zone", "Yes Count", "Yes %", "No Count", "No %", "Clear Total Count", "Clear Count %", "White Space", "Clear Count", "Clear %", "Unclear Count", "Unclear %", "Non-response Count", "Non-response %", "Total Count", "Total %"))
+
+```
+The data table is a collection of responses to a mailed out survey question to Australians who were registered to vote in 2017. One table is the responses for particular territories and states, while one is the responses for each voting district within each state and territory. Each row shows the number and percent of Yes and No votes of the clear responses. It then breaks down the number and percent of clear responses, the number and percent of unclear responses, and the number and percent of non-responses, or people who didn't respond at all.
+
+## Clean the Data 
+This data has very unclear columns, with many data points per row and many rows that provide no information. 
+Before I plan the final shape of the tibble I will first remove unnecessary rows and redundant columns. This means removing the column of white space on both sheets, all of the total percentages (its always 100) and the rows showing total counts per division from the second sheet because they are shown on the first sheet. Also removing the rows that show percentages, because they are easy to recover given the Counts and removing the Clear Total number because that can be found by adding the  yes and no votes.
+
+```{r}
+#| label: Remove useless rows and redundant columns from tibbles 
+
+#A clean version of the federal_electoral_division data
+clean_fed <- federal_electoral_divison %>% 
+        select(!c("White Space", "Clear Count", "Clear Total Count") & !contains("%")) %>%
+        filter(!grepl("(Total)", Zone)) %>%
+        mutate(Division = case_when(str_ends(Zone, "Divisions") ~ Zone,
+                                    TRUE ~ NA_character_ )) %>%
+        fill(Division, .direction = "down") %>%
+        filter(!is.na(`Total Count`))
+  
+clean_fed
+
+#A clean version of the state_and_territory data
+clean_sat <- state_and_territory %>% 
+              select(!c("White Space", "Clear Count", "Clear Total Count") & !contains("%"))
+clean_sat
+```
+## Reshape the Data
+With the data frames clean we can see our starting tibble dimensions are 9x12 for the states and territories (S.a.T.) table and 150x12 for the federal electoral division (F.E.D.) table. For the S.a.T. table in order to make it tidy We want each row to contain one observation. I plan on pivoting the table longer so that each observation consist of the count for one type of response, with 4 responses total (Yes, No, Unclear, Unresponsive, or total) for each Division. This will leave me with 3 total columns and 45 rows. 
+
+For the F.E.D. table we will do the same pivot except we will add an extra column for division, so that each electoral zone can be group by which territory division they fall into. This should leave the F.E.D table with dimensions 750x4. 
+
+```{r}
+#| label: reshape the data to be tidy following the procedure described above
+
+tidy_sat <- clean_sat %>%
+        pivot_longer(-c(`Division`),
+        names_to = c('Vote Type', '.value'),
+        names_sep = ('\\s')
+        )
+
+tidy_sat
+
+tidy_fed <- clean_fed %>%
+        pivot_longer(-c(`Zone`, `Division`),
+        names_to = c('Vote Type', '.value'),
+        names_sep = ('\\s')
+        )
+
+tidy_fed
+        
+```
+

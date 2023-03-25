@@ -1,0 +1,139 @@
+---
+title: "Challenge 4 Instructions"
+author: "PoChun Yang"
+desription: "More data wrangling: pivoting"
+date: "03/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - abc_poll
+  - lubridate
+  - stringr
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+library(stringr)
+library(readxl)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+
+Read the organiceggpoultry.xls used the read_excel
+
+```{r}
+df <- read_excel("_data/organiceggpoultry.xls", sheet = "Data",skip=4)
+df2 <- df[,!names(df) %in% c("...6")]
+df2
+colnames(df2)
+
+```
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+This is the code that I try to tidy all the organiceggpoultry_xls. First of all, I used the mutate to copy the date which columns call ...1. Then, I used the rename to change all the columns name. It would be easy to use when I want to used the pivot command. Next, I find that some of the date with /1 so I used str_remove to remove it. In addition, I want to change the date between year and month. Finally, I found that the Jan does not show the full vocabulary as other items so I change Jan to January. Beside that, I separate the part of chicken's price and the type of egg's price.
+
+```{r}
+df3<-df2%>%
+  mutate(date=...1)%>%
+  select(11,2:10)
+df3<-df3%>%
+  rename(xlarge_dozen=2,xlarge_halfdozen=3,large_dozen=4,large_halfdozen=5,chicken_whole=6
+         ,chicken_BS_Breast=7,chicken_Bone_Breast=8,chicken_whole_Legs=9,chicken_tight=10)
+df4<-df3%>%
+  mutate(date = str_remove(date," /1"))
+df4<-df4%>%
+  separate(date,into = c("Month", "Year"),sep = " ")%>%
+  fill(Year)
+df4<-df4%>%
+  mutate(Month = replace(Month, Month == 'Jan', 'January')) 
+df4
+chicken<-df4%>%
+  select(1:2,7:11)
+chicken
+eggs<-df4%>%
+  select(1:6)
+eggs
+
+```
+
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Well, I try my best to combine the time between the year and month and date. When I search the detail is that variable must be "int". However, I change that I still not works here. Therefore, I used the stringr which command call str_c to solve the problem. In addition, I used the "-" to insert between the month ,yaear, and date.
+
+```{r}
+egg_time<-eggs%>%
+  mutate(date = 15)%>%
+  select(1,2,7)
+mutate(egg_time,'measure_date' = make_date(year = Year, month = Month, day = date))
+##after the search on the Net the make_date must be a number 
+#mutate(egg_time,produce_time=make_date(Month,Year,date))
+#egg_tidy<-egg_time%>%
+#mutate(Month = replace(Month, Month == 'January',01))%>%
+#mutate(Month = replace(Month, Month == 'February', 02))%>%
+#mutate(Month = replace(Month, Month == 'March', 03))%>%
+#mutate(Month = replace(Month, Month == 'April', 04))%>%
+#mutate(Month = replace(Month, Month == 'May', 05))%>%
+#mutate(Month = replace(Month, Month == 'June', 06))%>%
+#mutate(Month = replace(Month, Month == 'July', 07))%>%
+#mutate(Month = replace(Month, Month == 'August', 08))%>%
+#mutate(Month = replace(Month, Month == 'September', 09))%>%
+#mutate(Month = replace(Month, Month == 'October', 10))%>%
+#mutate(Month = replace(Month, Month == 'November', 11))%>%
+#mutate(Month = replace(Month, Month == 'December', 12))%>%
+#mutate(produce_time=make_date(Month,Year,date))
+mutate(egg_time, produce_time=str_c(date,Month,Year,sep='-'))
+
+
+```
+In this part, I used the pivot_longer to make a new format for type of egg with their prices. Then, I used the summarise command to get the max, min, mean, median of the prices from 2004 to 2013.
+
+```{r}
+data_summary<-eggs%>%
+pivot_longer(col= contains("large"),
+              names_to="type_of_egg",
+              values_to = "price")
+data_summary
+data_summary%>%
+group_by(type_of_egg)%>%
+summarise(Min=min(price),
+          Max=max(price),
+          Mean=mean(price),
+          Median=median(price))
+
+```
+Any additional comments?

@@ -1,0 +1,162 @@
+---
+title: "Challenge 4"
+author: "Thrishul"
+desription: "More data wrangling: pivoting"
+date: "08/18/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - abc_poll
+  - eggs
+  - fed_rates
+  - hotel_bookings
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+abc_poll_orig<-read_csv("_data/abc_poll_2021.csv")
+
+# political questions
+abc_poll_orig%>%
+  select(starts_with("Q"))%>%
+  colnames(.)
+
+# all but one demographer
+abc_poll_orig%>%
+  select(starts_with("pp"))%>%
+  colnames(.)
+
+# national poll
+n_distinct(abc_poll_orig$ppstaten)
+
+```
+
+### Briefly describe the data
+The ABC Poll dataset is likely a national sample survey, conducted in 2019, that includes responses from 527 individuals. The survey covers a range of topics, including 10 questions related to political attitudes and beliefs, as well as party identification. Additionally, there are 15 demographic variables included in the dataset, some of which have been recoded to facilitate analysis. Finally, the dataset also includes 5 survey administration variables that provide information on the methodology and logistics of the survey administration. Overall, the dataset is a comprehensive collection of information on political attitudes and demographics in the surveyed population, and it offers a valuable resource for researchers and analysts interested in understanding these topics
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+print(summarytools::dfSummary(abc_poll_orig,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+```
+
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+To analyze or visualize the dataset, some of the string variables may need to be modified. For example, the party identification variable uses non-standard language, such as "A Democrat." Additionally, the "skipped" response category should be treated as missing data. To address these issues, the variables may need to be recoded or modified for consistency and accuracy.
+
+```{r}
+#starting point
+table(abc_poll_orig$QPID)
+
+```
+
+```{r}
+#mutate
+abc_poll<-abc_poll_orig%>%
+  mutate(partyid = str_remove(QPID, "A[n]* "),
+         partyid = na_if(partyid, "Skipped"))%>%
+  select(-QPID)
+
+#sanity check
+table(abc_poll$partyid)
+```
+
+## Ethnic Identity
+The ethnic identity variable in the dataset is lengthy and may be difficult to include in graphs or visualizations. However, it may be possible to modify the variable to make it more manageable, potentially by collapsing categories or creating new variables based on the original data. To ensure clarity and accuracy, it would be important to include a table note or other explanatory information that clarifies the meaning of the data labels, such as indicating that racial labels refer to non-Hispanic individuals, and that Hispanic responses do not necessarily indicate a specific race. By providing this contextual information, we can help to ensure that the dataset is accurately interpreted and understood by users.
+```{r}
+#starting point
+table(abc_poll$ppethm)
+```
+
+```{r}
+#mutate
+abc_poll<-abc_poll%>%
+  mutate(ethnic = str_remove(ppethm, ", Non-Hispanic"))%>%
+  select(-ppethm)
+
+#sanity check
+table(abc_poll$ethnic)
+```
+## Remove skipped
+The political variables in the dataset all contain a "Skipped" value that should be replaced with "NA" for analysis. To facilitate this process, the "across" function can be used, which allows us to apply a function to multiple columns of a data frame at once. By using "across" to replace "Skipped" values with "NA" across all political variables, we can streamline the data cleaning process and ensure that the resulting dataset is suitable for analysis.
+```{r}
+abc_poll<-abc_poll%>%
+  mutate(across(starts_with("Q"), ~ na_if(.x, "Skipped")))
+
+map(select(abc_poll, starts_with("Q1")), table)
+```
+
+## Factor Order
+If we want a variable to appear in a specific order, we can re-level the variable by assigning new levels to the categories in the desired order. For example, the education variable in the dataset is currently arranged in alphabetical order, but we may want to re-level it so that the categories appear in a different order, such as by level of education attainment. By re-leveling the variable in this way, we can ensure that it appears in the desired order in any subsequent analyses or visualizations
+
+```{r}
+table(abc_poll$ppeducat)
+```
+
+```{r}
+edulabs <- unique(abc_poll$ppeducat)
+edulabs
+```
+
+```{r}
+abc_poll<-abc_poll%>%
+  mutate(educ = factor(ppeducat, 
+                       levels=edulabs[c(4,1,3,2)]))%>%
+  select(-ppeducat)
+rm(edulabs)
+
+table(abc_poll$educ)
+```
+
+
+
+
+
+
+

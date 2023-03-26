@@ -1,0 +1,86 @@
+---
+title: "Challenge 3"
+author: "Shantanu Patil"
+description: "Tidy Data: Pivoting"
+date: "03/26/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - shantanu 
+  - animal_weights
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+### Briefly describe the data
+
+This csv file keeps track of the weights of various animals in various parts of the world. The Indian Subcontinent, Eastern Europe, Africa, Oceania, Western Europe, Latin America, Asia, the Middle East, and Northern America are all included. There are sixteen different kinds of animals. 
+
+Each animal is currently represented as a column, which is not very neat. I'd like to reduce the number of columns in the dataframe to three: area, animal type, and weight. This requires me to pivot each of the 16 animal columns.
+
+## Anticipate the End Result
+
+$n=9$ and $k=17$ in this case. I'll be pivoting $17-1=16$ variables because I'll be using $1$ of those variables to identify a case. The animal's type will be entered into the 'animal type' column, and its weight will be entered into the 'weight' column. In the pivoted dataframe, I would anticipate $9*16=144$ rows. Because I'd be converting those $16$ columns to $2$ columns, the pivoted dataframe would have $3$ columns.
+
+
+### Reading the Data 
+
+```{r}
+## Read in data
+animals <- read_csv("_data/animal_weight.csv")
+
+# View a few data points
+head(animals)
+
+# View all columns
+colnames(animals)
+
+```
+
+
+### Challenge: Calcuating the dimensions
+
+```{r}
+# Calculate existing rows, existing columns, expected rows, and expected columns
+n <- nrow(animals)
+k <- ncol(animals)
+expected_rows <- n * (k - 1)
+expected_cols <- 1 + 2
+
+
+```
+
+### Challenge: Pivot the Chosen Data
+
+Instead of a vector of weights, each "case" described by a row is one weight. The number of samples increases, but the level of granularity makes calculating statistics about the weights themselves much easier.
+
+```{r}
+# Define columns to be pivoted
+cols <- colnames(animals)[-1]
+
+# Pivot the data using pivot_longer()
+animals_pivoted <- pivot_longer(animals, cols = cols,
+                                 names_to = "animal_type",
+                                 values_to = "weight")
+
+# Display a sample of the pivoted data
+animals_pivoted[sample(nrow(animals_pivoted), 10), ]
+
+# Display the dimensions of the pivoted data
+dim(animals_pivoted)
+```
+
+Our calculations were correct, as evidenced by the code output.

@@ -1,0 +1,150 @@
+---
+title: "Mutating dataset using lubridate, stringr: hotel_bookings.csv"
+author: "Susmita Madineni"
+description: "lubridate, stringr"
+date: "03/25/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - hotel_bookings.csv
+  - readr
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+
+```{r}
+library(readr)
+hotel_bookings_data <- read_csv("_data/hotel_bookings.csv")
+View(hotel_bookings_data)
+```
+
+
+```{r}
+# Preview the first few rows of the dataset
+head(hotel_bookings_data)
+
+# Understanding the dimensions of the dataset 
+dim(hotel_bookings_data)
+```
+
+
+```{r}
+# Identifying the column names of the dataset 
+colnames(hotel_bookings_data)
+
+# Changing column name to make it more readable
+colnames(hotel_bookings_data)[28] <- "average_daily_rate"
+
+# Identifying the data types of the columns
+sapply(hotel_bookings_data, class)
+table(sapply(hotel_bookings_data, function(x) typeof(x)))
+sapply(hotel_bookings_data, function(x) n_distinct(x))
+```
+
+
+```{r}
+# Identifying unique values for columns - hotel, country, distribution_channel
+unique(hotel_bookings_data$hotel)
+
+unique(hotel_bookings_data$country)
+
+unique(hotel_bookings_data$distribution_channel)
+```
+
+### Briefly describe the data
+
+This dataset gives the information about hotel reservations. The dataset has 11930 rows and 32 columns. Based on the above, we can infer that there are 13 columns(variables) are of character datatype and 19 variables are of double datatype. Almost all the columns are readable for the user, except adr(column 28)  which stands for average daily rate. The hotel reservation data is provided for two types of hotels(Resort, City hotels) in various countries(178 countries) in years 2015, 2016 and 2017. Each observation in the dataset provides information of hotel category, reservation of the hotel information like arrival date(date, month, year, week), number of visitors(adult, children), country, number of days staying, meal, previous cancellations, reserved room types, customer type, number of special requests etc. 
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+In the process of tidying the data we can check if there are any NULL values in the data, and if the class type and values present in a particular column are easy to identify or not. For example, a class can be defined as a character, but there might be numeric values in it, which makes it hard for the user in analyzing the dataset.
+
+While analyzing the dataset, I have found that few of the columns like country, company has NULL values in it. I will remove the country cases where there is a NULL value since it doesn't help in data analysis. I will also change the class of company and agent to numeric since they have numeric values in it but are defined as character classes. I will make the NULL values in these two columns as NA. 
+
+```{r}
+table(hotel_bookings_data$country)
+```
+There are 488 rows with country value as NULL.
+```{r}
+table(hotel_bookings_data$company)
+```
+```{r}
+table(hotel_bookings_data$agent)
+```
+There are 16340 rows as NULL in agent column and 112593 rows as NULL in company column. 
+
+```{r}
+# filtering out NULL values in country column
+
+hotel_bookings_data <- hotel_bookings_data %>% 
+  filter(!(country == "NULL"))
+table(hotel_bookings_data$country)
+
+```
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+I have observed that each of the date, month, year are presented in a different column, instead of this we can combine all three columns and have 1 column as date to track the reservations. 
+
+```{r}
+# Mutating the month, date, year columns to 1 column - date arrived and mutating adults, children, babies to total_number_of_guests and mutating stays_in_weekend_nights, stays_in_week_nights to total_days_stay
+
+hotel_bookings_data_m <- hotel_bookings_data %>%
+  mutate(date_arrived = str_c(arrival_date_month, arrival_date_day_of_month, arrival_date_year, sep = "/"), 
+        date_arrived = mdy(date_arrived),
+        total_days_stay = stays_in_weekend_nights + stays_in_week_nights,
+        total_number_of_guests = adults + children + babies) %>%
+  select(-c(arrival_date_month, arrival_date_day_of_month, arrival_date_year))
+
+hotel_bookings_data_m
+```
+We can see that date_arrived, total_days_stay, total_number_of_guests columns are present after the mutation. 
+Let's understand the statistics of these columns.
+
+```{r}
+# Calculating summaries of date_arrived, total_days_stay, total_number_of_guests columns
+
+summary(hotel_bookings_data_m$date_arrived)
+summary(hotel_bookings_data_m$total_days_stay)
+summary(hotel_bookings_data_m$total_number_of_guests)
+```
+Based on the above summary, we can say that the reservation data from July 1st 2015 to 31st August 2017 are present and the minimum and maximum number of days stayed are 0, 57. The minimum and maximum total number of guests stayed are 0 and 55.
+
+Mutating the class of agent and company fields to numeric
+```{r}
+# Mutating the class of agent and company fields to numeric and updating NULL values as NA
+hotel_bookings_data_m <- hotel_bookings_data_m %>%
+  mutate(across(c(company, agent), ~ replace(.,str_detect(.,"NULL"), NA))) %>% mutate_at(vars(company, agent), as.numeric)
+
+# verifying whether the classes are updated as numeric for company and agent columns
+is.numeric(hotel_bookings_data_m$company)
+is.numeric(hotel_bookings_data_m$agent)
+
+sapply(hotel_bookings_data_m, class)
+hotel_bookings_data_m
+
+```
+

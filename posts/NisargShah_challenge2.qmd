@@ -1,0 +1,87 @@
+---
+title: "Challenge 2"
+author: "Nisarg Shah"
+description: "Data wrangling: using group() and summarise()"
+date: "08/16/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - Nisarg Shah
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv
+
+```{r}
+railroad <- read.csv("_data/railroad_2012_clean_county.csv")
+head(railroad)
+```
+
+## Describe the data
+From the datafram summary we can see that there are 3 columns: state, county, total_employees. The data shows us the number of railroad employees for each county of that state. 
+
+state: This variable represents the state where the county is located. There are 53 states represented.
+county: This variable represents the county within each state. There are 1,709 counties represented in this dataset
+total_employees: This variable represents the total number of employees in each county. The mean value is 87.2, with a standard deviation of 283.6. The minimum value is 1 employee, the maximum value is 8,207 employees, and the median value is 21 employees.
+
+In addition to the above information, there are also counts and percentages provided for each state and county. For example, 1748 (59.7%) of the counties are located in the 10th state (VA), and 2715 (92.7%) of the counties have a total of 0 employees.
+
+```{r}
+print(summarytools::dfSummary(railroad,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',table.classes = 'table-condensed')
+```
+
+## Provide Grouped Summary Statistics
+
+The data shows that California has the highest sum of employees with 13,137 and Illinois has the highest dispersion with a value of 829.15. On the other hand, AP has only one county with one employee, and AE has one county with two employees. Additionally, there are some states where the mean employees per county is quite high, such as Connecticut with 324 employees per county, and some where it is quite low, such as Hawaii with only 1.33 employees per county. Overall, the data provides information on the distribution of employees across states and their counties in the US.
+
+```{r}
+#| label: Grouped By State
+railroad %>%
+  group_by(state) %>%
+  select(state, county, total_employees) %>%
+  summarize(county_count = n(), mean_employees = mean(total_employees), sum_employees = sum(total_employees), dispersion = sd(total_employees, na.rm = TRUE))
+```
+
+When we group the data by county we see that some counties just have 1 state while other counties have multiple.
+```{r}
+#| label: Grouped By County
+railroad %>%
+  group_by(county) %>%
+  select(county, state, total_employees) %>%
+  summarize(state_count = n(), mean_employees = mean(total_employees), sum_employees = sum(total_employees), dispersion = sd(total_employees, na.rm = TRUE))
+```
+
+### Explain and Interpret
+The data suggests that the distribution of total employees is highly variable, with a large standard deviation relative to the mean. The middle 50% of the data falls within a relatively narrow range of 58, centered around a median value of 21. The maximum value in the dataset is very high at 8207, which suggests that there may be some extreme outliers in the data.

@@ -1,0 +1,91 @@
+---
+title: "PoChunYang_Challenge 2"
+author: "PoChun Yang"
+desription: "StateCounty2012.xls_Data wrangling"
+date: "02/27/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - PoChunYang
+  - tidyverse
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+library(summarytools)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+statecounty<- read_xls("_data/StateCounty2012.xls",skip=3)
+dim(statecounty)
+colnames(statecounty)
+
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+When I used the dfSummary, I got the all the summary of the StateCounty2012.xls. However, there are a lot of strange things. For example, the max of total railroad employment is 255432. Then, I check the number of the files. It is the grand total. Thus, I used the some command to solve those problems.
+
+```{r}
+#| label: summary
+dfSummary(statecounty)
+```
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+First of all, I used cleancolumns to make the data is to read it. Then, I want to remove all the state_total rows. Next, used the group_by and summerise to get some of the detail of all the state. I am interested in NY state of railroad information so I used the filter command to do it. As below of form, there are 61 county of New York states. Besides that, the maximum of county's railraod employment is 3685.
+In California state, there are 55 County that the summary gave us. Moreover, the minimum, maximum, mean, median county's railroad employment are respectively 1, 2888, 238.9, and 61.
+
+```{r}
+
+cleancolumns <- select(statecounty,"STATE","COUNTY","TOTAL")
+fix_data <- na.omit(cleancolumns)
+fix_data%>%
+  group_by(STATE)%>%
+  summarise(total = sum(TOTAL), meantotal=mean(TOTAL),mediantotal = median(TOTAL),
+            modetotal = mode(TOTAL),deviationtotal = sd(TOTAL), maxtotal = max(TOTAL),
+            mintotal = min(TOTAL))
+NY<-filter(fix_data,STATE == "NY")
+summary(NY)
+CA<-filter(fix_data,STATE == "CA")
+summary(CA)
+
+```
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.

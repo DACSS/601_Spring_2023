@@ -1,0 +1,125 @@
+---
+title: "Challenge 4 Debt In Trillions"
+author: "Kekai Liu"
+description: "More data wrangling: pivoting"
+date: "03/21/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4Kekai
+  - Kekai
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(stringr)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+debt_in_trillions <- readxl::read_excel("_data/debt_in_trillions.xlsx", sheet="Sheet1")
+
+print(summarytools::dfSummary(debt_in_trillions, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+
+table(select(debt_in_trillions, `Year and Quarter`))
+
+```
+
+### Briefly describe the data
+
+The debt_in_trillions dataset contains 74 rows and 8 columns.Each row contains information on amounts for seven categories of debt (Mortgage, HE Revolving, Auto Loan, Credit Card, Student Loan, Other, Total) in a year and quarter from 2003Q1 to 2021Q2. There are no missing values in the data.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data is not tidy, and the data is wide. Aside from the "Year and Quarter" column, the other columns represent amounts of different debt types. These columns can be pivoted into two columns: one denoting the debt type and another denoting the amount. The pivoted data would be tidy, as each row would then correspond to a single type of debt amount in a particular year-quarter. There are seven variables (Mortgage, HE Revolving, Auto Loan, Credit Card, Student Loan, Other, Total) to be pivoted. The resulting data set should have 518 rows and three columns (Year and Date, Debt Type, and Debt Amount).
+
+The summary of the data after the pivot_longer provides a sanity check. There are 518 rows and three columns (Year and Quarter, debt_type, debt_value). The debt_type column contains seven unique values, corresponding to the seven pivoted columns. This summary confirms that the pivot_longer successfully performed what was intended.
+
+```{r}
+
+#existing rows/cases
+nrow(debt_in_trillions)
+
+#existing columns/cases
+ncol(debt_in_trillions)
+
+#expected rows/cases
+nrow(debt_in_trillions) * (ncol(debt_in_trillions)-1)
+
+# expected columns 
+8 - 7 + 2
+
+# pivot_longer
+debt_in_trillions2 <- debt_in_trillions %>%
+  pivot_longer(col = -c(`Year and Quarter`),
+                 names_to="debt_type",
+                 values_to = "debt_value")
+
+
+# summary of data after pivot_longer
+print(summarytools::dfSummary(debt_in_trillions2, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+
+```
+
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+To facilitate more efficient analysis, the "Year and Quarter" variable should be renamed and mutated. This variable is a character type, as shown in the previous summary output. This is not ideal, because "Year and Quarter" represents a date or time. It should converted into a date object. In addition, the variable name contains spaces which makes it easy for errors to arise when coding. The other two variables are fine; debt_type is in snake case and is a character type because it represents string categories, and debt_value is in snake case and is a numeric type because it represents an amount.
+
+```{r}
+
+debt_in_trillions3 <- debt_in_trillions2 %>%
+  mutate(year = str_c("20", str_sub(`Year and Quarter`, 1, 2)), 
+         quarter = str_sub(`Year and Quarter`, 5, 5),
+         year_quarter = quarter(as_date(str_c(year, quarter), format="%Y%q"),  with_year=TRUE)) %>% #generate year_quarter as date object
+  select(-c(`Year and Quarter`, `year`, `quarter`)) %>%
+  relocate(year_quarter, debt_type, debt_value) %>%
+  mutate(debt_value = str_remove(as.character(debt_value), ".0+$")) #remove excess trailing zeros in decimal
+
+print(summarytools::dfSummary(debt_in_trillions3, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+
+
+```
+
+Any additional comments?
+
+The "Year and Quarter" variable has been transformed into a numeric date object. The first four digits correspond to the year and the last digit correspond to the quarter, with a period as the delimiter.
+
+A further consideration depending on the type of research may be to recode the debt_value amounts into bins, as there is too great of variation. From the previous summary, the plot does not give much insight about the distribution of debt.

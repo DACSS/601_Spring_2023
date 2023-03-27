@@ -1,0 +1,88 @@
+---
+title: "Challenge 5 "
+author: "Shantanu Patil"
+description: "Introduction to Visualization"
+date: "03/26/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+```{r}
+# reading the ceral dataset 
+cereal <- read_csv("_data/cereal.csv")
+head(cereal,4)
+```
+
+### Briefly describe the data
+This data set contains four columns:
+
+* `Cereal <chr>`: Cereal Name
+* `Sodium <dbl>`: Amount of sodium per serving of the cereal
+* `Sugar <dbl>`: Amount of sugar per serving of cereal
+* `Type <chr>`: Cereal Type (Child or Adult)
+
+## Tidy Data (as needed)
+Just making a few changes to the dataset.
+
+```{r}
+cereal <- cereal %>%
+  mutate(Type = recode(Type, "A" = "Adult", "C" = "Child"))
+
+# Display first 5 rows of the modified data
+head(cereal, 5)
+
+```
+
+## Univariate Visualizations
+```{r}
+# Create a histogram for the distribution of Sodium based on Type
+sodium_plot <- ggplot(cereal, aes(Sodium)) +
+  geom_histogram(binwidth = 100) +
+  facet_grid(vars(Type)) +
+  labs(title = "Distribution of Sodium based on Type")
+
+# Display the Sodium histogram
+print(sodium_plot)
+
+# Create a histogram for the distribution of Sugar based on Type
+sugar_plot <- ggplot(cereal, aes(Sugar)) +
+  geom_histogram(binwidth = 5) +
+  facet_grid(vars(Type)) +
+  labs(title = "Distribution of Sugar based on Type")
+
+# Display the Sugar histogram
+print(sugar_plot)
+
+```
+Because we are dealing with univariate, continuous data, I chose histograms. I wanted to compare things by type, so I used a facet grid.
+
+## Bivariate Visualization(s)
+```{r}
+# Create a boxplot for the amount of Sugar in Cereal by Type
+sugar_by_type_plot <- ggplot(cereal, aes(Type, Sugar)) +
+  geom_boxplot() +
+  labs(title = "Amount of Sugar in Cereal by Type")
+
+# Display the boxplot
+print(sugar_by_type_plot)
+
+```
+We can see that, on average, children's cereal contains more sugar than adult cereal. Because the data is so sparse, I went with a box plot.

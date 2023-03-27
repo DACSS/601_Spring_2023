@@ -1,0 +1,152 @@
+---
+title: "Challenge 3"
+author: "Tim Shores"
+description: "Tidy Data: Pivoting"
+date: "03/05/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+my_packages <- c("tidyverse", "readxl", "knitr") # create vector of packages
+invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Challenge 3 includes four tasks:
+
+1. read in a dataset and describe it
+2. identify what needs to be done to tidy the current data
+3. anticipate the shape of pivoted data
+4. pivot the data into tidy format using `pivot_longer`
+
+
+## Task 1) Read in and Describe the Data
+
+
+I chose to read in the organic egg file, organiceggpoultry.xls. The thought of chickens always brings a smile to my face.
+
+One tricky property of the egg data set is that the Excel file includes data in three tabs, so I can't just read it in with `read_xls()`. I use `excel_sheets()` to return a list of data frames with data populated by each sheet in the Excel file. From the `purrr` library, the `map()` assigns each sheet from the list as a vector element. Also from `purrr`, `set_names()` gives the vector element the same name as the Excel sheet.
+
+Messy, but a good stepping stone. Here are the three vector elements printed:
+
+```{r}
+#| echo: true
+listEggDFs <- map(set_names(excel_sheets("../posts/_data/organiceggpoultry.xls")),
+read_xls, path = "../posts/_data/organiceggpoultry.xls") # read in all sheets as dataframes in a list
+
+listEggDFs
+```
+
+The next step is to use `map()` again to assign each data frame in the list to its own variable. This will let me tidy each data frame separately. This is useful because each Excel sheet is organized in a different way, and therefore I must use different commands to tidy each sheet. For clarity of reference, I chose data frame variable names similar to the source file sheet names. 
+
+We now have three data frames from one Excel workbook. Here is each data frame printed: 
+
+```{r}
+df_eggPoultryData <- map(names(listEggDFs), ~assign(.x, listEggDFs[[.x]], envir = .GlobalEnv))[[1]] # assign the first df in the list to a separate df
+df_eggPrices <- map(names(listEggDFs), ~assign(.x, listEggDFs[[.x]], envir = .GlobalEnv))[[2]] # assign the second df in the list to a separate df
+df_poultryPrices <- map(names(listEggDFs), ~assign(.x, listEggDFs[[.x]], envir = .GlobalEnv))[[3]] # assign the third df in the list to a separate df
+
+df_eggPoultryData
+df_eggPrices
+df_poultryPrices
+```
+
+
+### Briefly describe the data
+
+The data describes the price of several types of USDA certified organic egg and chicken products from the years 2004 to 2013. The price was paid by 'first receivers', described in a footnote as "those entities that purchases the processed product from the poultry or egg company, such as a retailer, distributor, or manufacturer." The cited data sources are the U.S. Department of Agriculture, Agricultural Marketing Service (AMS) Market News, Organic Poultry and Eggs (Weekly reports).
+
+Although the three Excel worksheets appear at first glance  to have different data, the second and third worksheets are just tables that repeat and reorganize the data from the first worksheet. In my analysis below, I only use the data frame df_eggPoultryData mapped from the first Excel worksheet. 
+
+The data format has several problems. It's formatted for visual inspection rather than computational analysis. There are extra headings and columns. The date labels are inconsistent. The data is messy in that it uses 9 columns to describe what should be a single variable: the type of egg or chicken item that has price data. As a result, we can consider each row to include 9 observations. I will tidy this up below.
+
+The data includes `r ncol(df_eggPoultryData)` variables (date, 4 egg carton items and 5 chicken items, and an empty column) with prices for `r ncol(df_eggPoultryData) - 2` items for each month of 10 years in `r nrow(df_eggPoultryData) - 4` rows.
+
+
+## Task 2) Anticipate the End Result
+
+The end result of tidying and pivoting will be a data frame with variables for month, year, item, price, product (egg or chicken), and unit (price per carton or price cents per pound). 
+
+By pivoting `r ncol(df_eggPoultryData) - 2` variables into an item and price column representing `r nrow(df_eggPoultryData) - 4` months of data, the final table should have $9 * 120 = 1,080$ rows. Along with month, year, product, and unit variables, the final table should have `r ncol(df_eggPoultryData) - 5` columns.
+
+
+## Task 3) Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+The following code block takes the following actions to tidy up the eggData data frame: 
+
+1. Stores header values in list variables. 
+  i) The headers in the original data tell us that four columns are about eggs, and the other four are about chicken. 
+  ii) They also have egg and chicken unit information about table of values. 
+  iii) This is not made clear in the 4th row column names, so we'll save these values now and add them back later.
+2. Assigns values from the 4th populated row to column names.
+3. Assigns "month" to the first column name.
+4. Slice off the first four rows, which do not have table data.
+5. Uses `select` to remove a blank column between the egg and chicken data sets.
+6. Uses `separate_wider_delim`, `mutate`, and `fill` to tidy the month column and separate year into its own column. The source data labels the year only on January, implying the year for the other months. It's important to make both month and year explicit for each observation so we don't end up with analysis that makes it difficult to identify the year.
+7. Uses `pivot_longer` to pivot the egg and chicken product column headings into row values under a new `item` column, with their values listed in a `price` column.
+8. Uses `mutate` to tidy up item values and make labels consistent.
+9. Uses `mutate` and  `str_detect` to assign the egg and chicken product and unit variables that I recorded earlier according to each egg and chicken item. I used the literal values from the header without modification. They could be made more clear but not without the risk of distorting their original meaning.
+10. Prints the entire table.
+
+The full table is below, and it matches my expectation of $9 * 120 = 1,080$ rows.
+
+A new observation added to this data would require the following details:
+
+* Month and year of the observation (earlier than January 2004 or later than December 2013)
+* Observation of price per carton of one of the egg items, or cents per pound of one of the chicken items.
+
+
+How does it meet requirements for tidy data?
+
+* Each column is now a single variable. The variable structure doesn't span columns as it does in the original data set.
+* Every row is now a single observation. The original data set crammed 9 observations into each row.
+* Every cell is a single value. This was also true of the original data set.
+
+Here is the full data set tidied, pivoted, and printed: 
+
+```{r}
+productname <- c(df_eggPoultryData[2,1],df_eggPoultryData[2,7])
+unitname <- c(df_eggPoultryData[3,1],df_eggPoultryData[3,7])
+
+colnames(df_eggPoultryData) <- df_eggPoultryData[4, ]
+colnames(df_eggPoultryData)[1] <- "month"
+
+df_eggPoultryData <- df_eggPoultryData %>% 
+  slice(-(1:4)) %>%
+  select(!`NA`) %>% 
+  separate_wider_delim(month, delim = " ", names = c("month", "year"), too_few = "align_start", too_many = "merge") %>%
+  mutate(month = replace(month, month == 'Jan', 'January')) %>%
+  mutate(year = replace(year, year == '/1', NA)) %>%
+  fill(year) %>%
+  pivot_longer(cols = -c(month,year), names_to = "item", values_to = "price") %>%
+  mutate(item = str_remove_all(item, '\\n')) %>%
+  mutate(item = str_remove_all(item, '1/2 Dozen')) %>%
+  mutate(item = str_replace_all(item, 'Doz\\.','Dozen')) %>%
+  mutate(product = case_when(
+    str_detect(item, regex("^[EL]")) ~ productname[[1]],
+    str_detect(item, regex("^[BTW]")) ~ productname[[2]]
+    )) %>%
+  mutate(unit = case_when(
+    str_detect(item, regex("^[EL]")) ~ unitname[[1]],
+    str_detect(item, regex("^[BTW]")) ~ unitname[[2]]
+    )) %>%
+  print(n=1080) 
+```

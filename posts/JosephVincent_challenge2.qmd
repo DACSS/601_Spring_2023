@@ -1,0 +1,121 @@
+---
+title: "Challenge 2 - FAO_Stat"
+author: "Joseph Vincent"
+description: "Data wrangling: using group() and summarise()"
+date: "03/03/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - faostat
+  - Joseph Vincent
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(summarytools)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Reading in and cleaning up the Data
+
+```{r}
+# reading in FAO stat, dairy cattle and assigning to FAO_Dairy
+FAO_Dairy <- read.csv("_data/FAOSTAT_cattle_dairy.csv")
+
+# removing unchanging and duplicate variables
+# assigning to FAO_Dairy_Clean
+FAO_Dairy_Clean <- FAO_Dairy %>%
+  select('Area', 'Element', 'Year', 'Unit', 'Value', 'Flag', 'Flag.Description')
+
+head(FAO_Dairy_Clean)
+
+```
+
+## Describe the data
+
+```{r}
+#| label: summary
+# summarizing the original data set, viewing year and area in tables
+dfSummary(FAO_Dairy_Clean)
+
+# finding count of distinct Areas and Area Years
+count(distinct(FAO_Dairy_Clean, Area))
+count(distinct(FAO_Dairy_Clean, Area, Year))
+
+# finding distinct Flags and showing that Aggregate counts are for continents/regions other than countries
+distinct(FAO_Dairy_Clean, Flag)
+head(filter(FAO_Dairy_Clean, Flag == "A"))
+
+```
+This data set describes dairy production from 1961 to 2018 - specifically, whole milk production - by region.
+
+Dairy production is quantified in three different ways: total milk production in tons, number of cows, and yield per cow.
+
+There are 232  unique regions. These are mostly countries, but also include some broader regions like continents. These are flagged as aggregates in the data.
+
+Altogether, there are 12170 unique Area-Years.
+
+# Provide Grouped Summary Statistics
+## Production By Continent
+
+```{r}
+FAO_Dairy_Clean %>%
+  filter(Area %in% c("Africa", "Europe", "Americas", "Asia")) %>%
+  group_by(Area, Element) %>%
+  summarize(Mean = mean(Value, na.rm = TRUE),
+            Median = median(Value, na.rm = TRUE)) %>% 
+  pivot_wider(names_from = Element, values_from = c(Mean, Median))
+```
+
+I have focused above on just the aggregated continents in the data set in order to do a comparison at the same region level. The data was grouped by continents and element, and the mean and median values of Animals, Production, and Yield were calculated for each continent over the entire time period.
+
+As you can see, the number of dairy cows in Asia and Europe has been much greater on average. 
+
+However, it is notable that average production was more than 2x higher in Europe compared to Asia, suggesting that each cow is yielding much less milk in Asia.
+
+Furthermore, the Americas have produced on average about 40 million more tons of milk than Asia despite have having fewer cows.
+
+## Comparing production in two different continents over time
+
+```{r}
+# How did production increase over time in Asia vs Europe
+
+# creating a table with unique observations for each area-year
+FAO_Dairy_Plot <- FAO_Dairy %>%
+  select('Area', 'Element', 'Year', 'Value') %>%
+  pivot_wider(names_from = 'Element', values_from = 'Value')
+
+# creating table of asian production
+Asiaproduction <- FAO_Dairy_Plot %>%
+  select('Area', 'Year', 'Production') %>%
+  filter(Area == "Asia")
+
+# graphing asian milk production from 1961-2018
+ggplot(data = Asiaproduction) +
+  geom_line(mapping = aes(x = Year, y = Production))
+
+# creating table of European production
+Europeproduction <- FAO_Dairy_Plot %>%
+  select('Area', 'Year', 'Production') %>%
+  filter(Area == "Europe")
+
+# graphing European milk production from 1961-2018
+ggplot(data = Europeproduction) +
+  geom_line(mapping = aes(x = Year, y = Production))
+```
+
+## Asia vs Europe
+Next, I wanted to graph milk production of Asia and Europe to see how their milk production has trended over time.
+When we graph the results, it's clear that the average values did not tell the whole story.
+Asia has had an steady exponential growth in milk production over time.
+Europe had steady growth in milk production from the early sixties until about 1990, when milk production plunged. This has only recovered slightly in recent years.

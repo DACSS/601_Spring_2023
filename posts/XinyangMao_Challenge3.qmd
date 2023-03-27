@@ -1,0 +1,134 @@
+---
+title: "Challenge_3"
+author: "XinyangMao"
+description: "Tidy Data: Pivoting"
+date: "03/17/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+-   aniceggpoultry.xls 
+
+```{r}
+excel_sheets("_data/organiceggpoultry.xls")
+
+```
+
+### Import data
+Use the date col in eggs form
+```{r}
+date<-read_excel("_data/organiceggpoultry.xls",
+                      sheet="Data",
+                      range =cell_limits(c(6,2),c(NA,2)),
+                      col_names = c("date")
+                 )
+date
+```
+Import chicken data
+```{r}
+chicken_orig<-read_excel("_data/organiceggpoultry.xls",
+                      sheet="Data",
+                      range =cell_limits(c(6,8),c(NA,12)),
+                      col_names = c("Whole",
+                               "B/S_Breast", "Bone-in_Breast",
+                               "Whole_Legs","Thighs")
+                 )
+head(chicken_orig)
+```
+Merge date column and chicken data
+```{r}
+chicken_merged <- cbind(date,chicken_orig)
+head(chicken_merged)
+```
+```{r}
+chicken_merged%>%
+  count(date)
+```
+Same,we need to remove the "/1"
+```{r}
+chicken<-chicken_merged%>%
+  mutate(date = str_remove(date, " /1"))
+head(chicken)
+```
+Then use separate() to split the date to month and year columns.We can use fill() to fill the blank year cell.
+```{r}
+chicken<-chicken%>%
+  separate(date, into=c("month", "year"), sep=" ")%>%
+  fill(year)
+head(chicken)
+```
+
+
+## find current and future data dimensions
+We can see there are 120 rows and 7 columns in this dataset,I'll use 2 of variables to identify a case,so I'll pivoting 7-2 variables into a longer format.Therefore,we would expect 120*(7-2)=600 rows in the pivoted dataframe.
+```{r}
+#row number
+nrow(chicken)
+```
+```{r}
+#column number
+ncol(chicken)
+```
+```{r}
+#expect row number after pivoted
+nrow(chicken) * (ncol(chicken)-2)
+```
+```{r}
+#expect column number after pivoted
+2 + 2
+```
+
+## Pivot the Chosen Data
+### Converting data types
+As we can see,in the chicken data sheet,there are some string "too few" exist in 5 columns,so before we pivoting the data we should use a numeric type value replace them and convert all of the character type of number into numeric type value.
+```{r}
+#| tbl-cap: Pivoted Example
+chicken_db<-chicken
+chicken_db <- chicken_db%>%
+  mutate(across(`Whole`:`Thighs`,~ifelse(. == "too few",0.0,as.numeric(.))))
+head(chicken_db)
+
+```
+
+Now all of the data are avaiable,we can use pivot_longer() function to make the dataset be longer.There are 7 variables in this dataset,but we need to use other 2 variavles to instead 5 of them.
+```{r}
+chicken_long<-chicken_db%>%
+  pivot_longer(cols=c(`Whole`:`Thighs`), 
+               names_to = "ChickenType",
+               values_to = "Price"
+  )
+head(chicken_long)
+```
+Yes, once it is pivoted long, our resulting data are $600x4$ - exactly what we expected!
+
+
+

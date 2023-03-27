@@ -1,0 +1,88 @@
+---
+title: "Challenge 4"
+author: "Shantanu Patil"
+description: "More data wrangling: pivoting"
+date: "03/26/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+
+
+```{r}
+## Read in data
+poul <- read_csv("_data/poultry_tidy.csv")
+
+## Sample a few data points
+poul_sample <- poul[sample(nrow(poul), 10), ]
+print(poul_sample)
+
+## Calculate product counts
+product_counts <- table(select(poul, Product))
+print(product_counts)
+
+```
+
+### Briefly describe the data
+
+Given the Product, Year, and Month, this dataset describes the price of poultry meat. We can see that there are five different types of meat.
+
+## Tidy Data (as needed)
+The data already tidy.
+
+
+## Identify variables that need to be mutated
+
+The 'Product' and 'Month' categories must be converted to <dbl> (double) data types so that we can perform numerical operations on them more easily. For example, converting the Month category to a numeric data type would allow us to perform month-to-month comparisons while accounting for the new year's rollover.   We should also add a 'Date' column based on the 'Month' and'Year' columns. This will simplify data visualization and analysis.
+
+```{r}
+# Assign product IDs
+poul_mut <- poul %>%
+  mutate(Product_ID = recode(Product, "B/S Breast" = 1, 
+                             "Bone-in Breast" = 2, 
+                             "Thighs" = 3, 
+                             "Whole" = 4, 
+                             "Whole Legs" = 5))
+
+# Convert month names to month numbers
+poul_mut <- poul_mut %>%
+  mutate(Month_num = recode(Month, "January" = 1, "February" = 2, "March" = 3, 
+                            "April" = 4, "May" = 5, "June" = 6, "July" = 7, 
+                            "August" = 8, "September" = 9, "October" = 10, 
+                            "November" = 11, "December" = 12))
+
+# Create Date column based on Year and Month_num
+poul_mut <- poul_mut %>%
+  mutate(Date = make_date(Year, Month_num))
+
+# Display a sample of the modified data
+poul_mut[sample(nrow(poul_mut), 10), ]
+```
+

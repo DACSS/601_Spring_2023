@@ -1,0 +1,86 @@
+---
+title: "Challenge_1"
+author: "Kris Smole"
+description: "Railroads"
+date: "02/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - railroads
+  - faostat
+  - wildbirds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+# Overview of Dataset contained in filename railroad_2012_clean_county.csv
+
+Railroad, as I will call this dataset, contains distinct observations of total employee counts, by counties within US states/territories. The dataset was likely gathered by the railroad company or perhaps one of the regulatory bodies governing the railroad. 
+
+```{r}
+railroad <-read_csv("_data/railroad_2012_clean_county.csv" )
+```
+
+The railroad data observations are for US by state/territory and county within respective state, with count of total employees for that county within that state. Total by number of observations are 2,930, and are in alphabetic order by state/territory, then alphabetic by county within each state/territory. 
+
+
+# Specific views and statistics of the observations
+```{r}
+select(railroad, state, county, total_employees)
+```
+
+We can see in the results above, and confirmed below, that this dataset contains a count of rows (2930) and columns (3).
+```{r}
+dim(railroad)
+```
+The dataset represents US States and counties. Specifically, the railroad data inlcudes 53 distinct state names. Since the count of state names is over 50, I conclude that the District of Columbia and US territories are likely included in the data observations. 
+```{r}
+railroad%>%
+  select (state) %>%
+  n_distinct(.)
+```
+How many counties have distinct names within this dataset? The answer indicates that some county names repeat across various states, as the total county names are not = 2930, the total number of observations. Noted for future communications to describe observations by both county and state for clarity.
+```{r}
+railroad%>%
+  select(county)%>%
+  n_distinct(.)
+```
+Which counties have the most employees within this set of observations? It appears that Illinois' Cook County has the highest count of employees, indicating this railroad has significant operations in Cook County, the home of the city of Chicago.
+```{r}
+arrange(railroad, desc(`total_employees`))
+```
+Which counties have the fewest employees of this railroad? Numerous counties have only 1 employee per county. When looking at the full dataset, 145 counties have only 1 employee. Future reports to provide breakdowns by designated ranges of employee count (eg: 1-50,50-100, etc.) using yet to be learned coding tools.
+```{r}
+arrange(railroad, `total_employees`)
+```
+Which counties have more than 200 employees? The following list includes only counties with employee counts of 200 or greater, in alphabetic order. Future reports to include lists ranked highest to lowest in addition to alphbetic order by state, county as shown here.
+
+```{r}
+filter(railroad,`total_employees` >=200)
+```
+The overall mean count of employees of all counties within all states is 87.2 employees 
+```{r}
+summarize(railroad,mean(`total_employees`))
+```
+The overall median of employee count of all counties within all states is 21 employees 
+```{r}
+summarize(railroad, median(`total_employees`))
+```
+
+# Conclusion
+
+Future reports to contain totals of employees by state, which will require use of yet unknown functions. Combining the state and county fields for each observation will allow the existing data to be totalled by state using specific coding commands. Clean-up of the table results to be pursued. Additionally, graphic visualizations, and geo-graphics to be included in future reports.
+

@@ -1,0 +1,78 @@
+---
+title: "Challenge 2 - Railroads"
+author: "Pranav Bharadwaj Komaravolu"
+description: "Data wrangling: using group() and summarise()"
+date: "03/07/2023"
+format:
+  html:
+    toc: true
+    code-fold: false
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - Pranav Komaravolu
+  - dplyr
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Read in the Data
+
+```{r}
+data <- read_csv("_data/railroad_2012_clean_county.csv")
+data
+```
+
+
+## Describe the data
+
+The column names of the different columns are as follows: 
+```{r}
+colnames(data)
+```
+The classes of values in the different columns are as follows:
+```{r}
+as.data.frame(sapply(data, class))
+```
+Since we observe two columns with character type we can assume them to be categorical values and the number of distinct values in these columns are as follows:
+```{r}
+data %>%
+  select(state, county) %>%
+  summarize_all(n_distinct)
+```
+So we can see that there are 53 states and 1709 counties.
+## Grouped Summary Statistics
+
+<!--Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.-->
+We observed total_employees to be a numerical value, so we can get the measures of central tendency (mean) and dispersion(std) grouped on state as follows:
+
+```{r}
+data %>%
+  group_by(state) %>%
+  select(state, county, total_employees) %>%
+  summarize(county_count = n(), mean_employees = mean(total_employees), sum_employees = sum(total_employees), dispersion = sd(total_employees, na.rm = TRUE))
+```
+Now we'll try to observe the same when grouped by counties:
+```{r}
+data %>%
+  group_by(county) %>%
+  select(county, state, total_employees) %>%
+  summarize(state_count = n(), mean_employees = mean(total_employees), sum_employees = sum(total_employees), dispersion = sd(total_employees, na.rm = TRUE))
+```
+
+### Interpretation
+
+When we split the data based on state we observed that some of the states have only one county, while most of them have more than one county thus providing us with a dispersion measure, whereas when it comes to the counties we observe some common county names such as ADAMS are present in more than one state. Thus when we group by state we tend to observe more relevant data as to how many employees are present in a region than that of the counties.
+

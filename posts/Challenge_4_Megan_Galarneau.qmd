@@ -1,0 +1,109 @@
+---
+title: "Challenge 4 - FedFundsRate Dataset"
+author: "Megan Galarneau"
+description: "More data wrangling: pivoting"
+date: "03/22/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    css: "style.css"
+categories:
+  - challenge_4
+  - fed_rates
+  - Megan Galarneau
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  Read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  Tidy data (as needed, including sanity checks)
+3)  Identify variables that need to be mutated
+4)  Mutate variables and sanity check all mutations
+
+## Read in data
+
+```{r}
+#simply read in the data (untouched)
+library(readr)
+raw_FedFundsRate <- read_csv("_data/FedFundsRate.csv")
+raw_FedFundsRate
+```
+
+### Briefly describe the data
+
+This data set is reporting on federal fund rates as it relates to the real GDP (percent change), unemployment rate, and inflation rate from July 1954 to March 2017. According to [Investopedia](https://www.investopedia.com/terms/f/federalfundsrate.asp), the federal funds rate is "an interest rate set by the Federal Reserve to indirectly manage interest rates, inflation, and unemployment". In this data set, we examine four types: target, upper target, lower target, and effective rate.
+
+
+```{r}
+#summary of data set statistics
+print(summarytools::dfSummary(raw_FedFundsRate,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+```
+
+## Tidy Data
+
+Noticeably, there are many missing values across the federal fund rates and macroeconomic columns. Perhaps this data was collected on a specific cadence.
+
+To make this data set more comprehensive, I pivoted longer to have a column for federal fund types and macroeconomic conditions along with the respective values. I also programmed the tables to only show me rows with values so the reader is not sifting through missing data. For example: on July 1st, 1954, the effective federal funds rate was 0.8000, the real GDP was 4.6 and the unemployment rate was 5.8.
+
+As a note, if I were to visualize this data as a ggplot, I would condense the federal fund rate and macroeconomic conditions as two columns, type and value. This way I could see all seven rates over time.
+
+```{r}
+#pivot longer of the federal fund rate columns, removed NA values
+tidy_FedFundsRate <-pivot_longer(raw_FedFundsRate, col = c("Federal Funds Target Rate", "Federal Funds Upper Target", "Federal Funds Lower Target", "Effective Federal Funds Rate"),
+                 names_to="Federal Fund Type",
+                 values_to = "Federal Fund Rate",
+                 values_drop_na = TRUE)
+```
+
+```{r}
+#pivot longer of the federal fund rate columns, removed NA values. For this section, I'd rather not have pivoted longer as it creates duplicate federal fund rate rows, but I didn't want all the NA values regardless.
+tidy_FedFundsRate <-pivot_longer(tidy_FedFundsRate, col = c("Real GDP (Percent Change)", "Unemployment Rate", "Inflation Rate"),
+                 names_to="Macroeconomic Condition",
+                 values_to = "Macroeconomic Rate",
+                 values_drop_na = TRUE)
+
+tidy_FedFundsRate
+
+```
+
+## Identify & mutate variables
+
+There are three variables that require mutation: year, month, and day. These variables can be mutated into one easily readable "date" column. Upon creating this new column, I removed the old variables and moved it to first position.
+
+This data set of federal fund rates related to macroeconomic conditions from 1954-2017 is now compiled into a comprehensive table for analysis.
+
+```{r}
+
+tidy_FedFundsRate<-tidy_FedFundsRate%>%
+  mutate(date = str_c(Year, Month, Day, sep="-"),
+         date = ymd(date)) %>%
+  select(-c(Year, Month, Day)) %>%
+  relocate(date)
+
+tidy_FedFundsRate
+```
+

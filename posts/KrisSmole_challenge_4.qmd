@@ -1,0 +1,123 @@
+---
+title: "Challenge 4"
+author: "Kris Smole"
+desription: "Fed Funds Rate dataset"
+date: "03/24/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - fed_rates
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+## A Brief Introduction to the Fed Funds Rate Dataset
+
+We see the Fed Funds Rate dataset is a comma-separated file (a type of text file) that has 10 columns and 904 rows of mostly numeric and date information, with column headings making up all of the text within the dataset. Although it looks like an Excel spreadsheet, it has none of the metadata that can make Excel files complex to work with in R, and is otherwise a much simpler file structure. Many of the columns contain the value of "NA", which is accurate in terms of the exact effective date when the particular rate is valid, as the indicators can change from day to day, and are only reported or released on a certain date. Although accurate, the "NA" value can prevent accurate analysis. We will look at fixing this issue below.
+
+Let's look at the dataframe in RStudio, and see what data types it includes, and what changes need to be made so it is "tidy" and easily manipulated for analysis. (We know from past challenges that how the dataframe appears in RStudio and on html is slightly different than how it appears in a .csv or .xls file, so we'll keep taht and mind and touch on it later). At the bottom of the display of the dataframe, a list of the columns follows that details the datatypes within the dataset.
+```{r}
+
+ffr<-read_csv("_data/FedFundsRate.csv")
+dim(ffr)
+ffr
+spec(ffr)
+
+```
+
+
+### Description of Fed Funds Rate Data
+
+Now that we view the contents of the file onscreen, we see more details.
+
+The Fed Funds Rate dataset includes data for various national economic indicators are already listed chronologically beginning in mid-1954 through early 2017, covering federal funds rates, inflation rates, and unemployment rates. Some economic indicators are present consistently throughout the time period, while others begin later in the time span. Additionally, although most of the data occurs at the first or last day of a month or quarter, one indicator, the Federal Funds Target Rate, also occurs somewhat irregularly: on specific dates, in addition to the first or last day of the month or quarter, with no other economic indicator reported for that specific irregular date. Again, this dataset has 10 columns and 904 rows - with 7 economic indicators listed as columns.
+
+The list of datatypes of each column repeats what we see in the dataframe column heading. All of the columns of the dataset are 'dbl' or double datatypes, which are numbers with decimal places. This is to be expected, as the indicators are expressed percentages, although the dataframe does not include percent signs. Because we may want to calculate using the indicators at some point, later in this report we add columns to the dataset to represent the indicators in the appropriate decimal form to make easy calculations. For example, an indicator of 1.0 is 1.0%, not 100%, as 1.00 typically is represented numerically. So the indicator of 1.0 or 1.0% is accruately represented numerically as .0100 . More on this later.
+
+## Steps Required to make this dataset 'Tidy'
+
+
+Since the dataset has 7 economic indicators listed as columns, we're going to move those to be rows to properly reflect the economic indicator data points as observations. The economic indicator columns represent observations for the specific dates, and as oobservations, must be reflected in rows with the corresponding date. So, we'll use the pivot_longer function to make the dataset 'tidy' so each line represents an observation, and every column represents a variable. After pivoting, the dataset will have 5 variables represented in the columns: year, month, day, economic indicator name and rates of the economic indicator on the specified date. 
+
+We'll pivot 7 variables into a longer format, where the 7 variable names will move into the 'names_to' pivot function variable, and the current values in each of those corresponding columns will move into the 'values_to' pivot function variable.
+
+The Fed Funds Rate example currently has n = 904 rows and has 5 columns being pivoted. We expect the pivoted dataset to have $n*7 = 6328$ rows x 5 columns.
+
+
+```{r}
+
+
+ffrpl<-ffr %>% pivot_longer(
+  cols = "Federal Funds Target Rate":"Inflation Rate",
+  names_to = "Economic Indicator",
+  values_to = "Rates of Specified Date")
+
+```
+  
+We do see the pivoted dataset does have 6328 rows and 5 columns, as we estimated in our calculation.
+
+Now the 3 columns with year, month and date need to be changed to allow easier analysis. We will combine the day, month and year into one column. Because date-related calculations can be very complex there are a variety of ways to code dates. For this dataset, we will use a relatively simplistic coding of the date, as we are not concerned with the time of the particular date, or the time zone of the date of the indicators.
+
+
+## Using Mutate to Create Changes That Convert Data for Easier Analysis
+
+Let's use a mutate function to clear away the "NA" and make those cells blank. This will help clean up the look of this dataframe when it is viewed. We may need to consider another option to remove the "NA" if this choice causes issues with future calculations. In HTML, the blank appears as "", which is the code used to create the blank in the on screen representation of dataframe. I guess you'll just have to believe me that the blanks appeared in place of the NA on my screen in RStudio....
+
+The end of the dataframe is also displayed to show additional lines of indicator values, as the first 10 lines of the dataframe has relatively few indicator values because of when in time the various indicators began to be reported, which result in blank cells for those dates.
+```{r}
+
+ffrpl$`Rates of Specified Date`[is.na(ffrpl$`Rates of Specified Date`)] <- ""
+ffrpl
+tail(ffrpl,20)
+```
+The column Rates of Specified Dates is a character datatype <chr>, as we can see in the displayed content of the dataframe after performing the change of NA to blanks. Rates of Specified Dates must be a <num> datatype, which in addition to accurately depicting the column, it will also allow for decimal places, given we are working with rates and percentages in this column. Note the change to the datatype under the column heading in the output below.
+
+```{r}
+
+sapply(ffrpl, class)
+
+ffrpl$`Rates of Specified Date` <- as.numeric(as.character(ffrpl$`Rates of Specified Date`))
+
+sapply(ffrpl, class)
+
+ffrpl
+```
+
+After changing the datatype of the Rate of Specified Date column using a function in R, it is now "numeric" in the display of column headings and datatype. The column is labelled <dbl> under the column heading in the dataframe display. 
+
+We also see the NA is back, after making this datatype change to numeric. This issue will require further problem solving in another challenge.
+
+Now we move on to making a data column that combines the month, day and year into Month/Day/Year format.
+```{r}
+date_cols <- c("Month", "Day", "Year")
+
+ffrpl$MonthDayYear <- do.call(paste, c(ffrpl[date_cols], sep = "/"))
+  
+
+ffrpl
+
+```
+The Month/Day/Year column appears on the right side of the dataframe as expected. It is a character datatype as-is, so to enable date calculations in future analysis, we'll change the datatype of the new combined date column to date as our next step.
+
+## Use of Lubridate for Month/Day/Year Column
+```{r}
+ffrpl$MonthDayYear <- mdy(ffrpl$MonthDayYear)
+
+ffrpl
+```
+This is an unexpected result!  The MonthDayYear column is the date datatype, as intended, but the order of the contents of the column is Year-Month-Day. Further refinement will be done in future challenges to rectify the order of the date.
+

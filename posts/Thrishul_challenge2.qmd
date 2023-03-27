@@ -1,0 +1,150 @@
+---
+title: "Thrishul Challenge 2"
+author: "Meredith Rolfe"
+desription: "Data wrangling: using group() and summarise()"
+date: "08/16/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - faostat
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+df<- read.csv(file = "_data/hotel_bookings.csv")
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+#| label: summary
+str(data)
+num_observations <- nrow(df)
+num_variables <- ncol(df)
+cat("Dataset Size: ", num_observations, " observations, ", num_variables, " variables\n")
+
+
+# histogram of is_canceled
+hist(df$is_canceled)
+
+#scatterplot of stays_in_weekend_nights, stays_in_week_nights
+plot(df$stays_in_weekend_nights, df$stays_in_week_nights)
+
+# boxplot of arrival_date_week_number
+boxplot(df$arrival_date_week_number)
+
+
+
+```
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+
+# Read data
+hotel_data <- df
+```
+
+```{r}
+data <- select(df,-where(is.character))
+cor(data)
+
+```
+
+
+
+
+### Group by City hotel and mean, median, and mode of lead_time
+
+```{r}
+
+# Group by hotel type and calculate mean, median, and mode of lead_time
+hotel_lead_time_city <- hotel_data %>%
+  group_by(hotel = 'City Hotel') %>%
+  summarise(
+    mean_lead_time = mean(lead_time),
+    median_lead_time = median(lead_time),
+    mode_lead_time = lead_time[which.max(table(lead_time))]
+  )
+print(hotel_lead_time_city)
+```
+
+### Group by Resort hotel and mean, median, and mode of lead_time
+
+```{r}
+# Group by hotel type and calculate mean, median, and mode of lead_time
+hotel_lead_time_resort <- hotel_data %>%
+  group_by(hotel = 'Resort Hotel') %>%
+  summarise(
+    mean_lead_time = mean(lead_time),
+    median_lead_time = median(lead_time),
+    mode_lead_time = lead_time[which.max(table(lead_time))]
+  )
+print(hotel_lead_time_resort)
+```
+
+### only reservations from Portugal and standard deviation of adr
+
+```{r}
+# Filter for only reservations from Portugal and calculate standard deviation of adr
+portugal_adr_sd <- hotel_data %>%
+  filter(country == "PRT") %>%
+  summarise(adr_sd = sd(adr))
+print(portugal_adr_sd)
+```
+
+### min, max, and 25th, 50th, and 75th percentiles of total_of_special_requests
+
+```{r}
+# Calculate min, max, and 25th, 50th, and 75th percentiles of total_of_special_requests
+special_req_summary <- hotel_data %>%
+  summarise(
+    min_special_req = min(total_of_special_requests),
+    max_special_req = max(total_of_special_requests),
+    q25_special_req = quantile(total_of_special_requests, 0.25),
+    q50_special_req = quantile(total_of_special_requests, 0.5),
+    q75_special_req = quantile(total_of_special_requests, 0.75))
+print(special_req_summary)
+
+
+```

@@ -1,0 +1,108 @@
+---
+title: "Challenge 1: Railroad Workers 2012"
+author: "Teresa Lardo"
+desription: "Reading in and describing a data set about railroad employees in the year 2012."
+date: "02/21/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - Teresa Lardo
+  - dataset
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+railroad <- read_csv("_data/railroad_2012_clean_county.csv", show_col_types = FALSE)
+```
+
+## Choo-choo, all aboard!
+
+This data set shows the total number of railroad employees per county in the United States in the year 2012. Running the `head()` function displays the first 6 rows of the data set.
+
+```{r}
+head(railroad)
+```
+
+```{r}
+dim(railroad)
+```
+
+The `dim()` functions shows us that the data set contains 2930 rows (2930 counties) and 3 columns (*state*, *county*, and *total_employees*).
+
+The very first item lists a state code of "**AE**" and a county of "**APO**" with 2 employees for the year 2012. Since this is different from the state codes and county names that follow, I want to clarify that this is for **overseas military**. Besides "AE," the other overseas military "state" abbreviations are AP and AA. Let's check for all of these state codes in the data set.
+
+```{r}
+# Filter the state column through a vector of overseas military state codes
+overseas <- railroad %>% 
+  filter(
+    state %in% c("AA", "AE", "AP")
+  )
+overseas
+```
+
+Filtering the original data set by states in a vector of military overseas abbreviations shows that only Armed Forces Europe (AE) and Armed Forces Pacific (AP) appear in this data set; Armed Forces the Americas (AA) does not.
+
+```{r}
+# How many unique values are in the state column?
+railroad %>% 
+  select(state) %>% 
+  n_distinct(.)
+```
+
+So apparently there are **53** unique values under the 'state' column. There's 50 states, and the two overseas military codes we found before make 52. What's the other one?
+
+```{r}
+unique(railroad$state)
+```
+
+Looking through the unique listings of the 'state' column, we find '**DC**' hiding in there, being sneaky and upping our "state" count to 53.
+
+## Visualization
+
+We can use a horizontal bar graph to show which areas had the most railroad employees in 2012. Because we know from the `dim()` function that this data set includes **2930 different counties**, a bar graph of the number of state employees by county would be super long and overwhelming. So let's instead opt to use employee counts by state instead of county. Using states will still give us a graph with **53 bars**, so let's add some color to distinguish consecutive bars from each other.
+
+```{r}
+# Access ggplot2 and set up a horizontal bar graph to display employees by state
+library(ggplot2)
+
+st_emp_viz <- ggplot(railroad, aes(x=state, y=total_employees, fill=state)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip() + 
+  theme(legend.position = "none")
+
+# Add a title as well as labels for the x- and y-axes
+st_emp_viz <- st_emp_viz + ggtitle("Railroad Employees by State (2012)") + xlab("State") + ylab("Total Employees")
+st_emp_viz
+```
+
+The horizontal bar graph shows that the 3 states with the highest number of railroad employees in 2012 were **Texas**, **Illinois**, and **New York**, which all surpassed 15000 employees. **Nebraska**, **California**, and **Pennsylvania** have the next highest values, with all 3 states surpassing 12500.
+
+## Highest Values by County
+
+Let's do a little bit of sorting to see how the data set reflects or differs from our bar graph.
+
+```{r}
+# Arrange the data set in descending order so the counties with the most employees appear at the top
+sorted_by_county <- railroad %>% 
+  arrange(-total_employees)
+
+head(sorted_by_county, 15)
+```
+
+Since there are so many counties in this data set, I've expanded the `head()` view to the top 15 values. We can see that each of the top 6 states from our bar graph is represented in the top 15 counties. Several counties in other states also had particularly high numbers of railroad employees in 2012.
+
+## Conclusion
+
+This data set shows that at the state level, the states of **Texas**, **Illinois**, and **New York** had the highest total number of railroad employees in the year 2012. At the county level, the highest number of railroad employees were based in **Cook County, Illinois** (8207); **Tarrant County, Texas** (4235); and **Douglas County, Nebraska** (3797). Considering the data set describes data from the year 2012 specifically, the data was likely gathered via local census.

@@ -1,0 +1,111 @@
+---
+title: "Challenge 4 - fed_rates"
+author: "Joseph Vincent"
+description: "More data wrangling: pivoting"
+date: "03/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - fed_rates
+  - Joseph Vincent
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+library(summarytools)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Reading in FedFundsRate
+
+-   FedFundsRate.csv⭐⭐⭐
+
+```{r}
+fed_rates <- read_csv("_data/FedFundsRate.csv")
+head(fed_rates)
+
+#printing a summary of the data
+print(summarytools::dfSummary(fed_rates,
+                              valid.col=FALSE), 
+      method = 'render')
+
+```
+
+### Briefly describe the data
+
+This data shows the history of the Federal Funds Rate from 1954-2017.
+
+It also includes the Fed's target rates; however, it appears target rates were not set until 1958 as this data is missing.
+
+The data set also includes other economic metrics, including inflation rate, unemployment rate, and percent change in real GDP.
+Inflation data is not included until October of 1982.
+It's also worth noting that this type of data is only available on the 1st day of each month.
+Percent change in GDP is only available quarterly.
+
+From 2009 onwards, presumably in response to the financial crisis, the Fed changed their targets to a range. Data from this point onwards includes an upper target and a lower target rate.
+
+## Tidy-ing the Data
+
+There are a few things to change in this data set in order to perform analysis.
+
+First, we'll remove any days of data that are not on the 1st of the month, as they won't provide and inflation or unemployment data to compare against.
+
+Second, presuming we're interested in analyzing the Fed rate alongside Inflation (which is what the Fed rate is attempting to control) we'll remove the data before October 1982, as this excluded inflation rate.
+
+Finally, we'll just remove the last row as it was missing data.
+
+```{r}
+# filtering out dates before 1982, when target rate was implemented
+# filtering only days on 1st of month, when inflation and unemployment is included
+# removing last row with missing data
+
+fed_rates_tidy <- fed_rates %>%
+  filter(Year >= 1982 & Day == 1)
+fed_rates_tidy <- fed_rates_tidy[-c(1:9, 423),]
+
+#sanity checking that Years < 1982 and Days other than 1 have been removed properly
+unique(fed_rates_tidy$Year)
+unique(fed_rates_tidy$Day)
+```
+
+As you can see, the years now range from 1982 to 2017, and "1" is the only unique day in the dataset.
+
+## Mutating dates and target rates
+
+There are some still some issues with the data before it can be analyzed.
+
+First, the separate Year, Month, and Day columns should be mutated into a single Date column of the same format.
+
+Next, we haven't addressed the change in target system in 2009. In order to continue to include this in the data set, what we can do is treat the upper limit as the target rate from this point onwards. This will allow for better visualizations of target rate over time.
+
+Additionally, since the effectiveness of the Fed at hitting their target is something that will likely be analyzed, we'll create a new column that easily shows the difference between the target rate and effective rate at any given date. 
+
+```{r}
+# mutating seperate Year, Month, Day columns into a single date
+# using 'coalesce' to mutate the NA target rate values into the upper target rate after 2009 change
+# creating a 'Distance from Target' column to easily visualize how far from the Fed was from target rate at each date
+
+fed_rates_mutated <- fed_rates_tidy %>%
+  mutate(Date = make_date(Year, Month, Day)) %>%
+  mutate(`Federal Funds Target Rate` = coalesce(`Federal Funds Target Rate`,`Federal Funds Upper Target`)) %>%
+  mutate("Distance From Target" = `Effective Federal Funds Rate` - `Federal Funds Target Rate`) %>%
+  select(Date, `Distance From Target`, `Federal Funds Target Rate`, `Federal Funds Lower Target`, `Effective Federal Funds Rate`, `Real GDP (Percent Change)`, `Unemployment Rate`, `Inflation Rate`)
+
+
+#sanity checking that date is now a single column and target rate no longer has NAs > 2009
+tail(fed_rates_mutated)
+
+
+```
+

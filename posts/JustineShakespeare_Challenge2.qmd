@@ -1,0 +1,174 @@
+---
+title: "Challenge 2 - FAOStat Cattle & Dairy (updated)"
+author: "Justine Shakespeare"
+desription: "Data wrangling: using group() and summarise()"
+date: "03/07/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - faostat
+  - Justine Shakespeare
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Loading and cleaning the data
+
+First we'll load the tidyverse package and read in the data. We'll focus on the FAOStat data on cattle and dairy.
+
+```{r echo=TRUE}
+
+FAOCD <- read_csv("_data/FAOSTAT_cattle_dairy.csv")
+```
+
+This data includes information about quantities related to cattle and dairy products organized by geographical region (including countries, regions, and continents) and year. A more detailed description of the variables in this dataset is provided below.
+
+Let's take a look at the dataset with the head() and dim() functions.
+
+```{r}
+dim(FAOCD)
+
+head(FAOCD)
+```
+
+We have a dataset with over 36,000 observations (rows) and 14 variables (columns). It looks like some of these columns contain redundant information (such as many of the columns with "Code" in the name) and/or they have the same value for all observations (indicating that they were likely taken from a larger dataset). Let's use the unique() function to confirm that some of these variables hold just one value, in which case we can remove them for our analysis and keep this information as metadata for this dataset.
+
+```{r}
+unique(FAOCD$Domain)
+unique(FAOCD$Item)
+```
+
+Both of these columns contain just one value for all observations, so we can remove them.
+
+Let's use the `select()` and `contain()` functions to create a new dataframe that removes all of the columns we have decided we don't need: the columns with "Code" in the name and the columns with only one value throughout the dataset.
+
+```{r}
+FAOCD_subset <- FAOCD %>% 
+  select(-contains("Code")) %>% 
+  select(-contains("Domain")) %>% 
+  select(-contains("Item"))
+  
+FAOCD_subset
+```
+
+## Data exploration and analysis
+
+Let's take a closer look at this data now that we have updated dataframe with the `glimpse()` function.
+
+```{r}
+glimpse(FAOCD_subset)
+```
+It looks as though this data includes information about the *Value* of a variety of cattle and dairy related  products (in the column *Element*) organized by geographical region (in the column *Area*) and *Year*. 
+
+We have two double (numeric) variables, including *Value* and *Year*. The former variable looks to be related to the variable *Unit*, which is a character variable. Let's use the `range()` function to take a closer look at the *Year* variable and see what time period this data covers.
+
+```{r}
+range(FAOCD_subset$Year)
+```
+
+This data dates back to 1961 and goes up to 2018.
+
+This dataframe also includes five character variables: The *Area* column includes primarily countries and some larger regions and groupings of countries. The *Element* variable includes three quantities relates to cattle and dairy products: Milk Animals, Yield, and Production. The *Unit* column, as mentioned above, looks to describe the unit of the values in the *Value* column. Finally, *Flag* and *Flag Description* seem to include information about the data source for each observation in this dataframe. Since we're interested in comparing across countries and regions, let's use the `unique()` function to see what is in the *Area* column.
+
+```{r}
+unique(FAOCD_subset$Area)
+```
+
+Without going through this list exhaustively, it looks as if this variable contains all countries in the world, some historic geopolitical areas (such as "Sudan (former)" or "USSR") and larger regions of the world (such as "World", "Africa", and subsets of continents, such as "Caribbean", "Central Asia", etc.). If this were a real analysis I would spend the time removing values that were not countries and ensuring that this list was a complete and current list of countries. 
+
+Let's use the `group_by()` and `summarize()` functions to find the mean, median, and standard deviation of each Element in this dataset. 
+
+```{r}
+FAOCD_grouped <- FAOCD_subset %>% 
+  group_by(Element) %>% 
+  summarize("mean" = mean(Value, na.rm = TRUE), 
+            "median" = median(Value, na.rm = TRUE),
+            "standard_deviation" = sd(Value, na.rm = TRUE))
+
+FAOCD_grouped
+```
+
+This gives us a sense of the average quantity of these three elements, but it covers all years in the dataset. To get a sense of how these quantities have changed over time, let's get averages for a few specific years:
+
+```{r}
+FAOCD_Comparison <- FAOCD_subset %>% 
+  filter(Year %in% c(1980, 1990, 2000, 2010)) %>% 
+  group_by(Year, Element) %>% 
+  summarize("mean" = mean(Value, na.rm = TRUE), 
+            "median" = median(Value, na.rm = TRUE),
+            "standard_deviation" = sd(Value, na.rm = TRUE)) %>% 
+  arrange(Element, desc(Year))
+
+
+FAOCD_Comparison
+
+```
+This data looks at the average and median quantities (along with the standard deviation) for each element in 4 different years, each a decade apart, from the dataset. Since we have it arranged by Element and Year (in descending order) we can see for each Element how the average quantity has changed in the past few decades.  
+
+Let's take a closer look at a particular element here. I'd like to see where the highest average Production is happening. We'll use the `filter()`, `group_by()`, `summarize()` and `arrange()` functions.
+
+```{r}
+FAOCD_Production <- FAOCD_subset %>% 
+  filter(Element == "Production") %>% 
+  group_by(Area) %>% 
+  summarize("mean" = mean(Value, na.rm = TRUE), 
+            "median" = median(Value, na.rm = TRUE),
+            "standard_deviation" = sd(Value, na.rm = TRUE)) %>% 
+  arrange(desc(`mean`))
+
+FAOCD_Production
+```
+Unsurprisingly, the value that tops this list is "World" and larger geographical regions. Since this is an aggregate of all of the countries specified here, it makes sense that this would have the highest average production. This data shows that Europe has the highest average production, followed by the Americas and Eastern Europe. The first country that shows up on this list is the USSR, which is no longer a country. But given this, it makes sense that the next country that shows up on the list is Russia.
+
+Let's take a look at the same information but filtered to look at just data from recent years (since 2010).
+
+```{r}
+FAOCD_Since2010 <- FAOCD_subset %>% 
+  filter(Year > 2010) %>% 
+  filter(Element == "Production") %>% 
+  group_by(Area) %>% 
+  summarize("mean" = mean(Value, na.rm = TRUE), 
+            "median" = median(Value, na.rm = TRUE),
+            "standard_deviation" = sd(Value, na.rm = TRUE)) %>% 
+  arrange(desc(`mean`))
+
+FAOCD_Since2010
+```
+
+We can see here that since 2010 Europe is still the continent with the highest average production value in recent years, but Asia has moved up the list to second. India is the first country to show up on the list and in fact has a higher production average than some larger regions, including South America and Eastern Asia.
+
+Now let's look at this data from the first 20 years or so of the dataset (before 1980) to get a sense of how things have changed. 
+
+```{r}
+FAOCD_before1980 <- FAOCD_subset %>% 
+  filter(Year < 1980) %>% 
+  filter(Element == "Production") %>% 
+  group_by(Area) %>% 
+  summarize("mean" = mean(Value, na.rm = TRUE), 
+            "median" = median(Value, na.rm = TRUE),
+            "standard_deviation" = sd(Value, na.rm = TRUE)) %>% 
+  arrange(desc(`mean`))
+
+FAOCD_before1980
+```
+
+This table shows data from 1961 to 1979, more than 30 years earlier than the data from the previous table we looked at (data since 2010). It is interesting to note that Europe still tops the list, but the first countries that show up on this list are the USSR (which no longer exists) and Germany. 
+
+## Conclusion and further research
+
+As noted earlier in this post, with more time I would more thoroughly clean the Area variable, so that we could more easily create tables focused on just countries, geographical regions, or continents.
+
+There are so many different ways you could explore this data! Another area that would be worth exploring is the change over time of production and how this varies across countries and regions. Visualization could be used to better illustrate any patterns and trends discovered in the data.

@@ -1,0 +1,132 @@
+---
+title: "Challenge 2 Instructions"
+author: "Rahul Somu"
+description: "Data wrangling: using group() and summarise()"
+date: "03/06/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - faostat
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read Birds.csv and get summary for each item
+
+```{r}
+
+df_birds <- read_csv("_data/birds.csv")
+df_birds_select <- df_birds %>%
+  select('Area', 'Item', 'Year', 'Unit', 'Value', 'Flag', 'Flag Description')
+
+df_birds_select %>%
+  filter(Value != "") %>%
+  group_by(Year, Item) %>%
+  summarize(mean = mean(Value),
+            median = median(Value))
+
+data <- na.omit(df_birds_select)
+
+# Create a plot for each item
+items <- unique(data$Item)
+
+for (item in items) {
+  item_data <- subset(data, Item == item)
+  p <- ggplot(item_data, aes(x = Year, y = Value, group = 1)) +
+    geom_line() +
+    labs(title = item)
+  print(p)
+}
+
+```
+
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+Summary of the entire dataframe
+
+```{r}
+#| label: summary
+
+summary(df_birds_select)
+
+df_birds_select %>%
+  group_by(Item, Year) %>%
+  summarise(mean = mean(Value, na.rm = TRUE),
+            median = median(Value, na.rm = TRUE))
+```
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+Summary table for world statistics.
+
+```{r}
+# Filtering the world data
+data_filtered <- filter(df_birds_select, Area == "World")
+
+# Group the data by item
+grouped_data <- data_filtered %>% 
+  group_by(Item)
+
+# Compute mean, median, and mode for each item
+summary_stats <- grouped_data %>% 
+  select(Item, Value) %>% # select only the relevant columns
+  summarise(mean = mean(Value, na.rm = TRUE), # compute mean and exclude NAs
+            median = median(Value, na.rm = TRUE), # compute median and exclude NAs
+            mode = as.numeric(names(table(Value))[which.max(table(Value))])) # compute mode using table() function
+
+# Compute standard deviation and quantiles for each item
+dispersion_stats <- grouped_data %>% 
+  select(Item, Value) %>% # select only the relevant columns
+  summarise(sd = sd(Value, na.rm = TRUE), # compute standard deviation and exclude NAs
+            min = min(Value, na.rm = TRUE), # compute minimum and exclude NAs
+            q1 = quantile(Value, probs = 0.25, na.rm = TRUE), # compute 1st quartile and exclude NAs
+            median = median(Value, na.rm = TRUE), # compute median and exclude NAs
+            q3 = quantile(Value, probs = 0.75, na.rm = TRUE), # compute 3rd quartile and exclude NAs
+            max = max(Value, na.rm = TRUE)) # compute maximum and exclude NAs
+
+# Combine the summary statistics and dispersion statistics into a single table
+summary_table <- inner_join(summary_stats, dispersion_stats, by = "Item")
+
+# View the summary table
+summary_table
+
+```
+
+### Explain and Interpret
+
+I have picked the highest and least consumed item of the world data.
+
+Based on the data, the mean number of chickens produced is approximately 11.6 million with a standard deviation of approximately 6.1 million. The median number of chickens produced is approximately 10.4 million. The mode is 3.9 million. The minimum number of chickens produced is zero, while the maximum number is approximately 23.7 million. the average (mean) number of chickens increased from around 2 million in 1961 to over 23 million in 2018 in the world. However, there is also a large variability in the number of chickens, as indicated by the high standard deviation of over 6 million.
+
+For pigeons, the mean number produced is approximately 29,400 with a standard deviation of approximately 11,510. The median is approximately 32,222 and the mode is 12,068. The minimum number produced is 12,068, while the maximum is approximately 57,909.Based on the data, the mean and median values for pigeons have remained relatively stable over the years. However, the mode value for pigeons has fluctuated significantly, which indicates that there have been some years where the production of pigeons was significantly higher than others. Overall, there is not a clear upward or downward trend in pigeon production based on the provided data.

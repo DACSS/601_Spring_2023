@@ -1,0 +1,119 @@
+---
+title: "Challenge 2 Solution"
+author: "Sahan Prasad Podduturi Reddy"
+desription: "Data wrangling: using group() and summarise()"
+date: "03/15/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - birds.csv
+  - Sahan Prasad Podduturi Reddy
+---
+## Introduction
+
+I was trying to analyze the 'birds.csv' dataset by splitting the data into different subgroups in order to interpret the meaning of the results. This dataset summarizes the population size of wild bird species based on their body weight. We first start by importing the necessary libraries and setting the working directory to point to the location where the spreadsheet is located.
+
+```{r}
+#| label: Introduction
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+library(DescTools)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+setwd("D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data")
+```
+
+## Read in the Data
+
+Notice that there are 14 columns in the birds.csv file. We can first try to drop out some columns which contain redundant information.(i.e. columns containing same values for all rows). We can do this by defining a function to print out the number of unique values for a column in the dataframe and then applying the function to every columns.
+We notice that Domain Code, Domain, Element Code, Element and Unit have only 1 unique value. So we can remove these columns from our dataframe.
+We know that all rows of data refers to Poultry Stocks regarding Live Animals.
+We also know there is a 1:1 mapping between Area Code,Area & Item Code, Item & Year Code, Year & Flag, Flag Description.
+We can remove more columns to make our analysis task easier.
+
+```{r}
+#| label: ReadFile
+#| warning: false
+#| message: false
+
+setwd("D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data")
+dataframe <- read_csv("birds.csv")
+print(dataframe)
+#Domain Code, Domain, Element Code, Element, Unit | Area Code, Area | Item Code, Item
+# Year Code, Year | Flag, Flag Description | Value
+num_unique <- apply(dataframe, 2, function(x) length(unique(x)))
+print(num_unique)
+dataframe <- select(dataframe, -'Domain', -'Domain Code', -'Element Code', -'Element', -'Unit')
+dataframe <- select(dataframe, -'Area Code', -'Item Code', -'Year Code', -'Flag')
+print(dataframe)
+```
+
+## Grouping by Item -  Summary Statistics and Analysis
+
+Two different groupings were done.
+
+1) We first group the dataset based on Item. This gives us the 5 different types of stocks based on which the data was collected. Then we can use the summarise function in order to calculate the average stock price, median stock price, standard_deviation, minimum value, maximum value, 1st and 3rd quartile values for the stocks grouped by Item.
+Looking at the resulting table, we find that the average value for Chicken stock is orders of magnitude higher than the stock average for the other 4 stock types. This shows that the demand for chicken over the world is a lot higher than all the other types of live animals.
+
+The mean values for all stocks in this grouping is also much higher than the median values for the stock types implying that the distribution is very skewed towards the right. There are some countries contributing a large increase to the average while there a lot of smaller values. The high standard deviation indicates that the data is very spread out and not concentrated around the mean. The maximum value is also much higher than the mean indicating the data is skewed to the right by a few outliers.
+
+```{r}
+#| label: GroupingOne
+#| warning: false
+#| message: false
+
+group_by_item <-
+dataframe %>%
+  group_by(Item) %>%
+  select(Value) %>%
+  summarise(avg_stocks = mean(Value, na.rm=TRUE),
+            med_stocks = median(Value, na.rm=TRUE),
+            std_dev = sd(Value, na.rm=TRUE),
+            min_value = min(Value, na.rm=TRUE),
+            max_value = max(Value, na.rm=TRUE),
+            first_q = quantile(Value, 0.25, na.rm=TRUE),
+            third_q = quantile(Value, 0.75, na.rm=TRUE))
+print(group_by_item)
+
+```
+## Grouping by Year -  Summary Statistics and Analysis
+
+2) The second grouping we perform is for the mean and median stock prices over the years from 1961 to 2018. This was conducted in order to find out how the stock prices have fluctuated over the years. We notice there are 4 years in total where the avg_stock price has dropped below the last years stock price. All the other years, there has been an increase in stock price ranging from 0.5% all the way to 7%. This gradual increase in stock prices has led to the current price. The median price fluctuates frequently rising and falling over the years. The median is also very low compared to the mean price indicating once again the presence of large outliers in the dataset over the years.
+
+```{r}
+#| label: GroupingTwo
+#| warning: false
+#| message: false
+
+group_by_year <-
+dataframe %>%
+  group_by(Year) %>%
+  select(Value) %>%
+  summarise(avg_stocks = mean(Value, na.rm=TRUE),
+            med_stocks = median(Value, na.rm=TRUE)) %>%
+  arrange(Year)
+
+diff_avg <- diff(group_by_year[["avg_stocks"]])
+vec_diff_avg <- append(diff_avg,0, after=0)
+group_by_year['percent increase avg_stocks'] <- (vec_diff_avg/group_by_year$avg_stocks) * 100
+
+diff_med <- diff(group_by_year[["med_stocks"]])
+vec_diff_med <- append(diff_med,0, after=0)
+group_by_year['percent increase med_stocks'] <- (vec_diff_med/group_by_year$med_stocks) * 100
+print(arrange(group_by_year, desc(`Year`)))
+
+y <- group_by_year$avg_stocks
+x <- group_by_year$Year
+plot(x, y, type = "l")
+
+y <- group_by_year$med_stocks
+x <- group_by_year$Year
+plot(x, y, type = "l")
+```

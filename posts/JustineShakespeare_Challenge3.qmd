@@ -1,0 +1,77 @@
+---
+title: "Challenge 3 - Australian Marriage Survey"
+author: "Justine Shakespeare"
+description: "Tidy Data: Pivoting"
+date: "03/08/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - Justine Shakespeare
+  - australian_marriage
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+### Read in data
+
+First we'll read in the data. We'll be focusing on the not-yet-tidy dataset on the Australian Marriage Law Survey. After inspecting the data I can see that this dataset includes some additional rows at the top of the sheet and the column names are in multiple rows. For ease of analysis, I'll skip the first few lines and rename the rows when reading in this data. 
+
+```{r}
+aussieMarriage <- read_excel("_data/australian_marriage_law_postal_survey_2017_-_response_final.xls", sheet = 2, skip = 7, col_names = c("State_territory", "Yes", "Yes %", "No", "No %", "Total", "Total %", "delete", "Response clear", "Response clear %", "Response not clear", "Response not clear %", "Non-responding", "Non-responding %", "Resp Total", "Resp Total %"))
+
+aussieMarriage
+```
+### Data Description
+
+This data shows the results of the Australian Marriage Law Postal Survey from 2017, which was administered to eligible participants throughout Australia. Surprisingly, I could not find the question on the survey in the actual dataset. A [quick google search](https://www.abs.gov.au/ausstats/abs@.nsf/mf/1800.0) revealed that the question on the survey was, "Should the law be changed to allow same-sex couples to marry?"
+
+This data shows the responses of eligible participants organized by region (state or territory).
+
+### Data Cleaning
+
+Before we attempt any pivoting, we should clean up this dataset a bit more. Assuming we're interested in the *results* of the survey and not so much in how many responses were clear, let's select just the relevant columns. We can also leave off the percentage columns, since we can calculate those ourselves with the raw counts. We'll also drop the last few lines since they are endnotes. 
+
+```{r}
+aussieMarriage1 <- select(aussieMarriage, "State_territory", "Yes", "No", "Total")
+aussieMarriage2 <- slice(aussieMarriage1, 1:(nrow(aussieMarriage) - 6))
+aussieMarriage2
+```
+
+### Data Review and Pivot
+
+Now that we have a clean dataset we can take a closer look. Using the `dim()` and `head()` functions we can see that we have 9 observations and 4 variables. The 4 variables include the *state or territory* variable which indicates the region within Australia a vote is from, including Australia at the end. Then there is a *Yes* column with the number of "yes" votes, a *No* column with the number of "no" votes, and finally a *Total* column with the total number of votes. 
+
+```{r}
+dim(aussieMarriage2)
+
+head(aussieMarriage2, 10)
+```
+Let's use the `pivot_longer()` function to move all of the *yes* and *no* votes to two columns called "Response" and "Count". We can also calculate the percentage using these counts and the total column.
+
+```{r}
+aussieMarriagePL <- aussieMarriage2 %>% 
+  pivot_longer(col = c("Yes", "No"),
+               names_to = "Response",
+               values_to = "Count") %>% 
+  mutate("Percent" = Count/Total)
+
+aussieMarriageFinal <- select(aussieMarriagePL, State_territory, Response, Count, Percent, Total) # reordering the columns so that Total shows up on the far right.
+
+head(aussieMarriageFinal, 20)
+```
+
+This new dataset shows the same information but organized differently. Now each observation shows the number of *Yes* or *No* votes in a state/territory, along with the *Percent* those votes represent out of the total in that region. 

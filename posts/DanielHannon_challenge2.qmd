@@ -1,0 +1,97 @@
+---
+title: "Challenge 2: Railroad Wrangling"
+author: "Daniel Hannon"
+desription: "Desribed and Analyzed the Railroad dataset"
+date: "03/07/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Daniel Hannon
+  - railroads
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Reading in the Data
+```{r message = FALSE}
+#| label: read in the data
+railroad_data <- readxl::read_excel("_data/StateCounty2012.xls")
+slice(railroad_data, 1)
+```
+Looking at the original spreadsheet, we can see based on the title that this data is about the number of railroad employees in the United states, categorized by state and county for the year 2012. The data does not start until line 3 and columns 2 and 4 contain no information, so we can read in the data, skip the first two rows and select out the empty columns.
+
+```{r message = FALSE}
+#| label: save the data in a useful form
+railroad_data <-readxl::read_excel("_data/StateCounty2012.xls", skip= 3) %>%
+                select(STATE, COUNTY, TOTAL)
+head(railroad_data)
+```
+We can see that each observation is the number of railway workers for a given county in 2012. However, there also contains observations about the total for each state. These observations contain an N/A in the county space and use the word Total in the state column. We can filter these out to have a data frame for all the state totals and one for all the unique counties.
+
+```{r}
+#| label: Filter out the State Total Observations
+
+#A data frame of just totals
+state_totals <- railroad_data %>%
+                filter(grepl("Total", STATE)) %>%
+                select(!COUNTY)
+
+#A data frame of no totals 
+removed_state_totals <- railroad_data %>%
+                        filter(!grepl("Total", STATE))
+
+state_totals
+
+head(removed_state_totals)
+``` 
+The State totals should only have 50 observations, because there are only 50 states, but there is are 54. This is because Armed Forces Pacific, Armed Forces Europe, DC and the Grand Total are all saved in the frame. For the purposes of gaining insights about state totals specifically, these will be filtered out of the state_totals tibble before descriptive statistics are done. 
+```{r}
+#| label: Filter out the Non-state observations
+
+state_totals <- state_totals %>%
+                filter(!STATE %in% c("AE Total1", "AP Total1", "DC Total", "Grand Total"))
+
+```
+# Summary Statistics 
+
+### State level
+
+First lets look at the statistics of the state totals:
+```{r}
+#| label: get the descriptive stats over state totals 
+summarize(state_totals, Mean = mean(TOTAL), Median = median(TOTAL), Minimum =min(TOTAL), Maximum = max(TOTAL), Std = sd(TOTAL), IQR= IQR(TOTAL))
+
+```
+The totals for each state vary heavily, with a standard deviation of over 4.7 thousand compared to the mean of 5.1 thousand. It also looks like the values are skewed with a few very large states pulling the average up. This can be seen by the mean being almost half a standard deviation higher than the median, and can also be seen by the range of values going from 4 to 19839. In order to try to get a closer look at the county level, we can summarize over our other tibble. 
+
+### County Level
+```{r}
+#| label: get the descriptive stats over indivdual counties 
+summarize(removed_state_totals, Mean = mean(TOTAL, na.rm =TRUE), Median = median(TOTAL, na.rm =TRUE), Minimum =min(TOTAL, na.rm =TRUE), Maximum = max(TOTAL, na.rm =TRUE), Std = sd(TOTAL, na.rm =TRUE), IQR= IQR(TOTAL, na.rm =TRUE))
+
+```
+
+Much like the State Total data, this data is highly varied and skewed. Again we can see that the mean is much higher than the mean, but in the case of this data the IQR is much smaller than the Standard Deviation. This also suggests that there are a few observations much higher than the average, and that these are skewing the data.
+
+```{r warnings =FALSE, messages = FALSE}
+#| label: do descriptive stats on the average per state
+removed_state_totals %>% 
+  group_by(STATE)%>%
+  select(TOTAL)%>%
+  summarize_all(mean, na.rm= TRUE) %>%
+  summarize(Mean = mean(TOTAL, na.rm =TRUE), Median = median(TOTAL, na.rm =TRUE), Minimum =min(TOTAL, na.rm =TRUE), Maximum = max(TOTAL, na.rm =TRUE), Std = sd(TOTAL, na.rm =TRUE), IQR= IQR(TOTAL, na.rm =TRUE))
+          
+```
+The data above shows the descriptive statistics over the mean number of railroad employees per county per state. We can see that the range descreases, as the highest average number of workers per county in a state is 662, while the lowest is still 1. We can still see the skew from before, but it is less impactful with a lower standard deviation and a smaller gap between the median and mean. So while the average county has 87 workers according to the last summary, we can see that the average mean number of employees per county state wide is 115.

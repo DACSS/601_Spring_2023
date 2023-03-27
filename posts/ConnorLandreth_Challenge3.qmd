@@ -1,0 +1,107 @@
+---
+title: "Challenge 3 - Eggs"
+author: "Connor Landreth"
+description: "Tidy Data: Pivoting"
+date: "03/09/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+```{r}
+setwd("/Github Projects/601_Spring_2023/posts/_data")
+
+eggs <- read.csv("eggs_tidy.csv")
+eggs
+```
+
+### Briefly describe the data
+
+The data is inclusive of 120 observations and 6 variables. The data includes data on the prices of egg cartons from January 2004 to December 2013, hence the 120 observations. Pivoting this will make it more tidy because we can see more clearly how egg quantities increased or decreased from year-to-year, as opposed to every month back-to-back.
+
+## Anticipate the End Result
+
+Right now we are working with six columns and 120 rows when evaluating this data set. When pivoted for cleanliness, each carton type should appear together for each year (eg Nov 2006 large dozen and Nov 2006 large half dozen will be together)
+
+### Example: find current and future data dimensions
+
+Current: 6 columns x 120 rows. We will pivot this data longer to create a data set with only 4 columns, year and month will remain, and two new will be created (type of carton and relative price(P/lb))
+
+```{r}
+nrow(eggs)
+ncol(eggs)
+
+```
+
+Lets see if this works with a simple example.
+
+```{r}
+eggs_pivotlong <- eggs %>%
+  pivot_longer(col = c(large_half_dozen, large_dozen, extra_large_half_dozen, extra_large_dozen),
+               names_to = "Type_of_Carton",
+               values_to = "price_per_pound")
+eggs_pivotlong
+View(eggs_pivotlong)
+```
+
+### Challenge: Describe the final dimensions
+
+The new dimesions are 4 columns and 480 rows
+
+```{r}
+nrow(eggs_pivotlong)
+ncol(eggs_pivotlong)
+
+eggs_pivotlong %>% 
+  group_by(Type_of_Carton) %>% 
+  summarise( Min = min(price_per_pound),
+             Max = max(price_per_pound),
+             Mean = mean(price_per_pound),
+             Median = median(price_per_pound),
+             Quantile = quantile(price_per_pound))
+
+
+
+```
+
+Unsurprisingly, the mean price for a carton of extra large eggs came out to be the most expensive on average, while the mean price of a half dozen large eggs came out to be the lowest, on average.
+
+```{r}
+
+eggs_pivotlong %>% 
+  select(Type_of_Carton, price_per_pound, month, year) %>% 
+  ggplot(aes(price_per_pound, month, color=Type_of_Carton))+
+  geom_point(size=3, alpha = 0.8)+
+  geom_smooth()+
+  theme_linedraw()+
+  labs(title="Price by Carton Type over Months")
+```
+
+I don't know if this actually shows much but it shows price tends to increase in certain months. Any additional comments?

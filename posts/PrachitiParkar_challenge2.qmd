@@ -1,0 +1,103 @@
+---
+title: "Challenge 2"
+author: "Prachiti Parkar"
+description: "Data wrangling and Data Sumarization to find statistics in data"
+date: "03/08/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - faostat
+  - faostat_livestock
+  - Prachiti Parkar
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in the Data
+I have selected faostat_livestock dataset to do my analysis on.
+
+```{r}
+# Importing the faostat_livestock dataset and reading them
+library(readr)
+data <-read_csv("_data/FAOSTAT_livestock.csv")
+#Lets see the first 3 rows of the dataset
+head(data, 3)
+```
+
+## Describe the data
+
+Using R commands I am exploring the data and coming up with the description from the data.
+
+There are total 82117 rows and 14 columns
+The data ranges from year 1961 to 2018
+
+### Checking the variation in data for each column
+
+```{r}
+#| label: summary
+# Check the variation in data for each column
+summary(data)
+```
+
+## Provide Grouped Summary Statistics
+
+Conducting  exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`.
+
+
+```{r}
+#install.packages("dplyr")
+library(dplyr)
+```
+
+Grouping by the Area and finding the mean_value
+```{r}
+data %>% 
+  group_by(Area) %>% 
+  summarise(mean_value = mean(Value))
+```
+
+Table output by selecting Columns "Area", "Year", and "Value".
+```{r}
+data %>% 
+  select(Area, Year, Value)
+```
+
+I wanted to check out how any data rows / points are available for Afghanistan and Ireland in the year of 1962 for the item Asses. There are 2 datapoints available.
+```{r}
+data %>% 
+  filter(Area == "Afghanistan" | Area == "Ireland",Item == "Asses", Year == 1962)
+```
+
+
+## Table Value Statistics
+Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for Value within the data set.
+```{r}
+#deleting the rows with Null values
+data2 <- na.omit(data)
+# Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+data2%>%
+  group_by(Year)%>%
+  summarize(mean.Value = mean(Value, na.rm = TRUE), median.Value = median(Value, na.rm = TRUE), min.Value = min(Value, na.rm = TRUE), max.Value = max(Value, na.rm = TRUE), sd.Value = sd(Value, na.rm = TRUE), var.Value = var(Value, na.rm = TRUE), IQR.Value = IQR(Value, na.rm = TRUE))
+```
+
+Some Conclusion from seeing the data summary
+
+1. The Data is Collected from the year 1961 - 2018
+2. The Element column just has one value Stocks and the Element Code also has only 1 value - 5111
+3. The Area Code varies from 1 - 5504
+4. The Value Column has a lot of variance
+
+Some insights:
+There is no need of both Year Code and Year, either can be used to save space
+

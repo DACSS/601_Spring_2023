@@ -1,0 +1,103 @@
+---
+title: "challenge_3"
+author: "Kris(tine)_Smole"
+desription: "Eggs_Tidy"
+date: "03/08/2023" 
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - eggs
+  - australian_marriage
+  - usa_households
+  - sce_labor
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+#####reposted 3/26/2023 to correct missing date in YML.
+Originally posted 3/8/23.
+
+## DataSet Used
+
+
+
+```{r}
+eggs_tidy<-read_csv("_data/eggs_tidy.csv")
+```
+
+```{r}
+select(eggs_tidy, month,year,large_half_dozen,large_dozen,extra_large_half_dozen,extra_large_dozen)
+```
+## Description of Eggs_Tidy data
+The eggs_tidy dataset contains 120 rows and 6 columns.
+
+The rows in the dataset contains ten years of monthly data from January 2004 through December 2013 for the average volume of the columns representing the 6 different types of cartons of eggs sold by various producers in a fictious region, within a ficticious country. We know the values are averages because full and half-dozen cartons of eggs are not sold by a partial unit.For example, February 2004 has a value of 128.50 half dozen sized cartons of large-sized eggs. 
+
+Some of the columns contain observations, rather than variables. 
+
+We know from our reading (ie: in R for Data Science) the following rules regarding "tidy" data.
+
+"There are three interrelated rules which make a dataset tidy:
+1.	Each variable must have its own column.
+2.	Each observation must have its own row.
+3.	Each value must have its own cell."
+
+We see in rule 1 & 2 that each variable must have its own column, and each observation must have its own row. For this dataset, there are four variables. The variables are (1) month, (2) year, (3) Carton Type, and (4) Unit. As described for rule 2, the original depiction of the dataset includes columns that represent observations (Large 1/2 doz.,Large dozen, Extra large dozen, Extra large 1/2 doz., that will no longer be reflected as individual columns.
+
+Regarding rule 2, this dataset has observations related to each month and year, that are depicted in its columns entitled large_half_dozen, large_dozen, extra_large_half_dozen, extra_large_dozen. These observations must be made into rows under a column for carton tyoe since observations within the month and year must have their own row.
+
+Each value must have its own cell, which is true for the original depiction of the dataset, although the values of the observations must be pivoted according to the corresponding variables.
+
+## How Eggs_Tidy will be made "Tidy"
+
+We will pivot this dataset to have more rows and fewer columns to "tidy" this data. The columns to be pivoted are observations of carton types (Large 1/2 dozen, Large dozen, Extra Large 1/2 dozen, and Extra Large dozen), which will become rows in the corresponding month and year of observation. We will use the tidyverse function, pivot_longer to accomplish this pivot.
+
+## Estimating the Shape of the New Pivoted DataFrame
+In the original depiction of the dataset, we have 120 rows of data in 6 columns. 
+
+Two of the columns identify variables, so we will pivot $k-2$ variables into a longer format where the $k-2$ variable names will move into the `names_to` variable (as defined in the Pivot_longer function) and the current values in each of those columns will move into the `values_to` variable (as defined in the Pivot_longer function). Therefore, we would expect $n * (k-2)$ rows in the pivoted dataframe!
+
+
+We expect $n * (k-2)$ rows in the pivoted dataframe.
+
+
+Suppose you have a dataset with $n$ 120 rows and $k$ 6 variables. In our example, 2 of the variables are used to identify a case, so you will be pivoting $k-2$ variables into a longer format where the $k-2$ variable names will move into the `names_to` variable and the current values in each of those columns will move into the `values_to` variable. Therefore, we would expect $n * (k-4)$ rows in the pivoted dataframe!
+
+Eggs_Tidy example has $n =120$ rows and $k - 2 = 4$ variables being pivoted, so we expect a new dataframe to have $n * 4 = 480$ rows x $2 + 2 = 4$ columns.
+
+
+## Eggs_Tidy After Using Pivot_Longer Function
+
+```{r}
+
+
+eggs_tidy %>%
+  pivot_longer(
+    cols = ends_with("dozen"),
+    names_to = "carton type",
+    values_to = "units")
+
+ 
+
+```
+
+
+## CONCLUSION
+
+We see the pivoted dataset does, indeed, have 480 rows and 4 columns. 
+

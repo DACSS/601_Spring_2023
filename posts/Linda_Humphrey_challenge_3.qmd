@@ -1,0 +1,169 @@
+---
+title: "Challenge 3 Instructions"
+author: "Linda Humphrey"
+description: "Tidy Data: Pivoting"
+date: "03/06/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3: Australian Marriage Law Postal Survey 2017 - Response
+  - my name: Linda Humphrey
+  - marriage_data: australian_marriage_law_postal_survey_2017_-_response_final.xls
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+library(xlsx)
+library(readxl)
+library(dplyr)
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+# Reading in the  data
+library(readr)
+
+marriage_data <- readxl::read_excel("~/Desktop/601_Spring_2023/posts/_data/australian_marriage_law_postal_survey_2017_-_response_final.xls", sheet = 2, range = "A7:G16")
+
+marriage_data
+
+```
+
+### Briefly describe the data
+
+I renamed all columns to be clear, created a response variable with 'yes' and 'no' values, and recalculated the percent variable and pivot the data longer.
+```{r}
+tidy_marriage_data <- marriage_data %>% 
+  select(1, 2, 4, 6) %>% 
+  rename("territory" = `...1`,
+         "yes" = no....2,
+         "no" = no....4,
+         "total" = no....6) %>% 
+  pivot_longer(c(yes, no), names_to = "response", values_to = "number") %>% 
+  mutate("percent" = number / total * 100)
+  
+tidy_marriage_data
+```
+
+## Anticipate the End Result
+
+I chose to delete the percentage columns from the original data and recalculate them later to avoid messiness.
+```{r}
+tidy_marriage_data <- tidy_marriage_data %>% 
+  relocate("total", .after = "number") %>% 
+  mutate(territory = recode(territory, "Northern Territory(b)" = "Northern Territory",
+         "Australian Capital Territory(c)" = "Australian Capital Territory"))
+tidy_marriage_data
+```
+
+The code arranges the votes in order of greatest to least percent of yes votes using filter, select, and arrange.
+```{r}
+yes_votes <- tidy_marriage_data %>% 
+  filter(response == "yes") %>% 
+  select(territory, percent, total) %>%
+  arrange(desc(percent))
+yes_votes
+```
+
+The code arranges the votes in order of greatest to least percent of no votes using filter, select, and arrange.
+
+```{r}
+no_votes <- tidy_marriage_data %>% 
+  filter(response == "no") %>% 
+  select(territory, percent, total) %>%
+  arrange(desc(percent))
+no_votes
+```
+
+Here I find the current and future data frame of australian marrige
+
+```{r}
+# create a data frame with some data
+df <- data.frame(
+  territory = c("New South Wales", "Victoria", "Queensland", "Western Australia"),
+  response = c("yes", "no","yes", "no"),
+  number = c(2374362, 2145629, 1487060, 801575),
+  stringsAsFactors = FALSE
+)
+
+# print the current data frame
+print(df)
+
+# create a future data frame with some data
+future_df <- data.frame(
+  territory = c("Victoria", "Queensland"),
+  response = c("yes", "no"),
+  percent = c(57.8, 60.7),
+  stringsAsFactors = FALSE
+)
+
+# print the future data frame
+print(future_df)
+
+
+```
+
+
+### Challenge: Describe the final dimensions
+
+Here I categorize the data by using count() by territory
+
+```{r}
+tidy_marriage_data %>% count(territory)
+
+```
+Here I categorize the data by using count() by response
+
+```{r}
+tidy_marriage_data %>% count(response)
+```
+
+
+### Challenge: Pivot the Chosen Data
+
+Here I pivot the dataset wider showing numbers of yes and no response.
+
+```{r}
+library(tidyverse)
+
+df_wide <- df %>% pivot_wider(
+  names_from = territory,
+  values_from = number
+)
+
+# view the pivoted data frame
+df_wide
+
+```
+
+

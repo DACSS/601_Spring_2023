@@ -1,0 +1,148 @@
+---
+title: "Challenge 2"
+author: "Nanci Kopecky"
+desription: "Data wrangling: Railroad Data"
+date: "03/07/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+library(readr)
+railroad<-read.csv(file = "_data/railroad_2012_clean_county.csv",
+                header=TRUE,
+                sep = ","
+                )
+
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+So far, I am continuing to use the Railroad data as I am getting used to Github and R.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+#| label: summary
+
+```
+
+### Overview of Data
+
+I used the *head* command to see an overview of the data might be organized.
+
+```{r}
+head(railroad)
+```
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set. \### Trying the commands, Select and Filter
+
+### Practicing R Commands
+
+The *arrange* and *select* keep each state and county as separate observations. I was able to filter by number of employees.
+
+```{r}
+stateemployees<-arrange(railroad, state)
+stateemployees
+state_select<-select(railroad, state, total_employees)
+state_select
+state_big<-filter(railroad, total_employees>1000)
+state_big
+state_small<-filter(railroad, total_employees<=1)
+state_small
+state_middle<-filter(railroad, total_employees %in% c(79,81))
+state_middle
+```
+
+I could not get mode to work. I tried a few different commands mode(total_employees), mode(states) and then some other coding that I watched on YouTube, see below.
+
+```{r}
+railroad %>%
+  summarize(
+    mean_employees=mean(total_employees),
+    median_employees=median(total_employees),
+    sd_employees=sd(total_employees)
+  )
+
+```
+
+```{r}
+mode1<-function(total_employees) {
+  ux~unique(total_employees)
+  ux[which.max(tabulate(match(total_employees,ux)))]
+}
+```
+
+### More Exploring of R Commands
+
+*summmary* would be helpful in understanding the type of data in each column. *table* showed how many counties are in each state. How could I see the total employees for each state?
+
+```{r}
+summary(railroad)
+```
+
+```{r}
+table(railroad$state)
+```
+
+### Visualize the Data
+
+The histogram shows the number of counties (vertical axis) with a given range of employees (horizontal axis) I would like to know how to omit the outlier.
+
+```{r}
+hist(railroad$total_employees, breaks=200)
+barplot(table(railroad$state))
+boxplot(railroad$total_employees~railroad$state)
+```
+
+### Group
+
+Using *group_by* you can see which states have the most employees.
+
+```{r}
+
+df<-group_by(railroad, railroad$state)
+summarise(df,sum=sum(total_employees), mean=mean(total_employees),sd=sd(total_employees))
+```
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.
+
+I chose the roilroad data because for now it is easier to understand as I review the basic commands of R and learning about Github. The group_by command was helpful to see the number employees per state instead of per state and county. In filtering which counties had the the biggest and smallest number of employees, nothing stood out in comparing these groups other than the number of employees.

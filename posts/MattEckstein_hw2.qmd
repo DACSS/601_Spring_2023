@@ -1,0 +1,133 @@
+---
+title: "Challenge 2"
+author: "Matt Eckstein"
+desription: "Challenge 2 - Matt Eckstein - Railroad Data"
+date: "03/01/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+
+  - challenge_2
+  - Matt Eckstein
+  - railroad_2012_clean_county.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Loading and viewing dataset  
+
+```{r}
+railroad_data <- read.csv("_data/railroad_2012_clean_county.csv")
+
+head(railroad_data)
+
+summarize(railroad_data)
+```
+
+These data were likely gathered from a survey of occupations across geographies conducted by a federal agency such as the Bureau of Labor Statistics.
+
+Each case is a county in the United States with at least one railroad worker. (The state and county columns are both essential for defining a case, since some county names occur in more than one state, and the state column is necessary for disambiguation.) The total_employees column indicates the number of railroad employees in the relevant county.
+
+
+```{r}
+railroad_data %>%
+  summarize(median = median(total_employees), mean = mean(total_employees))
+
+```
+
+Of US counties with at least one railroad employee, the median county had 21 railroad employees, while the mean county had slightly more than 87. This suggests that a handful of counties with very large numbers of railroad employees are dragging the mean upwards relative to more typical counties.
+
+##Railroad workers by state
+
+
+```{r}
+states <- select(railroad_data, state)
+table(states)
+prop.table(table(states))
+```
+Among all states and state-equivalents, the number of counties and county-equivalents that have at least one railroad worker ranges from one (in Washington, DC and each of the two military entities) to 221 (in Texas). This is roughly commensurate with what one might expect, given the overall number of counties in each state. About 7.5% of all counties and county-equivalents that have at least one railroad worker are in Texas. (Although the overall impact is small, note that the data in the proportional table are slightly distorted by the fact that the table aggregates railroad worker data for all of Virginia's independent cities as one entry rather than breaking them out as separate county-equivalents.)
+
+```{r}
+railroad_data %>%
+  select(state, county)%>%
+  n_distinct()
+```
+This shows that there are 2390 cases (consisting of state-county combinations) in the data
+
+## Grouping by state and finding mean and median both overall and for counties within them
+
+Note that the function mfv() used to calculate the mode to find these summary statistics is part of the package modeest. I ran install.packages("modeest") in my console rather than adding it to the Quarto document in order to avoid causing an unwanted install on the computer of someone else running the code in the Quarto document.
+
+```{r}
+library(modeest)
+
+railroad_data %>%
+  summarize(mean(total_employees))
+
+railroad_data %>%
+  summarize(median(total_employees))
+
+railroad_data %>%
+  summarize(mfv(total_employees))
+
+railroad_data %>%
+  summarize(min(total_employees))
+
+railroad_data %>%
+  summarize(max(total_employees))
+
+railroad_data %>%
+  summarize(IQR(total_employees))
+
+railroad_data %>%
+  group_by(state) %>%
+  summarize(mean(total_employees))
+
+railroad_data %>%
+  group_by(state) %>%
+  summarize(median(total_employees))
+
+railroad_data %>%
+  group_by(state) %>%
+  summarize(mfv(total_employees))
+
+railroad_data %>%
+  group_by(state) %>%
+  summarize(sd(total_employees))
+
+railroad_data %>%
+  group_by(state) %>%
+  summarize(min(total_employees))
+
+railroad_data %>%
+  group_by(state) %>%
+  summarize(max(total_employees))
+
+railroad_data %>%
+  group_by(state) %>%
+  summarize(IQR(total_employees))
+
+```
+
+
+
+
+## Explaining and interpreting the above
+I chose to calculate the measures of central tendency and dispersion for the total results and grouped by state. I considered a county (within states, to prevent counting counties in different states with the same name together) subgroup, but did not include it when I realized this produced the same results as overall analysis, since each county (within a state) has only one value.
+
+I found it notable how much the mean number of railroad workers per county varies by state. Some of this variation is accounted for by the fact that some states (e.g. California) have relatively few counties for the size of their populations and thus have many people (and, hence, railroad workers) in each county. Other states, such as the Dakotas, which have many counties relative to the sizes of their populations, do not have many railroad workers in their average county. Some interesting factors cause variation in this general pattern, though. Some states, such as Hawaii, do not have very railroad-friendly geography and have fewer railroad workers per county than one might otherwise expect. Also, Nebraska stands out as a bit of an outlier on the high side relative to other relatively lightly populated Midwestern states with large numbers of counties, in part since Omaha is a significant railroad hub (https://www.greatamericanstations.com/stations/omaha-ne-oma/).
+
+It's also notable that some states have a different number of railroad employees in every county with at least one, creating a large number of modes for some states.
+

@@ -1,0 +1,125 @@
+---
+title: "Challenge 3: Eggs 2004-2013"
+author: "Sue-Ellen Duffy"
+description: "Pivoting Egg Data"
+date: "03/14/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+  - Sue-Ellen Duffy
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(summarytools)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+### Egg Data!
+
+Here we have the monthly price paid by first receivers for USDA Certified Organic Eggs by size and carton types for January 2004 to December 2013. The unit "Price" is "cents per pound". So, for example in January 2004, the price paid by first receivers for USDA Certified Dozen of Extra Large Eggs was 230 cents/pound. As defined in the original data, First Receivers "those entities that purchases the processed product from the poultry or egg company, such as a retailer, distributor, or manufacturer". The term wholesale level would be appropriate in many cases. 
+
+
+## Reading in the egg data
+
+```{r}
+eggs_og <- read_excel("_data/organiceggpoultry.xls",
+                      sheet="Data",
+                      range =cell_limits(c(6,2),c(NA,6)),
+                      col_names = c("date", "xlarge_dzn", "xlarge_halfdzn", "large_dzn", "large_halfdzn")
+)
+eggs_og
+```
+::: callout-Tip
+## Date Format 1
+Starting off a little messy. Already I see this data is -wide- and the date needs formatting. Let's see what other nuances might be lingering in the date column (count).
+:::
+```{r}
+table(select(eggs_og, date))
+```
+::: callout-Tip
+## Date Format 2
+In the date column, January has a year indicator, 10 of the months appear 10 times, February appears 8 times and February/1 (a leap year) appears twice. We have to delete the /1 in February (mutate) and extend the year indicator from January to the rest of the months (separate and fill).
+:::
+
+```{r}
+eggs <- eggs_og %>%
+  mutate(date = str_remove(date, " /1")) %>%
+  separate(date,into=c("month", "year"), sep=" ") %>%
+  fill(year)
+eggs
+```
+::: callout-Tip
+## Pivot
+We need to adjust this data so that it is long data (pivot). As of right now we can look at the data nicely, but can't do much analysis across sizes because they are in different columns. I will shift this data to month, year, "carton_type" which will combine the 4 types of cartons into one column as their names and place their values into another column labeled "price".
+:::
+
+```{r}
+eggs_long <- eggs %>%
+  pivot_longer(cols=3:6,
+    names_to = c("carton_type"),
+      values_to = "Price"
+  )
+eggs_long
+```
+### Analyze
+Alright, now our data is pretty succinct. We can start doing some analysis!
+
+```{r}
+eggs_long %>%
+  arrange(desc(`Price`))
+```
+
+## Price Analysis by Carton Type
+
+```{r}
+eggs_long %>%
+  group_by(carton_type) %>%
+  summarise( Min = min(Price),
+             Max = max(Price),
+             Median = median(Price),
+             Mean = mean(Price)) %>%
+  arrange(desc(Mean))
+```
+
+No surprises here, xlarge_dzn is on average the most expensive of the 4 carton types and large_halfdzn is on average the least expensive of the 4 carton types.
+
+## Price analysis by Month
+
+```{r}
+eggs_long %>%
+  group_by(month) %>%
+  summarise( Min = min(Price),
+             Max = max(Price),
+             Median = median(Price),
+             Mean =mean(Price)) %>%
+  arrange(desc(Mean)) %>%
+  print(n=12)
+```
+
+Here we see the most expensive months are at the beginning of the winter season and at the beginning of the summer season. I wonder if this has anything to do with egg laying production or if this increase is seen within the broader scope of food price statistics.
+
+## Price Analysis by Year
+
+```{r}
+eggs_long %>%
+  group_by(year) %>%
+  summarise( Min = min(Price),
+             Max = max(Price),
+             Median = median(Price),
+             Mean =mean(Price))
+```
+
+When looking at the data by Year we are basically given the dimensions for: large half dozen price of the cheapest month in a given year (min) extra large dozen price of the most expensive month in a given year (max) average price across 4 carton types and 12 months in a given year(mean).This does allow us to look at the price fluctuations over the years.Two drastic year shifts are from 2007 to 2008 and 2008 to 2009.

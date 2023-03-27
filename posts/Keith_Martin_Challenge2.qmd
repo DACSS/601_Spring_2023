@@ -1,0 +1,111 @@
+---
+title: "Poultry Across the World from 1960 to 2018"
+author: "Keith Martin"
+description: "In-depth Analysis of Poultry Productrion from 1960 to 2018"
+date: "03/05/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - birds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+**Introduction:**
+
+I continued my research using the birds.csv data file. In this analysis, I studied the median, means and calculated the coefficient of variation (mean / standard deviation). The data includes the estimates stocks of poultry from approximately 250 areas across the globe. This data spans from 1961 to 2018.
+
+In this analysis, I discovered that production grew exponentially likely due to demand stemming from population growth. This is reflected when comparing the median, mean and coefficient of variation.
+
+```{r}
+### pull the data from the _data folder
+library(readr)
+birds <- read_csv ("_data/birds.csv")
+view (birds)
+head(birds)
+```
+
+As you can see from the above header, the data is organized by country, type of animal, the value, the item, year and several other data points. For the purpose of this analysis, we will focus on the area, item, year and the value. Refer to the below chart: 
+
+```{r}
+ arranged_values<- select(birds, "Area", "Item", "Year", "Value")
+arranged_values %>%
+  arrange(desc('value'))
+```
+
+**Summary Statistics**
+
+The below table represents the percentages per type of poultry from the listed countries. As you can see, chicken production makes up for almost 43% if all poultry produced globally. The second most produced poultry product was Duck (22%), than Turkey (18%), followed by Geese and Guinea Fowls (13%) and all other birds(~4%).
+
+```{r}
+Bird <- select(birds, "Item")
+prop.table(table(Bird))
+```
+
+
+```{r} 
+###median and mean of items
+arranged_values%>%
+  group_by(Item)%>%
+  select(Value)%>%
+    summarise (
+     avg_value = mean (Value, na.rm = TRUE),
+     med_value = median(Value, na.rm = TRUE)
+      )
+```
+Next, I analyzed the median and average values of the type of poultry exported. You will notice that the average values are exponentially larger than the median values. This indicates that there is an extremely large value difference in the data.
+
+
+```{r}
+arranged_values%>%
+  group_by(Year)%>%
+  select(Value)%>%
+    summarise (
+      avg_year = mean (Value, na.rm = TRUE),
+      med_year = median(Value, na.rm = TRUE)
+        )
+```
+
+After breaking up the averages and median values per year, I noticed that around the 1980s poultry production began to grow at a significantly higher rate. The largest growths in production were seen from the 1980s to about 2010. After 2010, the production seems to increase at a more steady rate.
+
+Graphs 
+
+```{r}
+### This section of code specifies the values on the below charts. 
+ggplot(data = birds, mapping = aes(x = Year, y = Value, color = Item)) +
+          geom_line() +
+        facet_wrap(vars(Item)) +
+### Titles of the below charts including a title for each axis
+  labs(title = "Poultry Production from 1960-2018",
+                                     x = "Year",
+                                     y = "Amount of Poultry")
+
+```
+
+The above graph presents a graphical representation of poultry production by type per year. As you can see, chicken represents the largest amount of exported poultry. Additionally, you will notice only chicken and ducks show a significant increase over the years.
+
+```{r}
+  ggplot(data = arranged_values)+
+  geom_line(mapping = aes(x = Year, y = Value))
+```
+
+
+The above graph shows the amount of poultry produced from 1960 - 2018. As you can see there a steady increase in production especially from 1980 to 2000. The increase in production could be a result from an increase in demand from population growth.
+
+
+**Conclusion:**
+
+Chicken makes up the majority of the poultry that is produced around the world. Additionally, poultry production has increased exponentially since the 1980s. The poultry production was likley brough on as demand increased with the growth of the population. We would have to study this further.

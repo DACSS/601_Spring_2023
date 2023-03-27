@@ -1,0 +1,96 @@
+---
+title: "Challenge 2"
+author: "Connor Landreth"
+description: "Data wrangling: using group() and summarise()"
+date: "03/06/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Connor Landreth
+  - railroads
+---
+
+```{r}
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+Here I will read in the railroad data
+
+```{r}
+setwd("/Github Projects/601_Spring_2023/posts/_data")
+
+railroad <- read.csv("railroad_2012_clean_county.csv")
+
+railroad
+str(railroad)
+View(railroad)
+```
+
+I have read in the hotel booking data. I am going to filter it to look specifically at certain months and years to attempt to determine cancellation trends or patterns
+
+## ... Summarize - first, I will summarize the data. The data has 2930 observations and 3 variables, but as will be displayed below,
+
+```{r}
+library(tidyr)
+library(tidyverse)
+
+summarize(railroad,sum(`total_employees`))
+summarize(railroad,mean(`total_employees`))
+summarize(railroad,median(`total_employees`))
+summarize(railroad,min(`total_employees`))
+summarize(railroad,max(`total_employees`))
+summarize(railroad,quantile(`total_employees`))
+summarize(railroad,sd(`total_employees`))
+
+```
+
+## 
+
+```{r}
+select (railroad, state, county, total_employees)
+railroad %>% 
+  select(county) %>% 
+  n_distinct(.) %>% 
+
+railroad%>%
+  group_by(state)%>%
+  select (`total_employees`)%>%
+  summarize_all(sum, na.rm=TRUE)
+
+railroad %>%
+  group_by(state)%>%
+  select (`total_employees`)%>%
+  summarize_all(mean, na.rm=TRUE) %>%
+  print(n=50)
+
+```
+
+Going to try to make a drill down to employees by county and see how many counties are over the mean number of employees (87.18)
+
+```{r}
+
+railroad %>% 
+  ggplot(mapping = aes(x = total_employees, y = mean_employees))+
+  geom_point(fill="steelblue")+
+  theme_classic()+
+  labs(title = "Employees Relative to the Mean",
+       x = "Total Employees(By County)")
+```
+
+```{r}
+railroad%>%
+  group_by(county, total_employees)%>%
+  select (`total_employees`)%>%
+  summarize_all(sum, na.rm=TRUE)
+```
+
+### Explain and Interpret
+
+After further analysis, we have been able to find the minimum amount of railroad employees in a county, as well as the max, mean, and quantile range. We also know how many distinct values there are and the standard deviation of the distribution. I attempted to graph out how many counties have employees above the mean (87), but it didn't come out very clear. It is something I will continue to attempt. We could also see which states have the least total emplyees by looking at the railroad data, selecting specific states (or all states), and summing up total employees individually.

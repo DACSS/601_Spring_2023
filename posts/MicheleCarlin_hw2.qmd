@@ -1,0 +1,112 @@
+---
+title: "Global Hotel Bookings: 2015-2017"
+author: "Michele Carlin"
+desription: "Exploring, data wrangling, and summarizing hotel bookings data"
+date: "02/28/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Michele Carlin
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+install.packages(summarytools)
+library(summarytools)
+install.packages(dplyr)
+library(dplyr)
+```
+## Read in and view 'hotel bookings' dataset.
+```{r}
+library(readr)
+hotel_bookings <- read_csv ("_data/hotel_bookings.csv")
+View(hotel_bookings)
+
+```
+## List of variables in dataset.
+```{r}
+str(hotel_bookings)
+```
+## dfSummary
+```{r}
+view(dfSummary(hotel_bookings))
+```
+## Describing dataset
+## The 'hotel_bookings' dataset contains 119,390 rows and 32 columns.  Each observation is that of a single hotel booking between 2015 and 2017 and provides information on type of resort, arrival date, number of nights/people, room type, country, market segment, etc.
+
+#Create new variable for total number of guests.
+```{r}
+hotel_bookings <- hotel_bookings %>%
+    mutate (guests = adults + children + babies)
+select(hotel_bookings, "adults", "children", "babies", "guests")
+```
+## Create a new 'season' variable using 'case_when'.
+```{r}
+hotel_bookings <- hotel_bookings %>%
+  mutate(season = case_when(
+         arrival_date_month == "December" | arrival_date_month == "January" | arrival_date_month == "February" ~ "Winter",
+        arrival_date_month == "March" | arrival_date_month == "April" | arrival_date_month == "May" ~ "Spring",
+        arrival_date_month == "June" | arrival_date_month == "July" | arrival_date_month == "August" ~ "Summer",
+       arrival_date_month == "September" | arrival_date_month == "October" | arrival_date_month == "November" ~ "Fall")
+  )
+table(select(hotel_bookings, season))
+```
+## Create crosstabs of Total number of guests by Season. Summer bookings tend to have higher guest totals possibly because families travel  more when kids are on summer break.
+```{r}
+xtabs(~ guests + season, hotel_bookings)
+```
+
+## Calculate min/max/mean average daily rate (adr) and group data by hotel type and arrival month.
+```{r}
+GrpByHotelType <- hotel_bookings %>%
+	group_by(hotel, arrival_date_month) %>%
+	summarise(minADR = min(adr), maxADR = max(adr), meanADR = mean(adr)) 
+tail(GrpByHotelType)
+```
+
+## Graph adr by type of hotel and arrival month.
+```{r}
+ggplot(hotel_bookings, aes(fill=hotel, x=arrival_date_month, y=adr)) + 
+  geom_bar(position="dodge", stat="identity")
+```
+
+## Sort data to find outlier(s). 
+```{r}
+hotel_bookings %>%
+  arrange(desc(adr)) %>%
+  select(hotel, adr)
+```
+## One hotel had an average daily rate of -6.4 and another of 5400 (the next highest adr is 510).Re-run bar chart with these two outliers excluded, summarize by season instead of month, and add title/axis labels.
+```{r}
+hotel_bookings %>%
+  filter(adr > 0 & adr < 600) %>%
+  ggplot(aes(fill=hotel, x=season, y=adr)) + 
+  geom_bar(position="dodge", stat="identity") +
+   labs(title = "Hotel Average Daily Rate by Type of Hotel and Season", y = "Avg Daily Rate", x = "Season")
+```
+## Graph adr by market segment and type of hotel.
+```{r}
+hotel_bookings %>%
+  filter(adr > 0 & adr < 600) %>%
+  ggplot(aes(fill=hotel, x=market_segment, y=adr)) + 
+  geom_bar(position="dodge", stat="identity") +
+     labs(title = "Hotel Average Daily Rate by Type of Hotel and Market Segment", y = "Avg Daily Rate", x = "Market Segment") +
+  scale_x_discrete(guide = guide_axis(n.dodge=2))
+```
+## Aviation and Undefined don't appear to have any Resort Hotel data. Run crosstabs to verify.
+
+## How do I leave empty space for teal column instead of red taking over width of both columns?
+```{r}
+xtabs(~ market_segment + hotel, hotel_bookings)
+```

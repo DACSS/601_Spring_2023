@@ -1,0 +1,128 @@
+---
+title: "Challenge 4 Poultry and Eggs"
+author: "Keith Martin"
+description: "More data wrangling: pivoting"
+date: "08/18/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - eggs
+  - 
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(googlesheets4)
+library(readxl)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+For this challenge, I re-used the data set that I used in challenge three. In that challenge I had previously tidied the data and conducted a basic sanity check to ensure the date was entered correctly.
+
+## Read in data
+
+First I loaded in the Organice Poultry Data set.
+```{r}
+### Loading in the libraries of the excel files
+excel_sheets("_data/organiceggpoultry.xls")
+```
+
+### Briefly describe the data
+This data set is tracking the prices of various quantities of eggs and chicken cuts from the years 2004 to 2013.
+
+## Tidy Data (as needed)
+In this challenge, due to outside time restraints, i re-used the data that I made tidy last week. However, this this challenge, I leveraged the lubridate functions to show a better picture of the date.
+
+```{r}
+raw_poulty<-read_excel("_data/organiceggpoultry.xls", 
+                         sheet = "Data",
+                          range =cell_limits(c(6,2),c(NA,12)),
+                          col_names = c("date", "XL_Dozen", "XL_1/2_Doz.", "L_Dozen", "L_1/2_Doz", "Remove", "Ckn_Whole", "Ckn_BS_Breast", "Ckn_Bone_Breast", "Ckn_Whole_legs", "Ckn_Thighs"),
+                      
+                                        
+                        )
+raw_poulty %>%
+  select(-c(Remove))
+
+```
+
+## Identify variables that need to be mutated
+
+In this data, there we're a few things that needed to be cleaned up. There was a typo or a "/1" in the data that needed to be mutated and removed. Additionally, I separated the month and date into two separate columns.
+
+```{r}
+### remove that /1 from the February date
+raw_poulty_clean <-raw_poulty %>% 
+  mutate(date = str_remove(date, " /1"))
+### Separate the month and the year, fill the years in for the rest of the months
+raw_poulty_clean<-raw_poulty_clean %>%
+  separate(date, into=c("month", "year"), sep =" ")%>%
+  fill(year)
+raw_poulty_clean  
+```
+
+Now I decided to use lubridate for month and year since this data did not include any data that indicated days. I had it added to its own row. It does not add much in terms of story to this data set, but it is more efficent and visually appealing.
+
+```{r}
+raw_poulty_clean<-raw_poulty_clean%>%
+  mutate(date = str_c(month, year, sep = " "), ###combine month and year into date column
+         date = my(date) ### lubridate will automatically make them into date format
+         )
+  
+  select(raw_poulty_clean, month, year, date)
+```
+
+Before I could do my sanity check on the eggs and the chicken, I needed to pivot longer. Before I could do that, I needed to recode the "too few" entries into 0. However, changing them to "0" was not enough I needed to re-code them as integers as well.
+
+```{r}
+ckn_edited<- raw_poulty_clean %>%
+  mutate(Ckn_Bone_Breast = recode(Ckn_Bone_Breast, `too few` = "0"),
+      Ckn_Thighs = recode(Ckn_Thighs, `too few`="0"))
+ckn_edited
+```
+
+Below I recoded the 0s into integers rather than characters.
+
+```{r}
+ckn_edited$Ckn_Bone_Breast<-as.numeric(ckn_edited$Ckn_Bone_Breast)
+ckn_edited$Ckn_Thighs<-as.numeric(ckn_edited$Ckn_Thighs)
+ckn_edited
+```
+
+I then pivoted longer to include the previous egg/chicken types as rows rather than columns so it was easier to do a sanity check. 
+
+```{r}
+eggs_longer<- pivot_longer(ckn_edited,  cols=c("XL_Dozen", "XL_1/2_Doz.", "L_Dozen", "L_1/2_Doz", "Ckn_Whole", "Ckn_BS_Breast", "Ckn_Bone_Breast", "Ckn_Whole_legs", "Ckn_Thighs"), 
+               names_to = "eggType/cknType",
+               values_to = "avgPrice"
+  )
+eggs_longer
+```
+
+Below I included the basic summary statistics like median, mode, min, max and standard deviation to show that the lubridate function and the pivot longer function worked as intended.
+
+```{r}
+eggs_longer%>%
+  group_by(date)%>%
+  summarise (
+      sd_year = sd (avgPrice, na.rm=TRUE),
+      max_year = max(avgPrice, na.rm = TRUE),
+      min_year = min(avgPrice, na.rm = TRUE),
+      avg_year = mean (avgPrice, na.rm = TRUE),
+      med_year = median(avgPrice, na.rm = TRUE)
+        )
+```
+

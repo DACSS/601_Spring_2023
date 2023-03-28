@@ -1,0 +1,296 @@
+---
+title: "Challenge 5: Public Schools Visualization"
+author: "Lauren Zichittella"
+description: "Introduction to Visualization"
+date: "03/25/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - laurenzichittella
+  - challenge_5
+  - public_schools
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+# Description Of Public Schools Characteristics, 2017-2017
+
+This dataset provides characteristics on public schools, their students and teachers, in the US as of the 2017-2018 school year.
+
+Please see steps below for steps to preparing this data for unvariate and by variate visualizations
+
+## Code Section 1 - Read in data Public School Characteristic
+
+Read in a data set Public_School_Characteristics_2017-18.csv
+
+After Review this data outside of R prior to import, it's clear this is a wide dataset with plenty of variables.For the sake of efficiency in this exercise, this dataset will be limited to variables and observations that can be used to study the association between student in primary and secondary schools by state, charter status, and magnet status. 
+
+### Steps 
+
+1) Read in dataset, limit variables to those that will be utilized to filter observations and create visualizations
+2) Describe data to inform additional filtering or selection of variables that remains prior to tidying 
+3) Create new variable representing ratio of students to teachers
+
+```{r}
+
+# Read in Public Schools Characteristics Dataset 
+   
+   # import data 
+   publicschool_char_raw <-read_csv("_data/Public_School_Characteristics_2017-18.csv")
+
+   # get full list of column names
+   colnames(publicschool_char_raw)
+   
+  # select columns to id school, state, enrollment, staff, and other types of status 
+  publicschool_nvars <-
+     publicschool_char_raw %>% 
+        select (NCESSCH, LSTATE, PK, KG, G01, G02, G03, G04, G05, G06, G07, G08, G09, G10, G11, G12, TOTAL, FTE, SCHOOL_TYPE_TEXT, SY_STATUS_TEXT, SCHOOL_LEVEL, CHARTER_TEXT,	MAGNET_TEXT)
+  
+     # confirm successful selection of vars
+     colnames(publicschool_nvars)
+     head(publicschool_nvars)
+     
+     # quick summary to inform whether to filter observations 
+     print(summarytools::dfSummary(publicschool_nvars, 
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, ),
+      method = 'render',
+      table.classes = 'table-condensed')
+     
+     
+     #remove observations to limit to schools that are currently operational  
+     publicschool_nvars_oper <-
+         publicschool_nvars %>%
+            filter(SY_STATUS_TEXT == "Currently operational")
+       
+     
+        #sanity checks
+        table(publicschool_nvars_oper$SY_STATUS_TEXT)
+        
+     # investigate observations where missing student or faculty counts    
+     summary(publicschool_nvars_oper$TOTAL)
+     summary(publicschool_nvars_oper$FTE)    
+     
+       missing_students <-
+          publicschool_nvars_oper %>%
+             filter(is.na(TOTAL))
+        
+         head(missing_students)
+         summary(missing_students$FTE)
+         
+       missing_teachers <-
+          publicschool_nvars_oper %>%
+             filter(is.na(FTE))
+        
+         head(missing_teachers)
+         summary(missing_teachers$TOTAL)
+         
+# Since it doesn't make much sense for a school to not have students or teachers observations where either faculty or student counts are missing, filter these observations 
+         
+# Also it will make the most sense to evaluate the relationship of student to staff in primary and secondary schools only 
+         
+   publicschool_pretidy <-
+      publicschool_nvars_oper %>%
+          filter(!is.na(FTE)|!is.na(TOTAL))
+   
+     table(publicschool_nvars_oper$SCHOOL_LEVEL)
+     
+   publicschool_pretidy <-
+      publicschool_pretidy %>%
+         filter(SCHOOL_LEVEL %in% c("Elementary", "High", "Middle", "Secondary"))
+   
+     table(publicschool_pretidy$SCHOOL_LEVEL)   
+     
+     
+     #sanity check
+     print(summarytools::dfSummary(publicschool_pretidy, 
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, ),
+      method = 'render',
+      table.classes = 'table-condensed')    
+
+```
+
+## Code Section 2 -  Tidy dataset
+ 
+
+## Steps
+1) Mutate to create indicators for magnet and charter schools (.= unknown, 1= true, 0=false)
+2) Mutate to create school level with two categories: primary (elementary) & secondary (middle, high school, secondar school)  
+3) Select only variables needed for analysis
+4) Tidy dataset to create one observation for measure: student count, teacher count 
+
+```{r}
+
+# Mutate 	CHARTER_TEXT to create indicator variable  
+
+  publicschool_pretidy2<-
+     publicschool_pretidy %>% 
+        mutate(charter_ind =  if_else(CHARTER_TEXT== "Yes", 1,
+                              if_else(CHARTER_TEXT== "No", 0, 9)))
+               
+               
+     #sanity check
+     table(publicschool_pretidy2$CHARTER_TEXT, publicschool_pretidy2$charter_ind, useNA="ifany")
+     
+# Mutate MAGNET_TEXT to indicator variable
+     
+  publicschool_pretidy2<-
+     publicschool_pretidy2 %>% 
+        mutate(magnet_ind =  if_else(MAGNET_TEXT== "Yes", 1,
+                             if_else(MAGNET_TEXT== "No", 0, 9)))
+               
+     #sanity check
+     table(publicschool_pretidy2$MAGNET_TEXT, publicschool_pretidy2$magnet_ind, useNA="ifany")    
+     
+# Mutate SCHOOL_LEVEL to indicator variable     
+     
+  publicschool_pretidy2<-
+     publicschool_pretidy2 %>% 
+        mutate(level =  if_else(SCHOOL_LEVEL== "Elementary", 'primary', 'secondary'))
+               
+     # sanity check
+     table(publicschool_pretidy2$level, useNA="ifany")   
+
+     
+# Remove school string from SCHOOL_TYPE_TEXT 
+     
+  publicschool_pretidy2<-
+     publicschool_pretidy2 %>% 
+        mutate(school_type = str_remove(SCHOOL_TYPE_TEXT, 'school'))
+  
+     # sanity check
+     table(publicschool_pretidy2$school_type, publicschool_pretidy2$SCHOOL_TYPE_TEXT,useNA="ifany")   
+  
+     
+# Rename variables to get more descriptive name prior to pivot
+     
+  publicschool_pretidy2 <-
+    publicschool_pretidy2 %>% 
+       rename(  "total_students" = "TOTAL"
+              , "total_faculty"  = "FTE"
+              , "state"          = "LSTATE"
+              , "school_id"      = "NCESSCH")
+  
+  colnames(publicschool_pretidy2)  
+  
+# Calculate ratio 
+     
+  publicschool_pretidy2 <-
+    publicschool_pretidy2 %>% 
+       mutate(ratio_student_faculty = total_students/total_faculty) 
+  
+  colnames(publicschool_pretidy2)    
+  
+# Limit to analysis variables and values 
+  
+
+  publicschool_pretidy2<-
+     publicschool_pretidy2 %>% 
+         select("school_id", "state", "level", "school_type", "magnet_ind", "charter_ind", "total_students", "total_faculty", "ratio_student_faculty")
+  
+  head(publicschool_pretidy2)
+  
+# pivot data to tidy by creating variables type of total (student versus faculty) and actual total (n)  
+  publicschool_tidy <- 
+     publicschool_pretidy2 %>%
+        pivot_longer( cols     = c("total_students", "total_faculty", "ratio_student_faculty"), 
+                      names_to = "measure_type"  )
+  
+     #sanity checks
+     colnames(publicschool_tidy)
+
+     print(summarytools::dfSummary(publicschool_tidy, 
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, ),
+      method = 'render',
+      table.classes = 'table-condensed')    
+
+  
+```
+
+## Univariate Visualizations
+
+I'm using this exercise more to figure out ggplot than the dataset hence very simple choices in what is being displayed. 
+
+
+This plot shows the total count of schools per state stacked by level   
+
+
+```{r}
+library(ggplot2)
+
+# isolate ratio 
+publicschool_ratio <- 
+     publicschool_tidy %>%
+         filter(school_type == "Regular " & measure_type == "ratio_student_faculty" & !is.na(value))
+
+
+   # group to get mean per categories 
+   publicschools_ratio_grouped <-
+      publicschool_ratio %>%
+          group_by(state, level)%>%
+              summarise(n_schools = n(),
+                        mean_value   = mean(value),
+                        med_value    = median(value))%>%
+              arrange(state, level )
+
+   # Stacked
+   ggplot(publicschools_ratio_grouped, aes(fill=level, y=n_schools, x=state)) + 
+          geom_bar(position="stack", stat="identity") + 
+          ggtitle("Count of Schools by State and Education Level with Student and Faculty")+
+          labs(y = "School Count", x = "State", colour = "Education Level")+
+          theme(axis.text.x = element_text(angle = 90))
+   
+```
+## Bivariate Visualization(s)
+
+For sake of simplicity, will evaluate the relationship of students to faculty via scatter plot, grouping data my school to get the mean of both to make the graph less busy 
+
+
+```{r}
+
+# isolate totals 
+publicschool_totals <- 
+     publicschool_tidy %>%
+         filter(school_type == "Regular " & measure_type == "total_students"& !is.na(value)|measure_type == "total_faculty"&!is.na(value))   
+
+
+   publicschools_totals_grouped <-
+      publicschool_totals %>%
+          group_by(state, measure_type)%>%
+              summarise( mean_value   = mean(value) )%>%
+              arrange(state, measure_type)
+
+
+# pivot wide to plot student n by faculty b 
+  publicschool_totals_wide <-
+     publicschools_totals_grouped %>%
+        pivot_wider(names_from = measure_type, values_from = mean_value)
+  
+  publicschool_plot_wide <-
+     publicschool_totals_wide %>%
+         filter(!is.na(total_students)&!is.na(total_faculty))   
+
+  #scatter student n by faculty b, color by state  
+  ggplot(publicschool_plot_wide, aes(x=total_students, y=total_faculty, color = state)) +         geom_point()+
+  geom_smooth(method=lm , color="red", se=FALSE)+
+  ggtitle("Average Count of Students and Faculty by State") +
+  labs(x = "Student Count", y = "Faculty Count")
+
+```

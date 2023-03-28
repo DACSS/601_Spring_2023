@@ -1,0 +1,81 @@
+---
+title: "Challenge 4 Egg Data"
+author: "Sue-Ellen Duffy"
+description: "Data wrangling: Mutate"
+date: "03/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - Sue-Ellen Duffy
+  - eggs
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+library(readxl)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+### Egg Data, Round 2
+Here we have the monthly price paid by first receivers for USDA Certified Organic Eggs by size and carton types for January 2004 to December 2013. The unit "Price" is "cents per pound". So, for example in January 2004, the price paid by first receivers for USDA Certified Dozen of Extra Large Eggs was 230 cents/pound. As defined in the original data, First Receivers "those entities that purchases the processed product from the poultry or egg company, such as a retailer, distributor, or manufacturer". The term wholesale level would be appropriate in many cases. 
+
+## Read in the Data
+
+```{r}
+eggs_og <- read_excel("_data/organiceggpoultry.xls",
+                      sheet="Data",
+                      range =cell_limits(c(6,2),c(NA,6)),
+                      col_names = c("date", "xlarge_dzn", "xlarge_halfdzn", "large_dzn", "large_halfdzn")
+)
+eggs_og
+```
+::: callout-Tip
+## Date Format 1
+Starting off a little messy. Already I see this data is -wide- and the date needs formatting. Let's see what other nuances might be lingering in the date column (count).
+:::
+```{r}
+table(select(eggs_og, date))
+```
+::: callout-Tip
+## Date Format 2
+In the date column, January has a year indicator, 10 of the months appear 10 times, February appears 8 times and February/1 (a leap year) appears twice. We have to delete the /1 in February (mutate) and extend the year indicator from January to the rest of the months (separate and fill).
+:::
+```{r}
+eggs <- eggs_og %>%
+  mutate(date = str_remove(date, " /1")) %>%
+  separate(date, into=c("month", "year"), sep=" ") %>%
+  fill(year)
+eggs
+```
+
+::: callout-Tip
+## Date Format 3
+We need to mutate the Month and Year into one combined date. In order to do that we would mutate and make_date time. However when I try that I get an error. I'm not entirely sure why. I tried renaming Jan to January to see if that was the issue. It still won't let me so I will just use the mutate and str_c functions to create the date column.
+:::
+
+```{r}
+eggs<-eggs %>%
+  mutate(month=recode (month, 'Jan'='January')) %>%
+  mutate(date = str_c(month, year, sep=" "),
+         date = my(date))
+select(eggs, month, year, date)
+        
+```
+
+```{r}
+eggs<-eggs%>%
+  mutate(date = make_datetime(month, year))
+```

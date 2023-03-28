@@ -1,0 +1,98 @@
+---
+title: "Challenge 4 by Jinxia Niu"
+author: "Jinxia Niu"
+description: "More data wrangling: pivoting"
+date: "03/25/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - hotel_bookings
+  - Jinxia Niu
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+library(tidyverse)
+hotel_bookings<- read.csv("_data/hotel_bookings.csv")
+dim(hotel_bookings)
+head(hotel_bookings,10)
+```
+### Briefly describe the data
+It's a hotel booking data set of 32 variables,119390 observations.There are several redundant variables, especially the arrival date_year,arrival_date_month and arrival_date_day_of_the_month ones.
+
+## Identify variables that need to be mutated
+
+We need to use mutate() and make_date() from the lubridate package to create just one date format. In addition, because the arrival-month is currently shown as characters(eg.July, August) instead of numbers, we also need to use case_when() from the dplyr package to convert them first into numbers.
+
+##Note:The case_when() function from the dplyr package in R can be used to create new variables from existing variables.
+
+This function uses the following basic syntax:
+
+library(dplyr)
+
+df %>%
+  mutate(new_var = case_when(var1 < 15 ~ 'low',
+                             var2 < 25 ~ 'med',
+                             TRUE ~ 'high'))
+Note that TRUE is equivalent to an “else” statement.
+
+
+```{r}
+library(dplyr)
+library(lubridate)
+hotel_bookings <- hotel_bookings %>%
+    mutate(month = case_when(
+       arrival_date_month == "January" ~ 1,
+       arrival_date_month == "February" ~ 2,
+       arrival_date_month == "March" ~ 3,
+       arrival_date_month == "April" ~ 4,
+       arrival_date_month == "May" ~ 5,
+       arrival_date_month == "June" ~ 6,
+       arrival_date_month == "July" ~ 7,
+       arrival_date_month == "August" ~ 8,
+       arrival_date_month == "September" ~ 9,
+       arrival_date_month == "October" ~ 10,
+       arrival_date_month == "November" ~ 11,
+       arrival_date_month == "December" ~ 12,
+     )) %>%
+    mutate(arrival_date = make_date(arrival_date_year, month, arrival_date_day_of_month)) %>%
+    select(-c(arrival_date_year, arrival_date_month, arrival_date_day_of_month, month, arrival_date_week_number)) %>%
+    select(hotel, arrival_date, everything())
+dim(hotel_bookings)
+
+```
+
+

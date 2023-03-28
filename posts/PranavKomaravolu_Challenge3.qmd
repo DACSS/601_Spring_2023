@@ -1,0 +1,118 @@
+---
+title: "Challenge 3"
+author: "Pranav Bharadwaj Komaravolu"
+description: "Tidy Data: Pivoting"
+date: "03/27/2023"
+format:
+  html:
+    toc: true
+    code-fold: false
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+<!--Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+-->
+```{r}
+data <- read_csv("_data/eggs_tidy.csv")
+head(data)
+
+```
+
+### Data Description
+
+<!--Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy" -->
+The summary of the data is as follows:
+```{r}
+summary(data)
+```
+ The dataset describes the price of different quantities of two different varieties of eggs in different years and seasons.
+
+## Pivot Longer
+
+<!--The first step in pivoting the data is to try to come up with a concrete vision of what the end product *should* look like - that way you will know whether or not your pivoting was successful.
+
+One easy way to do this is to think about the dimensions of your current data (tibble, dataframe, or matrix), and then calculate what the dimensions of the pivoted data should be.
+
+Suppose you have a dataset with $n$ rows and $k$ variables. In our example, 3 of the variables are used to identify a case, so you will be pivoting $k-3$ variables into a longer format where the $k-3$ variable names will move into the `names_to` variable and the current values in each of those columns will move into the `values_to` variable. Therefore, we would expect $n * (k-3)$ rows in the pivoted dataframe! -->
+
+In the above dataset we can see that multiple quantities are specified as columns so we can use pivot longer to reduce these to a single column.
+
+The dimensions of the dataset is as follows:
+```{r}
+dim(data)
+```
+The dataset comprises of 120 rows and 6 columns.
+
+The different columns in the dataset are:
+```{r}
+names(data)
+```
+So the target would be to reduce the columns "large_half_dozen", "large_dozen", "extra_large_half_dozen", "extra_large_dozen" to a single column "quantity". 
+```{r}
+reduced_cols <- 4
+rows <- nrow(data)
+cols <- ncol(data)
+new_rows <- rows*reduced_cols
+new_cols <- cols-reduced_cols+2
+new_rows
+new_cols
+```
+
+So the reduced dimensions will be $120\times4\times(6-4+2)$ i.e, the target dimensions is $480\times4$.
+
+
+### Pivot the data and current dimensions
+
+Lets see if this works with a simple example.
+
+The pivoting of the dataset can be done as follows:
+```{r}
+pivotted_data <- pivot_longer(data, contains("dozen"), names_to = c("quantity"), values_to = c("price"))
+head(pivotted_data)
+```
+The dimensions of the reduced data is as follows:
+```{r}
+dim(pivotted_data)
+```
+Yes, once it is pivoted long, our resulting data are $480x4$ - exactly what we expected!
+
+
+### Challenge: Pivot the Chosen Data
+
+Document your work here. What will a new "case" be once you have pivoted the data? How does it meet requirements for tidy data?
+
+Reducing the number of columns makes the data more readable and also efficient to view. Also it is suitable as the multiple columns can be reduced to a single column.
+
+Any additional comments?

@@ -1,0 +1,80 @@
+---
+title: "Challenge 4 submission"
+author: "Cam Needels"
+description: "More data wrangling: pivoting"
+date: "03/27/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - eggs
+  - poultry
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(summarytools)
+library(readr)
+library(readxl)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+#displaying the dataset
+eggs_data<- read_csv("B:/Needels/Documents/DACCS 601/DACSS_601_New/posts/_data/poultry_tidy.csv")
+eggs_data
+
+```
+
+```{r}
+#this was done in order to figure out the unique data points for product
+categories <- unique(eggs_data$Product)
+categories
+#this was done in order to figure out how many years this data set ranged from.
+yearcat <-- unique(eggs_data$Year)
+yearcat
+```
+
+### Briefly describe the data
+
+It shows the year and month when different forms of chicken were purchased. Whether it's Whole, B/S Breast, Bone-in Breast, Whole Legs, or Thighs and the amount of price per dollar.These ranges from the year 2004 to 2013.
+
+## Tidy Data (as needed)
+
+The data is already tidy so I don't need to make changes. However I do need to figure out the variables in the product category.
+
+
+## Identify variables that need to be mutated
+
+Product and Month are not numeric or double so we have to convert them into numbers so we can analyze the data more in depth. We will do this by creating a date column by taking the year and month to make a date column. We will also recode the products so that they can be changed into numbers and be able to be used for data analysis. I will use dfsummary afterwards and here are the results.
+
+```{r}
+#convert Month -> numbers
+eggs_mutate <- eggs_data %>%
+  mutate(Month_num = recode(Month, "January" = 1, "February" = 2, "March" = 3, "April" = 4, "May" = 5, "June" = 6, "July" = 7, "August" = 8, "September" = 9, "October" = 10, "November" = 11, "December" = 12))
+
+#assigning IDs to chicken types
+eggs_mutate <- eggs_mutate %>%
+  mutate(Chicken_ID = recode(Product, "B/S Breast" = 1, 
+                             "Bone-in Breast" = 2, 
+                             "Thighs" = 3, 
+                             "Whole" = 4, 
+                             "Whole Legs" = 5))
+eggs_mutate
+```
+
+
+
+```{r}
+dfSummary(eggs_mutate)
+```

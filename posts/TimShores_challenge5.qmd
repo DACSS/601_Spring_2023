@@ -79,13 +79,13 @@ dfPubSchool[1:numtoprint,]
 Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
 
 ```{r}
-dfPubSchoolSub <- subset(dfPubSchool, select = c(NMCNTY, PK, KG, G01, G02, G03, G04, G05, G06, G07, G08, G09, G10, G11, G12, G13, TOTAL, FTE, SCHOOL_TYPE_TEXT, SY_STATUS_TEXT, SCHOOL_LEVEL))
-
-dfPubSchoolSub$SCHOOL_TYPE_TEXT <- as.factor(dfPubSchoolSub$SCHOOL_TYPE_TEXT)
-dfPubSchoolSub$SCHOOL_TYPE_TEXT <- as.factor(dfPubSchoolSub$SCHOOL_TYPE_TEXT)
-dfPubSchoolSub$SCHOOL_TYPE_TEXT <- as.factor(dfPubSchoolSub$SCHOOL_TYPE_TEXT)
-class(dfPubSchoolSub$SCHOOL_TYPE_TEXT) 
-dfPubSchoolSub[1:numtoprint,]
+dfPubSchoolSub <- tibble(dfPubSchool) %>%
+  subset(select = 
+           c(NMCNTY, PK, KG, G01, G02, G03, G04, G05, G06, G07, G08, G09, G10, G11, G12, G13, TOTAL, FTE, SCHOOL_TYPE_TEXT, SY_STATUS_TEXT, SCHOOL_LEVEL)) %>%
+  mutate(SCHOOL_TYPE_TEXT = factor(SCHOOL_TYPE_TEXT), 
+         SY_STATUS_TEXT = factor(str_trim(SY_STATUS_TEXT)), # remove extra whitespace before converting to factor
+         SCHOOL_LEVEL = factor(SCHOOL_LEVEL)) %>% 
+  print(n = 12, width = Inf)
 
 ```
 
@@ -95,10 +95,80 @@ Document your work here.
 
 ```{r}
 
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+dfPubSchoolSub %>% 
+  #group_by(NMCNTY) %>% 
+  summarise(
+    meanFTE = mean(FTE, na.rm = TRUE), 
+    modeFTE = find_mode(FTE), 
+    minFTE = fivenum(FTE, na.rm = TRUE)[1], 
+    lowHingeFTE = fivenum(FTE, na.rm = TRUE)[2], 
+    medianFTE = median(FTE, na.rm = TRUE), 
+    upHingeFTE = fivenum(FTE, na.rm = TRUE)[4], 
+    maxFTE = fivenum(FTE, na.rm = TRUE)[5], 
+    count = n()
+    ) 
+
+dfPubSchoolSub %>% 
+  subset(select = c(NMCNTY, FTE)) %>%
+  group_by(NMCNTY) %>%
+  #filter(FTE <= 1200) %>% 
+  ggplot(aes(x = FTE)) +
+  geom_boxplot(outlier.colour = "red",
+         outlier.shape = 2,
+         outlier.size = 3) +
+  coord_flip()
+
+dfPubSchoolSub %>% 
+  subset(select = c(NMCNTY, FTE)) %>%
+  group_by(NMCNTY) %>%
+  filter(FTE <= 1200) %>% 
+  ggplot(aes(x = FTE)) +
+  geom_boxplot(outlier.colour = "red",
+         outlier.shape = 2,
+         outlier.size = 3) +
+  coord_flip()
+
+dfPubSchoolSub %>% 
+  subset(select = c(NMCNTY, FTE)) %>%
+  group_by(NMCNTY) %>%
+  filter(FTE <= 200) %>% 
+  ggplot(aes(x = FTE)) +
+  geom_boxplot(outlier.colour = "red",
+         outlier.shape = 2,
+         outlier.size = 3) +
+  coord_flip()
+
 ```
 
 ## Univariate Visualizations
 
+```{r}
+
+dfPubSchoolSub %>%
+  subset(select = c(NMCNTY, FTE)) %>%
+  group_by(NMCNTY) %>%
+  arrange(desc(FTE)) %>%
+  print(n = 20) %>%
+  filter(FTE <= 200) %>%
+  ggplot(aes(x = FTE)) + 
+    geom_histogram(binwidth = 10)
+
+dfPubSchoolSub %>%
+  subset(select = c(NMCNTY, FTE)) %>%
+  group_by(NMCNTY) %>%
+  filter(FTE > 200, FTE <= 1200) %>%
+  ggplot(aes(x = FTE)) + 
+    geom_histogram(binwidth = 20)
+
+```
 
 ## Bivariate Visualization(s)
 Any additional comments?

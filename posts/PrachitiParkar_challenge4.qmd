@@ -1,0 +1,106 @@
+---
+title: "Challenge 4"
+author: "Prachiti Parkar"
+description: "More data wrangling: pivoting"
+date: "08/18/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - abc_poll
+  - eggs
+  - fed_rates
+  - hotel_bookings
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+poultry_data <-readxl::read_excel("_data/poultry_tidy.xlsx")
+
+poultry_data
+
+summary(poultry_data)
+
+missing_data <- filter(poultry_data, is.na(Price_Dollar))
+
+#Checking if there is any missing data
+missing_data 
+
+
+unique(poultry_data$Product)
+```
+
+### Briefly describe the data
+The data consists of 4 columns and 600 rows from the year 2004 to 2013. Specifically it contains the products, Whole, B/S Breast, Bone-in Breast, Whole legs and Thighs. The price ranges from minimum 1.935 to 7.037. We can see from summary that some of the values of prices are missing, particularly 7. I tried to dive deeper and understood that most of these are of product Bone-in breast and thighs.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+Data is already tidy. We can choose to remove NA data but I believe since it has other column information, those rows are important too. 
+
+```{r}
+
+
+```
+
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+According to me, the year and months need to be joined so that we can sort them and also, we need to understand if price is low, medium or high instead of checking the exact price, we can just look at the variable.
+
+```{r}
+poultry_data <- poultry_data %>%
+        mutate(Date = ym(paste(Year, Month)))
+
+
+
+poultry_data <- poultry_data %>%
+  mutate(Price_type = case_when(Price_Dollar < 3 ~ 'low',
+                             Price_Dollar < 5 ~ 'med',
+                             Price_Dollar > 5 ~ 'high'))
+
+unique(poultry_data$Price_type)
+
+poultry_data
+```
+
+Any additional comments?

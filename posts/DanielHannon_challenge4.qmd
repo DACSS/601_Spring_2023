@@ -1,0 +1,59 @@
+---
+title: "Pivioting Poultry"
+author: "Daniel Hannon"
+desription: "Mutated and described the Poultry dataset"
+date: "03/29/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - Daniel Hannon
+  - poultry_tidy
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Read in the Data
+```{r}
+poultry_data <-readxl::read_excel("_data/poultry_tidy.xlsx")
+
+poultry_data
+
+summarytools::dfSummary(poultry_data)
+
+missing_data <- filter(poultry_data, is.na(Price_Dollar))
+
+missing_data
+```
+## Describe the Data
+
+This data set describes the cost of 5 Various poultry cuts, (Boneless Skinless Breast, Bone-in Breast, Thighs, Whole Legs, and Whole), each month from  January 2004 to December 2013. The data is missing several prices from 2004: Thighs from January, and Bone-in Breast from January to June. 
+
+## Tidy the Data
+
+The Data is already in a Tidy format where each row is a singular observation of a price of a certain cut of meat from a specific month and year.
+
+## Mutate the Date
+
+Right now the data has separate months and year columns so we need to add a date column so that we can sort things chronologically.
+
+```{r}
+
+poultry_data <- poultry_data %>%
+        mutate(Date = ym(paste(Year, Month)))
+
+head(poultry_data)
+
+```
+Now we have a column set up with dates, although the dates all have the day set to the first. We don't know the actual day that data was collected, but becasuse it is consistent throught the data_set, it wont mess up the ordering of anything.

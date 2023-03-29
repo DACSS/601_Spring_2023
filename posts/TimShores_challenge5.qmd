@@ -211,13 +211,18 @@ dfPubSchoolSubFTECharter %>%
 
 ```
 
-This scatterplot uses color to separate charters from non-charters. To zoom in on a smaller subset, the filter function looks at counties with mean enrollment of 200 students or less, and it omits schools without an applicable charter status. This scatterplot shows how charters have greater dispersion than non-charters in this enrollment segment.
+This scatterplot uses color to separate charters from non-charters. To zoom in on a smaller subset, the filter function looks at counties with mean enrollment of 200 students or less, and it omits schools without an applicable charter status. 
+
+This scatterplot shows how charters have greater dispersion than non-charters in this enrollment segment. The linear trendlines support the observation that non-charters employ more staff.
 
 ```{r}
 
 dfPubSchoolSubFTECharter %>% 
   filter(countyMeanEnr <= 200, CHARTER_TEXT != "Not Applicable") %>%
-  ggplot(aes(x = countyMeanEnr, y = countyMeanFTE)) +
-  geom_point(aes(color = factor(CHARTER_TEXT))) +
-  ggtitle("Scatterplot of Total Enrollment and FTE by County and by Charter Status (with mean county enrollment of 200 or less)")
+  ggplot(aes(x = countyMeanEnr, y = countyMeanFTE, color = factor(CHARTER_TEXT))) +
+  geom_point() +
+  geom_smooth(method = "lm", fill = NA) + 
+  labs(title = "Total Enrollment and FTE by County and by Charter Status",
+       subtitle = "Mean county enrollment 200 or less",
+       caption = "Trendline: linear")
 ```

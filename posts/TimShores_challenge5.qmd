@@ -1,0 +1,228 @@
+---
+title: "Challenge 5"
+author: "Tim Shores"
+description: "Introduction to Visualization"
+date: "03/29/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+execute: 
+  echo: false
+categories:
+  - challenge_5
+  - public_schools
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+
+my_packages <- c("tidyverse", "readxl", "knitr", "ggplot2") # create vector of packages
+invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set and describe it
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+## Read in data
+
+The school source CSV file is a relatively tidy table. 
+
+```{r}
+dfPubSchool <- tibble(read.csv(file = "../posts/_data/Public_School_Characteristics_2017-18.csv")) # read in data
+psrows <- prettyNum(nrow(dfPubSchool), big.mark = ",", scientific = FALSE)  # Apply comma-separated format
+pscols <- prettyNum(ncol(dfPubSchool), big.mark = ",", scientific = FALSE)
+numtoprint <- 12
+
+```
+
+### Briefly describe the data
+
+The public school characteristics (2017-18) data set includes **`r psrows`** observations under **`r pscols`** variables. Each observation is a school. Variables show information about public schools in every US state and county. Information includes numeric variables for enrollment in each grade, employment (expressed as full-time equivalent, FTE), demographics, and school status in terms of grade level, charter, magnet, and other categories. The data is likely the product of routine inventory collected by the Department of Education.
+
+Here are the first `r numtoprint` rows from the data.
+
+
+```{r}
+dfPubSchool[1:numtoprint,]
+
+```
+
+## Tidy Data (as needed)
+
+I'm interested in learning more about public school employment. It doesn't take much to tidy this data for that question, because both Total enrollment and FTE are single variables in the original data.
+
+```{r}
+dfPubSchoolSub <- dfPubSchool %>%
+  subset(select = 
+           c(NMCNTY, TOTAL, FTE, CHARTER_TEXT)) %>%
+  mutate(CHARTER_TEXT = factor(CHARTER_TEXT)) %>% 
+  print(n = numtoprint)
+
+```
+
+The summary shows a list of schools with FTE outliers on the upper end.
+
+```{r}
+
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+dfPubSchoolSub %>% 
+  summarise(
+    meanFTE = mean(FTE, na.rm = TRUE), 
+    modeFTE = find_mode(FTE), 
+    minFTE = fivenum(FTE, na.rm = TRUE)[1], 
+    lowHingeFTE = fivenum(FTE, na.rm = TRUE)[2], 
+    medianFTE = median(FTE, na.rm = TRUE), 
+    upHingeFTE = fivenum(FTE, na.rm = TRUE)[4], 
+    maxFTE = fivenum(FTE, na.rm = TRUE)[5], 
+    count = n()
+    ) 
+
+dfPubSchoolSubFTE <- subset(dfPubSchoolSub, select = c(NMCNTY, FTE)) %>%
+  group_by(NMCNTY) %>%
+  summarise(countySumFTE = sum(FTE), .groups = 'drop')
+
+fteRows <- nrow(dfPubSchoolSubFTE) 
+```
+
+Grouping by county reduces the data set to `r fteRows` observations. This is one observation for each county. *Sanity check:* The source data set has `r n_distinct(dfPubSchoolSub$NMCNTY)` distinct counties. We have a match.
+
+
+The summary and boxplot visualization of FTE summed by county is as follows:
+
+```{r}
+dfPubSchoolSubFTE %>% 
+  summarise(
+    meanCFTE = mean(countySumFTE, na.rm = TRUE), 
+    modeCFTE = find_mode(countySumFTE), 
+    minCFTE = fivenum(countySumFTE, na.rm = TRUE)[1], 
+    lowHingeCFTE = fivenum(countySumFTE, na.rm = TRUE)[2], 
+    medianCFTE = median(countySumFTE, na.rm = TRUE), 
+    upHingeCFTE = fivenum(countySumFTE, na.rm = TRUE)[4], 
+    maxCFTE = fivenum(countySumFTE, na.rm = TRUE)[5], 
+    count = n()
+    ) 
+
+dfPubSchoolSubFTE %>% 
+  ggplot(aes(x = countySumFTE)) +
+  geom_boxplot(outlier.colour = "red",
+         outlier.shape = 2,
+         outlier.size = 3) +
+  coord_flip() +
+  ggtitle("Boxplot of All Counties")
+
+dfPubSchoolSubFTE %>% 
+  filter(countySumFTE <= 2000) %>% 
+  ggplot(aes(x = countySumFTE)) +
+  geom_boxplot(outlier.colour = "red",
+         outlier.shape = 2,
+         outlier.size = 3) +
+  coord_flip() +
+  ggtitle("Boxplot of Counties with Fewer than 2000 FTE")
+
+dfPubSchoolSubFTE %>% 
+  filter(countySumFTE > 2000) %>% 
+  ggplot(aes(x = countySumFTE)) +
+  geom_boxplot(outlier.colour = "red",
+         outlier.shape = 2,
+         outlier.size = 3) +
+  coord_flip() +
+  ggtitle("Boxplot of Counties with More than 2000 FTE")
+
+```
+
+## Univariate Visualizations
+
+I use two histograms to group counties by number of public school FTE employees.
+
+The first histogram shows all counties with total FTE less than or equal to 2000, in bins of width 10.
+
+```{r}
+
+dfPubSchoolSubFTE %>%
+  filter(countySumFTE <= 2000) %>%
+  ggplot(aes(countySumFTE)) + 
+  geom_histogram(binwidth = 10) +
+  ggtitle("Histogram of Counties with 2000 or Fewer FTE")
+
+```
+
+The second histogram shows all counties with total FTE greater than 2000, in bins of width 100.
+
+```{r}
+dfPubSchoolSubFTE %>%
+  filter(countySumFTE > 2000) %>%
+  ggplot(aes(x = countySumFTE)) + 
+  geom_histogram(binwidth = 100) +
+  ggtitle("Histogram of Counties with More than 2000 FTE")
+
+
+```
+
+## Bivariate Visualization(s)
+
+```{r}
+
+dfPubSchoolSubFTECharter <- subset(dfPubSchoolSub, select = c(NMCNTY, TOTAL, FTE, CHARTER_TEXT)) %>%
+  group_by(NMCNTY, CHARTER_TEXT) %>%
+  summarise(countyMeanEnr = mean(TOTAL), countyMeanFTE = mean(FTE), .groups = 'drop')
+
+fteCharterRows <- nrow(dfPubSchoolSubFTECharter)
+```
+
+Grouping by county *and* charter produces a data set with `r fteCharterRows` observations. Comparative boxplots show the difference mean staffing between charter and non-charter schools (as well as schools with a "not applicable" charter status, which is confusing and makes me want to find the data dictionary.)
+
+```{r}
+
+dfPubSchoolSubFTECharter %>% 
+  ggplot(aes(x = countyMeanFTE, y = CHARTER_TEXT)) +
+  geom_boxplot(outlier.colour = "red",
+         outlier.shape = 2,
+         outlier.size = 3) +
+  coord_flip() +
+  ggtitle("Boxplot of Mean FTE by County and by Charter Status")
+
+```
+
+This scatterplot uses color to separate charters from non-charters. To zoom in on a smaller subset, the filter function looks at counties with mean enrollment of 200 students or less, and it omits schools without an applicable charter status. 
+
+This scatterplot shows how charters have greater dispersion than non-charters in this enrollment segment. The linear trendlines support the observation that non-charters employ more staff.
+
+```{r}
+
+dfPubSchoolSubFTECharter %>% 
+  filter(countyMeanEnr <= 200, CHARTER_TEXT != "Not Applicable") %>%
+  ggplot(aes(x = countyMeanEnr, y = countyMeanFTE, color = factor(CHARTER_TEXT))) +
+  geom_point() +
+  geom_smooth(method = "lm", fill = NA) + 
+  labs(title = "Total Enrollment and FTE by County and by Charter Status",
+       subtitle = "Mean county enrollment 200 or less",
+       caption = "Trendline: linear")
+```

@@ -1,0 +1,273 @@
+---
+title: "Challenge 5: Public School Characteristics"
+author: "Teresa Lardo"
+description: "Creating uni- and bivariate visualizations"
+date: "03/29/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - Teresa Lardo
+  - public_schools
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Read in data
+
+For this challenge, I will read in the data set on **Public School characteristics**. 
+
+```{r}
+public_schools <- read_csv("_data/Public_School_Characteristics_2017-18.csv", show_col_types = FALSE)
+```
+
+
+### Briefly describe the data
+
+The data set describes characteristics of just under **101,000 public schools** in the United States. The variables include location information (latitude, longitude, state, school district, street address, zip code, etc.), contact information, whether or not the school is virtual, number of students per grade level, racial and ethnic background data for students, student/teacher ratio, and more. 
+
+```{r}
+head(public_schools)
+```
+```{r}
+dim(public_schools)
+```
+
+
+## Tidy Data 
+
+### Problems() and Changing Data Types
+
+When I originally read the csv file in, I got a warning message that said to call `problems()` for more information. 
+
+```{r}
+problems(public_schools)
+```
+
+I used `print(problems(public_schools), n = nrow(problems(public_schools)))` and got a list of 110 issues, which all occurred in columns 14, 40, and 73. Boolean values were expected for these columns, while the actual values were often numbers or character strings. The data type of these three columns will need to be changed. 
+
+```{r}
+# Change Column 14 (LSTREET3) from logical to character type
+public_schools$LSTREET3 <- as.character(as.logical(public_schools$LSTREET3))
+
+# Change Column 40 (G13) from logical to numeric type
+public_schools$G13 <- as.numeric(as.logical(public_schools$G13))
+
+# Change Column 73 (AE) from logical to numeric type
+public_schools$AE <- as.numeric(as.logical(public_schools$AE))
+
+```
+
+Let's check the data types for these columns to make sure our changes went through as intended. We're expecting LSTREET3 column to have a *character* type and the other two columns to have *numeric* types.
+
+```{r}
+class(public_schools$LSTREET3)
+class(public_schools$G13)
+class(public_schools$AE)
+```
+
+Hurray!
+
+
+### Removing Repetitive Data
+
+This data set includes a column for the survey year, which suggests that this data was taken from a longer set that includes data from different survey years. However, this set is only from **one survey year**, as we can see from running the `unique()` function for that column:
+
+```{r}
+unique(public_schools$SURVYEAR)
+
+```
+
+As this "variable" does not vary at all in our data, we can remove this from the data set. 
+
+```{r}
+# Remove Survey Year column
+public_schools <- public_schools %>%
+  select(-SURVYEAR)
+```
+
+The data set also contains two sets of columns containing the latitude and longitudinal coordinates for the schools - columns **X** and **Y** as well as columns **LATCOD** and **LONCOD**. We can remove one set of these repetitive columns without losing any unique information. 
+
+```{r}
+# Remove columns X and Y
+public_schools <- public_schools %>%
+  select(-c(X, Y))
+```
+
+Let's get a quick view of our data set to make sure these 3 columns have been removed:
+
+```{r}
+head(public_schools)
+```
+
+
+## Mutation
+
+The **ULOCALE** variable in this data set lists 12 different settings, including "Rural: Fringe," "Town: Remote," "City: Mid-size," and "Suburb: Large." I'd like to use `mutate()` to create a column that categorizes each school into a smaller number of possible environments - simply Rural, Town, City, and Suburb. 
+
+
+```{r}
+public_schools <- public_schools %>%
+   mutate(ENVIRONMENT = case_when(ULOCALE %in% c("11-City: Large", "12-City: Mid-size", "13-City: Small") ~ "City",
+                                  ULOCALE %in% c("21-Suburb: Large", "22-Suburb: Mid-size", "23-Suburb: Small") ~ "Suburb",
+                                  ULOCALE %in% c("31-Town: Fringe", "32-Town: Distant", "33-Town: Remote") ~ "Town",
+                                  ULOCALE %in% c("41-Rural: Fringe", "42-Rural: Distant", "43-Rural: Remote") ~ "Rural"))
+```
+
+
+
+## Univariate Visualizations
+
+### School Levels
+
+I'd like to get a look at which levels of school (elementary, middle, etc.) are most represented in the data set. I want to try out a treemap for this to get a quick, visual sense of the proportion of each type of school level within the data set. 
+
+```{r}
+# Create a data source to store the counts by School Level
+levels <- public_schools %>%
+  count(SCHOOL_LEVEL)
+# Load treemapify from library
+library(treemapify)
+# Create a treemap
+ggplot(levels, 
+       aes(fill = SCHOOL_LEVEL, 
+           area = n, 
+           label = SCHOOL_LEVEL)) +
+  geom_treemap() + 
+  geom_treemap_text(colour = "black", 
+                    place = "centre") +
+  labs(title = "Public Schools by Level") +
+  theme(legend.position = "none")
+```
+
+This tree map shows that most of the schools in this data set are elementary schools - it looks like more than half of the schools are elementary level. We can also look into more exact percentages for these school levels by using a bar chart: 
+
+```{r}
+library(scales)
+# Create data source for School Level counts and percentages
+level_perc <- public_schools %>%
+  count(SCHOOL_LEVEL) %>%
+  mutate(pct = n / sum(n),
+         pctlabel = paste0(round(pct*100), "%"))
+
+# Create a bar chart showing the percentages of each level of school
+ggplot(level_perc, 
+       aes(x = reorder(SCHOOL_LEVEL, -pct),
+           y = pct)) + 
+  geom_bar(stat = "identity", 
+           fill = "steelblue", 
+           color = "black") +
+  geom_text(aes(label = pctlabel), 
+            vjust = -0.25) +
+  scale_y_continuous(labels = percent) +
+  labs(x = "School Levels", 
+       y = "Percent", 
+       title  = "School Levels for Public Schools, 2017-18") +
+  theme(axis.text.x = element_text(angle = 45,
+                                   hjust = 1))
+```
+
+This bar chart confirms that the percentage of elementary schools within our data set is slightly over half. Compared to the tree map, the bar chart also has much more readable labels for the less represented school levels.  
+
+
+### Operational Status
+
+The data set includes a column displaying the operational status of each school. Let's use a bar chart to get a sense of how many schools of each status are in our data set. I'll use `coord_flip()` to make this a horizontal bar chart for the sake of reading each operational status label more easily. 
+
+```{r}
+ggplot(public_schools, aes(x = SY_STATUS_TEXT)) + 
+  geom_bar(fill = "hotpink",
+           color = "black") +
+  labs(title="Status of Public Schools, 2017-18",
+       x = "Operational Status") + 
+  coord_flip()
+```
+
+Our horizontal bar chart shows that by far most of the schools in our data set were currently operational when the data was collected. 
+
+
+
+## Bivariate Visualizations
+
+### Total Students in Towns, Cities, Suburbs, & Rural Areas
+
+Let's create a visualization to show the total number of public school students by school environment (***city, rural, suburb***, and ***town***). 
+
+```{r}
+ggplot(public_schools, aes(x=ENVIRONMENT, y=TOTAL)) +
+    geom_bar(stat = "identity", color="darkgreen", width=0.45) + 
+    xlab("Environment of Public Schools") + ylab("Total Number of Students") + 
+    ggtitle("Total Public School Students by Environment Type")
+```
+This visualization shows that the environment with the most public school students overall is the **suburbs**, with the **city** pulling in second. **Town** has the lowest number of total public school students, which makes me curious how "town" is defined for this data set. 
+
+
+### Student-Teacher Ratios in Virtual/Non-Virtual Schools
+
+As this data set has a variable on virtual versus non-virtual status of the schools, I'm curious to look into some of the data on virtual public schools. However, when I filtered the data set down to only virtual schools, the result was a relatively small portion of our total data. So I want to compare the virtual and non-virtual schools in terms of student-teacher ratios to see if there is any noticeable difference to be seen (beyond there being much fewer numbers of virtual schools overall). 
+
+I will use a scatterplot in the interest of seeing where most data points gather and where more outlying points appear. 
+
+```{r}
+# Filter out the N/A & Missing values from the VIRTUAL variable
+public_schools <- public_schools %>%
+  filter(VIRTUAL == c("A virtual school", "Not a virtual school"))
+
+# Student Teacher Ratios at Virtual & Non-Virtual Schools
+ggplot(public_schools, 
+      aes(y = factor(VIRTUAL,
+                     labels = c("Virtual School", "Non-virtual School")),
+          x = STUTERATIO,
+          color = VIRTUAL)) +
+   geom_jitter(alpha = 0.7,
+               size = 1.5) + 
+   scale_x_continuous() +
+   labs(title = "Student-Teacher Ratios for Virtual & Non-Virtual Public Schools",
+        x = "Number of Students Per Teacher",
+        y = "Types of Schools") +
+   theme_minimal() +
+   theme(legend.position = "none")
+
+```
+
+This scatterplot shows that the student-teacher ratios for both virtual and non-virtual public schools fall below 125 students per teacher. The plot captures an outlying data point for one of the non-virtual schools where the student-teacher ratio is nearing 25000 students to a teacher. That seems likely to be an error in the data. 
+
+I'm interested in seeing a close-up view of the most common student-teacher ratios, so I'm going to filter out the higher student-teacher ratios and concentrate on the data points that fall below 100. 
+
+```{r}
+# Filter out higher STR from our data set to use in a new version of the plot above
+public_schools <- public_schools %>%
+  filter(STUTERATIO < 100)
+
+# Student Teacher Ratios at Virtual & Non-Virtual Schools
+ggplot(public_schools, 
+      aes(y = factor(VIRTUAL,
+                     labels = c("Virtual School", "Non-virtual School")),
+          x = STUTERATIO,
+          color = VIRTUAL)) +
+   geom_jitter(alpha = 0.7,
+               size = 1.5) + 
+   scale_x_continuous() +
+   labs(title = "Student-Teacher Ratios under 125:1",
+        x = "Number of Students Per Teacher",
+        y = "Types of Schools") +
+   theme_minimal() +
+   theme(legend.position = "none")
+```
+
+This "zoomed-in" version of the scatterplot shows us that the highest concentration of student-teacher ratios falls between 1 and roughly 30 students per teacher. 

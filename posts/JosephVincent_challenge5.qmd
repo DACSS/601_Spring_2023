@@ -1,0 +1,169 @@
+---
+title: "Challenge 5 - StateCounty Visualizations"
+author: "Joseph Vincent"
+description: "Introduction to Visualization"
+date: "03/29/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - state_county
+  - Joseph Vincent
+  - challenge_5
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Reading in StateCounty data
+
+-   StateCounty2012.xls ⭐⭐⭐
+
+```{r}
+#reading in StateCounty data
+#skipping first 2 blank rows
+#Selecting columns with data
+#Filtering out aggregate rows
+#Filtering out row with note about no addresx
+StateCounty <- read_xls("_data/StateCounty2012.xls",
+                        skip = 2)
+StateCounty <- StateCounty %>%
+  select(STATE, COUNTY, TOTAL) %>%
+  filter(!str_detect(STATE, "address"))
+
+head(StateCounty)
+
+#recoding the military designation observation
+StateCounty[2986, 1] = "MILITARY"
+StateCounty[2986, 3] = 1
+tail(StateCounty)
+
+#finding the number of counties excluding aggregates
+StateCounty %>%
+  filter(!str_detect(STATE, "Total")) %>%
+  dim_desc()
+
+#finding the mean and median by state
+StateCounty %>%
+  filter(str_detect(STATE, "Total")) %>%
+  summarize(Mean = mean(TOTAL, na.rm = TRUE),
+            Median = median(TOTAL, na.rm = TRUE),
+            Max = max(TOTAL, na.rm = TRUE),
+            Min = min(TOTAL, na.rm = TRUE))
+
+#finding the mean and median by county
+StateCounty %>%
+  filter(!str_detect(STATE, "Total")) %>%
+  summarize(Mean = mean(TOTAL, na.rm = TRUE),
+            Median = median(TOTAL, na.rm = TRUE),
+            Max = max(TOTAL, na.rm = TRUE),
+            Min = min(TOTAL, na.rm = TRUE))
+
+
+```
+
+### Briefly describe the data
+
+The StateCounty dataset is describing the number of employees for a specific organization in each county of the United States. There are also aggregate values for number of employees in each state. There are is also data on the number of employees in Canada and on military bases abroad.
+
+There are a total of 2,932 counties with employees. They are spread across all US states.
+
+The largest state has over 250,000 emoployees, with the state mean being around 9,000 and the state median being around 3,500.
+
+The largest individual county has over 8,000 employees, with the county mean being around 90 employees and the county median being about 20.
+
+## Tidy Data (as needed)
+
+The data is already tidy, but as you can see the aggregate state totals will need to be accounted for when the data is analyzed and visualized.
+
+The single military base employee was missing data, and this has been corrected.
+
+```{r}
+unique(StateCounty$STATE)
+```
+
+Before creating some visualizations of the data, it will be easier to create two data sets that include the county totals and state totals respectively.
+
+```{r}
+#creating a dataset without aggregates for ease of plotting
+StateCountyNoAggregates <- StateCounty %>%
+  filter(!str_detect(STATE, "Total"))
+
+unique(StateCountyNoAggregates$STATE)
+
+#creating a dataset with only the state aggregates for ease of plotting
+StateCountyAggregates <- StateCounty %>%
+  filter(str_detect(STATE, "Total")) %>%
+  filter(!str_detect(STATE, "Grand Total")) %>%
+  select(STATE, TOTAL) %>%
+  separate(STATE, into = c("STATE", "delete"), sep = " ") %>%
+  select(STATE, TOTAL)
+
+head(StateCountyAggregates)
+
+```
+
+## Univariate Visualizations
+
+Below you can see a few different distributions:
+The first is a plot of the distribution of county employee totals, for those containing less than 500 employees. This was done as there are some extreme outliers in the data set that would make it harder to visualize.
+
+As you can see, the vast majority of counties have a small number of employees.
+
+In the second plot, you can see the distribution of state employee totals. Most states have around 5,000 or fewer employees, but there are some outliers which will be further described in later plots.
+
+```{r}
+#Plotting the distribution of county employee totals
+StateCountyNoAggregates %>%
+  filter(TOTAL < 500) %>%
+  ggplot(aes(TOTAL)) +
+    geom_histogram(binwidth=3, fill="#b3697a", alpha=0.9) +
+    ggtitle("Distribution of County Employees (Fewer than 500)")
+
+#plotting the distribution of state employee totals
+ggplot(StateCountyAggregates, aes(TOTAL)) +
+  geom_histogram(fill="#69b3a2", alpha = 0.9) +
+  ggtitle("Distribution of State Employees")
+
+```
+
+## Bivariate Visualization(s)
+
+Next we will take a look at a detailed breakdown of employees by state.
+The two bar-plots below make it easy to visualize the number of employees in each state and their order.
+I split this into two charts, one above the mean and one below the mean, simply to declutter the plots and make them easier to read.
+
+```{r}
+#plotting distribution of employees by state for those with over 2000 employees
+#using fct_reorder to order from greatest to least
+StateCountyAggregates %>%
+  filter(TOTAL >= 3500) %>%
+  mutate(STATE = fct_reorder(STATE, TOTAL)) %>%
+  ggplot(aes(x=STATE, y=TOTAL)) + 
+  geom_bar(stat = "identity", fill="#f68060", alpha=.6, width=.8) + 
+  coord_flip() +
+  ggtitle("Employees By State (>=3500)")
+
+#plotting distribution of employees by state for those with less than 2000 employees
+#using fct_reorder to order from greatest to least
+StateCountyAggregates %>%
+  filter(TOTAL < 3500) %>%
+  mutate(STATE = fct_reorder(STATE, TOTAL)) %>%
+  ggplot(aes(x=STATE, y=TOTAL)) + 
+  geom_bar(stat = "identity", fill="#a42678", alpha=.6, width=.8) + 
+  coord_flip() + 
+  ggtitle("Employees By State (<3500)")
+
+```
+

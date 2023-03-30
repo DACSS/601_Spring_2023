@@ -1,0 +1,79 @@
+---
+title: "Challenge 5 Submission"
+author: "Cam Needels"
+description: "Introduction to Visualization"
+date: "03/29/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - cereal
+  - CamNeedels
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(summarytools)
+library(car)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+cereal <- read_csv("B:/Needels/Documents/DACCS 601/DACSS_601_New/posts/_data/cereal.csv")
+cereal
+```
+
+### Briefly describe the data
+This is data about 20 different cereals with the amount of sodium and sugar allocated in each one.They're also separated by the fact they are either type A or type C cereal. 
+
+```{r}
+#i heard in class people were having a tough time with sodium not being numeric so I did this in case
+cereal%>%
+  mutate(Sodium = as.numeric(Sodium))
+
+```
+
+## Univariate Visualizations
+I went with the bar graph for sodium because there are multiple different cereals with certain amount of sodium if they are rounded properly.
+
+```{r}
+#I originally made this without chunking into 25 but after seeing the solution it makes way more sense and is way easier to observe. This is essentially rounding the maximum of the sodium. I also added a title and made the y variable more clear by renaming it
+sodiumbins <- (round((max(cereal$Sodium))- min(cereal$Sodium))/25)
+
+
+ggplot(cereal, aes(x=Sodium)) + geom_histogram(bins= sodiumbins) +labs(title = "Sodium Graph", y="Amount of cereals")
+```
+
+
+
+```{r}
+#this is a boxplot with sugar and sodium on x and y respectively. I also added a title to make it clearer
+ggplot(cereal, aes(x=Sugar, y=Sodium)) + geom_boxplot() + labs(title = "Sugar/Sodium Boxplot")
+```
+
+
+```{r}
+#this is a histogram that focuses on sugar only and i also added a title to this as well.
+ggplot(cereal, aes(x=Sugar)) + geom_histogram() + labs(title = "Sugar Graph", y="Amount of cereals")
+```
+
+## Bivariate Visualization(s)
+
+I chose this visualization because you can see where each individual cereal lies and you can see both their sodium and sugar easily. It also clearly shows the outliers and makes it easy to analyze. I did it for sugar too but it made a little less sense but it still gets the job done.
+
+```{r}
+#We create a point graph with X axis being sugar and Y being sodium and making the column either type A or type C so we can see the different colored dots on the graph.
+ggplot(cereal, aes(x=Sugar, y=Sodium, col=Type)) + geom_point()
+```
+
+

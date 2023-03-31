@@ -1,0 +1,150 @@
+---
+title: "Challenge 5 - AB_NYC_2019"
+author: "Megan Galarneau"
+description: "Introduction to Visualization"
+date: "03/29/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    css: "style.css"
+categories:
+  - challenge_5
+  - Megan Galarneau
+  - AB_NYC_2019
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(patchwork)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  Read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  Tidy data & mutate variables as needed (including sanity checks)
+4)  Create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+## Read in data
+
+
+```{r}
+#simply read in the data (untouched)
+library(readr)
+raw_NYCHousing_2019 <- read_csv("_data/AB_NYC_2019.csv")
+raw_NYCHousing_2019
+```
+
+### Briefly describe the data
+
+This data set is describing listing activities of Airbnb properties during 2019 in the five boroughs of New York City, New York. The property information includes geographical coordinates, rental type (entire home/apt, private room, or shared room), price breakdowns, reviews (last review, total number & per month), and how many days available in 2019. Specifically, there are 48,895 observations (each represents a listing). This data is tidy already, therefore I will not need to mutate any variables here.
+
+
+```{r}
+#summary of data set statistics
+print(summarytools::dfSummary(raw_NYCHousing_2019,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+```
+
+## Univariate Visualizations
+
+As I am scoping out this data set, the first thing that sticks out to me is the price for each unit. Visualized below is the price distrbution for all listings (right skewed, outliers are filtered out).
+
+```{r}
+#price distribution table. Not sure why my y-axis scaled so small, could it be my density map overlay?
+price_NYCHousing_2019 <- raw_NYCHousing_2019 %>%
+  filter(price>0 & price<2500)
+price_NYCHousing_2019 %>%
+  ggplot(aes(price)) +
+  labs(title = "Airbnb Property Listing Prices in NYC, 2019", x = "Price (US Dollars $)", y = "Number of Listings") +
+  geom_histogram(aes(y = ..density..), alpha = 0.5) +
+  geom_density(alpha = 0.2, fill="red") 
+
+```
+
+Now that I have an initial understanding of price, let's explore the number of listings in each of the NYC boroughs. I can see that Manhattan leads the charge with the most amount of listings.
+
+```{r}
+#NYC boroughs table
+listings_NYCHousing_2019 <- raw_NYCHousing_2019 %>%
+  ggplot(aes(neighbourhood_group)) +
+  labs(title = "Airbnb Property Listing Locations in NYC, 2019", x = "NYC Boroughs", y = "Number of Listings") +
+  geom_bar() 
+
+listings_NYCHousing_2019
+
+```
+
+Finally, I want to understand the breakdown of the types of listings available (entire home/apt, private room, or shared room). Here, we can see that entire home/apt listings are the most prevelant. 
+
+```{r}
+#listing types table
+type_NYCHousing_2019 <- raw_NYCHousing_2019 %>%
+  ggplot(aes(room_type)) +
+  labs(title = "Airbnb Property Listing Types in NYC, 2019", x = "Listing Types", y = "Number of Listings") +
+  geom_bar() 
+
+type_NYCHousing_2019
+
+
+```
+
+
+## Bivariate Visualization(s)
+
+Seeing these variables in separate tables can be helpful, but let's combine some of them to get an even better idea of the data we are analyzing and the questions it can answer.
+
+First, let's look at the listing prices per NYC borough. From this table, I can infer that Manhattan is the most expensive/prevalent listings for NYC Airbnb in 2019.
+
+```{r}
+listingperprice_NYCHousing_2019 <- raw_NYCHousing_2019 %>%
+  filter(price>0 & price<2500)
+listingperprice_NYCHousing_2019 %>%
+  ggplot(aes(neighbourhood_group,price))+
+  geom_boxplot()
+
+```
+
+What if I put this all together? Below, all five boroughs are graphed against listing type and price for each. Here, entire home/apt listings in Manhattan, NYC are the most expensive on average for 2019.
+
+
+```{r}
+#struggled to correct y-axis. I believe it's totaling the prices per borough instead of averaging across the board..
+ final_NYCHousing_2019 <-
+  raw_NYCHousing_2019 %>%
+  filter (! is.na (price)) %>%
+  filter (! is.na (neighbourhood_group)) %>%
+  summarise(median_price=median(price)) %>%
+  ggplot(data = raw_NYCHousing_2019, mapping = aes(x = room_type, y = price, fill = room_type)) + 
+  geom_col() +
+  facet_wrap(vars(neighbourhood_group), scales = "free") + labs(title = "Airbnb NYC Property Listing Prices in 2019", y = "Price in US Dollars ($)", x = "Listing Type") +
+  theme_bw() +
+  theme(axis.text.x = element_text(colour = "grey20", size = 8, angle = 90, hjust = 0.5, vjust = 0.5), text = element_text(size = 12))
+
+final_NYCHousing_2019
+
+```

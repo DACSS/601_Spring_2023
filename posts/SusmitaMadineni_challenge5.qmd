@@ -1,0 +1,137 @@
+---
+title: "Visualizing cereal dataset"
+author: "Susmita Madineni"
+description: "Introduction to Visualization"
+date: "03/29/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - cereal
+  - readr
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+
+```{r}
+library(readr)
+cereal_data <- read_csv("_data/cereal.csv")
+View(cereal_data)
+```
+
+```{r}
+# Preview the first few rows of the dataset
+head(cereal_data)
+
+# Understanding the dimensions of the dataset 
+dim(cereal_data)
+```
+```{r}
+# Identifying the column names of the dataset 
+colnames(cereal_data)
+
+# Identifying the data types of the columns
+sapply(cereal_data, class)
+table(sapply(cereal_data, function(x) typeof(x)))
+sapply(cereal_data, function(x) n_distinct(x))
+```
+
+
+### Briefly describe the data
+Based on the above, we can say that the cereal dataset has 20 different cereals describing the amount of sodium, sugar present in it and a type(category) assigned to each cereal. There are total 20 rows and 4 columns, out of which two columns(cereal, type) are of class character and two coulmns(sodium, sugar) are of class numeric. We can also observe that each cereal is categorized into two types(A, C). 
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data looks tidy enough to use for various analyses and data visualizations. We can convert the sodium into grams and compare it with the sugar, we can pivot longer the dataset to use it for visualizations. 
+
+```{r}
+cereal_data <- cereal_data %>%
+  arrange(Cereal) %>%
+  mutate(Sodium = Sodium/1000)
+View(cereal_data)
+
+```
+
+
+```{r}
+cereal_pivot_data <- pivot_longer(cereal_data, cols = contains("S"), 
+                                names_to= c("additive"),
+                                values_to = "quantity")
+View(cereal_pivot_data)
+
+```
+
+The two columns- additive and quantity have been added at the end. Additive column has two values- Sodium, Sugar and the respective value of these two additives are present in quantity column.
+
+## Univariate Visualizations
+Based on the above cereal data, we can analyze how much sodium is present in a particular type of cereal.
+
+
+
+```{r}
+# Visualization showing sodium levels in type C cereal
+cereal_data %>%
+  filter(Type == 'C') %>%
+  arrange(Sodium) %>%
+  ggplot(aes(x=Cereal, y=Sodium)) + geom_segment(aes(xend=Cereal, yend=0)) + geom_point(color='blue', fill='black',shape=20, size = 3) + theme_minimal() + coord_flip(expand = TRUE) + labs(title = "Sodium levels in Type C cereals", y = "Sodium in mgs", x = "Cereal Name")
+
+
+```
+```{r}
+# Visualization showing sodium levels in type A cereal
+cereal_data %>%
+  filter(Type == 'A') %>%
+  arrange(Sodium) %>%
+  ggplot(aes(x=Cereal, y=Sodium)) + geom_segment(aes(xend=Cereal, yend=0)) + geom_point(color='blue', fill='black',shape=20, size = 3) + theme_minimal() + coord_flip(expand = TRUE) + labs(title = "Sodium levels in Type A cereals", y = "Sodium in mgs", x = "Cereal Name")
+
+```
+
+
+## Bivariate Visualization(s)
+Now I want to construct a stacked bar chart to compare the sodium and sugar levels in a particular type of cereal.
+
+```{r}
+cereal_pivot_data %>%
+  filter(Type == 'A') %>%
+  mutate(Cereal = fct_reorder(Cereal, desc(quantity))) %>%
+  ggplot(aes(x=Cereal, y=quantity, fill=additive)) + geom_bar(stat = "identity", position="stack", width = 0.75, color = "red") + theme_minimal() + coord_flip(expand = FALSE) + labs(title = "Additive levels in Type A cereals", y = "Additives", x = "Cereal Name")
+
+```
+Based on the above visualizations, the users can understand which cereals are better to consume for a healthier lifestyle and can also use this as a reference for various other analyses.

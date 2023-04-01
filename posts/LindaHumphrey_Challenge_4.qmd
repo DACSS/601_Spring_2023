@@ -1,0 +1,144 @@
+---
+title: "Challenge 4"
+author: "Linda Humphrey"
+description: "More data wrangling: pivoting"
+date: "08/22/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4: hotel_bookings
+  - hotel_bookings: hotel_bookings.csv
+  - name: Linda Humphrey
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+library(tibble)
+library(readxl)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+### Briefly describe the data
+
+# The data below is a collection The hotel_bookings. 
+
+```{r}
+# Reading in the  data
+library(readr)
+hotel_bookings <- read_csv("~/Desktop/601_Spring_2023/posts/_data/hotel_bookings.csv")
+
+hotel_bookings
+
+```
+
+
+
+## Tidy Data (as needed)
+
+In tidyr, pivot_longer() will take hotel_bookings dataset from wide to long, changes the names to variables and values.
+```{r}
+# Tidy in the  data
+#Rename the column names that gather has provides
+#Change key and value to variable and value.
+library(readr)
+hotel_bookings <- read_csv("~/Desktop/601_Spring_2023/posts/_data/hotel_bookings.csv")
+gathered <- hotel_bookings  %>% 
+  pivot_longer(everything(), names_to = "variable", values_to = "value", values_drop_na = TRUE)
+
+gathered
+```
+
+## Exploring data
+Here we observe the first few rows of our data.
+```{r}
+library(readr)
+hotel_bookings <- read_csv("~/Desktop/601_Spring_2023/posts/_data/hotel_bookings.csv")
+head(hotel_bookings)
+
+```
+## Here we observe the summary statistics of each variable of our dataset.
+```{r}
+summary(hotel_bookings)
+```
+## Here we observe the structure of our dataset
+```{R}
+str(hotel_bookings)
+```
+## Analyzing data set with filter option
+```{R}
+library(lubridate)
+hotel_bookings <- hotel_bookings %>%
+  filter(arrival_date_year == 2015)
+```
+## checking the missing values
+```{R}
+sum(is.na(hotel_bookings))
+```
+
+#Checking for duplicate values
+```{R}
+sum(duplicated(hotel_bookings))
+```
+#Checking for outliers or extreme values
+```{R}
+boxplot(hotel_bookings$arrival_date_day_of_month)
+```
+# Creating Line graph of hotel_bookings 
+
+```{R}
+# Convert the year column to a date format
+hotel_bookings$arrival_date_day_of_month <- as.Date(paste(hotel_bookings$arrival_date_year, "-01-01", sep = ""), format = "%Y-%m-%d")
+
+# Filter data including years between 2015 - 2017
+hotel_bookings <- hotel_bookings %>% 
+  filter(arrival_date_year >= 2015 & arrival_date_year <= 2017)
+            
+```
+
+# Wrangle hotel_bookings
+```{R}
+read_csv("~/Desktop/601_Spring_2023/posts/_data/hotel_bookings.csv",)
+
+# Mutate data
+hotel_bookings <- hotel_bookings %>%
+  mutate(year = as.Date(Date, "%m/%d/%Y"))
+
+hotel_bookings <- hotel_bookings %>%
+  rename(year = Date, EFFR = `Effective Federal Funds Rate`)
+
+
+hotel_bookings <- hotel_bookings %>%
+  mutate(Month = month(Date, label = TRUE), Year = year(Date))
+
+
+```

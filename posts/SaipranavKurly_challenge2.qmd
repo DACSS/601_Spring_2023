@@ -1,0 +1,115 @@
+---
+title: "Challenge 2"
+author: "Sai Pranav Kurly"
+description: "Data wrangling: using group() and summarise()"
+date: "03/31/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - faostat
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in the Data
+
+I have decided to use Railroads dataset. The Railroads dataset includes separate observations of total employee counts by county within US states/principalities. First, we read the data:
+
+```{r}
+railroad <-read_csv("_data/railroad_2012_clean_county.csv")
+print(railroad)
+```
+
+## Describe the data
+
+We see that the total number employees:
+
+```{r}
+summarize(railroad,sum(`total_employees`))
+```
+
+We see that the mean number employees by county:
+
+```{r}
+summarize(railroad,mean(`total_employees`))
+```
+
+We see that the median number employees by county:
+
+```{r}
+summarize(railroad,median(`total_employees`))
+```
+
+We see that the min number employees by county:
+
+```{r}
+summarize(railroad,min(`total_employees`))
+```
+
+We see that the max number employees by county:
+
+```{r}
+summarize(railroad,max(`total_employees`))
+```
+
+We see that the max number employees by county:
+
+```{r}
+summarize(railroad,max(`total_employees`))
+```
+
+We could also summarize everything in one go and have some extra statistics like quantile using the summarry command
+
+```{r}
+summary(railroad)
+```
+
+
+## Provide Grouped Summary Statistics
+
+The group by function comes in handy since we can actually find some information based on state. 
+
+We can find the number of employees in the state. We see that Texas has the largest number.
+
+```{r}
+railroad %>%
+  group_by(state) %>%
+  select(total_employees) %>%
+  summarize_all(sum, na.rm = TRUE) %>%
+  arrange(desc(total_employees))
+```
+
+We can also find the mean of the employees per state based on the counties:
+```{r}
+railroad%>%
+  group_by(state)%>%
+  select (`total_employees`)%>%
+  summarize_all(mean, na.rm=TRUE) 
+```
+
+We also find the max number of employees in the county per state:
+```{r}
+railroad%>%
+  group_by(state)%>%
+  select (`total_employees`)%>%
+  summarize_all(max, na.rm=TRUE)
+```
+
+## Explain and Interpret
+
+Based on the data, Initially I thought that the number of em[ployees would be directly proportional to the size of the state. For example TX is a very large state and has the most number of employees. However, this does not hold true always. We can also find some more interesting statistics using the group by like finding the max number of employees in a particular state based on the county. 

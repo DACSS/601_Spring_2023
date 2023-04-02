@@ -2,7 +2,7 @@
 title: "Challenge 3"
 author: "Aritra Basu"
 description: "Tidy Data: Pivoting"
-date: "03/22/2023"
+date: "03/20/2023"
 format:
   html:
     toc: true
@@ -12,14 +12,13 @@ format:
 categories:
   - challenge_3
   - Aritra Basu
-  - eggs
+  - Eggs
 ---
 
 ```{r}
 #| label: setup
 #| warning: false
 #| message: false
-
 library(tidyverse)
 library(dplyr)
 library(descr)
@@ -27,10 +26,15 @@ library(readr)
 library(readxl)
 library(summarytools)
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
 ```
+
+
 ## Reading in data, and cleaning it.
 
 I am working on the first sheet of organiceggpoultry. The first task is to clean the data. I have removed a column of NAs, and then used mutate, separate and fill to separate the month and years. I have then used select to consider the variables that are associated with eggs and not with chickens.
+
+
 ```{r}
 egg_poultry <- read_excel("_data/organiceggpoultry.xls", skip=4)
 subset <- subset( egg_poultry, select = -c(6) )
@@ -42,7 +46,9 @@ df3 <- mutate_all(df2, funs(replace(., .=='Jan', 'January')))
 
 df4 <- df3 %>% fill(year)
 str(df4)
+
 ```
+
 Now, I change some of the variables from character to numeric.
 ```{r}
 df5<-select(df4, "month", "year", "Extra Large 
@@ -58,28 +64,38 @@ df6<-df5 %>%
   mutate_at('Large Dozen', as.numeric)%>%
   mutate_at('Large Half Dozen', as.numeric)
   str(df6)
-
-clean_eggs<-df6
+  clean_eggs<-df6
 ```
+
 
 ### Describing the data
 
 ```{r}
-view(dfSummary(clean_eggs, style="grid", graph.magnif = 0.75, valid.col = FALSE))
+print(summarytools::dfSummary(clean_eggs,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
 ```
-It can be seen that the dimension is 120 x 6. 
+
+It can be seen that the dimension is 120 x 6.
 
 The observations are in a month year format. The values are prices per cartons for different types of packaging for a particular month between 2004 and 2013 (inclusive). In the original file, the years, as well as the values were stored as characters, and I have converted them to numeric.
 
 The way the data is presented is fairly intuitive. But this could become cumbersome if we had a few more columns. However, the data is already tidy
 
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+
 ## Anticipating the end results
+
 ### Challenge: Describing the final dimensions
 
 Documenting my work here.
 
 ```{r}
-
 #existing rows/cases
 nrow(clean_eggs)
 
@@ -92,9 +108,14 @@ nrow(clean_eggs) * (ncol(clean_eggs)-4)
 # expected columns 
 4
 
-
 ```
+
+
+
+## Pivoting the Data
+
 ### Challenge: Pivoting the Chosen Data
+
 The new case again is a month year unit. However, the data is now in a long format instead of wide. It satisfies the requirement of tidy data.
 
 ```{r}

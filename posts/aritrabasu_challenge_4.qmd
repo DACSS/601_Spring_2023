@@ -1,0 +1,133 @@
+---
+title: "Challenge 4"
+author: "Aritra Basu"
+description: "More data wrangling: pivoting"
+date: "04/01/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - Aritra Basu
+  - fed_rates
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(lubridate)
+library(descr)
+library(readr)
+library(summarytools)
+library(naniar)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+### Reading in data
+
+
+```{r}
+
+mydata <- read.csv("_data/FedFundsRate.csv")
+glimpse(mydata)
+```
+
+
+### Describing the data
+```{r}
+print(summarytools::dfSummary(mydata,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+We have data on federal funds rates between 1954 and 2017. The variables include a target rate, as well as upper and lower targets. Along with that, it also contains effective rates which seem to be the actual prevailing rates at that point of time. We also have percentage change in GDP, unemployment and inflation. 
+
+After viewing the data, it can be seen that we need to combine the date into a single variable (from the year, month and day). I also select away the previous three variables of month year and day, and rename the other variables. 
+
+```{r}
+mydata2 <- mydata %>% 
+mutate (date=ymd(paste(Year, Month, Day, sep = "-")))%>%
+select(date, everything())%>%
+select(-Year,-Month,-Day)%>% 
+  rename (Target_Rate = "Federal.Funds.Target.Rate", Upper_Target="Federal.Funds.Upper.Target", Lower_Target="Federal.Funds.Lower.Target", Effective_Rate="Effective.Federal.Funds.Rate", GDP_Percent_Change="Real.GDP..Percent.Change.", Unemployment_Rate="Unemployment.Rate", Inflation_Rate="Inflation.Rate")   
+glimpse(mydata2)
+View(mydata2)
+```
+It can be seen that the date variable has been appropriately created, and other variables are modified.
+
+### Tidy Data (as needed)
+
+The data is already tidy, with ymd observations from 1954 to 2017.
+
+### Missing values
+
+The next task is to look at the missing values systematically.
+
+```{r}
+df_missing <- mydata2 %>% 
+  summarise_all(funs(n_miss = sum(is.na(.)), prop_miss = mean(is.na(.))))
+glimpse(df_missing)
+```
+Here, we can see the proportion of missing values. I suspect that the missing values could be date specific.
+```{r}
+ggplot(mydata2, aes(x = date, y = Target_Rate)) +
+  geom_miss_point()
+
+ggplot(mydata2, aes(x = date, y = Upper_Target)) +
+  geom_miss_point()
+
+ggplot(mydata2, aes(x = date, y = Lower_Target)) +
+  geom_miss_point()
+```
+We can see that the variable Target_Rate is completely missing before 1980's and is also missing after late 2000s. It seems that upper and lower targets replace the Target_Rate variable.
+
+Now, I first filter data from 1980, and also impute the missing values from the later part of the data where Target_Rate is missing, but lower and upper target rates are present.
+
+### Identifying variables that need to be mutated
+
+```{r}
+mydata3 <- mydata2 %>% 
+     filter(date> ymd("1982-09-01"))%>%
+     mutate (Imputed_Target_Rate = ifelse(is.na(Target_Rate), (Lower_Target + Upper_Target) / 2, Target_Rate))
+glimpse(mydata3)
+     
+```
+We can now see that the effective rate and the target rate usually move together, and that pattern is retained even after imputation. I this imputation, I have imputed the missing target rates, with the averages of lower and upper targets.
+
+```{r}
+mydata4 <- mydata3 %>%
+gather(variable, value, Imputed_Target_Rate, Effective_Rate) 
+
+ggplot(mydata4, aes(x = date, y = value, color = variable)) +
+geom_line()
+  
+```
+We could moreover, impute the missing values of GDP_percent_change, Unemployment_rate, and Inflation_rate by the annual averages:
+
+```{r}
+mydata5 <- mydata3 %>%
+  group_by(year = lubridate::year(date)) %>%
+  mutate(GDP_Percent_Change_imputed = ifelse(is.na(GDP_Percent_Change), mean(GDP_Percent_Change, na.rm = TRUE), GDP_Percent_Change)) %>%
+  mutate(Unemployment_Rate_imputed = ifelse(is.na(Unemployment_Rate), mean(Unemployment_Rate, na.rm = TRUE), Unemployment_Rate)) %>%
+ mutate(Inflation_Rate_imputed = ifelse(is.na(Inflation_Rate), mean(Inflation_Rate, na.rm = TRUE), Inflation_Rate)) %>% 
+  ungroup()
+
+mydata6 <- mydata5 %>%
+  select(date, Imputed_Target_Rate, Effective_Rate, GDP_Percent_Change_imputed, Unemployment_Rate_imputed, Inflation_Rate_imputed)
+glimpse(mydata6)
+
+```
+
+This is how the final dataset looks like after imputations.
+

@@ -1,0 +1,145 @@
+---
+title: "Challenge 5"
+author: "Connor Landreth"
+description: "Visualization"
+date: "2023-03-26"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐ 
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐ 
+-   USA Households ⭐⭐⭐⭐⭐
+
+setwd("C:/Github Projects/601_Spring_2023/posts/_data")
+
+marriage <- read.csv("australian_marriage_tidy.csv")
+
+Even though this dataset is small and one could simply eye through the set to identify regions where people are predominately unmarried.
+
+```{r}
+View(marriage)
+marriage %>% 
+  count(resp)
+
+df1 <- marriage %>% 
+  select(resp, territory, percent) %>%
+  filter(resp == "no") %>% 
+  filter(percent > 50)
+
+View(df1)
+
+```
+By filtering only people who responded no at a rate of over 50%, it is clear every region has more married people than not. So, we will filter differently.
+
+library(ggplot2)
+install.packages("ggthemes")
+library(ggthemes)
+
+```{r}
+library(ggplot2)
+install.packages("ggthemes")
+library(ggthemes)
+
+pvar = c(57.8, 64.9, 60.7, 62.5, 63.7, 63.6, 60.6, 74.0)
+  order(pvar)
+  pvar[order(pvar)]
+  pvar
+  
+marriage %>% 
+  filter (resp %in% c("yes")) %>% 
+  ggplot(mapping = aes(x = percent,
+                       y = territory,
+                       labs(title = "Response Count by Territory",
+                            y = "Territory",
+                            x = "Percentage" )))+
+
+  theme_economist()+
+  scale_color_economist()+
+  geom_point(alpha = 0.5)
+
+
+
+```
+Australian Capital Territory can be seen as clearly having the greatest percent of the population married, at almost 75%. New South Wales is on the other side of the spectrum, at nearly 55%.
+
+next we'll attempt to look at the count with a density map.
+```{r}
+climb %>% 
+  filter(resp == "yes") %>% 
+  ggplot(aes(count, territory, color=count))+
+  geom_point(size=3, alpha = 0.8)+
+  geom_smooth()+
+  theme_linedraw()+
+  labs(title="Count by Territory",
+       x = "Number of Married Individuals",
+       y = "Territory")
+
+
+```
+Why is it important that we do this? Because looking at the graph of percentage, Australian Capital Territory is vastly dominant in terms of how many individuals are married while New South Wales lags in the very back. However, when looking at count, we see that new South Wales has a much larger count and the Capital Territory has nearly the smallest count. Because of this, we can assume the greater the count, the more likely the percentage is to fall.
+
+Below, we'll take a closer look at the differences between the two.
+
+```{r}
+NSW.compare <- marriage %>% 
+  select(resp, count, percent, territory) %>% 
+  arrange(territory) %>% 
+  filter(territory %in% c("New South Wales", "Australian Capital Territory(c)")) 
+```
+
+
+
+```{r}
+NSW.compare %>% 
+  ggplot(mapping = aes(x = count))+
+  geom_boxplot(fill="steelblue")+
+  theme_classic()+
+  labs(title = "Count by Territoy",
+       x = "percent")
+```
+

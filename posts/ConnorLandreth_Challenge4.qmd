@@ -1,0 +1,115 @@
+---
+title: "Challenge 4 - Fed Rates"
+author: "Connor Landreth"
+description: "More data wrangling & Description of Fed Data"
+date: "03/17/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - fed_rates
+  - ggplot
+  - Tidyr
+
+---
+
+Check wd and load in packages
+
+```{r}
+getwd()
+setwd("C:/Github Projects/601_Spring_2023/posts/_data")
+
+library(tidyverse)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+Read in Fed Rates Data
+```{r}
+Rates <- read.csv("FedFundsRate.csv")
+glimpse(Rates)
+```
+
+### Briefly describe the data
+The data is inclusive of 10 variables and 904 observations. It look at fed rate data by month, year, and day from 1954-2017. Categories include interest and inflation rates, GDP, and funds target rates (lower x upper bounds)
+
+## Tidy Data (as needed)
+
+
+Next, we'll combine the variables to make one date variable, then pull it into the Rates data frame
+```{r}
+## Make one date variable
+
+df1$Date <- as.Date(with(df1,paste(Year,Month,Day,sep = "-")), "%Y-%m-%d")
+View (df1)
+
+Date = df1
+
+## Combine data frame so "Date" is in original frame
+df2 <- cbind(Rates, df1)
+
+View(df2)
+
+## Remove individual (Year, Month, Day variables)
+df3 <- df2[-c(1:3,11:13)]
+
+View(df3)
+```
+Next, I will arrange the new 
+
+
+This data is rather tidy, however, I will still elect to make some alterations to look at specific variables. I will look at the comparison between inflation and unemployment.
+```{r}
+
+
+df4 <- df3 %>% 
+  select(6:8) %>% 
+  drop_na(Inflation.Rate, Unemployment.Rate)
+View(df4)
+
+```
+This view of df shows us a side-by-side, isolated comparison of unemployment and inflation rates by year, month, day.
+
+Any additional comments? -
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+Sort date order from least recent to most recent and graph the trend.Additionally, I will find the mean unemployment rate to aid analysis, and finally mutate column heads for visual appeal.
+
+```{r}
+df4[order(as.Date(df4$Date, format="%m/%d/%Y")),]
+
+df4 %>% 
+  summarise(Mean = mean(Unemployment.Rate))
+
+
+
+
+```
+
+
+
+```{r}
+df4 %>% 
+  drop_na(Date) %>% 
+  filter(Inflation.Rate > 2) %>% 
+  ggplot(aes(Date, Unemployment.Rate, color=Inflation.Rate))+
+  geom_point(size=3, alpha = 0.8)+
+  geom_smooth()+
+  theme_linedraw()+
+  labs(title="Interest & Unemployment Rates by Date")
+```
+
+The above chart shows high and low unemployment rates from 1954 and 2017. There is slight concentration on the lower end of the spectrum, but almost all of the instances of high inflation rates are seen above the mean of ~6. The lighter blue dots are representative of greater inflation rates, which again, all fall higher on the chart. This chart challenges the intuitive idea that unemployment and inflation are inversely related, meaning that traditionally it's said the the higher the inflation rate, the lower unemployment is.
+
+
+Any additional comments?

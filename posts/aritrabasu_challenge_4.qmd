@@ -29,7 +29,7 @@ library(ggplot2)
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
-## Reading in data
+### Reading in data
 
 
 ```{r}
@@ -37,6 +37,9 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 mydata <- read.csv("_data/FedFundsRate.csv")
 glimpse(mydata)
 ```
+
+
+### Describing the data
 ```{r}
 print(summarytools::dfSummary(mydata,
                         varnumbers = FALSE,
@@ -46,11 +49,8 @@ print(summarytools::dfSummary(mydata,
                         valid.col    = FALSE),
       method = 'render',
       table.classes = 'table-condensed')
-
-View(mydata)
 ```
 
-### Describing the data
 We have data on federal funds rates between 1954 and 2017. The variables include a target rate, as well as upper and lower targets. Along with that, it also contains effective rates which seem to be the actual prevailing rates at that point of time. We also have percentage change in GDP, unemployment and inflation. 
 
 After viewing the data, it can be seen that we need to combine the date into a single variable (from the year, month and day). I also select away the previous three variables of month year and day, and rename the other variables. 
@@ -66,11 +66,11 @@ View(mydata2)
 ```
 It can be seen that the date variable has been appropriately created, and other variables are modified.
 
-## Tidy Data (as needed)
+### Tidy Data (as needed)
 
 The data is already tidy, with ymd observations from 1954 to 2017.
 
-## Missing values
+### Missing values
 
 The next task is to look at the missing values systematically.
 
@@ -94,7 +94,7 @@ We can see that the variable Target_Rate is completely missing before 1980's and
 
 Now, I first filter data from 1980, and also impute the missing values from the later part of the data where Target_Rate is missing, but lower and upper target rates are present.
 
-## Identifying variables that need to be mutated
+### Identifying variables that need to be mutated
 
 ```{r}
 mydata3 <- mydata2 %>% 
@@ -103,7 +103,7 @@ mydata3 <- mydata2 %>%
 glimpse(mydata3)
      
 ```
-We can now see that the effective rate and the target rate usually move together, and that pattern is retained even after imputation.
+We can now see that the effective rate and the target rate usually move together, and that pattern is retained even after imputation. I this imputation, I have imputed the missing target rates, with the averages of lower and upper targets.
 
 ```{r}
 mydata4 <- mydata3 %>%
@@ -129,5 +129,5 @@ glimpse(mydata6)
 
 ```
 
-
+This is how the final dataset looks like after imputations.
 

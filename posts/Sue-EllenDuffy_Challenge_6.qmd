@@ -1,0 +1,119 @@
+---
+title: "Challenge 6 Air BnB Data by Last Review"
+author: "Sue-Ellen Duffy"
+description: "Visualizing Time and Relationships"
+date: "04/02/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - Sue-Ellen Duffy
+  - air_bnb
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(summarytools)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## AirBnB Listing Data in New York City 2019
+
+This dataset shows AirBnB listings in NYC in 2019 with 48,895 rows (listings) and 17 columns (data for each listing). We see different types of observations including NYC neighborhood and neighborhood group, type of rental (entire home, private room, shared room), their prices, the minimum required number of nights, and number of guest reviews. Additionally we can see how many listing each host has on AirBnB, how many days a listing was available throughout 2019, and the date of the last guest review.
+
+## Read in the Data
+
+I chose not to pivot this data because each listing was unique, even if a host had different listings, each had different price points, neighborhoods, room types, and names.
+
+```{r}
+mydata <- read.csv("_data/AB_NYC_2019.csv", na.strings=c('','  ','   '))
+tibble(mydata, 10)
+```
+
+The different data points for each listing:
+
+```{r}
+colnames(mydata)
+```
+
+## Date Tidying
+
+The date was originally characters, I used transform and as.date to mutate last_review into date format.
+
+```{r}
+mydata <- transform(mydata, last_review=as.Date(last_review))
+str(mydata)
+```
+
+## Time Dependent Visualization
+
+This is the hard part. I'm not exactly sure what to show here, but I got this far so I won't give up!
+
+#1 There has gotta be something wrong with these outliers. Who is staying for more than 200 days?
+
+```{r}
+ggplot(mydata, aes(x=`last_review`, y=`minimum_nights`)) + geom_point() +
+  labs(title = "Date of Last Review by Minimum Nights Stay", x = "Date of Last Review", y = "Minimum Required Nights Stay") 
+
+```
+
+#2 I am just going to making some assumptions here... Those folks who had their entire home/apt for rent and had last reviews in 2012-2014 probably sold their homes. These may have been some of those early starters who were buying up real estate and saw this as a great source of income before they were able to sell and move on to other ventures.
+
+```{r}
+ggplot(mydata, aes(x=`last_review`, y=`room_type`)) + geom_point() +
+    labs(title = "Date of Last Review by Room Type", x = "Date of Last Review", y = "Room Type") 
+
+```
+
+#3 I filtered here for Staten Island, just for fun, and set the listing price to less than $500. Most of the last reviews here are in 2019. 
+
+```{r}
+mydata%>%
+  filter(neighbourhood_group == "Staten Island", price < 500) %>%
+    ggplot(aes(x=last_review, y=price)) +
+  geom_point() + scale_x_date(date_labels = "%Y %m %d") +
+  xlab("")  + scale_x_date(limits = as.Date(c("2012-01-01", "2020-01-01"))) +
+    labs(title = "Staten Island - Date of Last Review by Price of Listing", x = "Date of Last Review", y = "Price of Listings") 
+```
+#4 Here's a comparasson - Manhattan has last reviews all over the place.
+```{r}
+mydata%>%
+  filter(neighbourhood_group == "Manhattan", price < 500) %>%
+    ggplot(aes(x=last_review, y=price)) +
+  geom_point() + scale_x_date(date_labels = "%Y %m %d") +
+  xlab("")   + scale_x_date(limits = as.Date(c("2012-01-01", "2020-01-01"))) +
+    labs(title = "Manhattan - Date of Last Review by Price of Listing", x = "Date of Last Review", y = "Price of Listings") 
+```
+#5 I'm not exactly sure what to make of this graph. But I wanted to make it so here it is!
+
+```{r}
+mydata%>%
+  filter(last_review > "2019-01-01") %>%
+
+ggplot(aes(x=last_review, y=price, fill=neighbourhood_group)) +
+    geom_area() + ylim(0, 500) +
+    labs(title = "2019 Neighborhood Group Data by date of last review and price", x = "Date of Last Review", y = "Price of Listings", fill = "Neighborhood Group") 
+```
+
+## Visualizing Part-Whole Relationships
+
+#1 I chose this date to show the distribution of room type across Neighborhood Groups.
+
+```{r}
+ggplot(mydata, aes(neighbourhood_group, fill = room_type)) + 
+  geom_bar(position="fill", stat = "count") + 
+  labs(title = "Percent Distribution of Room Type in each NYC Neighborhood Group", x = "Neighborhood Group", y = "Percentage of Room Type") +
+  scale_fill_discrete(name = "Room Type") + 
+  theme_bw() 
+```

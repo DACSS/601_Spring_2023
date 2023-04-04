@@ -1,0 +1,90 @@
+---
+title: "Challenge 5"
+author: "Matt Eckstein"
+description: "Introduction to Visualization"
+date: "03/29/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - cereal
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+
+```{r}
+
+cereal <- read_csv("_data/cereal.csv")
+str(cereal)
+
+```
+
+### Briefly describe the data
+
+This dataset lists several popular breakfast cereals by their sodium content, their sugar content, and their type A or C (presumably meaning adult or children's).
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+This dataset is already tidy as it is.
+
+```{r}
+#Nothing needed here
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+I have converted the Type variable into a numeric variable.
+
+```{r}
+#Converting types A and C to numeric values 1 and 2
+cereal <- cereal%>%
+  mutate(Type = case_when(
+    Type == "A" ~ 1,
+    Type == "C" ~ 2)
+         )
+
+#Checking that the variable type was successfully converted
+str(cereal)
+
+```
+
+## Univariate Visualizations
+
+I chose to visualize sodium and sugar with histograms because these do a good job of illustrating the distribution of cereals by the amount of each substance they contain. I chose to have 10 bins in each graph because this number provides relatively neat graphs that illustrate that the amount of sodium in cereals clusters around a value just shy of 200 units, while the distribution of the amount of sugar in cereals is relatively uniform
+```{r}
+summary(cereal)
+ggplot(cereal, aes(Sugar)) + geom_histogram(bins = 10)
+ggplot(cereal, aes(Sodium)) + geom_histogram(bins = 10)
+
+```
+
+
+## Bivariate Visualization(s)
+
+
+I chose to make a scatterplot in order to see any relationship between the amount of sodium in a cereal and the amount of sugar in one - there is no apparent strong relationship, it turns out.
+
+```{r}
+ggplot(cereal, aes(Sodium, Sugar)) + geom_point()
+```
+

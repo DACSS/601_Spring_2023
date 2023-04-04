@@ -1,0 +1,118 @@
+---
+title: "Challenge 5"
+author: "PoChun Yang"
+description: "Introduction to Visualization"
+date: "03/30/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - railroads
+  - cereal
+  - air_bnb
+  - pathogen_cost
+  - australian_marriage
+  - public_schools
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+
+
+```{r}
+df<-read_excel("_data/Total_cost_for_top_15_pathogens_2018.xlsx ")
+```
+
+### Briefly describe the data
+This data is talking about the foodborne illness estimates in 2018. Besides that, it give the value of 15 different types of pathogens which cause human to have a foodborne illness. In addition, give the cost and case of those pathogens.
+
+## Tidy Data (as needed)
+
+As I use the read_excel to read the data files. There are a lot of the NA so I used na_omit to remove all the rows which have a NA. In addition, the column names are pretty difficult for people to understand easily. Therefore, I used the colnames this command to change all the words of the previous colnames. Notice that the final row is the total for 15 pathogons so I removed it.
+
+```{r}
+df<- na.omit(df)
+df<- df[-16,]
+colnames(df)
+colnames(df)[1] ="pathogens"
+colnames(df)[2] ="case"
+colnames(df)[3] ="cost"
+df$case<-as.numeric(df$case)
+df$cost<-as.numeric(df$cost)
+df
+```
+
+## Univariate Visualizations
+
+When I used the ggplot, I found that there are a lot of errors. Such as, I could not run the geom_histogram. The resaon is that I could not found the cost and case is char value. therefore, I add the as.numeric command to solve the problem. If I want to show the bar chart of the char value, I should use the geom_bar. 
+
+Document your work here.
+
+```{r}
+#ggplot(df,aes(x=pathogens,y =cost))+
+ # geom_bar()
+ggplot(df, aes(x=case)) +
+  geom_histogram()
+ggplot(df, aes(x=cost)) +
+  geom_histogram()
+ggplot(df, aes(x=case)) +
+  geom_histogram()+
+  scale_x_continuous(trans = "log10")
+ggplot(df, aes(x=cost)) +
+  geom_histogram()+
+  scale_x_continuous(trans = "log10")
+
+```
+
+
+
+## Bivariate Visualization(s)
+```{r}
+ggplot(df, aes(case,cost,label=pathogens)) + 
+  geom_point(color="blue")+
+  geom_text()
+ggplot(df, aes(x=case, y=cost, label=pathogens)) +
+  geom_point(color = "red")+
+  scale_x_continuous(trans = "log10", labels = scales::comma)+
+  scale_y_continuous(trans = "log10", labels = scales::comma)+
+  geom_text()
+ggplot(df, aes(case, cost)) + geom_boxplot()
+```

@@ -1,6 +1,6 @@
 ---
 title: "Challenge 6 Solutions"
-author: "Meredith Rolfe"
+author: "Meredith Rolfe & Sean Conway"
 description: "Visualizing Time and Relationships"
 date: "04/05/2023"
 format:
@@ -17,6 +17,8 @@ categories:
   - debt
   - usa_hh
   - abc_poll
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r}
@@ -52,7 +54,8 @@ Today's challenge is to:
 This data set runs from the first quarter of 2003 to the second quarter of 2021, and includes quarterly measures of the total amount of household debt associated with 6 different types of loans - mortgage,HE revolving, auto, credit card, student, and other - plus a total household debt including all 6 loan types. This is another fantastic macroeconomic data product from the New York Federal Reserve. See Challenge 4.
 
 ```{r}
-debt_orig<-read_excel("_data/debt_in_trillions.xlsx")
+debt_orig<-here("posts","_data","debt_in_trillions.xlsx") %>%
+  read_excel()
 debt<-debt_orig%>%
   mutate(date = parse_date_time(`Year and Quarter`, 
                            orders="yq"))
@@ -140,9 +143,9 @@ ggplot(debt_long, aes(x=date, y=total, fill=Loan)) +
 This data set runs from July 1954 to March 2017, and includes daily macroeconomic indicators related to the effective federal funds rate - or the interest rate at which banks lend money to each other in order to meet mandated reserve requirements. There are 7 variables besides the date: 4 values related to the federal funds rate (*target*, *upper target*, *lower target*, and *effective*), 3 are related macroeconomic indicators (*inflation*, *GDP change*, and *unemployment rate*.)
 
 ```{r}
-fed_rates_vars<-read_csv("_data/FedFundsRate.csv",
-                         n_max = 1,
-                         col_names = NULL)%>%
+fed_rates_vars<-here("posts","_data","FedFundsRate.csv") %>% 
+  read_csv(n_max = 1,
+           col_names = NULL)%>%
   select(-c(X1:X3))%>%
   unlist(.)
 
@@ -150,10 +153,10 @@ names(fed_rates_vars) <-c("fed_target", "fed_target_upper",
                          "fed_target_lower", "fed_effective",
                          "gdp_ch", "unemploy", "inflation")
       
-fed_rates_orig<-read_csv("_data/FedFundsRate.csv",
-                         skip=1,
-                         col_names = c("Year", "Month", "Day", 
-                                       names(fed_rates_vars)))
+fed_rates_orig<-here("posts","_data","FedFundsRate.csv") %>% 
+  read_csv(skip=1,
+           col_names = c("Year", "Month", "Day", 
+                         names(fed_rates_vars)))
 
 fed_rates<-fed_rates_orig%>%
   mutate(date = make_date(Year, Month, Day))%>%
@@ -188,12 +191,180 @@ ggplot(., aes(x=date, y=value, color=variable))+
   facet_grid(rows = vars(variable))
 ```
 
+```{r}
+year_unemploy <- fed_rates %>%
+  pivot_wider(names_from = variable, values_from = value) %>%
+  mutate(year=year(date)) %>%
+  group_by(year) %>%
+  summarise(median_rate=median(unemploy)/100) %>%
+  ungroup()
+year_unemploy
+```
+
+```{r}
+year_unemploy %>%
+  ggplot(aes(year,median_rate))+
+  geom_line()
+```
+
+```{r}
+year_unemploy %>%
+  filter(year<=1981) %>%
+  ggplot(aes(year,median_rate))+
+  geom_line()+
+  scale_y_continuous(labels=scales::percent_format(),limits=c(0,.1))+
+  scale_x_continuous(breaks=seq(1955,1980,5))
+  labs(x="year",y="median unemployment rate")
+```
+
 ## usa_hh ⭐⭐⭐
 
+```{r}
+income_brackets <- c(i1 = "Under $15,000",
+                     i2 = "$15,000 to $24,999",
+                     i3 = "$25,000 to $34,999",
+                     i4= "$35,000 to $49,999",
+                     i5 = "$50,000 to $74,999",
+                     i6 = "$75,000 to $99,999",
+                     i7 = "$100,000 to $149,999",
+                     i8 = "$150,000 to $199,999",
+                     i9 = "$200,000 and over")
+
+ushh_orig <- here("posts","_data","USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx") %>%
+  read_excel(skip=5,
+         n_max = 352,
+         col_names = c("year", "hholds", "del",
+                       str_c("income",1:9,sep="_i"),
+                       "median_inc", "median_se", 
+                       "mean_inc","mean_se"))%>%
+  select(-del)
+ushh_orig 
+ushh_id<-ushh_orig%>%
+  mutate(identity = case_when(
+    str_detect(year, "[[:alpha:]]") ~ year,
+    TRUE ~ NA_character_
+  ))%>%
+  fill(identity)%>%
+  filter(!str_detect(year, "[[:alpha:]]"))
+
+ushh_id<-ushh_id%>%
+  separate(year, into=c("year", "delete"), sep=" ")%>%
+  mutate(identity = str_remove(identity, " [0-9]+"),
+         across(any_of(c("hholds", "mean_inc", "mean_se", "year")), 
+                as.numeric))%>%
+  select(-delete)
+
+ushh_id
+ushh <-ushh_id%>%
+  mutate(gp_identity = case_when(
+   identity %in% c("BLACK", "BLACK ALONE") ~ "gp_black",
+    identity %in% c("ASIAN ALONE OR IN COMBINATION",
+                  "ASIAN AND PACIFIC ISLANDER") ~ "gp_asian",
+    identity %in% c("WHITE, NOT HISPANIC", 
+                    "WHITE ALONE, NOT HISPANIC") ~ "gp_white",
+    identity %in% c("HISPANIC (ANY RACE)") ~ "gp_hisp",
+    identity %in% c("ALL RACES") ~ "gp_all"
+  ))%>%
+  filter(!is.na(gp_identity))%>%
+  group_by(year, gp_identity)%>%
+  summarise(across(c(starts_with("inc"),starts_with("me"),
+                     "hholds"), 
+                   ~median(.x, na.rm=TRUE)))%>% # sort of cheating - getting median of a median?
+  ungroup()
+
+```
+
+```{r}
+ushh %>%
+  filter(gp_identity=="gp_all") %>%
+  ggplot(aes(year,median_inc))+
+  geom_line()
+```
+
+```{r}
+ushh %>%
+  filter(gp_identity!="gp_all") %>%
+  mutate(gp_identity=str_remove(gp_identity,"gp_"))%>%
+  ggplot(aes(year,median_inc,col=gp_identity))+
+  geom_line()+
+  scale_x_continuous(limits=c(min(ushh$year),max(ushh$year)),
+                     breaks=seq(min(ushh$year),max(ushh$year),by=10))+
+  scale_y_continuous(labels = scales::dollar_format())+
+  scale_color_discrete(name="identity")+
+  labs(x="year",y="median income")
+```
 
 ## hotel_bookings ⭐⭐⭐⭐
 
+```{r}
+bookings_orig<- here("posts","_data","hotel_bookings.csv") %>%
+  read_csv()
+bookings<-bookings_orig%>%
+  mutate(date_arrival = str_c(arrival_date_day_of_month,
+                              arrival_date_month,
+                              arrival_date_year, sep="/"),
+         date_arrival = dmy(date_arrival))%>%
+  select(-starts_with("arrival"))
+```
+
+```{r}
+bookings_cumul <- bookings %>%
+  group_by(date_arrival) %>%
+  summarise(n=n()) %>%
+  ungroup() %>%
+  mutate(n_cumul=cumsum(n))
+bookings_cumul
+```
+
+```{r}
+ggplot(bookings_cumul, aes(date_arrival,n_cumul))+
+  geom_line()
+```
+
+```{r}
+bookings_month_n <- bookings %>%
+  mutate(month=floor_date(date_arrival,unit="month")) %>%
+  group_by(month) %>%
+  summarise(n=n()) %>%
+  ungroup()
+
+bookings_month_n
+```
+
+```{r}
+bookings_month_n %>%
+  ggplot(aes(month,n))+
+  geom_line()+
+  scale_x_date(NULL, date_labels = "%b %y",breaks="2 months")+
+  scale_y_continuous(limits=c(0,7000))+
+  labs(x="date",y="number of bookings")+
+  theme(axis.text.x=element_text(angle=90))
+```
+
+```{r}
+bookings_month_hotel_n <- bookings %>%
+  mutate(month=floor_date(date_arrival,unit="month")) %>%
+  group_by(month, hotel) %>%
+  summarise(n=n()) %>%
+  ungroup()
+bookings_month_hotel_n
+```
+
+```{r}
+bookings_month_hotel_n %>%
+  ggplot(aes(month,n,col=hotel))+
+  geom_line()+
+  scale_x_date(NULL, date_labels = "%b %y",breaks="2 months")+
+  scale_y_continuous(limits=c(0,5000))+
+  labs(x="date",y="number of bookings")+
+  theme(axis.text.x=element_text(angle=90))
+```
 
 ## air_bnb  ⭐⭐⭐⭐⭐
 
+```{r}
+airb <- here("posts","_data","AB_NYC_2019.csv") %>%
+  read_csv()
+
+```
 :::

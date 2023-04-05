@@ -1,0 +1,171 @@
+---
+title: "Challenge 4"
+author: "Nanci Kopecky"
+description: "More data wrangling: pivoting"
+date: "08/18/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+library(readr)
+abc_poll_2021<-read.csv(file = "_data/abc_poll_2021.csv",
+                header=TRUE,
+                sep = ","
+                )
+head(abc_poll_2021)
+view(abc_poll_2021)
+ncol(abc_poll_2021)
+nrow(abc_poll_2021)
+```
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+as_tibble(abc_poll_2021)
+
+```
+
+###Tidy Data
+
+The only thing that I noticed to change was that pphhsize was a character instead of a numerical variable. The value "6 or more" was changed to "6" and the column was changed to numerical. It is stacked data with each row representing an observation and a variable in each column. There appears to be no missing values.
+
+```{r}
+df<-as.data.frame.matrix(abc_poll_2021)
+df$pphhsize[df$pphhsize == '6 or more'] <- '6'
+df
+df1 <- transform(df,
+                 pphhsize =as.numeric(pphhsize))
+df1
+```
+Any additional comments?
+
+I am wondering if there was a more efficient way to changing column pphhsize to numerical.
+
+## Visualizations
+
+```{r}
+hist(abc_poll_2021$ppage, breaks=10)
+barplot(table(abc_poll_2021$ppmarit5))
+boxplot(abc_poll_2021$ppage~abc_poll_2021$ppemploy)
+boxplot(df1$pphhsize~abc_poll_2021$ppemploy)
+plot(df1$ppage,df1$pphhsize, 
+     main='Age Vs Household Size')
+```
+
+## Statistical Test
+
+Here I am practicing using the table function and looking at Chi-square on a few categorical variables. Warning Error messages were for counts too low for Skipped. I was interested to see if there there were associations betweeen things like Political Party and Gender, Political Party and Perspective, and Education and Gender.
+
+```{r}
+mean(df1$pphhsize)
+table(df1$pphhsize)
+prop.table(table(df1$pphhsize))
+table(df1$ppeducat,df1$ppgender)
+prop.table(table(df1$ppeducat,df1$ppgender))
+chisq.test(table(df1$ppeducat,df1$ppgender))
+table(df1$QPID,df1$ppgender)
+prop.table(table(df1$QPID,df1$ppgender))
+chisq.test(table(df1$QPID,df1$ppgender))
+politicalvgender <- table(df1$QPID,df1$ppgender)
+chisq.test(politicalvgender)$expected
+chisq.test(table(df1$Q5,df1$ppeducat))
+prop.table(table(df1$QPID,df1$Q5))
+chisq.test(table(df1$QPID,df1$Q5))
+
+```
+
+### Remove NA's
+
+Due to the warnings in trying to run the Chi-square distribution, I tried to remove the Skipped data with ! is.na function; it did not work.
+
+```{r}
+df2 <- df1 %>% 
+  filter(! is.na(ppgender)) %>%
+  filter(! is.na(QPID))
+#sanity check
+table(df2$QPID,df2$ppgender)
+
+```
+##Remove Skipped in QPID and Q5 for Table and Analysis with partyid again
+
+```{r}
+df_removeskip<-df1%>%
+  mutate(partyid = str_remove(QPID, "A[n]* "),
+         partyid = na_if(partyid, "Skipped"))%>%
+  select(-QPID)%>%
+  mutate(Q5 = na_if(Q5,"Skipped"))
+
+#sanity check
+table(df_removeskip$Q5)
+```
+
+```{r}
+#Analysis
+table(df_removeskip$partyid,df1$ppgender)
+prop.table(table(df_removeskip$partyid,df1$ppgender))
+chisq.test(table(df_removeskip$partyid,df1$ppgender))
+politicalvgender <- table(df_removeskip$partyid,df1$ppgender)
+chisq.test(politicalvgender)$expected
+chisq.test(table(df_removeskip$Q5,df1$ppeducat))
+prop.table(table(df_removeskip$partyid,df_removeskip$Q5))
+chisq.test(table(df_removeskip$partyid,df_removeskip$Q5))
+
+```
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+The mutate function and na.if was used above to remove the "Skipped" data. Below, I created a function just for practice and used the mutate function to add a column to df1 with the z-score of the age. Practicing using R and seeing the distribution of the age variable. The histogram shows the distribution of the age of the respondents in the poll.
+
+```{r}
+normdistage <- function(x) {
+  (x-mean(x))/sd(x, na.rm = T)
+}
+normdistage(df1$ppage)
+hist(df1$ppage, breaks = 10)
+df1%>%mutate((ppage-mean(ppage))/sd(ppage), .after = ppage)
+
+```
+
+Any additional comments?

@@ -1,0 +1,121 @@
+---
+title: "Challenge 6 Instructions"
+author: "Michele Carlin"
+description: "Visualizing Time and Relationships"
+date: "04/03/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - Michele Carlin
+  - fed_rate
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(summarytools)
+library(dbplyr)
+library(readr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+library(scales)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+Read in and view summary of 'FedFundsRate' dataset.
+
+```{r}
+FedRates <- read_csv ("_data/FedFundsRate.csv")
+View(FedRates)
+view(dfSummary(FedRates))
+```
+
+This dataset contains 904 rows and 10 columns.  Each row contains various federal funds data points (e.g., the Effective Federal Funds Rate, including lower and upper targets, as well as unemployment and inflation rates).  Monthly data is provided from 1954 to 2017. 
+
+Based on my review of the df summary, it appears that the majority of the data is from the 1st of each month, therefore I am going to run a frequency table to see how many rows are from dates other than the 1st of the month.
+
+```{r}
+FedRates %>% count(Day)
+```
+
+After reviewed the frequency table above of the 'Day' variable, you can see that the majority of the data is based on the 1st of each month, therefore I am going to filter out all rows that are not from the 1st of the month.
+
+```{r}
+sum(FedRates$Day > 1, na.rm=TRUE)
+nrow(FedRates)
+FedRates <- FedRates %>%
+  filter(Day == 1)
+nrow(FedRates)
+
+```
+
+
+```{r}
+FedRates <- FedRates%>%
+  mutate(date = make_date(Year, Month, Day))
+
+select(FedRates, Year, Month, Day, date)
+
+view(dfSummary(FedRates))
+```
+
+Summarise "umemployment rate" variable.
+
+```{r}
+FedRates %>% 
+  group_by(Year) %>%
+  summarise(Avg_UR = mean(`Unemployment Rate`),
+            Min_UR = min(`Unemployment Rate`),
+            Max_UR = max(`Unemployment Rate`))
+```
+
+Time series graph.
+
+```{r}
+FedRates %>%
+ filter(!is.na(`Unemployment Rate`)) %>%
+ ggplot(aes(x=date, y=`Unemployment Rate`)) + 
+   geom_line()+
+   labs(title = "Unemployment Rates: 1954 - 2017", x = "Date", y = "Rate")+
+  scale_x_date(date_breaks = "5 years")+
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+
+FedRates %>%
+  filter(!is.na(`Unemployment Rate`) & !is.na(`Inflation Rate`)) %>%
+ggplot(aes (date)) + 
+  geom_line(aes(y = `Unemployment Rate`, colour = "red", labels = "Unemployment")) +   
+  geom_line(aes(y = `Inflation Rate`, colour = "blue"))+
+   labs(title = "Unemployment and Inflation Rates: 1954 - 2017", y = "Rate", x = "Year")+
+  scale_x_date(date_breaks = "5 years", labels = date_format("%Y"))+
+  theme(axis.text.x=element_text(angle=45,hjust=1))
+```
+How do I change labels on legend?
+
+Create new 'Quarter' variable using mutate and lubridate.
+
+```{r}
+FedRates <- FedRates %>%
+  mutate(Quarter = paste0(quarter(date))) 
+```
+
+Create clustered bar graph using new 'Quarter' variable.
+
+```{r}
+FedRates %>%
+  filter(Year > 2009 & Year < 2018) %>%
+  ggplot(aes(fill=Quarter, x=Year, y=`Unemployment Rate`)) + 
+  geom_bar(position="dodge", stat="summary") +
+     labs(title = "Quarterly Unemployment Rate: 2010 - 2017 ", y = "Rate", x = "Year")
+
+```
+
+how do I get all x-axis labels to show on graph? there is only Q1 data available for 2017 - is there a way to make the red bar the same width as the other red bars?

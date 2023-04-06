@@ -1,0 +1,145 @@
+---
+title: "Challenge 3"
+author: "Nanci Kopecky"
+description: "Tidy Data: Pivoting Animal Weights"
+date: "3/6/23"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+library(readr)
+animal_weight<-read.csv(file = "_data/animal_weight.csv",
+                header=TRUE,
+                sep = ","
+                )
+
+```
+
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+
+This data file has nine geographic areas (9 observaitions) defined by the Inter-governmental Panel on Climate Change (IPCC) and the weights of seventeen animals (17 varioables). One idea is to pivot or organize the data to compare weights of animals in different geographic areas.
+
+```{r}
+head(animal_weight)
+view(animal_weight)
+ncol(animal_weight)
+nrow(animal_weight)
+```
+
+## Anticipate the End Result
+
+The first step in pivoting the data is to try to come up with a concrete vision of what the end product *should* look like - that way you will know whether or not your pivoting was successful.
+
+One easy way to do this is to think about the dimensions of your current data (tibble, dataframe, or matrix), and then calculate what the dimensions of the pivoted data should be.
+
+Suppose you have a dataset with $n$ rows and $k$ variables. In our example, 3 of the variables are used to identify a case, so you will be pivoting $k-3$ variables into a longer format where the $k-3$ variable names will move into the `names_to` variable and the current values in each of those columns will move into the `values_to` variable. Therefore, we would expect $n * (k-3)$ rows in the pivoted dataframe!
+
+### Example: find current and future data dimensions
+
+Used the %\>% pipe feature with the mutate function to add a column.
+
+```{r}
+#| tbl-cap: Example
+
+animal_weight%>%mutate(Cattle...dairy - Cattle...non.dairy, .after = Cattle...non.dairy)
+summary(animal_weight)
+animal_weight %>%
+  summarize(
+    mean_Cattledairy=mean(Cattle...dairy),
+    mean_Cattlenondairy=mean(Cattle...non.dairy),
+    sd_Cattledairy=sd(Cattle...dairy),
+    sd_Cattlenondairy=sd(Cattle...non.dairy)
+    )
+ncol(animal_weight)
+nrow(animal_weight)
+```
+
+## Practicing basics of tibble
+
+```{r}
+tb<-tibble(x=1:5,y=2,z=x+y)
+tb
+tb1<-tibble(': (' = "sad", ': )' = "happy",'24'="24")
+tb1
+as_tibble(animal_weight)
+```
+
+## Trying Data Frames
+
+The first data frame is accurate, but not sure how useful. The second dataframe was just exploring the structure of the data frames, it is not useful or accurate, but I understand what the number means after the array c.
+
+```{r}
+df1<-tibble(IPCC.Area = rep(c("Indian Sub", "E. Europe", "Africa", "Oceania", "W. Europe", "Latin America", "Asia", "Middle East", "N. America"),1),
+           CattleDairy = rnorm(9, mean=425.44, sd=140.39), 
+           CattleNonDairy = rnorm(9, mean=298, sd=116.26))
+df1
+df2<-tibble(CattleType=rep(c("Dairy", "Non Dairy"), 9),
+            IPCC.Area =rep(c("Indian Sub", "E. Europe", "Africa", "Oceania", "W. Europe", "Latin America", "Asia", "Middle East", "N. America"),2),
+           CattleDairy = rnorm(18,mean=425.44, sd=140.39),
+           CattleNonDairy = rnorm(18, mean=298, sd=116.26)
+           )
+df2
+```
+
+```{r}
+df3<-tibble(CattleType=rep(c("Dairy", "Non Dairy"), 1),
+             IndianSub=rep(c(rnorm(1,mean=425.44, sd=140.39), rnorm(1, mean=298, sd=116.26))),
+            E.Europe=rep(c(rnorm(1,mean=425.44, sd=140.39), rnorm(1, mean=298, sd=116.26))))
+
+df3
+```
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+### Example
+
+Pivot_Longer command
+
+```{r}
+df1<-pivot_longer(df1, col = c(CattleDairy, CattleNonDairy),
+                  names_to = "Cattle_Type",
+                  values_to = "Animal_Weight")
+df1
+
+```

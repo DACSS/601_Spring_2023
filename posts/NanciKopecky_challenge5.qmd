@@ -1,0 +1,151 @@
+---
+title: "Challenge 5 Marriage in Australia"
+author: "Nanci Kopecky"
+description: "Introduction to Visualization"
+date: "4/1/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - australian_marriage
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+
+-   try to make them "publication" ready
+-   Explain why you choose the specific graph type
+
+5)  Create at least one bivariate visualization
+
+-   try to make them "publication" ready
+-   Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐
+-   USA Households ⭐⭐⭐⭐⭐
+
+```{r}
+library(readr)
+aussie_marry <- read.csv(file = "_data/australian_marriage_tidy.csv",
+                header=TRUE,
+                sep = ",")
+View(aussie_marry)
+head(aussie_marry)
+ncol(aussie_marry)
+nrow(aussie_marry)
+```
+
+### Briefly describe the data
+
+The data represents the proportions and counts people married in 8 Australian territories.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data is tidy where each cell represents a value and there are no missing values. There are 4 variables, 2 categorical and 2 numerical, and 16 rows. I used the pivot_wider function here to see if the table easier to read and use later for visualizations.
+
+```{r}
+aussie_marry2 <- aussie_marry %>% pivot_wider(names_from = resp, values_from = c(count, percent))
+aussie_marry2
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+I changed the count to be on the scale of 10,000's so the graph does not have big numbers. I did not use the .after feature because I did not want the table to get too wide.
+
+```{r}
+aussie_marry3 <- aussie_marry2 %>% mutate(count_yes = count_yes/10000, 
+                         count_no = count_no/10,000)
+
+aussie_marry3
+```
+
+## Univariate Visualizations
+
+I started with the basics of geom_histogram representing the count of those responded yes and then added more details of the historgram adding fill and labels. The second graph is more colorful and easier to read.
+
+```{r}
+ggplot(aussie_marry3, aes(count_yes)) + geom_histogram (bins = 15)
+
+```
+
+```{r}
+ggplot(aussie_marry3, aes(count_yes, fill = territory)) + 
+  geom_histogram(bins = 15) + 
+  labs(title = "How Many Said YES?!", x = "Said YES! x 10,000", y = "Frequency") 
+  
+```
+
+### Bar Graphs
+
+Here I practiced making bar graphs and exploring different ways to show clearly the x axis labels. I had to use geom_col in instead of geom_bar because the data was already summarized with the territory and percent that said yes.
+
+```{r}
+barplot(aussie_marry3$percent_yes)
+
+aussie_marry3 %>% ggplot(aes(x = territory, y = percent_yes)) + 
+  geom_col(aes(fill = territory)) + 
+  labs(title = "Said YES!", x = "Aussie Territory", y = "Percent %") + 
+  scale_x_discrete(guide = guide_axis(n.dodge = 3)) +
+  NULL
+
+aussie_marry3 %>% ggplot(aes(x = territory, y = percent_yes)) + 
+  geom_col(aes(fill = territory)) + 
+  labs(title = "Said YES!", x = "Aussie Territory", y = "Percent %") + 
+  coord_flip()
+
+```
+
+## Bivariate Visualization(s)
+
+Any additional comments?
+
+I used the only two pieces of numerical data to make a scatterplot. One variable was the count and the other was the percent of the same characteristic. I do not expect the graph to be interesting or informative. And while linear regression would not apply here, I practiced using the function for future reference.
+
+```{r}
+ggplot(aussie_marry3, aes(`count_yes`, `percent_yes`)) + 
+  geom_point( ) + 
+  geom_smooth( ) + 
+  labs(title = "YES! Count and Percent on a Scatterplot", x = "Count that Said YES!", y = "% that said YES!")
+
+sp1<-ggplot(aussie_marry3, aes(x=count_yes, y=percent_yes)) + geom_point() 
+sp1
+  
+```

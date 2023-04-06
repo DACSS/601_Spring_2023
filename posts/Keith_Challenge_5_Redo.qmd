@@ -1,0 +1,144 @@
+---
+title: "Keith Martin Challenge 5"
+author: "Keith Martin"
+description: "Introduction to Visualization"
+date: "04/4/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - cereal
+  
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(summarytools)
+library(ggrepel)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+For this challenge, I decided to use the cereal data set. This data set was already very tidy and did not really require any data cleaning.
+
+
+## Read in data
+
+I read in the below data and displayed the first five rows as a header. As you can see, the data is split into the name of the cereal, the amount of sodium, the amount of sugar and whether or not it is an "Adult" cereal or "Child" cereal.
+
+```{r}
+cereal<-read_csv("_data/cereal.csv")
+head(cereal,5)
+```
+
+I changed A to Adult and C to Child just so that the data set was more clear.
+
+```{r}
+cereal<-cereal%>%
+  mutate(Type = recode(Type, "A"= "Adult", "C"= "Child"))
+head(cereal)
+```
+
+As you can see below, there we're four columns and 20 rows. This was a very small data set and did not require much changing for the visualizations.
+
+```{r}
+colnames(cereal)
+nrow(cereal)
+ncol(cereal)
+```
+
+### Briefly describe the data
+
+I included the basic summary statistics with some condensed visualizations. This provides some useful summary statistics to get a better idea of distribution of the data. As you can see, the data set is relatively short, so not much tidying was required.
+
+```{r}
+print(summarytools::dfSummary(cereal, 
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, ),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+
+## Tidy Data (as needed)
+
+I grouped the data by sodium and sugar. Initially, I did not think that the Type was a helpful data point, but I included it later in the bivariate visualization.
+
+```{r}
+cereal%>%
+  group_by(Cereal)%>%
+  select(Sodium, Sugar)
+
+```
+
+
+## Univariate Visualizations
+
+I created bins for sugar. I decided 2mg bins we're probably the best visualization since all of them contained around less than 20mgs of sugar.
+
+```{r}
+bins_sugar<- round((max(cereal$Sugar) - min(cereal$Sugar))/2)
+bins_sugar
+
+ggplot(cereal, aes(x= Sugar))+
+  geom_histogram(bins = bins_sugar)
+```
+
+I included 25mg bins for the sodium because the range was larger and most we're over 100mgs. As you can see the majority of the cereals we're high in both sodium and sugar. Later, I will use a bivariate box plot to determine if there are any patterns between adult cereal and childrens cereal. 
+```{r}
+bins_sodium<- round((max(cereal$Sodium) - min(cereal$Sodium))/25)
+bins_sodium
+
+ggplot(cereal, aes(x= Sodium))+
+  geom_histogram(bins = bins_sodium)
+```
+
+
+## Bivariate Visualization(s)
+
+As you can see on the below box chart, the average amount of sugar in children cereal is higher than that of adult cereal, but the adult cereal cover a larger range. However, it would be interesting to know how these cereals were categorized and what constitutes an adult/child cereal.
+
+```{r}
+ggplot(cereal, aes(Type, Sugar)) +
+  geom_boxplot()+
+  labs(title = "Sugar by Type")
+```
+
+I have included the bivariate scatter plot to see if there was any clear correlation. It seems that there is no significant pattern between the types of cereal and their sugar/sodium amounts.
+
+```{r}
+ggplot(cereal, aes(x=Sugar, y=Sodium, col = Type)) +
+  geom_point()
+```
+```{r}
+###Outlier Function
+
+is_outlier <- function(x) {
+  return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
+}
+```
+I borrowed this outlier function from the solutions as it will be very helpful for similar types of analysis. When integrated into a scatter-plot, it specifies which are upper and lower outliers. As you can see from the below plots, Raisin Bran is the upper outlier and Frosted Mini-Wheats is the lower.
+
+
+```{r}
+cereal%>%
+  mutate(outlier_sug=is_outlier(Sugar),
+         outlier_sod=is_outlier(Sodium),
+         outlier_lab=if_else(outlier_sug | outlier_sod, Cereal, NA_character_)) %>%
+  ggplot(aes(Sugar,Sodium))+
+  geom_point()+
+  geom_text(aes(label=outlier_lab),col="red")
+```
+

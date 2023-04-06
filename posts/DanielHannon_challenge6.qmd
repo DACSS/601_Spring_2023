@@ -1,0 +1,98 @@
+---
+title: "Debt Time Graphing"
+author: "Daniel Hannon"
+desription: "Created graphs vizualing changes over time to debt data"
+date: "04/05/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - Daniel Hannon
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read in the Data
+
+```{r}
+debt_data <- readxl::read_xlsx("_data/debt_in_trillions.xlsx")
+debt_data
+```
+The data is a tibble of size 74 x 8, telling the amount of Various types of debt active in every quarter of every year from Q1 2003, to Q2 2021. The types of debt are Mortgage, HE Revolving, Auto Loan, Credit Card, Student Loan, Other, and Total. 
+
+In order to better graph the data we will create a data column using lubridate.
+```{r}
+debt_data <- debt_data %>%
+          mutate(Date = yq(`Year and Quarter`))
+```
+## Tidy the Data
+
+In the last assignment it was not always useful to have the data in a tidy format when graphing, so we will save it as a separate tibble
+
+```{r}
+debt_tidy <- debt_data %>%
+          pivot_longer(cols= !c(`Year and Quarter`, Date), names_to = "Debt Type", values_to = "Amount") %>%
+          select(!`Year and Quarter`)
+debt_tidy
+```
+
+## Sanity Check
+
+```{r}
+debt_data %>%
+          select(!c(`Year and Quarter`, Date)) %>%
+          summarise_all(list("mean"= mean, "median"= median, "max"= max, "min" = min))
+```
+
+## Time Evolution Graph
+
+```{r}
+debt_data %>%
+          ggplot(aes(y= Total, x= Date)) +
+          geom_line()+
+          geom_point()+
+          labs(title= "Total Debt by Quarter", y= "Total Debt (in trillions)", x= "Fiscal Quarter")+
+          theme_bw()
+```
+I chose to use a line graph and a point graph to make a connected scatter plot. I did this because the points are useful to know the exact points in time that represent the first date of each quarter, and the line helps to show the trend over time more clearly. If the points weren't there it would almost look like a continuous variable, and it would be hard to see where the exact measurements are.
+
+## Flow Relationship Graph
+
+Here we will use the tidy version of our data set. 
+
+```{r}
+debt_tidy %>%
+    filter(`Debt Type`!= "Total") %>%
+    ggplot(aes(x= Date, y=Amount, color= `Debt Type`)) + 
+    geom_line(show.legend = TRUE) +
+    geom_point()+
+    theme_bw()+
+    labs(title= "Debt Type Breakdown by Quarter", x= "Quarter", y= "Debt (in trillions)")
+  
+```
+Using another line chart makes it hard to see all the non-mortgage debt, because they are all low and overlapping. For this reason the best graph to use seems to be a stacked graph.
+
+```{r}
+debt_tidy %>%
+    filter(`Debt Type`!= "Total") %>%
+    mutate(`Debt Type` =  fct_relevel(`Debt Type`, "Mortgage", "Auto Loan", "Credit Card", "HE Revolving", "Other", "Student Loan"))%>%
+    ggplot(aes(x= Date, y=Amount, fill= `Debt Type`)) + 
+    geom_bar(show.legend = TRUE, stat = "identity")+ 
+    theme_bw()+
+    labs(title= "Debt Type Breakdown by Quarter", x= "Quarter", y= "Debt (in trillions)")
+  
+```
+With a stacked bar chart we can see the trends across the different debt types very clearly as time goes on. We can see when certain type of debt increase compared to other debt and we can still see the total debt as the sum of the bars. Trying to do a grouped bar chart would be very hard to see with the smaller debt bars being dwarfed by the mortgage bars, and the graph would be too wide and the bars would be very skinny. 

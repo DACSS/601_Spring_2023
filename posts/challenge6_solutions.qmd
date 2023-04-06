@@ -1,6 +1,6 @@
 ---
 title: "Challenge 6 Solutions"
-author: "Meredith Rolfe & Sean Conway"
+author: "Meredith Rolfe & Sean Conway & Erico Yu"
 description: "Visualizing Time and Relationships"
 date: "04/05/2023"
 format:
@@ -361,10 +361,44 @@ bookings_month_hotel_n %>%
 ```
 
 ## air_bnb  ⭐⭐⭐⭐⭐
-
 ```{r}
 airb <- here("posts","_data","AB_NYC_2019.csv") %>%
   read_csv()
 
+#reorder the columns and put host_id and name in the front
+example<-subset(airb, select = c(1:11)) #just keep the first ten columns
+example<-example[,c(3,4, 9,10, 1:2, 5:8, 11)] #reorder columns to move the room_type and price ahead to the 3rd and 4th columns
 ```
+
+This dataset contains geolocation data (longtitude and latitude of each property liste), which allows us to create a map of these properties. So let's plot the may by the types of proeprties and their price. Note the options that I add for labels, titles, and colors.
+
+```{r}
+ggplot(example, aes(longitude, latitude, size = price, color = room_type), group = neighbourhood_group) +
+  geom_point() +
+  labs (size = "Price of Property",
+        title = "Map of Airbnb Properties in NYC by Price and Room Types",
+    subtitle = "the airbnb dataset (AB_NYC_2019.csv)")
+  coord_quickmap()
+
+```
+Note that this map does not draw the boundary of the New York City. To plot a map with boundaries, we will have to get the shape data and merge the shape data of different neighbours or neighbourhood_groups. One source you can check out that contains the shape data or shape files (including most major countries and the US States) is the ggplot2::map__data().
+
+
+Let's draw a part-whole relationship by showing different neighbourhood_groups within the sum of bookings of a specific type of room.
+
+```{r}
+## Bivariate Visualization(s)
+ggplot(airb, aes(x=room_type, fill=neighbourhood_group)) +  # setting x-axis as the room_type variable; #filling each room type by a second variable, the neighbourdhood group the property locates in
+ 
+  geom_bar( ) + #option of barchart
+  labs(
+    x = "Type of Rooms",
+    y = "Amount of Bookings",
+    colour = "Neighborhood Group",
+    title = "Bivariate Visualization: room_type + neighbourhood_group",
+    subtitle = "the airbnb dataset (AB_NYC_2019.csv)"
+  )
+```
+
+
 :::

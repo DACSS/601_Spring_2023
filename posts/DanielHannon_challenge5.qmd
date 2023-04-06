@@ -1,0 +1,120 @@
+---
+title: "Cereal Visualization"
+author: "Daniel Hannon"
+desription: "Described and made visualizations for Cereal data"
+date: "04/05/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - Daniel Hannon
+  - cereal
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read in the Data
+
+```{r}
+cereal <- read.csv("_data/cereal.csv")
+cereal
+```
+
+The data set shows the sugar (g) and sodium (mg) content per serving for 20 different cereals. It also categorizes the cereals as children cereals or adult cereals (in the type column).
+
+## Tidy the Data 
+
+In order to make the data tidy, I pivoted it longer to a 40x4 tibble so that each row can be a separate observation, either the sugar content or the sodium content.
+
+```{r}
+cereal_tidy <- pivot_longer(cereal, c(Sodium, Sugar), names_to = "Chemical", values_to = "Amount")
+cereal_tidy
+
+```
+## Descriptive Statistics 
+
+```{r}
+cereal_tidy %>%
+  select(Type)%>%
+  table()
+
+cereal_tidy %>%
+  filter("Sodium" == Chemical) %>%
+  group_by(Type)%>%
+  summarize(Mean = mean(Amount), Median = median(Amount), Minimum =min(Amount), Maximum = max(Amount), Std = sd(Amount), IQR= IQR(Amount))
+
+cereal_tidy %>%
+  filter("Sugar" == Chemical) %>%
+  group_by(Type)%>%
+  summarize(Mean = mean(Amount), Median = median(Amount), Minimum =min(Amount), Maximum = max(Amount), Std = sd(Amount), IQR= IQR(Amount))
+  
+```
+We can see that there are 10 adult cereals, and 10 children cereals, with the children cereals having slightly higher sodium and sugar content than the adult ones. 
+
+## Univariate Visualizations
+```{r}
+cereal_tidy %>%
+  filter(Chemical == "Sodium") %>%
+  ggplot(aes(Amount)) +
+  geom_density(fill= "blue")+
+  theme_minimal()+
+  labs(title = "Sodium Content in Cereal", x= "Sodium Content (mg)", y= "Density")
+
+cereal_tidy %>%
+  filter(Chemical == "Sugar") %>%
+  ggplot(aes(Amount)) +
+  geom_density(fill= "red")+
+  theme_minimal()+
+  labs(title = "Sugar Content in Cereal", x= "Sugar Content (g)", y= "Density")
+  
+```
+
+For Univariate Visualizations, I am choosing to make density plots for the sugar and sodium content across different cereals. I am choosing this because the sodium content is a continuous variable, so while a chart like a bar plot will tell us the frequency of each exact amount of sodium or sugar, a density graph better shows the overall shape of the pattern in the data, and can let us make more general observations.
+
+
+## Bivariate Visualizations
+
+```{r}
+cereal %>%
+  ggplot(aes(x= Sodium, y= Sugar)) +
+  geom_point() + 
+  geom_smooth() +
+  theme_minimal() +
+  labs(title= "Sugar and Sodium Correlation in Cereals", x= "Sodium Content (mg)", y= "Sugar Content(g)")
+
+
+```
+
+At this point I see that while the tidy data is better for somethings, it is easier to use the original data set to perform correlations between the different chemicals in the same cereal. Here I chose a point plot with a smooth function to see if there was any link between the sugar and sodium content, but there appears to not be a strong correlation. 
+
+We have the variable distinguishing Adult and Children cereal, so the last two plots, I wanted to compare the sugar and sodium content. I chose to make two boxplots to be able to compare them side by side because we are using a categorical and a continuous variable. 
+
+```{r}
+cereal %>%
+  mutate(Type= case_match(Type, "C" ~ "Child", "A"~ "Adult")) %>%
+  ggplot(aes(x= Type, y= Sodium))+
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Sodium Content Comparison in Adult and Children's cereal", y= "Sodium content(mg)", x= "Cereal Type")
+
+cereal %>%
+  mutate(Type= case_match(Type, "C" ~ "Child", "A"~ "Adult")) %>%
+  ggplot(aes(x= Type, y= Sugar))+
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Sugar Content Comparison in Adult and Children's cereal", y= "Sugar content(g)", x= "Cereal Type")
+```
+
+These graphs provide us meaningful information about the differences between adult and children cereals. While cereals for children have a more consistent sodium content, it has only a slightly higher average amount of sodium. It also shows that kids cereals tend to have more sugar, while adult cereals cover a wider range, and have a larger varience.

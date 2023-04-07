@@ -1,0 +1,303 @@
+---
+title: "Challenge 5 Instructions"
+author: "Linda Humphrey"
+description: "Introduction to Visualization"
+date: "03/22/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5: AB_NYC_2019
+  - Name: Linda Humphrey
+  - data: AB_NYC_2019.csv
+
+---
+  
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(csv)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+```
+
+## Read in data
+Reading AB_NYC_2019
+
+```{r}
+library(readr)
+
+# Load the data set
+data <- read.csv("~/Desktop/601_Spring_2023/posts/_data/AB_NYC_2019.csv")
+
+```
+
+### Briefly describe the data
+
+AB_NYC_2019.csv is a dataset containing information about Airbnb listings in New York City in 2019. It can be used to analyze various aspects of the Airbnb market.
+
+## Tidy Data (as needed)
+
+Inspecting the dataset to get an idea of its structure and contents using functions such as head(), tail(), str(), and summary():
+
+```{r}
+df <- read.csv("~/Desktop/601_Spring_2023/posts/_data/AB_NYC_2019.csv")
+
+head(df)
+tail(df)
+str(df)
+summary(df)
+
+```
+Checking for missing values and handle them if necessary using functions such as is.na(), sum(), na.omit().
+
+```{R}
+# Check for missing values
+sum(is.na(df))
+
+# Remove rows with missing values
+df <- na.omit(df)
+
+```
+
+Cleaning and transforming the data as needed using functions such as, as.numeric(), and rename().
+
+```{R}
+
+# Load the data set
+data <- read.csv("~/Desktop/601_Spring_2023/posts/_data/AB_NYC_2019.csv",stringsAsFactors = FALSE)
+
+# check for missing values
+sum(is.na(data))
+
+# if there are missing values, remove the rows with missing values
+data <- data[complete.cases(data), ]
+
+# check for duplicates
+sum(duplicated(data))
+
+# remove duplicates
+data <- data[!duplicated(data), ]
+
+# visualize the price column using a boxplot
+boxplot(data$price)
+
+# remove outliers (in this case, we will remove prices above $1,000 per night)
+data <- data[data$price <= 1000, ]
+
+# rename columns
+colnames(data)[1] <- "id"
+colnames(data)[2] <- "name"
+colnames(data)[3] <- "host_id"
+colnames(data)[4] <- "host_name"
+colnames(data)[5] <- "neighbourhood_group"
+colnames(data)[6] <- "neighbourhood"
+colnames(data)[7] <- "latitude"
+colnames(data)[8] <- "longitude"
+colnames(data)[9] <- "room_type"
+colnames(data)[10] <- "price"
+colnames(data)[11] <- "minimum_nights"
+colnames(data)[12] <- "number_of_reviews"
+colnames(data)[13] <- "last_review"
+colnames(data)[14] <- "reviews_per_month"
+colnames(data)[15] <- "calculated_host_listings_count"
+colnames(data)[16] <- "availability_365"
+
+# remove unnecessary columns (in this case, we will remove the id, host_name, and last_review columns)
+data <- subset(data, select = -c(id, host_name, last_review))
+
+# convert data types (in this case, we will convert the price and minimum_nights columns to numeric)
+data$price <- as.numeric(data$price)
+data$minimum_nights <- as.numeric(data$minimum_nights)
+
+
+```
+
+Save the cleaned data
+
+```{R}
+# Load the data set
+data <- read.csv("~/Desktop/601_Spring_2023/posts/_data/AB_NYC_2019.csv",stringsAsFactors = FALSE)
+
+# save the cleaned dataset to a new file
+write.csv(data, "~/Desktop/601_Spring_2023/posts/_data/cleaned_airbnb.csv", row.names = FALSE)
+
+
+```
+
+The resulting dataset will have a row for each date where the availability of the listing is "available" or "not available", and a new column for the month of the date.
+```{R}
+# Load the data set
+data <- read.csv("~/Desktop/601_Spring_2023/posts/_data/AB_NYC_2019.csv")
+
+AB_NYC_2019_long <- pivot_longer(AB_NYC_2019, cols = c("availability_365"), names_to = "date", values_to = "availability")
+
+AB_NYC_2019_long <- mutate(AB_NYC_2019_long, month = substr(date, 6, 7))
+
+head(AB_NYC_2019_long)
+
+```
+
+## Rename variables if necessary using the rename() function from the dplyr package:
+
+```{R}
+library(dplyr)
+
+# Rename the neighbourhood variable to neighborhood
+df <- rename(df, neighborhood = neighbourhood)
+
+```
+
+Convert variables to appropriate data types if necessary using functions such as as.Date(), as.POSIXct(), and as.factor():
+
+```{R}
+# Convert the last_review variable to a date
+df$last_review <- as.Date(df$last_review, format='%Y-%m-%d')
+
+```
+
+Mutate() and head() are used to create a new variable named "total_price".
+```{r}
+# Load the required packages
+library(dplyr)
+
+# Load the data set
+data <- read.csv("~/Desktop/601_Spring_2023/posts/_data/AB_NYC_2019.csv")
+
+# Mutate the data set
+data <- data %>% 
+  mutate(total_price = price * minimum_nights) # Create a new variable named "total_price" that multiplies "price" and "minimum_nights"
+
+# View the mutated data set
+head(data)
+
+```
+
+The "AB_NYC_2019.csv" dataset can be transformed into factors and reordered for ease of graphics and visualization, such as the "neighbourhood_group" variable.
+
+```{R}
+# Load the required packages
+library(dplyr)
+library(forcats)
+
+# Load the data set
+data <- read.csv("~/Desktop/601_Spring_2023/posts/_data/AB_NYC_2019.csv")
+
+# Convert the neighbourhood_group variable to a factor with the desired levels
+data$neighbourhood_group <- factor(data$neighbourhood_group, levels = c("Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"))
+
+# Reorder the levels of the neighbourhood_group factor based on median price
+data$neighbourhood_group <- fct_reorder(data$neighbourhood_group, data$price, .fun = median)
+
+# Plot a box plot of price grouped by neighbourhood_group
+ggplot(data, aes(x = neighbourhood_group, y = price)) +
+  geom_boxplot()
+
+
+```
+
+Label encoding can be used to represent string values numerically, such as the "room_type" variable in the "AB_NYC_2019.csv" dataset.
+```{R}
+# Load the data set
+data <- read.csv("~/Desktop/601_Spring_2023/posts/_data/AB_NYC_2019.csv")
+
+# Convert the room_type variable to a factor
+data$room_type <- factor(data$room_type)
+
+# Convert the factor levels to integers using as.numeric()
+data$room_type_numeric <- as.numeric(data$room_type)
+
+# Display the first few rows of the data
+head(data[, c("room_type", "room_type_numeric")])
+
+```
+
+
+## Univariate Visualizations
+
+Histogram: to visualize the distribution of continuous variables, such as price or reviews_per_mo.
+
+```{R}
+library(ggplot2)
+
+# Plot the histogram of the price variable
+ggplot(data=df, aes(x=price)) + 
+  geom_histogram(bins=30) + 
+  labs(x='Price', y='Count')
+
+```
+
+Pie chart: to visualize the proportion of categorical variables, such as room_type.
+
+```{R}
+# Plot the pie chart of the room_type variable
+ggplot(data=df, aes(x='', fill=room_type)) + 
+  geom_bar(position='fill') + 
+  labs(y='Room type')
+
+```
+
+Scatter plot: to visualize the relationship between two continuous variables, such as price and reviews_per_mo.
+
+```{R}
+# Plot the scatter plot of price and reviews_per_mo
+
+ggplot(data=df, aes(x=price, y = reviews_per_month)) + 
+  geom_point() + 
+  labs(x='Price', y='Reviews per month')
+
+```
+
+Box plot: to visualize the distribution of continuous variables and detect outliers, such as min_nights or reviews.
+
+```{R}
+# Plot the box plot of the min_nights variable
+ggplot(data = df, aes(x='', y = minimum_nights)) + 
+  geom_boxplot() + 
+  labs(y='Minimum nights')
+
+
+```
+
+## Bivariate Visualization(s)
+
+Bar plot: to visualize the relationship between a categorical variable and a count variable, such as neighbourhood_group and the number of listings.
+
+```{R}
+# Plot the bar plot of the number of listings by neighbourhood_group
+ggplot(data=df, aes(x=neighbourhood_group, fill=neighbourhood_group)) + 
+  geom_bar() + 
+  labs(x='Neighbourhood group', y='Number of listings') +
+  scale_fill_discrete(name='Neighbourhood group')
+
+```
+
+Violin plot: to visualize the relationship between two categorical variables and a continuous variable, such as room type, borough, and price.
+
+```{R}
+# Plot the violin plot of price by room type and neighbourhood_group 
+ggplot(data=df, aes(x=room_type, y = price, fill = neighbourhood_group)) + 
+  geom_violin() + 
+  labs(x='Room type', y='Price') +
+  scale_fill_discrete(name= 'neighbourhood_group')
+
+
+```
+
+Scatter plot: to visualize the relationship between two continuous variables, such as price and minimum nights.
+
+```{R}
+# Plot the scatter plot of price and minimum nights
+ggplot(data=df, aes(x=price, y=minimum_nights)) + 
+  geom_point() + 
+  labs(x='Price', y='Minimum nights')
+
+```

@@ -1,0 +1,98 @@
+---
+title: "Challenge 3 Instructions"
+author: "Saksham Kumar"
+description: "Pivoting Egg Data"
+date: "04/03/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+  - Saksham Kumar
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today we attempt to:
+
+1.  read in the eggs dataset, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+```{r}
+eggs<-read_csv("_data/eggs_tidy.csv")
+eggs
+```
+
+
+```{r}
+unique(eggs$month)
+unique(eggs$year)
+```
+
+The dataset has information rearding the prices of eggs in various months across years 2004 to 2013. The eggs are of 2 types: large and extra large. The eggs come in two sizes: dozen and half a dozen.
+
+### Challenge: Describe the final dimensions
+
+Document your work here.
+
+```{r}
+#| tbl-cap: Example
+
+#existing rows/cases
+nrow(eggs)
+
+#existing columns/cases
+ncol(eggs)
+
+#expected rows/cases
+nrow(eggs) * (ncol(eggs)-2)
+
+# expected columns 
+2 + 2
+```
+The inital number of columns are 6 and there are 120 rows. As we are converting 4 columns into 2, the expected number of rows should be (120)*(4) i.e. 480. The number of columns should be reduced to 4.
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+```{r}
+#| tbl-cap: Pivoted Example
+
+eggs_pivoted<-eggs%>%
+  pivot_longer(cols=contains("dozen"), 
+               names_to = "size_quantity",
+               values_to = "price"
+  )
+eggs_pivoted
+```
+
+As we can see that we have 480 rows and 4 columns as predicted before. The data seems tidier. However we see that information in the `size_quantity` column can be split into two: `size` and `quantity`. We perform the same below. We can see that values in this variable follow the pattern *size*_*quantity*. So we first replace this underscore with a space character. And then we use this space to split the string. 
+
+```{r}
+eggs_pivoted$size_quantity<-sub("large_", "large ", eggs_pivoted$size_quantity)
+
+eggs_pivoted_separated <- separate(eggs_pivoted, size_quantity, c("size", "quantity"), " ")
+
+eggs_pivoted_separated
+```

@@ -1,0 +1,107 @@
+---
+title: "Challenge 2"
+author: "Gauri Naik"
+editor: visual
+date: "03/21/2023"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+``` {r table setup, include=FALSE}
+library(tidyverse)
+  hotel <- read.csv("C:/Users/naiga/Documents/GithubDACSS601/601_Spring_2023/posts/_data/hotel_bookings.csv")
+  
+library(summarytools)
+```
+
+## Challenge 2
+### Dataset: hotel_bookings.csv
+
+The data set used today is hotel_bookings.csv. Here we load the first couple lines, to get a preview of what we're looking at.
+
+```{r, echo=FALSE}
+head(hotel) %>%
+  knitr::kable(caption=NULL)
+```
+
+There's a lot of columns available for us to browse through. Let's first figure out what we're working with, and what we think is useful to describe the dataset.
+
+```{r, echo=FALSE, message=FALSE}
+print(
+  summarytools::dfSummary(hotel, 
+                        varnumbers = FALSE,
+                        plain.ascii = FALSE, 
+                        style = "grid", 
+                        graph.magnif = 0.75,
+                        valid.col = FALSE,
+                        na.col = FALSE,
+                        tmp.img.dir = "/tmp",
+),
+method = 'render',
+table.classes = 'table-condensed'
+)
+```
+  
+According to the data summary, we have two types of hotels: a city hotel and a resort hotel. There is also bookings that have been canceled, the arrival date, how long a stay was and whether it was the weekend or week night, how many adults, children, and babies in the stay, meals, country stayed in, if the booking was a repeated guest, the reserved room type, assigned room type, any booking changes, required parking access, reservation status, and more.
+
+We will first group the data by the type of hotel, and then by the type of room it was. We will then look at the data as a whole and sort it out so it is easier to look at, and describe the data.
+
+Then let's set a question to use this data set for. Let's try to figure out the country with the largest amount of stays, and how long a particular reservation stayed compared to others (example, whether reservations with only adults stayed for longer than adults with children or adults with babies).
+
+### Data Description
+
+It seems that all bookings included in this data set are from 2015 to 2017, with the majority of the bookings having been made in 2016. Alongside that, the country with the largest amount of bookings seems to have been Puerto Rico, with Great Britain coming in at second. However, the data set includes bookings where guests showed up and bookings where guests cancelled. There's also several types of rooms, and it seems price fluctuates depending on the rooms and meals.
+
+```{r table, echo=FALSE, message = FALSE}
+library(dplyr)
+library(plyr)
+h2<- hotel %>%
+  select(-c(is_canceled, 
+            lead_time, 
+            arrival_date_week_number,
+            market_segment,
+            distribution_channel,
+            is_repeated_guest,
+            previous_cancellations,
+            previous_bookings_not_canceled,
+            agent,
+            company,
+            days_in_waiting_list,
+            customer_type,
+            total_of_special_requests,
+            booking_changes,
+            deposit_type,
+            reservation_status_date
+            )) %>%
+  plyr::rename(c(hotel = "Type_of_Hotel",
+                 arrival_date_year = "Year",
+                 arrival_date_month = "Month",
+                 arrival_date_day_of_month = "Day",
+                 stays_in_weekend_nights = "Stays_in_Weekend_Nights",
+                 stays_in_week_nights = "Stays_in_Week_Nights",
+                 adults = "Adults",
+                 children = "Children",
+                 babies = "Babies",
+                 meal = "Meal_Type",
+                 country = "Country",
+                 reserved_room_type = "Reserved_Room_Type",
+                 assigned_room_type = "Assigned_Room_Type",
+                 adr = "Average_Daily_Rate",
+                 required_car_parking_spaces = "Required_Car_Parking_Spaces",
+                 reservation_status = "Reservation_Status"
+                 ))
+h2$Month = match(h2$Month, month.name)
+h2 <- mutate(h2, Date = as.Date(paste(h2$Year, h2$Month, h2$Day, sep = "-"), "%Y-%m-%d"))
+h2 <- select(h2, -c(Year, Month, Day))
+h2 <- relocate(h2, Stays_in_Week_Nights, .before = "Stays_in_Weekend_Nights")
+h2 <- relocate(h2, Date, .before = "Stays_in_Week_Nights")
+h2 <- relocate(h2, Reserved_Room_Type, .before = "Stays_in_Week_Nights")
+h2 <- relocate(h2, Assigned_Room_Type, .before = "Stays_in_Week_Nights")
+h2 <- relocate(h2, Average_Daily_Rate, .before = "Country")
+h2$Matched_Room_Type <- ifelse(h2$Reserved_Room_Type==h2$Assigned_Room_Type, 'Assigned', 'Unassigned')
+h2 <- relocate(h2, Matched_Room_Type, .before = "Stays_in_Week_Nights")
+print(h2)
+```
+Due to the amount of data we have available, Quarto takes a long time to load if we try to create a customized table. We still have a lot of data, but at least it's manageable now. We also have a new column where we can check whether or not the reserved room type was the type assigned to the booking when checked in.

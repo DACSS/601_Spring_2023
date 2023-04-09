@@ -2,7 +2,7 @@
 title: "Final Project Assignment #1: Tim Shores"
 author: "Tim Shores"
 description: "Project & Data Description"
-date: "04/03/2023"
+date: "04/09/2023"
 format:
   html:
     df-print: paged
@@ -17,47 +17,12 @@ editor_options:
   chunk_output_type: console
 ---
 
-## Important Formatting & Submission Notes: {#important-formatting-submission-notes}
-
-1.  **Use this file as the template to work on: start your own writing from Section "Part.1"**
-
-2.  **Please make the following changes to the above YAML header:**
-
-    DONE -   Change the "title" to "Final Project Assignment#1: First Name Last Name";
-
-    DONE -   Change the "author" to your name;
-
-    DONE -   Change the "date" to the current date in the "MM-DD-YYYY" format;
-
-3.  **Submission:**
-
-    -   Delete the unnecessary sections ("Overview", "Tasks", "Special Note", and "Evaluation").
-    -   Render and submit the file to the blog post like a regular challenge.
-
-## Overview of the Final Project {#overview-of-the-final-project}
-
-The goal is to tell a coherent and focused story with your data, which answers a question (or questions) that a researcher, or current or future employer, might want to have answered. The goal might be to understand a source of covariance, make a recommendation, or understand change over time. We don't expect you to reach a definitive conclusion in this analysis. Still, you are expected to tell a data-driven story using evidence to support the claims you are making on the basis of the exploratory analysis conducted over the past term.
-
-In this final project, statistical analyses **are not required**, but any students who wish to include these may do so. However, **your primary analysis should center around visualization rather than inferential statistics.** Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. **Do not run a multiple regression with numerous predictors and report which predictors are significant!!**
-
-## Tasks of Assignment#1 {#Tasks-of-assignment1}
-
-This assignment is the first component of your final project. Together with the later assignments, it make up a short paper/report. In this assignment, you should introduce a dataset(s) and how you plan to present this dataset(s). This assignment should include the following components:
-
-1.  **A clear description of the dataset(s) that you are using.**
-
-2.  **What "story" do you want to present to the audience? In other words, what "question(s)" do you like to answer with this dataset(s)?**
-
-3.  **The Plan for Further Analysis and Visualization.**
-
-We will have a special class meeting on April 12 to review and discuss students' proposed datasets for the final project. **If you want your project being discussed in the class, please submit this assignment before April 12.**
-
 ```{r}
 #| label: setup
 #| warning: false
 #| message: false
 
-my_packages <- c("tidyverse", "pdftools", "knitr", "ggplot2") # create vector of packages
+my_packages <- c("tidyverse", "pdftools", "knitr") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
@@ -65,83 +30,173 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 
 ## Part 1. Introduction {#describe-the-data-sets}
 
-In this part, you should introduce the dataset(s) and your research questions.
+This is the story of two small, rural Massachusetts towns that have made an agreement to combine their two local police departments into a single, regionalized department. The regionalization agreement, initiated in 2020, has made it more challenging to assess police and other public safety personnel need. 
 
-1.  Dataset(s) Introduction:
+For example, if demand for first responders has increased, is it because a single police department is now responding to calls from both towns, or is it for reasons unrelated to regionalization, such as increased police response to medical calls or other calls for which police response is not required?
 
-    -   identify the source of the dataset(s): who or which organization collected the dataset(s); some dataset(s) also tells you how and when it was collected ;
+I intend to use the data collected to better inform budgeting and public safety discussion by public officials in the two towns. Furthermore, the work of regionalized municipal services is a common challenge that small rural towns, strapped for revenue, must consider. Improving how we collect and derive insights from municipal service regionalization data will be a vital service to towns who often don't have the capacity to organize their own data-driven policy and administration.
 
-    -   a description of the "cases" represented by the dataset(s); in other words, what does each row represent?
 
-    -   **Erico's hint:** the website of the dataset(s) usually has a brief introduction of the above information; you can also look for the "user manual" document that comes with the dataset(s).
+1.  Dataset Introduction:
 
-    -   For reference, you can check out[the "Introduction" section of this final project](https://dacss.github.io/601_Fall_2022_final_posts/posts/final_project_Guanhua_Tan.html) as an example of dataset(s) introduction.
+Following the guidance of the [Massachusetts Public Records Law](https://www.mass.gov/info-details/massachusetts-law-about-freedom-of-information-and-public-records), I submitted public records requests in March 2023 to my local police department in Leverett and to Shelburne Dispatch, which handles emergency calls for most towns in Franklin County.
 
-2.  What questions do you like to answer with this dataset(s)?
+After learning that the local Leverett Police Department (which also covers the town of Wendell as of 2020) had requested the creation of a fourth full-time police officer position for Fiscal Year 2024, I sought information to find out what had changed in our police call data to justify this request. This is from the body of my public records request: 
+
+> I also left a voicemail, but thought it would help to send my request by email. I've been learning about the budget requests from last week's meeting to get a sense of the request and the call volume and any other factors behind the request. It would help if I could learn more about our call data. 
+>
+>I'm writing to request public data to do with Leverett and Wendell calls made to dispatch, and calls handled by our police department, for the 5-year period 2018 to 2022 (inclusive of the years 2018, 2019, 2020, 2021, and 2022). I'm requesting complete police department call detail records, with columns of data redacted if they are subject to specific statutory exemption to the MA Public Records Law due to criteria such as victim confidentiality. 
+>
+>Please export data from your call management software application to CSV or XLSX files, rather than PDF or Word documents. The tabular CSV or XLSX format will facilitate data analysis.
+
+According to Shelburne Dispatch Supervisor Butch Garrity, the dispatch center and local agencies have used a client-server application called [IMC-Central Square](https://www.centralsquare.com/) since 1997 to manage dispatch calls and responses. The application has a reputation for being difficult to use. 
+
+In 2020, the town of Leverett appointed residents to a Social Justice Committee (SJC). While researching a report on policing and the experience of people of color in Leverett, the SJC submitted multiple requests for detailed reports of local police calls. Leverett PD Chief Scott Minckler didn't comply, claiming that he didn't know how to generate reports for anything other than basic call volume. The SJC met with someone at Amherst PD, which uses the same software, who offered to meet with the Leverett Chief to show him how to do it. The Leverett Chief, to my knowledge, ignored that invitation. This is in violation of the Massachusetts public records law, but it's not easy to enforce that law.
+
+This time around, Chief Minckler was able to comply with my request thanks to the reporting assistance of Officer Kimball. However, they were not able to export to Excel or CSV format.
+
+I received several PDF files with summary data about police calls handled by local police departments for both Leverett and Wendell for the years 2018 through 2022. The data is input by emergency dispatch staff and police officers responding to calls routed to the Leverett or Wendell PDs. These files are reports exported from the dispatch records management software include three types of data: 
+
+a. Call Reason Breakdown (742 records): Each observation is a call reason (examples include "Assault", "Traffic violation", "Community policing") for each year and town, with a summary count of calls initiated by the local PD, the count of calls sent to the PD from dispatch, the average time to arrive to the call, and the average time spent on the call. 
+b. Call Actions (2,481 records): Each observation is a call action (examples include "Investigated", "Services Rendered", "Report Taken") for each year, town, and call reason, with a summary count of call actions. Each observation has a many to one relationship with a call reason observation: each call reason observation can have many call actions, but each call action observation can have only one call reason observation.
+c. Operator Breakdown (150 records): Each observation is an ethnicity, race, or sex describing automobile operators for each year and town, with summary count of operators. The data does not relate these records to call reasons or call actions.
+
+From Supervisor Garrity, I received several Word documents including dispatch policy manuals that describe how to identify and triage calls, and Shelburne Dispatch annual reports for the years 2019 through 2022. The annual reports include a lot of information about call reasons and call actions throughout the region, but the report format and information presented changes every year. I may be able to derive total call volume from these reports to get a sense of how the call data compares to the two small towns in focus (Leverett and Wendell).
+
 
 ## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
 
-This part contains both a coding and a storytelling component.
+My primary interest is in the call reason and call actions data. I would like to answer the following questions: 
 
-In the coding component, you should:
+1. Which call reasons require the most personnel time, and how has this changed from 2018 to 2022?
+2. Which call actions are associated with the most time-consuming call reasons, and how has this changed?
+3. Leverett and Wendell began a regionalization agreement in 2020. How has that impacted the time spent on calls?
+4. The call data does not show when police response is required. However, I can make some reasonable interpretations by coding calls in the following four categories. This will allow me to compare calls and actions in terms of the change in demand for police personnel -- when a police officer is required, compared to when a police officer responds because another type of public safety responder is not available.
+a. Crime
+b. Traffic incident
+c. Medical
+d. Referral
+e. Administrative
+f. Proactive
+5. Call actions show when a police call results in a referral to another agency, such as state police, utility, highway department, hospitals, animal control, other. Although the call data doesn't indicate which call reasons are "police optional" reasons in terms of dispatcher procedure, these referral actions can be interpreted as a proxy for calls that need not go to the police. What is the time taken to respond to call with these actions, and how might that impact the rationale for police department personnel?
+5. Medical calls do not require police, although police may be the closest first responder to the location of an incident. How often do police respond to medical calls, and how does that impact the police department workload?
 
-1.  read the dataset;
-
-    -   (optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step.
-
-    -   (optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns.
-
-```{r}
-txt <- pdf_text("../posts/TimShores_FinalProject_Data/02Leverett2018.pdf")
-
-# first page text
-cat(txt[1])
-```
-
-2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;
-
-    -   for examples: dim(), length(unique()), head();
-
-    ```{r}
-
-    ```
-
-3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
+I also plan to figure out how to use R to read in and parse the data from the source PDF files. For assignment 1, I've read in a CSV version derived from the PDFs using copy and paste and manual data tidying.
 
 ```{r}
+old <- options( # tibble number formatting
+  pillar.sigfig = 2
+)
+
+policeCallDF <- read.csv("../posts/TimShores_FinalProject_Data/CALL_REASON_BREAKDOWN_Leverett_Wendell_MA_Police_Department_Call_Data_2018_to_2022.csv")
+
+pcRows <- prettyNum(nrow(policeCallDF), big.mark = ",", scientific = FALSE)  # Apply comma-separated format
+pcCols <- prettyNum(ncol(policeCallDF), big.mark = ",", scientific = FALSE)
+
+policeCallDF
 ```
 
-In the storytelling component, you should describe the basic information of the dataset(s) and the variables in a way that corresponds to your descriptive and summary statistics in the above coding component. **DO NOT** simply report the number of rows. Instead, describe the dataset(s) fully by **specifying what each row and column mean.** In other words, your description should be comprehensive and detailed enough for readers to picture or envision the dataset(s) in their brains.
+The average time variables are in units of minutes. 
 
--   For example, suppose I use a dataset of all the athletes who participated in the Olympic Games. Here is how I describe the basic information of the data: "the case of this dataset is ab individual athlete, represented by each row in the dataset. The dataset includes individual (e.g., gender, age, height, weight, race) and event performance (e.g., final placement) information for all athletes (22,398) competing in all events (e.g., Male 400m Free, Female ...) in all Olympics Games since 1922 (24 Winter and 28 Summer Games. Athletes appearing in the dataset competed in anywhere from 1-11 distinct events (of 198 possible) during 1-5 distinct Olympic competitions, for a total of XXX, XXX athlete-event-Olympic-year observations. XXX Countries are represented, etc)."
+The data includes `r pcCols` variables with `r pcRows` observations.
 
--   Erico's hint: as I mentioned above, sometimes a dataset is too large, and it is difficult to present and explain all the variables/columns (especially if you run summary statistics for the whole dataset). In this case, you will have to make a decision to select the most important variables/columns to discuss. For example, the Olympic dataset I mentioned above as an example contains more than 50 columns. For clarity of data presentation, I may just focus on 6 items/columns of individual athletes (gender, age, weight, height, race, nationality) and the column of final placement that are most relevant to answer my specific research questions. By doing so, you can just present the tables of the summary statistics of these 7 variables/columns without showing too much information and confusing the readers.
+The following summary by Call.Reason shows the spread of calls for all years in both towns. The dataframe is in descending order by call count, or call volume, which is a statistic used frequently in budget discussions. However, personnel time per call reason is often not discussed in budget discussions. It is therefore important to visualize the difference between volume of calls and amount of time.
 
--   A good example is to can check out [the Data Description section of the above student's final project](https://dacss.github.io/601_Fall_2022_final_posts/posts/final_project_Guanhua_Tan.html#briefly-describe-the-dataset.). As you can see, the student describes the dataset after he runs a few descriptive statistics. You can also see the weekly challenge solutions by Professor Rolfe for other examples of clear, concise data descriptions.
+Here is the summary by Call.Reason:
+
+```{r}
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+
+policeCallDF %>% 
+  mutate(TimeMinutes = Avg._Arrive + Avg._Time_._Scene) %>%
+  group_by(Call.Reason) %>% 
+  summarise(
+    meanTime = mean(TimeMinutes, na.rm = TRUE), 
+    modeTime = find_mode(TimeMinutes), 
+    minTime = fivenum(TimeMinutes, na.rm = TRUE)[1], 
+    lowHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[2], 
+    medianTime = median(TimeMinutes, na.rm = TRUE), 
+    upHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[4], 
+    maxTime = fivenum(TimeMinutes, na.rm = TRUE)[5]
+    ) %>%
+  arrange(desc(meanTime))
+
+```
+
+Here is the summary grouped by Town: 
+
+```{r}
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+
+policeCallDF %>% 
+  mutate(TimeMinutes = Avg._Arrive + Avg._Time_._Scene) %>%
+  group_by(Town) %>% 
+  summarise(
+    meanTime = mean(TimeMinutes, na.rm = TRUE), 
+    modeTime = find_mode(TimeMinutes), 
+    minTime = fivenum(TimeMinutes, na.rm = TRUE)[1], 
+    lowHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[2], 
+    medianTime = median(TimeMinutes, na.rm = TRUE), 
+    upHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[4], 
+    maxTime = fivenum(TimeMinutes, na.rm = TRUE)[5]
+    ) %>%
+  arrange(desc(meanTime))
+```
+
+And here is the summary grouped by year: 
+
+```{r}
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+
+policeCallDF %>% 
+  mutate(TimeMinutes = Avg._Arrive + Avg._Time_._Scene) %>%
+  group_by(Year) %>% 
+  summarise(
+    meanTime = mean(TimeMinutes, na.rm = TRUE), 
+    modeTime = find_mode(TimeMinutes), 
+    minTime = fivenum(TimeMinutes, na.rm = TRUE)[1], 
+    lowHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[2], 
+    medianTime = median(TimeMinutes, na.rm = TRUE), 
+    upHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[4], 
+    maxTime = fivenum(TimeMinutes, na.rm = TRUE)[5]
+    ) %>%
+  arrange(Year)
+
+options(old) # restore original tibble number formatting
+```
 
 ## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
 
-1.  Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above.
+Visualization will include: 
 
-2.  Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?
-
-3.  If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.
-
-    -   What do you need to do to mutate the datasets (convert date data, create a new variable, pivot the data format, etc.)?
-
-    -   How are you going to deal with the missing data/NAs and outliers? And why do you choose this way to deal with NAs?
-
-4.  (Optional) It is encouraged, **but optional**, to include a coding component of tidy data in this part.
-
-```{r}
-```
-
-## Special Note on the role of statistics {#special-note-on-the-role-of-statistics}
-
-Statistical analyses **are not required**, but any students who wish to include these may do so. However, your primary analysis should center around visualization rather than inferential statistics. Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. Do not run a multiple regression with numerous predictors and report which predictors are significant!!
-
-**Remember: The goal is to tell a story about the data**. For example, you might identify sports where winning athletes are younger or older than average and then try to see if you can find some sort of pattern that accounts for this difference. Or perhaps you might compare a country's performance to GDP and see if this changes over time. The goal is not to get a significant statistical result but to identify an interesting pattern in the data and then extract some sort of meaningful recommendation or information from it.
-
-## Evaluation {#evaluation}
-
-You will be evaluated on both the quality of your source code and your written report, with a greater emphasis on the clarity and details of the description of your dataset(s) and your research questions.
+- The change in average and total time on call response over the years, between the two towns. 
+- Call reasons by volume and time over the years, between the two towns. 
+- Call actions by call reason volume and time over the years, between the two towns.
+- Call volume and time over the years, between the two towns, grouped by the interpretive categories I will introduce to the data set: 
+a. Crime
+b. Traffic incident
+c. Medical
+d. Referral
+e. Administrative
+f. Proactive

@@ -1,0 +1,74 @@
+---
+title: "Challenge 1"
+author: "Gauri Naik"
+date: "04/08/2023"
+output: html_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Challenge_3
+
+### Dataset: australian_marriage_tidy.csv
+
+```{r, echo=FALSE, message=FALSE}
+library(tidyverse)
+
+eggs_tidy <- read.csv("C:/Users/naiga/Documents/GithubDACSS601/601_Spring_2023/posts/_data/eggs_tidy.csv")
+
+head(eggs_tidy) %>%
+knitr::kable()
+```
+
+Here we have the first six rows of six columns of data. It gives us the month, year, and prices of eggs based on size and amount.
+
+### Description of Dataset
+
+Let's figure out how large the dataframe actually is.
+
+```{r, echo=FALSE}
+nrow(eggs_tidy)
+ncol(eggs_tidy)
+```
+
+We have found that the data frame gives us 120 rows and 6 columns.
+
+```{r, echo=FALSE}
+typeof(eggs_tidy$month)
+typeof(eggs_tidy$year)
+typeof(eggs_tidy$large_half_dozen)
+```
+
+In the respective columns `month`, `year`, and `large_half_dozen`, the type of data are characters, integers, and doubles. And the type doubles extends across several columns.
+
+### Pivot and Table
+
+Now we clean it up a bit and make it look nicer. We're going to pivot the table so that we can more easily see the types of eggs and the quantity sold by month and year.
+
+```{r, echo = FALSE}
+library(plyr)
+library(knitr)
+library(kableExtra)
+```
+
+```{r, echo=FALSE, message=FALSE}
+eggs_pivoted<-eggs_tidy %>%
+  pivot_longer(cols=contains("dozen"), 
+               names_to = "size_quantity",
+               values_to = "price")
+
+eggs_pivoted$size_quantity<-sub("large_", "large ", eggs_pivoted$size_quantity)
+eggs_pivoted %>%
+  separate(size_quantity, c("size", "quantity"), " ") %>%
+  kbl(col.names = c("Month", 
+                    "Year", 
+                    "Size", 
+                    "Quantity", 
+                    "Prize")) %>%
+    kable_styling(html_font = 'sans-serif', htmltable_class = "lightable-minimal") 
+
+eggs_pivoted
+               
+```

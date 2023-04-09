@@ -1,0 +1,156 @@
+---
+title: "Challenge 6 - Hotel Bookings"
+author: "Megan Galarneau"
+description: "Visualizing Time and Relationships"
+date: "04/07/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    css: "style.css"
+categories:
+  - challenge_6
+  - Megan Galarneau
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(patchwork)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  Read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  Tidy data (as needed, including sanity checks)
+3)  Mutate variables as needed (including sanity checks)
+4)  Create at least one graph including time (evolution)
+
+-   try to make them "publication" ready (optional)
+-   Explain why you choose the specific graph type
+
+5)  Create at least one graph depicting part-whole or flow relationships
+
+-   try to make them "publication" ready (optional)
+-   Explain why you choose the specific graph type
+
+## Read in data
+
+```{r}
+#read in the data set, raw
+library(readr)
+raw_hotel <- read_csv("_data/hotel_bookings.csv")
+raw_hotel
+```
+
+### Briefly describe the data
+
+This data set contains information of over 119k city & resort hotel bookings from July 2015 to August 2017 in 178 different countries. Detailed information about arrival date/times, length of stay, cancellations, room type, reservation status, # of people (adults, childern, or babies), market segment & more are also included in this data set. At first glance, there are more reported city hotel bookings (66.4%) with almost half of the bookings from 2015 (47.5%).
+
+
+```{r}
+#summary of data set statistics
+print(summarytools::dfSummary(raw_hotel,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+## Tidy Data
+
+Immediately, I noticed that arrival dates are separated into three columns (year, month, day). Let's mutate these columns in order to graph it later on.
+
+
+```{r}
+#recode month characters to numeric
+month_hotel<-raw_hotel%>%
+  mutate(tidy_arrival_date_month = case_when(
+  arrival_date_month == "January" ~ 1,
+  arrival_date_month == "February" ~ 2,
+  arrival_date_month == "March" ~ 3,
+  arrival_date_month == "April" ~ 4,
+  arrival_date_month == "May" ~ 5,
+  arrival_date_month == "June" ~ 6,
+  arrival_date_month == "July" ~ 7,
+  arrival_date_month == "August" ~ 8,
+  arrival_date_month == "September" ~ 9,
+  arrival_date_month == "October" ~ 10,
+  arrival_date_month == "November" ~ 11,
+  arrival_date_month == "December" ~ 12)
+)
+
+#create new arrival date column
+arrival_date_hotel<-month_hotel%>%
+  mutate(arrival_date = make_date(arrival_date_year, tidy_arrival_date_month, arrival_date_day_of_month))
+
+#create new total bookings per arrival date column
+tidy_time_hotel<-arrival_date_hotel%>%
+  mutate(month=floor_date(arrival_date,unit="month")) %>%
+  group_by(arrival_date, hotel) %>%
+  summarise(n=n()) %>%
+  ungroup()
+
+#pivot_longer adults, child, babies
+
+people_hotel <-pivot_longer(raw_hotel, col = c("adults", "children", "babies"),
+                 names_to="Person",
+                 values_to = "Person Number",
+                 values_drop_na = TRUE)
+
+#arrival date sanity check
+tidy_time_hotel
+
+#adult, child, baby sanity check
+people_hotel
+```
+
+## Time Dependent Visualization
+
+Now that our data is tidy, I chose to graph the number of bookings per hotel type over time according to arrival date. I choose a line graph because it gives a granular perspective of each booking and date.
+
+
+```{r}
+
+time_hotel <- tidy_time_hotel %>%
+  ggplot(aes(arrival_date,n,col=hotel))+
+  geom_line()+
+  scale_x_date(NULL, date_labels = "%b %y",breaks="2 months")+
+  scale_y_continuous(limits=c(0,500))+
+  labs(x="Arrival Date",y="# of bookings", title = "Hotel Booking Arrival Dates over Time")+
+  theme(axis.text.x=element_text(angle=90))
+
+time_hotel
+
+
+```
+
+## Visualizing Part-Whole Relationships
+
+I wanted to graph the breakdown of adult, child & babies for city vs. resort bookings below. I don't think the quantities are accurately represented though.
+
+```{r}
+bar_hotel <- people_hotel %>%
+ggplot(mapping = aes(x = hotel, fill = Person), position = "fill") + 
+  geom_bar() +
+   labs(x="Hotel Type",y="# of Bookings", title = "Occupants of Hotel Rooms by Type")
+
+bar_hotel
+```
+
+

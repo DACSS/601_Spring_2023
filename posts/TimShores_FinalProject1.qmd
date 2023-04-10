@@ -1,0 +1,202 @@
+---
+title: "Final Project Assignment #1: Tim Shores"
+author: "Tim Shores"
+description: "Project & Data Description"
+date: "04/09/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+my_packages <- c("tidyverse", "pdftools", "knitr") # create vector of packages
+invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+This is the story of two small, rural Massachusetts towns that have made an agreement to combine their two local police departments into a single, regionalized department. The regionalization agreement, initiated in 2020, has made it more challenging to assess police and other public safety personnel need. 
+
+For example, if demand for first responders has increased, is it because a single police department is now responding to calls from both towns, or is it for reasons unrelated to regionalization, such as increased police response to medical calls or other calls for which police response is not required?
+
+I intend to use the data collected to better inform budgeting and public safety discussion by public officials in the two towns. Furthermore, the work of regionalized municipal services is a common challenge that small rural towns, strapped for revenue, must consider. Improving how we collect and derive insights from municipal service regionalization data will be a vital service to towns who often don't have the capacity to organize their own data-driven policy and administration.
+
+
+1.  Dataset Introduction:
+
+Following the guidance of the [Massachusetts Public Records Law](https://www.mass.gov/info-details/massachusetts-law-about-freedom-of-information-and-public-records), I submitted public records requests in March 2023 to my local police department in Leverett and to Shelburne Dispatch, which handles emergency calls for most towns in Franklin County.
+
+After learning that the local Leverett Police Department (which also covers the town of Wendell as of 2020) had requested the creation of a fourth full-time police officer position for Fiscal Year 2024, I sought information to find out what had changed in our police call data to justify this request. This is from the body of my public records request: 
+
+> I also left a voicemail, but thought it would help to send my request by email. I've been learning about the budget requests from last week's meeting to get a sense of the request and the call volume and any other factors behind the request. It would help if I could learn more about our call data. 
+>
+>I'm writing to request public data to do with Leverett and Wendell calls made to dispatch, and calls handled by our police department, for the 5-year period 2018 to 2022 (inclusive of the years 2018, 2019, 2020, 2021, and 2022). I'm requesting complete police department call detail records, with columns of data redacted if they are subject to specific statutory exemption to the MA Public Records Law due to criteria such as victim confidentiality. 
+>
+>Please export data from your call management software application to CSV or XLSX files, rather than PDF or Word documents. The tabular CSV or XLSX format will facilitate data analysis.
+
+According to Shelburne Dispatch Supervisor Butch Garrity, the dispatch center and local agencies have used a client-server application called [IMC-Central Square](https://www.centralsquare.com/) since 1997 to manage dispatch calls and responses. The application has a reputation for being difficult to use. 
+
+In 2020, the town of Leverett appointed residents to a Social Justice Committee (SJC). While researching a report on policing and the experience of people of color in Leverett, the SJC submitted multiple requests for detailed reports of local police calls. Leverett PD Chief Scott Minckler didn't comply, claiming that he didn't know how to generate reports for anything other than basic call volume. The SJC met with someone at Amherst PD, which uses the same software, who offered to meet with the Leverett Chief to show him how to do it. The Leverett Chief, to my knowledge, ignored that invitation. This is in violation of the Massachusetts public records law, but it's not easy to enforce that law.
+
+This time around, Chief Minckler was able to comply with my request thanks to the reporting assistance of Officer Kimball. However, they were not able to export to Excel or CSV format.
+
+I received several PDF files with summary data about police calls handled by local police departments for both Leverett and Wendell for the years 2018 through 2022. The data is input by emergency dispatch staff and police officers responding to calls routed to the Leverett or Wendell PDs. These files are reports exported from the dispatch records management software include three types of data: 
+
+a. Call Reason Breakdown (742 records): Each observation is a call reason (examples include "Assault", "Traffic violation", "Community policing") for each year and town, with a summary count of calls initiated by the local PD, the count of calls sent to the PD from dispatch, the average time to arrive to the call, and the average time spent on the call. 
+b. Call Actions (2,481 records): Each observation is a call action (examples include "Investigated", "Services Rendered", "Report Taken") for each year, town, and call reason, with a summary count of call actions. Each observation has a many to one relationship with a call reason observation: each call reason observation can have many call actions, but each call action observation can have only one call reason observation.
+c. Operator Breakdown (150 records): Each observation is an ethnicity, race, or sex describing automobile operators for each year and town, with summary count of operators. The data does not relate these records to call reasons or call actions.
+
+From Supervisor Garrity, I received several Word documents including dispatch policy manuals that describe how to identify and triage calls, and Shelburne Dispatch annual reports for the years 2019 through 2022. The annual reports include a lot of information about call reasons and call actions throughout the region, but the report format and information presented changes every year. I may be able to derive total call volume from these reports to get a sense of how the call data compares to the two small towns in focus (Leverett and Wendell).
+
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+My primary interest is in the call reason and call actions data. I would like to answer the following questions: 
+
+1. Which call reasons require the most personnel time, and how has this changed from 2018 to 2022?
+2. Which call actions are associated with the most time-consuming call reasons, and how has this changed?
+3. Leverett and Wendell began a regionalization agreement in 2020. How has that impacted the time spent on calls?
+4. The call data does not show when police response is required. However, I can make some reasonable interpretations by coding calls in the following four categories. This will allow me to compare calls and actions in terms of the change in demand for police personnel -- when a police officer is required, compared to when a police officer responds because another type of public safety responder is not available.
+a. Crime
+b. Traffic incident
+c. Medical
+d. Referral
+e. Administrative
+f. Proactive
+5. Call actions show when a police call results in a referral to another agency, such as state police, utility, highway department, hospitals, animal control, other. Although the call data doesn't indicate which call reasons are "police optional" reasons in terms of dispatcher procedure, these referral actions can be interpreted as a proxy for calls that need not go to the police. What is the time taken to respond to call with these actions, and how might that impact the rationale for police department personnel?
+5. Medical calls do not require police, although police may be the closest first responder to the location of an incident. How often do police respond to medical calls, and how does that impact the police department workload?
+
+I also plan to figure out how to use R to read in and parse the data from the source PDF files. For assignment 1, I've read in a CSV version derived from the PDFs using copy and paste and manual data tidying.
+
+```{r}
+old <- options( # tibble number formatting
+  pillar.sigfig = 2
+)
+
+policeCallDF <- read.csv("../posts/TimShores_FinalProject_Data/CALL_REASON_BREAKDOWN_Leverett_Wendell_MA_Police_Department_Call_Data_2018_to_2022.csv")
+
+pcRows <- prettyNum(nrow(policeCallDF), big.mark = ",", scientific = FALSE)  # Apply comma-separated format
+pcCols <- prettyNum(ncol(policeCallDF), big.mark = ",", scientific = FALSE)
+
+policeCallDF
+```
+
+The average time variables are in units of minutes. 
+
+The data includes `r pcCols` variables with `r pcRows` observations.
+
+The following summary by Call.Reason shows the spread of calls for all years in both towns. The dataframe is in descending order by call count, or call volume, which is a statistic used frequently in budget discussions. However, personnel time per call reason is often not discussed in budget discussions. It is therefore important to visualize the difference between volume of calls and amount of time.
+
+Here is the summary by Call.Reason:
+
+```{r}
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+
+policeCallDF %>% 
+  mutate(TimeMinutes = Avg._Arrive + Avg._Time_._Scene) %>%
+  group_by(Call.Reason) %>% 
+  summarise(
+    meanTime = mean(TimeMinutes, na.rm = TRUE), 
+    modeTime = find_mode(TimeMinutes), 
+    minTime = fivenum(TimeMinutes, na.rm = TRUE)[1], 
+    lowHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[2], 
+    medianTime = median(TimeMinutes, na.rm = TRUE), 
+    upHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[4], 
+    maxTime = fivenum(TimeMinutes, na.rm = TRUE)[5]
+    ) %>%
+  arrange(desc(meanTime))
+
+```
+
+Here is the summary grouped by Town: 
+
+```{r}
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+
+policeCallDF %>% 
+  mutate(TimeMinutes = Avg._Arrive + Avg._Time_._Scene) %>%
+  group_by(Town) %>% 
+  summarise(
+    meanTime = mean(TimeMinutes, na.rm = TRUE), 
+    modeTime = find_mode(TimeMinutes), 
+    minTime = fivenum(TimeMinutes, na.rm = TRUE)[1], 
+    lowHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[2], 
+    medianTime = median(TimeMinutes, na.rm = TRUE), 
+    upHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[4], 
+    maxTime = fivenum(TimeMinutes, na.rm = TRUE)[5]
+    ) %>%
+  arrange(desc(meanTime))
+```
+
+And here is the summary grouped by year: 
+
+```{r}
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+
+policeCallDF %>% 
+  mutate(TimeMinutes = Avg._Arrive + Avg._Time_._Scene) %>%
+  group_by(Year) %>% 
+  summarise(
+    meanTime = mean(TimeMinutes, na.rm = TRUE), 
+    modeTime = find_mode(TimeMinutes), 
+    minTime = fivenum(TimeMinutes, na.rm = TRUE)[1], 
+    lowHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[2], 
+    medianTime = median(TimeMinutes, na.rm = TRUE), 
+    upHingeTime = fivenum(TimeMinutes, na.rm = TRUE)[4], 
+    maxTime = fivenum(TimeMinutes, na.rm = TRUE)[5]
+    ) %>%
+  arrange(Year)
+
+options(old) # restore original tibble number formatting
+```
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+Visualization will include: 
+
+- The change in average and total time on call response over the years, between the two towns. 
+- Call reasons by volume and time over the years, between the two towns. 
+- Call actions by call reason volume and time over the years, between the two towns.
+- Call volume and time over the years, between the two towns, grouped by the interpretive categories I will introduce to the data set: 
+a. Crime
+b. Traffic incident
+c. Medical
+d. Referral
+e. Administrative
+f. Proactive

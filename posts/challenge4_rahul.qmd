@@ -1,0 +1,75 @@
+---
+title: "Challenge 4"
+author: "Rahul Somu"
+description: "More data wrangling: pivoting"
+date: "04/10/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - abc_poll
+  - eggs
+  - fed_rates
+  - hotel_bookings
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(tidyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Combine Year-Month-Date as one column to help us filter based on date. Based on date, all the variable values can be filter. Duplicates can be removed.
+
+Below is the code for the above code
+
+```{r}
+getwd()
+
+# read in the data
+fed_funds <- read.csv("/Users/rahulsomu/Documents/DACSS_601/601_repo/posts/_data/FedFundsRate.csv",col.names = c("Year",	"Month",	"Day",	"Federal_Funds_Target_Rate",	"Federal_Funds_Upper_Target",	"Federal_Funds_Lower_Target",	"Effective_Federal_Funds_Rate",	"Real_GDP_Percent_Change"	,"Unemployment_Rate","Inflation_Rate"))
+colnames(fed_funds)
+# Pivot the data into tidy format
+fed_funds_tidy <- pivot_longer(fed_funds, 
+                               cols = c("Federal_Funds_Target_Rate", 
+                                        "Federal_Funds_Upper_Target", 
+                                        "Federal_Funds_Lower_Target", 
+                                        "Effective_Federal_Funds_Rate", 
+                                        "Real_GDP_Percent_Change", 
+                                        "Unemployment_Rate", 
+                                        "Inflation_Rate"), 
+                               names_to = "Variable", 
+                               values_to = "Value")
+
+# Mutate variables as needed
+fed_funds_tidy <- fed_funds_tidy %>% 
+  mutate(Date = as.Date(paste(Year, Month, Day, sep = "-")),
+         Year = NULL,
+         Month = NULL,
+         Day = NULL,
+         Variable = gsub("\\(.*\\)", "", Variable),
+         Variable = gsub("Real GDP", "GDP", Variable),
+         Variable = tolower(Variable),
+         Variable = gsub(" ", "_", Variable))
+
+# Check for any missing values
+sum(is.na(fed_funds_tidy))
+
+# Check for any duplicated rows
+any(duplicated(fed_funds_tidy))
+
+fed_funds_tidy
+
+```

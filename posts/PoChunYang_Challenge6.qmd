@@ -1,0 +1,124 @@
+---
+title: "Challenge 6"
+author: "PoChun Yang"
+description: "Visualizing Time and Relationships"
+date: "04/08/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+  
+
+```{r}
+df<-read_excel("_data/debt_in_trillions.xlsx")
+df2<- readxl::read_xlsx("_data/debt_in_trillions.xlsx")
+head(df)
+
+```
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+First of all, I used two different method to read the data. The data is quite clean so we do not need a lot of changing. I used the first data for the Time Dependent Visualization. Then, I used second tidy data for Visualizing Part-Whole Relationships.
+
+```{r}
+
+df1<-df%>%
+  mutate(date = parse_date_time(`Year and Quarter`, orders="yq"))
+df1
+df2<-df2%>%
+   mutate(Date = yq(`Year and Quarter`))%>%
+  pivot_longer(cols= !c(`Year and Quarter`, Date), names_to = "Debt Type", values_to = "Amount") %>%
+          select(!`Year and Quarter`)
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+
+## Time Dependent Visualization
+In the time dependent visualization, I want to get the Mortgage changing from 2003 to 2021. Therefore, I used the ggplot command, add the point command, and the line. In addition, I want to add the unit for the y-axis.
+```{r}
+ggplot(df1,aes(x=date, y=Mortgage))+
+  geom_point()
+ggplot(df1, aes(x=date,y=Mortgage))+
+  geom_point(size=.5,color="red")+
+  geom_line()+
+  scale_y_continuous(labels = scales::label_number(suffix = "Trillion"))
+```
+
+## Visualizing Part-Whole Relationships
+I used several commands to achieve multiple lines in the graph. We have to notice that the total in the date so we have to remove the total data. In the final, the graph looks pretty well. Moreover, the Mortgage line show clearly is the highest debt type for every year. In the second bar graph, it shows that the debt changing from 2003 to 2021 with all the type of debt.
+
+```{r}
+df2%>%
+    filter(`Debt Type`!= "Total") %>%
+    ggplot(aes(x= Date, y=Amount, color= `Debt Type`)) + 
+    geom_line(show.legend = TRUE) +
+    geom_point()+
+    theme_bw()+
+    labs( x= "date", y= "total (in trillions)")
+
+df2%>%
+  filter(`Debt Type`!= "Total") %>%
+    mutate(`Debt Type` =  fct_relevel(`Debt Type`, "Auto Loan", "Credit Card", "Mortgage", "HE Revolving", "Other", "Student Loan"))%>%
+    ggplot(aes(x= Date, y=Amount, fill= `Debt Type`)) + 
+    geom_bar(show.legend = TRUE, stat = "identity")+ 
+    theme_bw()+
+    labs( x= "date", y= "total (in trillions)")
+
+```

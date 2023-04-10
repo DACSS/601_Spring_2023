@@ -1,0 +1,79 @@
+---
+title: "Challenge 3"
+author: "Rahul Somu"
+description: "Tidy Data: Pivoting"
+date: "04/10/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - eggs
+  - australian_marriage
+  - usa_households
+  - sce_labor
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+
+Read excel and load it to a dataframe
+
+
+```{r}
+
+df_ausmarriage <- read_excel("_data/australian_marriage_law_postal_survey_2017_-_response_final.xls",, sheet= "Table 2", skip=7,col_names = c("State", "Yes Count", "Yes %", "No Count", "No %", "Clear Total Count", "Clear Count %", "Blank", "Clear Count", "Clear %", "Not clear Count", "Not clear %", "Non-response Count", "Non-response %", "Total_Count", "Total %"))
+
+
+```
+
+Create a column with Division for the respective state
+
+```{r}
+#| tbl-cap: Example
+
+df_ausmarriage_with_div <- df_ausmarriage %>% 
+        select(!c("Blank", "Clear Count", "Clear Total Count") & !contains("%")) %>%
+        filter(!grepl("(Total)", State)) %>%
+        mutate(Division = case_when(str_ends(State, "Divisions") ~ State,
+                                    TRUE ~ NA_character_ )) %>%
+        fill(Division, .direction = "down") %>%
+        filter(!is.na(`Total_Count`))
+
+df_ausmarriage_with_div
+
+df_select <- select(df_ausmarriage_with_div, "State", "Yes Count", "No Count", "Total_Count","Division")
+
+```
+
+Document your work here.
+
+Pivot the data to help fliter based on Divison/state with yes/No count.
+
+```{r}
+
+df_extend <- df_select %>% 
+  pivot_longer(col = c("Yes Count", "No Count"),
+               names_to = "Response",
+               values_to = "Count") %>% 
+  mutate("Percent" = Count/Total_Count)
+
+print(df_extend)
+```
+
+The data has been transformed based on the yes/no count to help filter for each category and help in analysis.

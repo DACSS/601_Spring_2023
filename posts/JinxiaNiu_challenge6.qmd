@@ -1,0 +1,117 @@
+---
+title: "Challenge 6-debt"
+author: "Jinxia Niu"
+description: "Visualizing Time and Relationships"
+date: "04/3/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - debt
+  - Jinxia Niu
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+  
+
+```{r}
+install.packages("tidyverse")
+library(tidyverse)
+install.packages("readxl")
+library(readxl)
+df <- read_excel("_data/debt_in_trillions.xlsx")
+```
+
+### Briefly describe the data
+```{r}
+head(df, 10)
+summary(df)
+glimpse(df)
+# The data includes 74 rows and 8 variables, includes quarterly measures of the total amount of household debt associated with 6 different types of loans - mortgage,HE revolving, auto, credit card, student, and other - plus a total household debt including all 6 loan types. 
+```
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+debt <- df %>%
+  mutate(date = parse_date_time(`Year and Quarter`, 
+                           orders="yq")) %>%
+  select(date,everything())
+  print(debt)
+
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+
+## Time Dependent Visualization
+```{r}
+library(ggplot2)
+ggplot(debt, aes(date,Total))+geom_point()
+```
+```{r}
+ggplot(debt,aes(date,Mortgage))+geom_line()
+```
+
+
+
+## Visualizing Part-Whole Relationships
+```{r}
+debt_long<-debt%>%
+  pivot_longer(cols = Mortgage:Other,
+               names_to = "Loan", 
+               values_to = "total")%>%
+  select(-Total)%>%
+  mutate(Loan = as.factor(Loan))
+
+ggplot(debt_long, aes(x=date, y=total, color=Loan)) +
+  geom_point(size=.5) +
+  geom_line() +
+  theme(legend.position = "right") 
+```
+

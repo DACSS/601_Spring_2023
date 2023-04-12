@@ -1,0 +1,156 @@
+---
+title: "Final Project Assignment#1: Teresa Lardo"
+author: "Teresa Lardo"
+description: "Project & Data Description"
+date: "04/12/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+  - Teresa Lardo
+  - Bigfoot Reports
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction 
+
+### Dataset
+
+For my final project, I want to work with a data set on Bigfoot reports ("reports" includes direct sightings of or encounters with a creature purported to be Bigfoot, vocalizations thought to be those of a Sasquatch, and discoveries of a Bigfoot-like footprint). This data set describes just over 5000 Bigfoot reports within the continental United States dated from November 1869 to November 2021. The data on Bigfoot sightings is largely self-reported, though some of the earlier reports are taken from newspaper reports. 
+
+The report data comes from The Bigfoot Field Researchers Organization, or [BFRO](https://www.bfro.net/), and supplemental data on weather and environmental conditions were added from Dark Sky API. The geocoded and weather-enhanced data set I'm using comes courtesy of [Tim Renner](https://data.world/timothyrenner). 
+
+### Questions
+
+With this data set, I want to explore the relationships between types of reports in different locations and environmental conditions over time:
+
+* How have the amount of Bigfoot reports in different states & geographic regions fluctuated over time? (For example, have sightings in New England increased notably since the 1970s? Was there a spike in reports from Texas in the mid-90s?)
+* Do sightings or reports of vocalizations correspond strongly with a specific moon phase? 
+* Are Class A reports more likely to correspond with clear weather conditions, and do Class B reports correspond to foggy weather, low visibility? 
+
+## Part 2. Describe the data set
+
+```{r}
+library(readr)
+library(dplyr)
+bfro <- read_csv("TeresaLardo_FinalProjectData/bfro_reports_geocoded.csv", col_types = cols(number = col_skip()))
+
+# Rearrange order of rows for my personal sanity
+bfro <- bfro %>% 
+  select(index, date, title, state, county, classification, everything())
+
+head(bfro)
+```
+
+In reading in the csv of the data set, I have opted to remove a variable that simply describes the number of the report in the BFRO system. 
+
+```{r}
+dim(bfro)
+```
+
+```{r}
+colnames(bfro)
+```
+
+```{r}
+unique(bfro$season)
+length(unique(bfro$state))
+unique(bfro$classification)
+```
+
+### Summary Statistics
+
+The dataset includes many variables about environmental conditions for the reports which have specific dates. I would like to concentrate on the following variables: cloud cover, visibility, temperature (high, low, and mid), and moon phase.
+
+```{r}
+library(summarytools)
+bfro_stats <- bfro %>%
+  select(moon_phase, cloud_cover, temperature_high, temperature_mid, temperature_low, visibility) %>%
+  drop_na()
+
+descr(bfro_stats)
+```
+
+
+### What's In This Dataset? 
+
+A case in this dataset is a Bigfoot report, including sightings, vocalizations, and footprints. There are over 5,000 cases in this set, and the dataset includes: 
+
+* descriptions of the events of the encounter, 
+* the date & season of the encounter, 
+* the location (including state, county, latitude, longitude, geohash, and details describing the specific location such as "near the summit of Mt. Mitchell" or "north of Highway 285"), 
+* title of the report, 
+* classification of the sighting (relating to the circumstantial potential for misinterpretation of the observation). **Class A** denotes to a very low potential for misinterpretation, **Class B** denotes a greater potential for misinterpretation or misidentification such as in the case of sounds heard but no clear view of a creature, and **Class C** denotes a high potential for inaccuracy due to being second-hand reports or having untraceable sources), 
+* and environmental conditions for reports with specified dates, including **temperature** (high, low, mid), dew point, humidity, **cloud cover**, **moon phase**, precipitation (type, probability & intensity), atmospheric pressure, UV index, wind bearing & wind speed, **visibility**, and a textual summary of the weather conditions of the day in the report's location. 
+
+I plan to focus on the environmental variables of *temperature*, *cloud cover*, *visibility*, and *moon phase*. 
+
+
+
+## 3. The Tentative Plan for Visualization 
+
+
+In order to explore the question of changes in amount of reports by state and region over time, I plan to mutate the data to create a "**Region**" variable to better chunk together the geographic data, and then create a time series visualization for the different regions. From there, I can hone in on any regional spikes in activity and investigate the activity at the state level (for states in that region). I want to also look into the details on creating a choropleth map and see if I can integrate an animated time series element into that. I have created some maps on ArcGIS with this data set before, and I think a choropleth map would be a great way to show which areas "light up" with activity within a given timespan. 
+
+To explore the question of moon phase correspondence, I can start with a basic scatterplot. I would like to use string searching to detect which reports are visual vs. auditory and categorize the reports of vocalizations separately from the visual sightings, and use color to distinguish these two categories on the moon phase scatterplot. 
+
+To explore the question of Class A & B reports and relative visibility, I can again start with a basic scatterplot where Class A & B reports are distinguished by color. This should give a quick sense of any trends by level of visibility for both classifications. I would also like to dig into the weather details in the "Summary" variable, such as searching for words like "fog" and "foggy" versus "clear," and see which classes of reports show up most for reports with these weather descriptions. This will also likely be taken from the subset of visual sightings instead of from all reports. 
+
+### Creating a Region Column
+
+```{r}
+# Creating separate vectors for each region
+Pacific <- c("California", "Oregon", "Washington", "Alaska")
+Mountain <- c("Nevada", "Arizona", "New Mexico", "Colorado", "Utah", "Idaho", "Montana", "Wyoming")
+West_North_Central <- c("Minnesota", "North Dakota", "South Dakota", "Iowa", "Nebraska", "Kansas", "Missouri")
+West_South_Central <- c("Texas", "Oklahoma", "Louisiana", "Arkansas")
+East_North_Central <- c("Ohio", "Wisconsin", "Michigan", "Illinois", "Indiana")
+East_South_Central <- c("Alabama", "Kentucky", "Tennessee", "Mississippi")
+South_Atlantic <- c("Florida", "Georgia", "South Carolina", "North Carolina", "Virginia", "West Virginia", "Maryland", "Delaware")
+Mid_Atlantic <- c("Pennsylvania", "New York", "New Jersey")
+New_England <- c("Connecticut", "Rhode Island", "Massachusetts", 'Vermont', "New Hampshire", "Maine")
+
+# Mutating new column using the vectors above
+bfro <- bfro %>%
+  mutate(
+    Region = case_when(state %in% Pacific ~ "Pacific",
+                       state %in% Mountain ~ "Mountain",
+                       state %in% West_North_Central ~ "West North Central",
+                       state %in% West_South_Central ~ "West South Central",
+                       state %in% East_North_Central ~ "East North Central",
+                       state %in% East_South_Central ~ "East South Central",
+                       state %in% South_Atlantic ~ "South Atlantic",
+                       state %in% Mid_Atlantic ~ "Mid-Atlantic",
+                       state %in% New_England ~ "New England")
+  )
+
+```
+
+Let's do a quick sanity check on that new column: 
+
+```{r}
+# Select the state and Region columns from the dataset and look at a sample with head()
+bfro %>% 
+  select(state, Region) %>%
+  head(15)
+```
+
+Okay, good - this sample of the first 15 values of the state & Region columns indicate that the states have been categorized into their correct regions.

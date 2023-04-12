@@ -1,0 +1,142 @@
+---
+title: "Final Project Assignment#1: Aritra Basu"
+author: "Aritra Basu"
+description: "Project & Data Description"
+date: "04/11/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(lubridate)
+library(descr)
+library(readr)
+library(summarytools)
+library(naniar)
+library(ggplot2)
+library(sf)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+1.  Dataset(s) Introduction:
+
+In this project, I am using ATUS data from 2003 to 2020. ATUS stands for American Time Use Survey, which is conducted by the Bureau of Labor Statistics (BLS) in the United States. The ATUS is a nationwide survey that collects information about how people spend their time on a daily basis. The survey includes questions about various activities such as work, household chores, leisure, and other activities. 
+
+The data collected from the survey is used to estimate the amount of time that people spend on various activities and to understand how time use patterns differ across different groups of people, such as by age, gender, and employment status. This information is used by policymakers, researchers, and other stakeholders to better understand how people use their time and to inform policy decisions related to labor, health, and other areas. The ATUS is conducted on an ongoing basis, with new data released annually. The survey is based on a representative sample of the U.S. population and includes both phone and in-person interviews.
+
+My interest in ATUS is with a particular activity: child care. I want to look at the evolution of gender gap in care provisioning. I want to particularly ask, if the 
+
+I will be combining three data files. 
+
+i) The first is the ATUS respondent file. This is a dataset that provides detailed information about the respondents who participated in the American Time Use Survey (ATUS). The respondent file includes demographic characteristics of the respondents, such as age, sex, race, and ethnicity, as well as information about their employment status, occupation, and industry, as well as information on various activities. Each respondent has an unique ID and has their information for that row, 
+
+ii) The second is the ATUS CPS file. The ATUS CPS (Current Population Survey) file is a dataset that combines data from the ATUS with data from the Current Population Survey (CPS). The CPS is a monthly survey conducted by the U.S. Census Bureau for the BLS that collects information about the labor force, employment, and other economic indicators. The ATUS CPS file includes information from both surveys to provide a more comprehensive picture of how people spend their time and how it relates to their labor force status.
+
+iii) The third is the activity summary file. This file provides summary statistics of the time use data collected in the ATUS. The detailed breakdown of categories are provided in the ATUS coding lexicon. 
+
+My question is the following: Does paid family leave alter the pattern of childcare for parents of young children. I want to particularly focus on some state where PFL laws were passed sometime after 2004 but before 2016. Rhode island is a good example, where the law was passed in 2014. My hypothesis is that fathers of young children in Rhode island would perform more active childcare after the PFL is passed. I will follow a difference in difference method, but approach it graphically instead of using fancy econometrics.  
+
+
+## Part 2. Describing the data set(s) {#describe-the-data-sets-1}
+
+I have merged the three datasets using their CASEIDs. Then I have retained respondents that have at least one household child of their own below 13 years. Then I have retained only observation on respondents that do not have missing values for secondary care provision for household children. The final file that I have retains a small subset of variables.
+
+Github was not allowing me to commit file sizes more than 100 MB. I have shown all the steps, but I have only saved the final file in the folder and have removed the rest. 
+
+```{r}
+# my_data <- read_csv("AritraBasu_FinalProjectData/atusresp_0320.dat")
+# my_data2 <- read_csv("AritraBasu_FinalProjectData/atuscps_0320.dat")
+# filtered_my_data2 <- my_data2 %>%
+#  filter(TULINENO == 1)
+# merged_data12 <- left_join(my_data, filtered_my_data2, by = c("TUCASEID"))
+# my_data3 <- read_csv("AritraBasu_FinalProjectData/atussum_0320.dat")
+
+# merged_data_final <- left_join(merged_data12, my_data3, by = c("TUCASEID"))
+
+# final_data_with_children <- merged_data_final %>%
+# filter(TROHHCHILD == 1, TRYHHCHILD.x < 13, TRTCC!=-1)
+
+# write_csv(final_data_with_children, "AritraBasu_FinalProjectData/final_data.csv")
+
+# final_data_with_children<-  read_csv("AritraBasu_FinalProjectData/final_data.csv")
+
+#selected_df <- select(final_data_with_children, TUCASEID, TEAGE, TESEX, TRCHILDNUM.x, TUYEAR.x, starts_with("t0301"), starts_with("t0302"), starts_with("t0303"), GESTFIPS)
+#write_csv(selected_df, "AritraBasu_FinalProjectData/selected_df.csv")
+selected_df <- read_csv("AritraBasu_FinalProjectData/selected_df.csv")
+
+```
+
+```{r}
+ head(selected_df)
+```
+
+2. I intend to compute active childcare, and hence I have retained a subset of variables whose headings start with t, for three specific activities: caring for and helping household children, children's education and health. Thus the dataset has the unique respondent identifier, their age, sex, state, number of children, and the activity times that would be added to find the total childcare time. I could also eventually add employment information, but I have not completely made up my mind on that.
+
+
+3. Using the function mutate, I have created the variable childcare. Here I am presenting the summary statistics for childcare, where the respondents have been grouped by sex and year and state. But alternative groupings (such as by only sex and year) are possible.  
+
+```{r}
+selected_df_modified <- selected_df %>%
+  mutate(Childcare = rowSums(select(., starts_with("t0301"))) + rowSums(select(., starts_with("t0302"))) + rowSums(select(., starts_with("t0303")))) %>%
+ mutate(TESEX_cat = ifelse(TESEX == 1, "Male", "Female"))
+
+
+summary_stats <- selected_df_modified  %>% 
+group_by( TESEX_cat, TUYEAR.x, GESTFIPS)  %>% 
+  summarise(
+    Mean=mean(Childcare, na.rm = TRUE),
+    Quantile1 = quantile(Childcare, c(0.25), q1 = c(0.25), na.rm = TRUE),
+    Median=median(Childcare, na.rm = TRUE),
+    Quantile3 = quantile(Childcare, c(0.75), q3 = c(0.75), na.rm = TRUE),
+    SD=sd(Childcare, na.rm = TRUE),
+    min=min(Childcare, na.rm = TRUE),
+    max=max(Childcare, na.rm = TRUE),
+    )
+
+head (summary_stats)
+
+
+```
+
+
+## 3. The Tentative Plan for Visualization 
+1. Data analysis: 
+
+i) First, I will show whether there exists difference in active care time between mothers and fathers. A simple stacked area graph could drive home the point. We can see that women perform the bulk of active childcare.
+```{r}
+Childcare_by_SexandYear <- selected_df_modified %>%
+  group_by(TESEX_cat, TUYEAR.x) %>%
+  summarize(mean_Childcare = mean(Childcare, na.rm = TRUE))
+
+
+
+ggplot(Childcare_by_SexandYear, aes(x = TUYEAR.x, y = mean_Childcare, fill = TESEX_cat)) +
+  geom_area() +
+  labs(x = "Year", y = "Mean Childcare", fill = "Sex") +
+  theme_classic()
+```
+
+ii) I would use simple summary statistic, say the average of childcare time by fathers before and after the law is passed in the treatment state (say Rhode Island), and control states (thus excluding states in which paid family leave has passed.) I think, due to the nature of my question, even for the diff in diff analysis, I will focus on plots that can look at evolution through time. Thus, line plots and area charts would be useful.
+
+iii) I think the primary challenge was obtaining the dataset. These were very large datasets, and I used the codebooks to locate the variables of interest. I used mutate to obtain the variable childcare. 
+As an ancillary question, I might look at how hours of employment change due to paid family leave. I have observed that the employment variable has some missing values that are not coded as NAs but as weirdly high numbers. If I go into employment data, I will take them out. 
+
+Another additional issue would be to look at the components of childcare. In case I decide to take a peek, I will convert the variables from wide to long, and then use a stacked bar plot or pie chart for a particular year.

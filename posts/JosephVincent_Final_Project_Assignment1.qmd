@@ -1,0 +1,322 @@
+---
+title: "Final Project Assignment#1: Project & Data Description"
+author: "Joseph Vincent"
+description: "Air Quality and Related Deaths in California"
+date: "04/12/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+  - Joseph Vincent
+editor_options: 
+  chunk_output_type: inline
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction
+
+### 1. Datasets Introduction:
+
+My project focuses on air quality and its impact on public health.
+I've chosen to focus on Counties in California, as high quality data on deaths by type is available.
+
+My data is coming from two separate sources:
+
+1)  I'm using the CDC's database for Air Quality Measures on the National Environmental Health Tracking Network. The most recent and complete historic data available contains per-county data on air quality between the years of 1999 and 2013, inclusive.
+
+This data is collected by the Environmental Protection Agency's network of more than 4,000 outdoor ambient air monitoring systems around the US, called the Air Quality System (AQS).
+
+These systems collect two main types of data:
+
+-   Ozone Concentrations High concentrations of Ozone near the ground level can be harmful, causing irritation to the respiratory system and aggravating a variety of chronic lung diseases.
+
+-   PM2.5 Concentrations This refers to tiny particulate matter in the air measuring two and a half microns or less in width that originates from a variety of pollutants.
+    Exposure to PM2.5 particles can cause both short and long term health effects, particularly for those with chronic medical conditions of the lungs and heart.
+
+While this data is of high quality, it is lacking in rural areas where monitors are not present.
+To account for this, the CDC and EPA developed statistical models to fill in gaps in data across regions and time.
+This allows for granular analysis of county air quality data.
+
+Each row in this dataset represents an air quality `value`, for a given county, report year and type of air quality measure.
+
+Source: https://data.cdc.gov/Environmental-Health-Toxicology/Air-Quality-Measures-on-the-National-Environmental/cjae-szjv
+
+2)  In order to draw conclusions about air quality's effect on public health, I'm combining this air quality data with data from the state of California's Department of Health and Human Services (HHS) on annual number of deaths by county, including underlying cause of death, from the same date range (1999-2013).
+
+This is collected based on information from death certificates.
+In addition to the count of deaths by county, they also provide the cause of death as defined by the WHO, indicated by one of a number of categories.
+For my analysis, I'm most interested in the following lung and heart related conditions, but have also included suicide as a potential area of interest:
+
+-   ALL = All causes (total)
+-   CLD = Chronic lower respiratory disease (CLRD)
+-   HTD = Diseases of heart
+-   PNF = Pneumonia and influenza
+-   SUI = Intentional self-harm (suicide)
+
+Each row in the data represents a number of deaths for a given year and county, stratified by cause of death and some demographic variables like age and gender.
+
+source: https://data.chhs.ca.gov/dataset/death-profiles-by-county/resource/e692e6a1-bddd-48ab-a0c8-fa0f1f43e9f4?i
+nner_span=True
+
+### 2. What questions do you like to answer with this dataset(s)?
+
+I would like to answer the following questions:
+
+1)  What is the correlation between air quality in a given county and year and its immediate affect on deaths in that region?
+    Is there a lagging effect in the year, or two years after poor air quality?
+
+2)  Do the air quality measures (Ozone and PM2.5) affect particular causes of death more than others?
+    For example, are chronic lung diseases more impacted by Ozone levels or PM2.5 levels?
+    How about for heart disease or even suicide?
+
+## Part 2. Describe the data sets
+
+### Reading in the data sets
+
+As evidenced by the head samples of the two original data sets below, despite both revolving around county-years they are in quite different structures.
+
+The air quality data consists of measures of both ozone and PM2.5.
+Ozone levels are measured by number of days with higher than average Ozone levels, and also person-days by county by multiplying by the population for that year.
+PM2.5 levels are lacking raw number of days with higher than average levels, but are recorded in percent of days, person days, and the annual average level for that county-year.
+
+On thing that's interesting about the data structure is that all of the measures of the same type are listed for each county in a given year, then the next measure is listed for each county in a given year, and so on.
+
+As for the death data, each row contains a count of deaths in the "value" column, but they are not exclusive values even within the same county-year, as a totals row is included labelled as "ALL".
+
+These data are also stratified by demographic data, such as age and gender, which I don't believe will be relevant for my analysis.
+
+```{r}
+#reading in air quality data
+airquality <- read_csv("JosephVincent_FinalProjectData/Air_Quality_Measures_on_the_National_Environmental_Health_Tracking_Network.csv")
+
+head(airquality)
+
+#reading in deaths dataset
+calideaths <- read_csv("JosephVincent_FinalProjectData/2021-05-14_deaths_final_1999_2013_county_year_sup.csv") %>%
+  #filtering for occurrence deaths (i.e. all deaths that occurred, disregarding residence)
+  filter(Geography_Type == "Occurrence") %>%
+  #de-selecting geography type as they are now all occurrence
+  select(-Geography_Type)
+
+head(calideaths)
+```
+
+In order to combine these data sets, a number of things need to be done first to get them into the same structure, where each row represents a county year.
+
+First, I'll filter for California, then pivot wider so that the air quality measures each are represented in a column.
+Additional cleaning measures can be seen in the code below.
+
+One thing worth mentioning is that the air quality data consists of both "monitored" values and "modeled" values.
+As described on the CDC's website, the CDC and EPA collaborated to develop statiscal models for filling in missing data in regions without data.
+For my analysis, I will be using the modeled data to allow me to look at counties that would otherwise be missing data.
+
+```{r}
+airqualitycali <- airquality %>%
+  #filtering for california only
+  filter(StateName == "California") %>%
+  #selecting only relevant columns
+  select(CountyName, ReportYear, MeasureName, Value) %>%
+  #renaming county and year to be consistent with deaths dataset
+  rename("County" = `CountyName`, "Year" = `ReportYear`) %>%
+  #pivoting so that each row is a year-county for merging data
+  pivot_wider(names_from = MeasureName, values_from = Value) %>%
+  #renaming Air Quality columns
+  rename("Ozone Days Delete" = `Number of days with maximum 8-hour average ozone concentration over the National Ambient Air Quality Standard`,
+         "Ozone Person Days Delete" = `Number of person-days with maximum 8-hour average ozone concentration over the National Ambient Air Quality Standard`,
+         "PM2.5 Percent of Days Delete" = `Percent of days with PM2.5 levels over the National Ambient Air Quality Standard (NAAQS)`,
+         "PM2.5 Person Days Delete" = `Person-days with PM2.5 over the National Ambient Air Quality Standard`,
+         "PM2.5 Annual Average Delete" = `Annual average ambient concentrations of PM2.5 in micrograms per cubic meter (based on seasonal averages and daily measurement)`,
+         "Ozone Days" = `Number of days with maximum 8-hour average ozone concentration over the National Ambient Air Quality Standard (monitor and modeled data)`,
+         "Ozone Person Days" = `Number of person-days with maximum 8-hour average ozone concentration over the National Ambient Air Quality Standard (monitor and modeled data)`,
+         "PM2.5 Percent of Days" = `Percent of days with PM2.5 levels over the National Ambient Air Quality Standard (monitor and modeled data)`,
+         "PM2.5 Person Days" = `Number of person-days with PM2.5 over the National Ambient Air Quality Standard (monitor and modeled data)`,
+         "PM2.5 Annual Average" = `Annual average ambient concentrations of PM 2.5 in micrograms per cubic meter, based on seasonal averages and daily measurement (monitor and modeled data)`)
+
+#filling in modeled data for first and last two years, where there is no modeled data
+airqualitycali <- airqualitycali %>%
+  mutate(`Ozone Days` = case_when(
+    `Year` %in% c(1999,2000,2012,2013) ~ `Ozone Days Delete`,
+    TRUE ~ as.numeric(as.character(`Ozone Days`)))) %>%
+  mutate(`Ozone Person Days` = case_when(
+    `Year` %in% c(1999,2000,2012,2013) ~ `Ozone Person Days Delete`,
+    TRUE ~ as.numeric(as.character(`Ozone Person Days`)))) %>%
+  mutate(`PM2.5 Percent of Days` = case_when(
+    `Year` %in% c(1999,2000,2012,2013)  ~ `PM2.5 Percent of Days Delete`,
+    TRUE ~ as.numeric(as.character(`PM2.5 Percent of Days`)))) %>%
+  mutate(`PM2.5 Person Days` = case_when(
+    `Year` %in% c(1999,2000,2012,2013) ~ `PM2.5 Person Days Delete`,
+    TRUE ~ as.numeric(as.character(`PM2.5 Person Days`)))) %>%
+  mutate(`PM2.5 Annual Average` = case_when(
+    `Year` %in% c(1999,2000,2012,2013) ~ `PM2.5 Annual Average Delete`,
+    TRUE ~ as.numeric(as.character(`PM2.5 Annual Average`)))) %>%
+  select(!contains("Delete"))
+```
+
+For prepping the deaths data, I've filtered for only the causes of death I believe may be relevant to air quality, and have otherwise pivoted the data to allow for each row to represent a county-year.
+
+```{r}
+#turning calideaths into a wider format that where each rows is a year-county for combining
+calideathswider <- calideaths %>%
+  filter(Strata_Name == "Total Population") %>%
+  #de-selecting some stratifying variables
+  select(-Cause_Desc, -Annotation_Code, -Annotation_Desc, -Strata, -Strata_Name) %>%
+  #focusing on relevant conditions
+  filter(Cause %in% c("ALL", "CLD", "PNF", "SUI", "HTD")) %>%
+  #pivoting into wider format
+  pivot_wider(names_from = Cause, values_from = Count)
+
+#merging data
+airqualityanddeaths <- left_join(calideathswider, airqualitycali, by = c("County", "Year"))
+head(airqualityanddeaths)
+```
+
+## Tidy data and some mutation for later analysis
+
+As I'm creating my data set, I'll perform some mutations and tidy-ing ahead of time, as I'll want to include some new columns while summarizing the data.
+
+First, I'll create a column for Population by using the person-day columns already provided.
+
+I'll also create "death per 100,000" columns in order to standardize deaths by counties.
+
+I also have created a "raw" PM2.5 Days column that counts the number of days, instead of a percent.
+
+```{r}
+airqualityanddeaths <- airqualityanddeaths %>%
+  #creating a column for population based on person days column
+  mutate("Population" = `Ozone Person Days`/`Ozone Days`) %>%
+  #creating standardized death columns
+  mutate("ALL Deaths per 100,000" = `ALL`/`Population`*100000) %>%
+  mutate("CLD Deaths per 100,000" = `CLD`/`Population`*100000) %>%
+  mutate("HTD Deaths per 100,000" = `HTD`/`Population`*100000) %>%
+  mutate("PNF Deaths per 100,000" = `PNF`/`Population`*100000) %>%
+  mutate("SUI Deaths per 100,000" = `SUI`/`Population`*100000) %>%
+  #creating a raw PM2.5 Days column, using the existing percent of days column
+  mutate("PM2.5 Days" = `PM2.5 Percent of Days`/100*365)
+
+#re-arranging
+airqualityanddeaths <- airqualityanddeaths %>%
+  select(Year, County, Population, 
+         ALL, `ALL Deaths per 100,000`, 
+         CLD, `CLD Deaths per 100,000`,
+         HTD, `HTD Deaths per 100,000`,
+         PNF, `PNF Deaths per 100,000`,
+         SUI, `SUI Deaths per 100,000`,
+         `Ozone Days`, `Ozone Person Days`,
+         `PM2.5 Days`, `PM2.5 Person Days`, `PM2.5 Percent of Days`, `PM2.5 Annual Average`)
+
+```
+
+## Part 2 ctd.
+
+### 2. Present descriptive information:
+
+My new dataset consists of 870 rows, each representing a county-year.
+There are 19 columns.
+2 of these are "key" columns, indicating the county and year.
+There is a single column for population.
+The rest are all unique variables each representing a death count by disease type or an air quality measure.
+
+```{r}
+dim(airqualityanddeaths)
+head(airqualityanddeaths)
+```
+
+### 3. Conduct summary statistics of the datasets
+
+First, I will look at summary statistics for air quality by county.
+
+As seen in the below table, the counties with the highest mean Ozone days are San Bernardino, Riverside, Tulare, and Kern.
+Each with about a third of the year being above the national average.
+
+The counties with the highest mean PM2.5 days are similar - Fresno, Riverside and Kern - with a mean of around 50 days per year.
+
+```{r}
+ozoneandpmdaysbycounty <- airqualityanddeaths %>%
+  group_by(County) %>%
+  summarize(MeanOzoneDays = mean(`Ozone Days`, na.rm=TRUE),
+            MedianOzoneDays = median(`Ozone Days`, na.rm=TRUE),
+            MaxOzoneDays = max(`Ozone Days`, na.rm=TRUE),
+            MinOzoneDays = min(`Ozone Days`, na.rm=TRUE),
+            MeanPM2.5Days = mean(`PM2.5 Days`, na.rm=TRUE),
+            MedianPM2.5Days = median(`PM2.5 Days`, na.rm=TRUE),
+            MaxPM2.5Days = max(`PM2.5 Days`, na.rm=TRUE),
+            MinPM2.5Days = min(`PM2.5 Days`, na.rm=TRUE))
+
+head(arrange(ozoneandpmdaysbycounty, desc(MeanOzoneDays)))
+head(arrange(ozoneandpmdaysbycounty, desc(MeanPM2.5Days)))
+```
+
+Next we will look at similar air quality summary statistics, but by year.
+As you can see, 2002 seems to be a particularly bad year for both, topping out the mean days for both Ozone and PM2.5.
+In general, the early 2000s seem to be bad for air quality.
+
+```{r}
+ozoneandpmdaysbyyear <- airqualityanddeaths %>%
+  group_by(Year) %>%
+  summarize(MeanOzoneDays = mean(`Ozone Days`),
+            MedianOzoneDays = median(`Ozone Days`),
+            MaxOzoneDays = max(`Ozone Days`),
+            MinOzoneDays = min(`Ozone Days`),
+            MeanPM2.5Days = mean(`PM2.5 Days`),
+            MedianPM2.5Days = median(`PM2.5 Days`),
+            MaxPM2.5Days = max(`PM2.5 Days`),
+            MinPM2.5Days = min(`PM2.5 Days`))
+
+head(arrange(ozoneandpmdaysbyyear, desc(MeanOzoneDays)))
+head(arrange(ozoneandpmdaysbyyear, desc(MeanPM2.5Days)))
+
+```
+
+Finally, I'll look at some summary statistics for deaths per 100,000 by county.
+The counties with the highest rate of death in this time period were Shasta, Del Norte, Butte, Inyo and Lake.
+All relatively small, rural counties.
+
+```{r}
+"deathsper100,000bycounty" <- airqualityanddeaths %>%
+  group_by(County) %>%
+  summarize(MeanALL = mean(`ALL Deaths per 100,000`, na.rm=TRUE),
+            MeanCLD = mean(`CLD Deaths per 100,000`, na.rm=TRUE),
+            MeanHTD = mean(`HTD Deaths per 100,000`, na.rm=TRUE),
+            MeanPNF = mean(`PNF Deaths per 100,000`, na.rm=TRUE),
+            MeanSUI = mean(`SUI Deaths per 100,000`, na.rm=TRUE))
+
+head(arrange(`deathsper100,000bycounty`, desc(MeanALL)))
+
+
+```
+
+## 3. The Tentative Plan for Visualization
+
+To answer my first question about the correlation between air quality and deaths by county over time, I plan to create time-series visualizations.
+This could be done in a few ways:
+
+One would be to take a series of counties for a given year (or vice versa) and create a series of small line plots with two y axes - one showing deaths per 100,000 and the other showing either Ozone or PM2.5 levels.
+
+Another way to show air quality over time would be to use a time-series heat map, that changes colors for years with higher levels.
+How this would be directly compared to the deaths data, I'm not entirely sure.
+
+A possibility would be to use a map of california for selected years, and show both heat maps of county air quality levels and indicate a death per 100,000 number.
+
+For the second question - how each cause of death correlates to specific air quality values - I could create some type of correlation matrix, though more exploration is needed.
+More simply, I could create similar time series line charts by counties, where each cause of death is mapped in addition to changes in air quality type.
+
+Much of the mutation has already been done, but a remaining point of contention will be how to handle NA's, particularly in the deaths data.
+After some reading, it seems that NAs indicate that there was not enough data, so the numbers were being surpressed.
+So perhaps a 0 values or even random value below a threshold would allow me to fill these in.

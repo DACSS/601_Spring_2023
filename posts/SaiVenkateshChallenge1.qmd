@@ -1,0 +1,98 @@
+---
+title: "Challenge 1"
+author: "Sai Venkatesh"
+description: "Reading in data and creating a post"
+date: "04/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+- challenge_1
+- railroads
+- faostat
+- wildbirds
+---
+  
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+## Read in the Data
+
+We are going to load the railroad data.
+
+```{r}
+
+
+railroad <- read.csv('_data/railroad_2012_clean_county.csv')
+
+print("Lets load the data and see the dimensions and columns of the data.")
+
+# The Dimensions 
+dim(railroad)
+
+# The Column Names 
+colnames(railroad)
+
+```
+
+From the above, we can see that the Railroad data has 2930 rows and 3 columns.
+The 3 column names are state, county and total_employees.
+
+
+```{r}
+
+print("The top rows of the data are :- ")
+head(railroad)
+```
+
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+The data seems to represent the railroad employees and the distribution of the employees by state and county.
+
+
+```{r}
+
+# Number of Employees Per State
+print("The total number of employees in the states ordered by the count:-")
+railroad %>%
+  group_by(state) %>%
+  summarize(state_total = sum(total_employees))  %>%
+  select(state, state_total)  %>%
+  arrange(desc(state_total))
+
+```
+
+
+```{r}
+
+# Number of Employees > 1000
+print("The counties with employees greater than 1000 ordered by the count:-")
+railroad %>%
+  filter(total_employees > 1000)  %>%
+  select(state, county, total_employees) %>%
+  arrange(desc(total_employees))
+
+```
+
+We can see that Texas state has the most employees and Cook County has the most employees.

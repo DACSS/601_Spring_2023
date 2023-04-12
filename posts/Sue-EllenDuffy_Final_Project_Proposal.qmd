@@ -1,0 +1,166 @@
+---
+title: "Final Project Assignment#1: Sue-Ellen Duffy"
+author: "Sue-Ellen Duffy"
+description: "Project & Data Description"
+date: "04-11-2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(summarytools)
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+library(treemap)
+library(hrbrthemes)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+1.  Data Introduction
+
+The dataset was retrieved from the Massachusetts Department of Transportation data extraction service. I requested publicly available crash data for Boston municipality for the specific years of 2012-2022 and received a CSV file.
+
+This dataset is about individual crashes in Boston from 2012-2022 and are represented by each row in the dataset. The dataset includes crash information including date, time, weather and lighting conditions and the severity of each crash. In regards to location, the dataset includes the travel direction of the vehicles, proximity to certain landmarks such as an exit or roadway intersection and the coordinates (latitude and longitude) of the crash point.
+
+Post-pandemic car ownership and commuting by car has increased in an astonishing way - not to help the matter, train commutes are slower than ever. This dataset cannot delve deep enough to understand the scope of this issue and traffic data is not publicly available. This dataset will at least allow me to analyze city crashes that may yield some understanding about the implications of an increase in car commuting to the city.
+
+2.  Questions
+
+I want to know if there are any correlations to time of day, date, or weather conditions that implicate a higher severity of crash and or a higher prevalence of crash.
+
+I also want to know if these dates or times of day that are associated with higher prevalence of crash have any relationship with holidays, weekends, or sunset/sunrises.
+
+An additional question is whether there are certain areas that contain higher crash points in the city. Do crashes happen more so on the highways between popular destinations or do they for instance happen on city streets where many drivers are searching for places to park.
+
+As a final question - post-pandemic are incidents of crashes going up in the city?
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+```{r}
+crashdata <- read_csv("Sue-EllenDuffy_FinalProjectData/Crash_Details_2012-2022.csv", 
+    skip = 2)
+View(crashdata)
+```
+
+```{r}
+dim(crashdata)
+length(unique(crashdata))
+head(crashdata)
+str(crashdata)
+```
+
+3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
+
+Variables I am interested in:
+
+Crash_Time
+
+Crash_Date - (specifically the years, holidays, and daylight savings time, etc.)
+
+Crash_Severity
+
+Manner_of_Crash
+
+Maximum_Injury_Severity_Reported
+
+Vehicle_Travel_Direction
+
+Ambient_Light
+
+Weather_Condition
+
+X_Coordinate & Y_Coordinate
+
+```{r}
+unique(crashdata$"Crash_Severity")
+unique(crashdata$"Manner_of_Collision")
+unique(crashdata$"Ambient_Light")
+```
+
+```{r}
+p<- ggplot(crashdata, aes(x=Crash_Severity)) +
+         geom_histogram(stat = "count")
+p
+
+ggplot(crashdata, aes(Manner_of_Collision, fill = Crash_Severity)) +
+  geom_bar(position = "fill", stat = "count")+ 
+  coord_flip()
+
+ggplot(crashdata, aes(Ambient_Light, fill = Crash_Severity)) +
+  geom_bar(position = "fill", stat = "count") + 
+  coord_flip()
+```
+```{r}
+ggplot(crashdata, aes(Crash_Time)) + geom_histogram()
+```
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+
+There are a lot of unknowns when it comes to crashes that resulted in fatalities. I will not be able to simply analyze the conditions of the most dangerous incidents, I will also have to analyze the other crashes which cause harm - including non-fatal accidents and property damage only.
+
+#Visualizations
+
+Overall/Summary:
+
+Treemap - Crash_Severity counts - to show the distribution in types of crash severity (could also be a piechart or barchart)
+
+Circular Packing or Treemap - to show certain groupings that stand out (for example: "Morning" - rear-ends; "Afternoon" - sideswipe, same direction; Evening" - Head-on)
+
+Date/Time:
+
+Line plot, StreamGraph - Crash_Time/Hour/Date/Year Time Series - Crash_Severity in relation to Sunset/Sunrise
+
+(maybe - Parallel Coordinate Plot - to show a lot of data over time and separate by groups)
+
+I will need to add or import a dataset for "Holidays" and "Sunset/Sunrise" and analyze crash severity and frequency by these times.
+
+Location:
+
+Bubble Map - Coordinates of crashes - with fill being counts of crash severity (fatal, non-fatal, damage to property, none).
+
+Choropleth Map - Coordinates & Severity of Crash_Severity or Fatality Bar chart or Violin chart of types of types of vehicle travel direction prior to crash.
+
+Bar chart showing the proximity to landmark/exit.
+
+
+# Date and Time Tidying
+
+Convert Crash_Date into a date format Crash_Date
+
+Add a column Crash_DoW into the Days of the Week Crash_Date
+
+Add a column Crash_Season into Winter, Spring, Summer, Fall Crash_Date
+
+Add a column Crash_Year for 2012-2022 Crash_Time
+
+Add a column Crash_Timegroup into Morning: 0:600-9:59, Mid-Day (10:00-13:49), Afternoon (14:00-17:59), Evening (1800-2159), Late Night (2200-0159), Overnight (0200-0559)
+
+Convert X_Coordinate and Y_Coordinate to longitudes & latitudes
+
+Vehicle_Travel_Directions - currently there are \[426\] different values for this data as there are many varied instances of crash. I will have to understand this column more to determine if V1 is always going to be the vehicle I should analyze ambient light and/or sun exposure. I may have to let this one go, but analyzing time of day data first will be useful to determine if this is a useful data 
+
+Missing data/NAs and outliers? And why do you choose this way to deal with NAs?
+
+Crash_Severity has two sorts of NA - "Not Reported" and "Unknown". I think for this purpose I would like to demonstrate that these bars exist for some of the graphs and reference that I will combine them for ease of visual information. 
+
+With Distance_From subset - I would reference the NA's by showing it as a category but with some analyses I may omit the NA, but reference that it was omitted.
+
+If I got rid of NA's completely I'd lose data for fatal injury crashes and I'm not sure that would then give me the most accurate data. I will need more time to look at the data and consider how to best manage the NAs

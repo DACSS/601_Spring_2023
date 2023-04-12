@@ -1,0 +1,105 @@
+---
+title: "Final Project Assignment#1: Michele Carlin"
+author: "Michele Carlin"
+description: "UMass Chan Medical School - Clerkship Grades"
+date: "04/12/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+## Introduction
+
+The data sets I will be exploring for my final project are from UMass Chan Medical School. Third year medical students complete seven different clerkships/rotations throughout the academic year. Within each clerkship, they are assessed in various ways. Student performance evaluations (SPEs) are completed by the physicians they work with in the clinical setting. Each student is evaluated by multiple physicians, an average is then calculated across all SPEs. The students also complete an Objective Structured Clinical Examination (OSCE) at the end of each clerkship where students are assessed by Standardized Patients (SPs) in various simulated patient encounters. Each SP is trained to portray a patient in a clinical setting with a specific chief complaint. The SPs then complete checklists on a variety of history and physical exam skills; scores are then calculated for each encounter and summarized as an overall OSCE score. In addition, students complete a multiple-choice National Board of Medical Examiners (NBME) exam at the end of each clerkship. Scores from these various grading components are used to calculate final grades. 
+
+
+## Describe the data set(s).
+
+The data is currently in two different excel files, one containing final grades from AY1718-AY2122, and another containing component grades from AY1920-AY2122. I will merge these data sets into a new 'Grades' data set, where each row will contain a student scores for one clerkship.  Each student will then have seven rows of data (one for each clerkship).
+
+Load the following libraries.
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(summarytools)
+library(dbplyr)
+library(readxl)
+library(tidyr)
+library(ggplot2)
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+Dataset #1: Read in and view summary of 'FinalGrades' dataset. This excel file has 5 worksheets, one for each year (AY1718 - AY2122), that will be combined into one dataset.
+
+```{r}
+setwd("C:/Users/CarlinML/DACSS-601/601_Spring_2023/Posts/")
+sheet <- excel_sheets("MicheleCarlin_FinalProjectData/AY1718-AY2122_FinalGrades.xlsx")
+sheet
+FinalGrades <- lapply(setNames(sheet, sheet), function(x) read_excel("MicheleCarlin_FinalProjectData/AY1718-AY2122_FinalGrades.xlsx", sheet=x))
+FinalGrades <- bind_rows(FinalGrades, .id="Sheet")
+View(FinalGrades)
+view(dfSummary(FinalGrades))
+```
+
+The 'FinalGrades' dataset contains 5081 rows and 8 columns (including the course subject area, site, and session).
+
+Dataset #2: Read in and view summary of 'ComponentGrades' dataset. This excel file contains one worksheet. 
+
+```{r}
+ComponentGrades <- read_excel ("MicheleCarlin_FinalProjectData/AY1920-AY2122_ComponentGrades.xlsx")
+View(ComponentGrades)
+view(dfSummary(ComponentGrades))
+```
+
+The 'ComponentGrades' dataset contains 3259 rows and 9 columns (including course subject, term, as well as SPE, OSCE, and NBME scores).
+
+Join the 'FinalGrades' and 'ComponentGrades' datasets into one, matching on ID and Subject.
+
+```{r}
+Grades <- FinalGrades %>% full_join(ComponentGrades, 
+                              by=c('ID','Subject'))
+View(Grades)
+view(dfSummary(Grades))
+```
+
+The new 'Grades' dataset contains 5149 rows and 15 columns. I performed a full join, therefore b/c there are more rows in this merged data set than I had in the FinalGrades data set, it is evident that there are some students that do not have a final grade but have component scores. 
+
+The first thing I plan to review is whether final grades and component scores are stable from year to year. In addition, multiple sites are needed to accommodate the number of students enrolled in each clerkship, therefore I am interested in examining the data at the sites level to determine if students at particular sites perform better than those at other sites.
+
+Below are some basic summary statistics of the grading component variables.
+
+```{r}
+Grades %>%
+ filter(!is.na(Year)) %>%
+  group_by(Year, Subject) %>%
+  summarise(Avg_SPE = mean(SPE),
+            Min_SPE = min(SPE),
+            Max_SPE = max(SPE),
+            Avg_OSCE = mean(OSCE),
+            Min_OSCE = min(OSCE),
+            Max_OSCE = max(OSCE),
+            Avg_NBME = mean(NBME),
+            Min_NBME = min(NBME),
+            Max_NBME = max(NBME)) %>%
+  print(n=21)
+```
+
+## Tentative Plan for Visualization. 
+
+Based on the above descriptive statistics, I will need to determine why some components have NA for a given year; and will need to determine how to handle missing data if that is what's causing the NAs. I also see that some of the scores are reported on a 0-100% scale, while others are based on a 4-point scale, and still others are based on the weighted # of points (e.g., if the OSCE is worth 20% of the final grade, the scores are entered on a scale of 0-20). I will convert all scores to be on a 0-100% scale.
+

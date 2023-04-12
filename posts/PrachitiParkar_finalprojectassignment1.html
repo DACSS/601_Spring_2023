@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.475">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Prachiti Parkar">
+<meta name="dcterms.date" content="2023-04-12">
+<meta name="description" content="San Francisco Crime Data Exploration">
+
+<title>Final Project Assignment#1: Prachiti Parkar</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../images/DACSS_Round_Network.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+<link href="../site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="../site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta name="twitter:title" content="Final Project Assignment#1: Prachiti Parkar">
+<meta name="twitter:description" content="San Francisco Crime Data Exploration">
+<meta name="twitter:creator" content="@UMassDACSS">
+<meta name="twitter:site" content="@UMassDACSS">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../images/UMass White Wordmark Horiz.png" alt="" class="navbar-logo">
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/DACSS">
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html">
+ <span class="menu-text">Contributors</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://umass.edu/sbs/dacss">
+ <span class="menu-text">DACSS</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/DACSS"><i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+              <div class="quarto-toggle-container">
+                  <a href="" class="quarto-color-scheme-toggle nav-link" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+              </div>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview-of-the-final-project" id="toc-overview-of-the-final-project" class="nav-link active" data-scroll-target="#overview-of-the-final-project">Overview of the Final Project</a></li>
+  <li><a href="#Tasks-of-assignment1" id="toc-Tasks-of-assignment1" class="nav-link" data-scroll-target="#Tasks-of-assignment1">Tasks of Assignment#1</a></li>
+  <li><a href="#describe-the-data-sets" id="toc-describe-the-data-sets" class="nav-link" data-scroll-target="#describe-the-data-sets">Part 1. Introduction</a></li>
+  <li><a href="#describe-the-data-sets-1" id="toc-describe-the-data-sets-1" class="nav-link" data-scroll-target="#describe-the-data-sets-1">Part 2. Describe the data set(s)</a></li>
+  <li><a href="#the-tentative-plan-for-visualization" id="toc-the-tentative-plan-for-visualization" class="nav-link" data-scroll-target="#the-tentative-plan-for-visualization">3. The Tentative Plan for Visualization</a></li>
+  <li><a href="#special-note-on-the-role-of-statistics" id="toc-special-note-on-the-role-of-statistics" class="nav-link" data-scroll-target="#special-note-on-the-role-of-statistics">Special Note on the role of statistics</a></li>
+  <li><a href="#evaluation" id="toc-evaluation" class="nav-link" data-scroll-target="#evaluation">Evaluation</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Final Project Assignment#1: Prachiti Parkar</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">final_Project_assignment_1</div>
+    <div class="quarto-category">final_project_data_description</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    San Francisco Crime Data Exploration
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Prachiti Parkar </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 12, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="overview-of-the-final-project" class="level2">
+<h2 class="anchored" data-anchor-id="overview-of-the-final-project">Overview of the Final Project</h2>
+<p>The goal is to tell a coherent and focused story with your data, which answers a question (or questions) that a researcher, or current or future employer, might want to have answered. The goal might be to understand a source of covariance, make a recommendation, or understand change over time. We don’t expect you to reach a definitive conclusion in this analysis. Still, you are expected to tell a data-driven story using evidence to support the claims you are making on the basis of the exploratory analysis conducted over the past term.</p>
+<p>In this final project, statistical analyses <strong>are not required</strong>, but any students who wish to include these may do so. However, <strong>your primary analysis should center around visualization rather than inferential statistics.</strong> Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - <strong>NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS</strong>. <strong>Do not run a multiple regression with numerous predictors and report which predictors are significant!!</strong></p>
+</section>
+<section id="Tasks-of-assignment1" class="level2">
+<h2 class="anchored" data-anchor-id="Tasks-of-assignment1">Tasks of Assignment#1</h2>
+<p>This assignment is the first component of your final project. Together with the later assignments, it make up a short paper/report. In this assignment, you should introduce a dataset(s) and how you plan to present this dataset(s). This assignment should include the following components:</p>
+<ol type="1">
+<li><p><strong>A clear description of the dataset(s) that you are using.</strong></p></li>
+<li><p><strong>What “story” do you want to present to the audience? In other words, what “question(s)” do you like to answer with this dataset(s)?</strong></p></li>
+<li><p><strong>The Plan for Further Analysis and Visualization.</strong></p></li>
+</ol>
+<p>We will have a special class meeting on April 12 to review and discuss students’ proposed datasets for the final project. <strong>If you want your project being discussed in the class, please submit this assignment before April 12.</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="describe-the-data-sets" class="level2">
+<h2 class="anchored" data-anchor-id="describe-the-data-sets">Part 1. Introduction</h2>
+<p>In this part, you should introduce the dataset(s) and your research questions.</p>
+<ol type="1">
+<li>Dataset(s) Introduction:</li>
+</ol>
+<p>The dataset is downloaded from DataSF, which has a number of open datasets provided by the San Francisco Government. Reference Link: https://datasf.org/opendata/</p>
+<p>This dataset includes incident reports that have been filed as of January 1, 2018. These reports are filed by officers or self-reported by members of the public using SFPD’s online reporting system. The reports are categorized into the following groups based on how the report was received and the type of incident:</p>
+<p>Initial Reports: the first report filed for an incident Coplogic Reports: incident reports filed by members of the public using SFPD’s online reporting system Vehicle Reports: any incident reports related to stolen and/or recovered vehicles</p>
+<p>Data is added to open data once incident reports have been reviewed and approved by a supervising Sergeant or Lieutenant. Incident reports may be removed from the dataset if in compliance with court orders to seal records or for administrative purposes such as active internal affair investigations and/or criminal investigations.</p>
+<ol start="2" type="1">
+<li>What questions do you like to answer with this dataset(s)?</li>
+</ol>
+<p>We can make observations about 1. the district wise distribution of crime, 2. what is the most frequent resolution in different districts, 3. what are the top crimes and what time does it occur, 4. what are the crime hotspots, 5. frequency of category of crimes across months/quarters.</p>
+</section>
+<section id="describe-the-data-sets-1" class="level2">
+<h2 class="anchored" data-anchor-id="describe-the-data-sets-1">Part 2. Describe the data set(s)</h2>
+<p>This part contains both a coding and a storytelling component.</p>
+<p>In the coding component, you should:</p>
+<ol type="1">
+<li><p>read the dataset;</p>
+<ul>
+<li><p>(optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step.</p></li>
+<li><p>(optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns.</p></li>
+</ul></li>
+</ol>
+<p>Since the data is huge containing 713107 columns and 35 columns, I decided to minimize my dataset to only the year 2023 which has around 30K rows.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"PrachitiParkar_FinalProjectData/Police_Department_Incident_Reports__2018_to_Present.csv"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">filter</span>(data, Incident.Year <span class="sc">==</span> <span class="dv">2023</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ol start="2" type="1">
+<li><p>present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;</p>
+<ul>
+<li>for examples: dim(), length(unique()), head();</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 30687    35</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(data))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 35</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Incident.Datetime"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Incident.Date"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Incident.Time"],"name":[3],"type":["chr"],"align":["left"]},{"label":["Incident.Year"],"name":[4],"type":["int"],"align":["right"]},{"label":["Incident.Day.of.Week"],"name":[5],"type":["chr"],"align":["left"]},{"label":["Report.Datetime"],"name":[6],"type":["chr"],"align":["left"]},{"label":["Row.ID"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["Incident.ID"],"name":[8],"type":["int"],"align":["right"]},{"label":["Incident.Number"],"name":[9],"type":["int"],"align":["right"]},{"label":["CAD.Number"],"name":[10],"type":["int"],"align":["right"]},{"label":["Report.Type.Code"],"name":[11],"type":["chr"],"align":["left"]},{"label":["Report.Type.Description"],"name":[12],"type":["chr"],"align":["left"]},{"label":["Filed.Online"],"name":[13],"type":["lgl"],"align":["right"]},{"label":["Incident.Code"],"name":[14],"type":["int"],"align":["right"]},{"label":["Incident.Category"],"name":[15],"type":["chr"],"align":["left"]},{"label":["Incident.Subcategory"],"name":[16],"type":["chr"],"align":["left"]},{"label":["Incident.Description"],"name":[17],"type":["chr"],"align":["left"]},{"label":["Resolution"],"name":[18],"type":["chr"],"align":["left"]},{"label":["Intersection"],"name":[19],"type":["chr"],"align":["left"]},{"label":["CNN"],"name":[20],"type":["dbl"],"align":["right"]},{"label":["Police.District"],"name":[21],"type":["chr"],"align":["left"]},{"label":["Analysis.Neighborhood"],"name":[22],"type":["chr"],"align":["left"]},{"label":["Supervisor.District"],"name":[23],"type":["int"],"align":["right"]},{"label":["Supervisor.District.2012"],"name":[24],"type":["int"],"align":["right"]},{"label":["Latitude"],"name":[25],"type":["dbl"],"align":["right"]},{"label":["Longitude"],"name":[26],"type":["dbl"],"align":["right"]},{"label":["Point"],"name":[27],"type":["chr"],"align":["left"]},{"label":["Neighborhoods"],"name":[28],"type":["int"],"align":["right"]},{"label":["ESNCAG...Boundary.File"],"name":[29],"type":["int"],"align":["right"]},{"label":["Central.Market.Tenderloin.Boundary.Polygon...Updated"],"name":[30],"type":["int"],"align":["right"]},{"label":["Civic.Center.Harm.Reduction.Project.Boundary"],"name":[31],"type":["int"],"align":["right"]},{"label":["HSOC.Zones.as.of.2018.06.05"],"name":[32],"type":["int"],"align":["right"]},{"label":["Invest.In.Neighborhoods..IIN..Areas"],"name":[33],"type":["lgl"],"align":["right"]},{"label":["Current.Supervisor.Districts"],"name":[34],"type":["int"],"align":["right"]},{"label":["Current.Police.Districts"],"name":[35],"type":["int"],"align":["right"]}],"data":[{"1":"3/13/23 23:41","2":"3/13/23","3":"23:41","4":"2023","5":"Monday","6":"3/13/23 23:41","7":"1.25374e+11","8":"1253736","9":"230167874","10":"NA","11":"VS","12":"Vehicle Supplement","13":"NA","14":"7041","15":"Recovered Vehicle","16":"Recovered Vehicle","17":"Vehicle, Recovered, Auto","18":"Open or Active","19":"","20":"NA","21":"Out of SF","22":"","23":"NA","24":"NA","25":"NA","26":"NA","27":"","28":"NA","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","_rn_":"1"},{"1":"3/1/23 5:02","2":"3/1/23","3":"5:02","4":"2023","5":"Wednesday","6":"3/11/23 15:40","7":"1.25380e+11","8":"1253795","9":"236046151","10":"NA","11":"II","12":"Coplogic Initial","13":"TRUE","14":"6374","15":"Larceny Theft","16":"Larceny Theft - Other","17":"Theft, Other Property, >$950","18":"Open or Active","19":"","20":"NA","21":"Mission","22":"","23":"NA","24":"NA","25":"NA","26":"NA","27":"","28":"NA","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","_rn_":"2"},{"1":"3/13/23 13:16","2":"3/13/23","3":"13:16","4":"2023","5":"Monday","6":"3/13/23 13:17","7":"1.25357e+11","8":"1253571","9":"220343896","10":"NA","11":"VS","12":"Vehicle Supplement","13":"NA","14":"7041","15":"Recovered Vehicle","16":"Recovered Vehicle","17":"Vehicle, Recovered, Auto","18":"Open or Active","19":"","20":"NA","21":"Out of SF","22":"","23":"NA","24":"NA","25":"NA","26":"NA","27":"","28":"NA","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","_rn_":"3"},{"1":"3/13/23 10:59","2":"3/13/23","3":"10:59","4":"2023","5":"Monday","6":"3/13/23 11:00","7":"1.25355e+11","8":"1253551","9":"230174885","10":"NA","11":"VS","12":"Vehicle Supplement","13":"NA","14":"7041","15":"Recovered Vehicle","16":"Recovered Vehicle","17":"Vehicle, Recovered, Auto","18":"Open or Active","19":"","20":"NA","21":"Out of SF","22":"","23":"NA","24":"NA","25":"NA","26":"NA","27":"","28":"NA","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","_rn_":"4"},{"1":"3/14/23 18:44","2":"3/14/23","3":"18:44","4":"2023","5":"Tuesday","6":"3/14/23 18:45","7":"1.25402e+11","8":"1254024","9":"230176728","10":"NA","11":"VS","12":"Vehicle Supplement","13":"NA","14":"7041","15":"Recovered Vehicle","16":"Recovered Vehicle","17":"Vehicle, Recovered, Auto","18":"Open or Active","19":"","20":"NA","21":"Out of SF","22":"","23":"NA","24":"NA","25":"NA","26":"NA","27":"","28":"NA","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","_rn_":"5"},{"1":"2/15/23 3:00","2":"2/15/23","3":"3:00","4":"2023","5":"Wednesday","6":"3/11/23 16:55","7":"1.25379e+11","8":"1253786","9":"236046123","10":"NA","11":"II","12":"Coplogic Initial","13":"TRUE","14":"6372","15":"Larceny Theft","16":"Larceny Theft - Other","17":"Theft, Other Property, $50-$200","18":"Open or Active","19":"","20":"NA","21":"Mission","22":"","23":"NA","24":"NA","25":"NA","26":"NA","27":"","28":"NA","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div></li>
+<li><p>conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.</p></li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Incident.Datetime  Incident.Date      Incident.Time      Incident.Year 
+ Length:30687       Length:30687       Length:30687       Min.   :2023  
+ Class :character   Class :character   Class :character   1st Qu.:2023  
+ Mode  :character   Mode  :character   Mode  :character   Median :2023  
+                                                          Mean   :2023  
+                                                          3rd Qu.:2023  
+                                                          Max.   :2023  
+                                                                        
+ Incident.Day.of.Week Report.Datetime        Row.ID           Incident.ID     
+ Length:30687         Length:30687       Min.   :1.230e+11   Min.   :1229913  
+ Class :character     Class :character   1st Qu.:1.238e+11   1st Qu.:1238439  
+ Mode  :character     Mode  :character   Median :1.246e+11   Median :1245767  
+                                         Mean   :1.246e+11   Mean   :1245693  
+                                         3rd Qu.:1.253e+11   3rd Qu.:1252958  
+                                         Max.   :1.261e+11   Max.   :1261142  
+                                                                              
+ Incident.Number       CAD.Number        Report.Type.Code  
+ Min.   :        0   Min.   :172441963   Length:30687      
+ 1st Qu.:230065057   1st Qu.:230250554   Class :character  
+ Median :230133182   Median :230470081   Mode  :character  
+ Mean   :230836666   Mean   :230585208                     
+ 3rd Qu.:230201488   3rd Qu.:230682186                     
+ Max.   :239000443   Max.   :999999999                     
+                     NA's   :6454                          
+ Report.Type.Description Filed.Online   Incident.Code   Incident.Category 
+ Length:30687            Mode:logical   Min.   : 1000   Length:30687      
+ Class :character        TRUE:5475      1st Qu.: 6244   Class :character  
+ Mode  :character        NA's:25212     Median : 7041   Mode  :character  
+                                        Mean   :24104                     
+                                        3rd Qu.:28160                     
+                                        Max.   :75030                     
+                                                                          
+ Incident.Subcategory Incident.Description  Resolution       
+ Length:30687         Length:30687         Length:30687      
+ Class :character     Class :character     Class :character  
+ Mode  :character     Mode  :character     Mode  :character  
+                                                             
+                                                             
+                                                             
+                                                             
+ Intersection            CNN           Police.District    Analysis.Neighborhood
+ Length:30687       Min.   :20013000   Length:30687       Length:30687         
+ Class :character   1st Qu.:23917000   Class :character   Class :character     
+ Mode  :character   Median :24924000   Mode  :character   Mode  :character     
+                    Mean   :25209532                                           
+                    3rd Qu.:26412000                                           
+                    Max.   :51541000                                           
+                    NA's   :1600                                               
+ Supervisor.District Supervisor.District.2012    Latitude       Longitude     
+ Min.   : 1.000      Min.   : 1.000           Min.   :37.71   Min.   :-122.5  
+ 1st Qu.: 3.000      1st Qu.: 3.000           1st Qu.:37.75   1st Qu.:-122.4  
+ Median : 6.000      Median : 6.000           Median :37.78   Median :-122.4  
+ Mean   : 5.993      Mean   : 6.048           Mean   :37.77   Mean   :-122.4  
+ 3rd Qu.: 9.000      3rd Qu.: 9.000           3rd Qu.:37.79   3rd Qu.:-122.4  
+ Max.   :11.000      Max.   :11.000           Max.   :37.83   Max.   :-122.4  
+ NA's   :1616        NA's   :1605             NA's   :1600    NA's   :1600    
+    Point           Neighborhoods    ESNCAG...Boundary.File
+ Length:30687       Min.   :  1.00   Min.   :1             
+ Class :character   1st Qu.: 22.00   1st Qu.:1             
+ Mode  :character   Median : 50.00   Median :1             
+                    Mean   : 53.62   Mean   :1             
+                    3rd Qu.: 86.00   3rd Qu.:1             
+                    Max.   :117.00   Max.   :1             
+                    NA's   :2081     NA's   :30410         
+ Central.Market.Tenderloin.Boundary.Polygon...Updated
+ Min.   :1                                           
+ 1st Qu.:1                                           
+ Median :1                                           
+ Mean   :1                                           
+ 3rd Qu.:1                                           
+ Max.   :1                                           
+ NA's   :26308                                       
+ Civic.Center.Harm.Reduction.Project.Boundary HSOC.Zones.as.of.2018.06.05
+ Min.   :1                                    Min.   :1.000              
+ 1st Qu.:1                                    1st Qu.:1.000              
+ Median :1                                    Median :3.000              
+ Mean   :1                                    Mean   :2.259              
+ 3rd Qu.:1                                    3rd Qu.:3.000              
+ Max.   :1                                    Max.   :5.000              
+ NA's   :26584                                NA's   :24573              
+ Invest.In.Neighborhoods..IIN..Areas Current.Supervisor.Districts
+ Mode:logical                        Min.   : 1.000              
+ NA's:30687                          1st Qu.: 3.000              
+                                     Median : 8.000              
+                                     Mean   : 6.759              
+                                     3rd Qu.:10.000              
+                                     Max.   :11.000              
+                                     NA's   :1605                
+ Current.Police.Districts
+ Min.   : 1.00           
+ 1st Qu.: 3.00           
+ Median : 5.00           
+ Mean   : 4.94           
+ 3rd Qu.: 7.00           
+ Max.   :10.00           
+ NA's   :1621            </code></pre>
+</div>
+</div>
+<p>Storytelling:</p>
+<p>The description of each column is -</p>
+<p>Incident Datetime - The date and time when the incident occurred</p>
+<p>Incident Date - The date the incident occurred</p>
+<p>Incident Time- The time the incident occurred</p>
+<p>Incident Year - The year the incident occurred, provided as a convenience for filtering</p>
+<p>Incident Day of Week - The day of week the incident occurred</p>
+<p>Report Datetime - Distinct from Incident Datetime, Report Datetime is when the report was filed.</p>
+<p>Row ID - A unique identifier for each row of data in the dataset</p>
+<p>Incident ID - This is the system generated identifier for incident reports. Incident IDs and Incident Numbers both uniquely identify reports, but Incident Numbers are used when referencing cases and report documents.</p>
+<p>Incident Number - The number issued on the report, sometimes interchangeably referred to as the Case Number. This number is used to reference cases and report documents.</p>
+<p>CAD Number - The Computer Aided Dispatch (CAD) is the system used by the Department of Emergency Management (DEM) to dispatch officers and other public safety personnel. CAD Numbers are assigned by the DEM system and linked to relevant incident reports (Incident Number).</p>
+<p>Report Type Code - A system code for report types, these have corresponding descriptions within the dataset.</p>
+<p>Report Type Description - The description of the report type, can be one of: Initial; Initial Supplement; Vehicle Initial; Vehicle Supplement; Coplogic Initial; Coplogic Supplement</p>
+<p>Filed Online - Non- emergency police reports can be filed online by members of the public using SFPD’s self-service reporting system called Coplogic Values in this field will be “TRUE” if Coplogic was used to file the report.</p>
+<p>Incident Code - Incident Codes are the system codes to describe a type of incident. A single incident report can have one or more incident types associated. In those cases you will see multiple rows representing a unique combination of the Incident ID and Incident Code.</p>
+<p>Incident Category - A category mapped on to the Incident Code used in statistics and reporting. Mappings provided by the Crime Analysis Unit of the Police Department.</p>
+<p>Incident Subcategory - A subcategory mapped to the Incident Code that is used for statistics and reporting. Mappings are provided by the Crime Analysis Unit of the Police Department.</p>
+<p>Incident Description - The description of the incident that corresponds with the Incident Code. These are generally self-explanatory.</p>
+<p>Resolution - The resolution of the incident at the time of the report. Can be one of: • Cite or Arrest Adult • Cite or Arrest Juvenile* • Exceptional Adult • Exceptional Juvenile* • Open or Active • Unfounded Juvenile information not maintained in the dataset.</p>
+<p>Intersection - The 2 or more street names that intersect closest to the original incident separated by a backward slash.</p>
+<p>CNN - The unique identifier of the intersection for reference back to other related basemap datasets.</p>
+<p>Police District - The Police District where the incident occurred. District boundaries can be reviewed in the link below.</p>
+<p>Analysis Neighborhood - This field is used to identify the neighborhood where each incident occurs. Neighborhoods and boundaries are defined by the Department of Public Health and the Mayor’s Office of Housing and Community Development.</p>
+<p>Supervisor District - There are 11 members elected to the Board of Supervisors in San Francisco, each representing a geographic district. The Board of Supervisors is the legislative body for San Francisco. The districts are numbered 1 through 11.</p>
+<p>Latitude - The latitude coordinate in WGS84, spatial reference is EPSG:4326</p>
+<p>Longitude - The longitude coordinate in WGS84, spatial reference is EPSG:4326</p>
+<p>Point - Geolocation in OGC WKT format (e.g, POINT(37.4,-122.3)</p>
+</section>
+<section id="the-tentative-plan-for-visualization" class="level2">
+<h2 class="anchored" data-anchor-id="the-tentative-plan-for-visualization">3. The Tentative Plan for Visualization</h2>
+<ol type="1">
+<li>Briefly describe what data analyses (<strong>please the special note on statistics in the next section)</strong> and visualizations you plan to conduct to answer the research questions you proposed above.</li>
+</ol>
+<p>I plan to plot some line graphs and bar graphs to answer the research questions.</p>
+<p>The district wise distribution of crime - I plan to plot a bar graph to show safe and unsafe districts - the tallest bar would be the one has the highest amount of crimes (unsafe) and the shortest would be the one which has the least amount of crimes. (safe)</p>
+<p>What is the most frequent resolution in different districts - I plan to plot compound bar graph to show various resolutions in each district, this would be a further deep down than the first plot. The larger proportion of the bar would point to highest number of crimes with that resolution.</p>
+<p>What are the top crimes and what time does it occur - I plan to plot bar graphs and heat maps for this question.</p>
+<p>What are the crime hotspots - I plan to use the map of San Francisco from get_statemap() library and then accordingly plot the crimes at the respective longitude and latitude.</p>
+<p>Frequency of category of crimes across months and quarters - I plan to plot line graph/ bar graph (depending on better visual appearance) showing the crimes across months and quarters.</p>
+<ol start="2" type="1">
+<li>Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see <a href="https://r-graph-gallery.com/">the R Gallery</a>) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?</li>
+</ol>
+<p>The district wise distribution of crime - This will help us figure out the most unsafe and safe districts.</p>
+<p>What is the most frequent resolution in different districts - This would help us understand most and least adopted resolutions to deal with crimes.</p>
+<p>What are the top crimes and what time does it occur - This will help us identify the most unsafe times - day or night and this can help the police increase &amp; tighten security during that time to prevent crimes.</p>
+<p>What are the crime hotspots - The San Francisco state map with the crimes plot will help us locate most unsafe cities in the state and can help the police department to tighten security there.</p>
+<p>Frequency of category of crimes across months/quarters - Plotting a line/bar graph will help us understand the most unsafe months and we can according correlate it with inflation/recession and develop insights.</p>
+<ol start="3" type="1">
+<li><p>If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.</p>
+<ul>
+<li><p>What do you need to do to mutate the datasets (convert date data, create a new variable, pivot the data format, etc.)?</p></li>
+<li><p>How are you going to deal with the missing data/NAs and outliers? And why do you choose this way to deal with NAs?</p></li>
+</ul></li>
+</ol>
+<p>I plan to first remove columns which has mostly NA values since that would not lead to any concrete insights. I have already filtered the data to focus on the year 2023 since the data is huge and processing so many rows will take some time. I also plan to mutate and add additional columns like months and quarters from the date column during the preprocessing step so that it will make it easier to plot graphs.</p>
+<ol start="4" type="1">
+<li>(Optional) It is encouraged, <strong>but optional</strong>, to include a coding component of tidy data in this part.</li>
+</ol>
+<div class="cell">
+
+</div>
+</section>
+<section id="special-note-on-the-role-of-statistics" class="level2">
+<h2 class="anchored" data-anchor-id="special-note-on-the-role-of-statistics">Special Note on the role of statistics</h2>
+<p>Statistical analyses <strong>are not required</strong>, but any students who wish to include these may do so. However, your primary analysis should center around visualization rather than inferential statistics. Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - <strong>NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS</strong>. Do not run a multiple regression with numerous predictors and report which predictors are significant!!</p>
+<p><strong>Remember: The goal is to tell a story about the data</strong>. For example, you might identify sports where winning athletes are younger or older than average and then try to see if you can find some sort of pattern that accounts for this difference. Or perhaps you might compare a country’s performance to GDP and see if this changes over time. The goal is not to get a significant statistical result but to identify an interesting pattern in the data and then extract some sort of meaningful recommendation or information from it.</p>
+</section>
+<section id="evaluation" class="level2">
+<h2 class="anchored" data-anchor-id="evaluation">Evaluation</h2>
+<p>You will be evaluated on both the quality of your source code and your written report, with a greater emphasis on the clarity and details of the description of your dataset(s) and your research questions.</p>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="DACSS/601_Spring_2023" data-repo-id="R_kgDOI4JcJA" data-category="Announcements" data-category-id="" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb10" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Final Project Assignment#1: Prachiti Parkar"</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Prachiti Parkar"</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "San Francisco Crime Data Exploration"</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "04/12/2023"</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">    df-print: paged</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">    css: styles.css</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">  - final_Project_assignment_1</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">  - final_project_data_description</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="an">editor_options:</span><span class="co"> </span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co">  chunk_output_type: console</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="fu">## Overview of the Final Project {#overview-of-the-final-project}</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>The goal is to tell a coherent and focused story with your data, which answers a question (or questions) that a researcher, or current or future employer, might want to have answered. The goal might be to understand a source of covariance, make a recommendation, or understand change over time. We don't expect you to reach a definitive conclusion in this analysis. Still, you are expected to tell a data-driven story using evidence to support the claims you are making on the basis of the exploratory analysis conducted over the past term.</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>In this final project, statistical analyses **are not required**, but any students who wish to include these may do so. However, **your primary analysis should center around visualization rather than inferential statistics.** Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. **Do not run a multiple regression with numerous predictors and report which predictors are significant!!**</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="fu">## Tasks of Assignment#1 {#Tasks-of-assignment1}</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>This assignment is the first component of your final project. Together with the later assignments, it make up a short paper/report. In this assignment, you should introduce a dataset(s) and how you plan to present this dataset(s). This assignment should include the following components:</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>**A clear description of the dataset(s) that you are using.**</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>**What "story" do you want to present to the audience? In other words, what "question(s)" do you like to answer with this dataset(s)?**</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a><span class="ss">3.  </span>**The Plan for Further Analysis and Visualization.**</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>We will have a special class meeting on April 12 to review and discuss students' proposed datasets for the final project. **If you want your project being discussed in the class, please submit this assignment before April 12.**</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a><span class="fu">## Part 1. Introduction {#describe-the-data-sets}</span></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>In this part, you should introduce the dataset(s) and your research questions.</span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>Dataset(s) Introduction:</span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>The dataset is downloaded from DataSF, which has a number of open datasets provided by the San Francisco Government.</span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>Reference Link: https://datasf.org/opendata/ </span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>This dataset includes incident reports that have been filed as of January 1, 2018. These reports are filed by officers or self-reported by members of the public using SFPD’s online reporting system. The reports are categorized into the following groups based on how the report was received and the type of incident:</span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>Initial Reports: the first report filed for an incident</span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>Coplogic Reports: incident reports filed by members of the public using SFPD’s online reporting system</span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>Vehicle Reports: any incident reports related to stolen and/or recovered vehicles</span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>Data is added to open data once incident reports have been reviewed and approved by a supervising Sergeant or Lieutenant. Incident reports may be removed from the dataset if in compliance with court orders to seal records or for administrative purposes such as active internal affair investigations and/or criminal investigations.</span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>What questions do you like to answer with this dataset(s)?</span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-71"><a href="#cb10-71" aria-hidden="true" tabindex="-1"></a>We can make observations about </span>
+<span id="cb10-72"><a href="#cb10-72" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>the district wise distribution of crime,</span>
+<span id="cb10-73"><a href="#cb10-73" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>what is the most frequent resolution in different districts,</span>
+<span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>what are the top crimes and what time does it occur,</span>
+<span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>what are the crime hotspots, </span>
+<span id="cb10-76"><a href="#cb10-76" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>frequency of category of crimes across months/quarters.</span>
+<span id="cb10-77"><a href="#cb10-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-78"><a href="#cb10-78" aria-hidden="true" tabindex="-1"></a><span class="fu">## Part 2. Describe the data set(s) {#describe-the-data-sets-1}</span></span>
+<span id="cb10-79"><a href="#cb10-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-80"><a href="#cb10-80" aria-hidden="true" tabindex="-1"></a>This part contains both a coding and a storytelling component.</span>
+<span id="cb10-81"><a href="#cb10-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a>In the coding component, you should:</span>
+<span id="cb10-83"><a href="#cb10-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-84"><a href="#cb10-84" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>read the dataset;</span>
+<span id="cb10-85"><a href="#cb10-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-86"><a href="#cb10-86" aria-hidden="true" tabindex="-1"></a><span class="ss">    -   </span>(optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step.</span>
+<span id="cb10-87"><a href="#cb10-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-88"><a href="#cb10-88" aria-hidden="true" tabindex="-1"></a><span class="ss">    -   </span>(optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns.</span>
+<span id="cb10-89"><a href="#cb10-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-90"><a href="#cb10-90" aria-hidden="true" tabindex="-1"></a>Since the data is huge containing 713107 columns and 35 columns, I decided to minimize my dataset to only the year 2023 which has around 30K rows. </span>
+<span id="cb10-91"><a href="#cb10-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-94"><a href="#cb10-94" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb10-95"><a href="#cb10-95" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"PrachitiParkar_FinalProjectData/Police_Department_Incident_Reports__2018_to_Present.csv"</span>)</span>
+<span id="cb10-96"><a href="#cb10-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-97"><a href="#cb10-97" aria-hidden="true" tabindex="-1"></a>data <span class="ot">=</span> <span class="fu">filter</span>(data, Incident.Year <span class="sc">==</span> <span class="dv">2023</span>)</span>
+<span id="cb10-98"><a href="#cb10-98" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-99"><a href="#cb10-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-100"><a href="#cb10-100" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;</span>
+<span id="cb10-101"><a href="#cb10-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-102"><a href="#cb10-102" aria-hidden="true" tabindex="-1"></a><span class="ss">    -   </span>for examples: dim(), length(unique()), head();</span>
+<span id="cb10-103"><a href="#cb10-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-104"><a href="#cb10-104" aria-hidden="true" tabindex="-1"></a>    <span class="in">```{r}</span></span>
+<span id="cb10-105"><a href="#cb10-105" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(data)</span>
+<span id="cb10-106"><a href="#cb10-106" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(data))</span>
+<span id="cb10-107"><a href="#cb10-107" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(data)</span>
+<span id="cb10-108"><a href="#cb10-108" aria-hidden="true" tabindex="-1"></a>    <span class="in">```</span></span>
+<span id="cb10-109"><a href="#cb10-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-110"><a href="#cb10-110" aria-hidden="true" tabindex="-1"></a><span class="ss">3.  </span>conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.</span>
+<span id="cb10-111"><a href="#cb10-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-114"><a href="#cb10-114" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb10-115"><a href="#cb10-115" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(data)</span>
+<span id="cb10-116"><a href="#cb10-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-117"><a href="#cb10-117" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-118"><a href="#cb10-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-119"><a href="#cb10-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-120"><a href="#cb10-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-121"><a href="#cb10-121" aria-hidden="true" tabindex="-1"></a>Storytelling:</span>
+<span id="cb10-122"><a href="#cb10-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-123"><a href="#cb10-123" aria-hidden="true" tabindex="-1"></a>The description of each column is -</span>
+<span id="cb10-124"><a href="#cb10-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-125"><a href="#cb10-125" aria-hidden="true" tabindex="-1"></a>Incident Datetime - The date and time when the incident occurred</span>
+<span id="cb10-126"><a href="#cb10-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-127"><a href="#cb10-127" aria-hidden="true" tabindex="-1"></a>Incident Date - The date the incident occurred</span>
+<span id="cb10-128"><a href="#cb10-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-129"><a href="#cb10-129" aria-hidden="true" tabindex="-1"></a>Incident Time- The time the incident occurred</span>
+<span id="cb10-130"><a href="#cb10-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-131"><a href="#cb10-131" aria-hidden="true" tabindex="-1"></a>Incident Year - The year the incident occurred, provided as a</span>
+<span id="cb10-132"><a href="#cb10-132" aria-hidden="true" tabindex="-1"></a>convenience for filtering</span>
+<span id="cb10-133"><a href="#cb10-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-134"><a href="#cb10-134" aria-hidden="true" tabindex="-1"></a>Incident Day of Week - The day of week the incident occurred</span>
+<span id="cb10-135"><a href="#cb10-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-136"><a href="#cb10-136" aria-hidden="true" tabindex="-1"></a>Report Datetime - Distinct from Incident Datetime, Report Datetime is</span>
+<span id="cb10-137"><a href="#cb10-137" aria-hidden="true" tabindex="-1"></a>when the report was filed.</span>
+<span id="cb10-138"><a href="#cb10-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-139"><a href="#cb10-139" aria-hidden="true" tabindex="-1"></a>Row ID - A unique identifier for each row of data in the dataset</span>
+<span id="cb10-140"><a href="#cb10-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-141"><a href="#cb10-141" aria-hidden="true" tabindex="-1"></a>Incident ID - This is the system generated identifier for incident</span>
+<span id="cb10-142"><a href="#cb10-142" aria-hidden="true" tabindex="-1"></a>reports. Incident IDs and Incident Numbers both uniquely identify</span>
+<span id="cb10-143"><a href="#cb10-143" aria-hidden="true" tabindex="-1"></a>reports, but Incident Numbers are used when referencing cases and report</span>
+<span id="cb10-144"><a href="#cb10-144" aria-hidden="true" tabindex="-1"></a>documents.</span>
+<span id="cb10-145"><a href="#cb10-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-146"><a href="#cb10-146" aria-hidden="true" tabindex="-1"></a>Incident Number - The number issued on the report, sometimes</span>
+<span id="cb10-147"><a href="#cb10-147" aria-hidden="true" tabindex="-1"></a>interchangeably referred to as the Case Number. This number is used to</span>
+<span id="cb10-148"><a href="#cb10-148" aria-hidden="true" tabindex="-1"></a>reference cases and report documents.</span>
+<span id="cb10-149"><a href="#cb10-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-150"><a href="#cb10-150" aria-hidden="true" tabindex="-1"></a>CAD Number - The Computer Aided Dispatch (CAD) is the system used by the</span>
+<span id="cb10-151"><a href="#cb10-151" aria-hidden="true" tabindex="-1"></a>Department of Emergency Management (DEM) to dispatch officers and other</span>
+<span id="cb10-152"><a href="#cb10-152" aria-hidden="true" tabindex="-1"></a>public safety personnel. CAD Numbers are assigned by the DEM system and</span>
+<span id="cb10-153"><a href="#cb10-153" aria-hidden="true" tabindex="-1"></a>linked to relevant incident reports (Incident Number).</span>
+<span id="cb10-154"><a href="#cb10-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-155"><a href="#cb10-155" aria-hidden="true" tabindex="-1"></a>Report Type Code - A system code for report types, these have</span>
+<span id="cb10-156"><a href="#cb10-156" aria-hidden="true" tabindex="-1"></a>corresponding descriptions within the dataset.</span>
+<span id="cb10-157"><a href="#cb10-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-158"><a href="#cb10-158" aria-hidden="true" tabindex="-1"></a>Report Type Description - The description of the report type, can be one</span>
+<span id="cb10-159"><a href="#cb10-159" aria-hidden="true" tabindex="-1"></a>of: Initial; Initial Supplement; Vehicle Initial; Vehicle Supplement;</span>
+<span id="cb10-160"><a href="#cb10-160" aria-hidden="true" tabindex="-1"></a>Coplogic Initial; Coplogic Supplement</span>
+<span id="cb10-161"><a href="#cb10-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-162"><a href="#cb10-162" aria-hidden="true" tabindex="-1"></a>Filed Online - Non- emergency police reports can be filed online by</span>
+<span id="cb10-163"><a href="#cb10-163" aria-hidden="true" tabindex="-1"></a>members of the public using SFPD's self-service reporting system called</span>
+<span id="cb10-164"><a href="#cb10-164" aria-hidden="true" tabindex="-1"></a>Coplogic Values in this field will be "TRUE" if Coplogic was used to</span>
+<span id="cb10-165"><a href="#cb10-165" aria-hidden="true" tabindex="-1"></a>file the report.</span>
+<span id="cb10-166"><a href="#cb10-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-167"><a href="#cb10-167" aria-hidden="true" tabindex="-1"></a>Incident Code - Incident Codes are the system codes to describe a type</span>
+<span id="cb10-168"><a href="#cb10-168" aria-hidden="true" tabindex="-1"></a>of incident. A single incident report can have one or more incident</span>
+<span id="cb10-169"><a href="#cb10-169" aria-hidden="true" tabindex="-1"></a>types associated. In those cases you will see multiple rows representing</span>
+<span id="cb10-170"><a href="#cb10-170" aria-hidden="true" tabindex="-1"></a>a unique combination of the Incident ID and Incident Code.</span>
+<span id="cb10-171"><a href="#cb10-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-172"><a href="#cb10-172" aria-hidden="true" tabindex="-1"></a>Incident Category - A category mapped on to the Incident Code used in</span>
+<span id="cb10-173"><a href="#cb10-173" aria-hidden="true" tabindex="-1"></a>statistics and reporting. Mappings provided by the Crime Analysis Unit</span>
+<span id="cb10-174"><a href="#cb10-174" aria-hidden="true" tabindex="-1"></a>of the Police Department.</span>
+<span id="cb10-175"><a href="#cb10-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-176"><a href="#cb10-176" aria-hidden="true" tabindex="-1"></a>Incident Subcategory - A subcategory mapped to the Incident Code that is</span>
+<span id="cb10-177"><a href="#cb10-177" aria-hidden="true" tabindex="-1"></a>used for statistics and reporting. Mappings are provided by the Crime</span>
+<span id="cb10-178"><a href="#cb10-178" aria-hidden="true" tabindex="-1"></a>Analysis Unit of the Police Department.</span>
+<span id="cb10-179"><a href="#cb10-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-180"><a href="#cb10-180" aria-hidden="true" tabindex="-1"></a>Incident Description - The description of the incident that corresponds</span>
+<span id="cb10-181"><a href="#cb10-181" aria-hidden="true" tabindex="-1"></a>with the Incident Code. These are generally self-explanatory.</span>
+<span id="cb10-182"><a href="#cb10-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-183"><a href="#cb10-183" aria-hidden="true" tabindex="-1"></a>Resolution - The resolution of the incident at the time of the report.</span>
+<span id="cb10-184"><a href="#cb10-184" aria-hidden="true" tabindex="-1"></a>Can be one of: • Cite or Arrest Adult • Cite or Arrest Juvenile<span class="sc">\*</span> •</span>
+<span id="cb10-185"><a href="#cb10-185" aria-hidden="true" tabindex="-1"></a>Exceptional Adult • Exceptional Juvenile<span class="sc">\*</span> • Open or Active • Unfounded</span>
+<span id="cb10-186"><a href="#cb10-186" aria-hidden="true" tabindex="-1"></a>Juvenile information not maintained in the dataset.</span>
+<span id="cb10-187"><a href="#cb10-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-188"><a href="#cb10-188" aria-hidden="true" tabindex="-1"></a>Intersection - The 2 or more street names that intersect closest to the</span>
+<span id="cb10-189"><a href="#cb10-189" aria-hidden="true" tabindex="-1"></a>original incident separated by a backward slash.</span>
+<span id="cb10-190"><a href="#cb10-190" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-191"><a href="#cb10-191" aria-hidden="true" tabindex="-1"></a>CNN - The unique identifier of the intersection for reference back to</span>
+<span id="cb10-192"><a href="#cb10-192" aria-hidden="true" tabindex="-1"></a>other related basemap datasets.</span>
+<span id="cb10-193"><a href="#cb10-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-194"><a href="#cb10-194" aria-hidden="true" tabindex="-1"></a>Police District - The Police District where the incident occurred.</span>
+<span id="cb10-195"><a href="#cb10-195" aria-hidden="true" tabindex="-1"></a>District boundaries can be reviewed in the link below.</span>
+<span id="cb10-196"><a href="#cb10-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-197"><a href="#cb10-197" aria-hidden="true" tabindex="-1"></a>Analysis Neighborhood - This field is used to identify the neighborhood</span>
+<span id="cb10-198"><a href="#cb10-198" aria-hidden="true" tabindex="-1"></a>where each incident occurs. Neighborhoods and boundaries are defined by</span>
+<span id="cb10-199"><a href="#cb10-199" aria-hidden="true" tabindex="-1"></a>the Department of Public Health and the Mayor's Office of Housing and</span>
+<span id="cb10-200"><a href="#cb10-200" aria-hidden="true" tabindex="-1"></a>Community Development.</span>
+<span id="cb10-201"><a href="#cb10-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-202"><a href="#cb10-202" aria-hidden="true" tabindex="-1"></a>Supervisor District - There are 11 members elected to the Board of</span>
+<span id="cb10-203"><a href="#cb10-203" aria-hidden="true" tabindex="-1"></a>Supervisors in San Francisco, each representing a geographic district.</span>
+<span id="cb10-204"><a href="#cb10-204" aria-hidden="true" tabindex="-1"></a>The Board of Supervisors is the legislative body for San Francisco. The</span>
+<span id="cb10-205"><a href="#cb10-205" aria-hidden="true" tabindex="-1"></a>districts are numbered 1 through 11.</span>
+<span id="cb10-206"><a href="#cb10-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-207"><a href="#cb10-207" aria-hidden="true" tabindex="-1"></a>Latitude - The latitude coordinate in WGS84, spatial reference is</span>
+<span id="cb10-208"><a href="#cb10-208" aria-hidden="true" tabindex="-1"></a>EPSG:4326</span>
+<span id="cb10-209"><a href="#cb10-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-210"><a href="#cb10-210" aria-hidden="true" tabindex="-1"></a>Longitude - The longitude coordinate in WGS84, spatial reference is</span>
+<span id="cb10-211"><a href="#cb10-211" aria-hidden="true" tabindex="-1"></a>EPSG:4326</span>
+<span id="cb10-212"><a href="#cb10-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-213"><a href="#cb10-213" aria-hidden="true" tabindex="-1"></a>Point - Geolocation in OGC WKT format (e.g, POINT(37.4,-122.3)</span>
+<span id="cb10-214"><a href="#cb10-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-215"><a href="#cb10-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-216"><a href="#cb10-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-217"><a href="#cb10-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-218"><a href="#cb10-218" aria-hidden="true" tabindex="-1"></a><span class="fu">## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}</span></span>
+<span id="cb10-219"><a href="#cb10-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-220"><a href="#cb10-220" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above.</span>
+<span id="cb10-221"><a href="#cb10-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-222"><a href="#cb10-222" aria-hidden="true" tabindex="-1"></a>I plan to plot some line graphs and bar graphs to answer the research questions. </span>
+<span id="cb10-223"><a href="#cb10-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-224"><a href="#cb10-224" aria-hidden="true" tabindex="-1"></a>  The district wise distribution of crime - I plan to plot a bar graph to show safe and unsafe districts - the tallest bar would be the one has the highest amount of crimes (unsafe) and the shortest would be the one which has the least amount of crimes. (safe)</span>
+<span id="cb10-225"><a href="#cb10-225" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-226"><a href="#cb10-226" aria-hidden="true" tabindex="-1"></a>  What is the most frequent resolution in different districts - I plan to plot compound bar graph to show various resolutions in each district, this would be a further deep down than the first plot. The larger proportion of the bar would point to highest number of crimes with that resolution. </span>
+<span id="cb10-227"><a href="#cb10-227" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-228"><a href="#cb10-228" aria-hidden="true" tabindex="-1"></a>  What are the top crimes and what time does it occur - I plan to plot bar graphs and heat maps for this question. </span>
+<span id="cb10-229"><a href="#cb10-229" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-230"><a href="#cb10-230" aria-hidden="true" tabindex="-1"></a>  What are the crime hotspots - I plan to use the map of San Francisco from get_statemap() library and then accordingly plot the crimes at the respective longitude and latitude. </span>
+<span id="cb10-231"><a href="#cb10-231" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-232"><a href="#cb10-232" aria-hidden="true" tabindex="-1"></a>  Frequency of category of crimes across months and quarters - I plan to plot line graph/ bar graph (depending on better visual appearance) showing the crimes across months and quarters.  </span>
+<span id="cb10-233"><a href="#cb10-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-234"><a href="#cb10-234" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see <span class="co">[</span><span class="ot">the R Gallery</span><span class="co">](https://r-graph-gallery.com/)</span>) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?</span>
+<span id="cb10-235"><a href="#cb10-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-236"><a href="#cb10-236" aria-hidden="true" tabindex="-1"></a>  The district wise distribution of crime - This will help us figure out the most unsafe and safe districts.</span>
+<span id="cb10-237"><a href="#cb10-237" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb10-238"><a href="#cb10-238" aria-hidden="true" tabindex="-1"></a>  What is the most frequent resolution in different districts - This would help us understand most and least adopted resolutions to deal with crimes.</span>
+<span id="cb10-239"><a href="#cb10-239" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb10-240"><a href="#cb10-240" aria-hidden="true" tabindex="-1"></a>  What are the top crimes and what time does it occur - This will help us identify the most unsafe times - day or night and this can help the police increase &amp; tighten security during that time to prevent crimes.</span>
+<span id="cb10-241"><a href="#cb10-241" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb10-242"><a href="#cb10-242" aria-hidden="true" tabindex="-1"></a>  What are the crime hotspots - The San Francisco state map with the crimes plot will help us locate most unsafe cities in the state and can help the police department to tighten security there. </span>
+<span id="cb10-243"><a href="#cb10-243" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb10-244"><a href="#cb10-244" aria-hidden="true" tabindex="-1"></a>  Frequency of category of crimes across months/quarters - Plotting a line/bar graph will help us understand the most unsafe months and we can according correlate it with inflation/recession and develop insights.</span>
+<span id="cb10-245"><a href="#cb10-245" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-246"><a href="#cb10-246" aria-hidden="true" tabindex="-1"></a><span class="ss">3.  </span>If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.</span>
+<span id="cb10-247"><a href="#cb10-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-248"><a href="#cb10-248" aria-hidden="true" tabindex="-1"></a><span class="ss">    -   </span>What do you need to do to mutate the datasets (convert date data, create a new variable, pivot the data format, etc.)?</span>
+<span id="cb10-249"><a href="#cb10-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-250"><a href="#cb10-250" aria-hidden="true" tabindex="-1"></a><span class="ss">    -   </span>How are you going to deal with the missing data/NAs and outliers? And why do you choose this way to deal with NAs?</span>
+<span id="cb10-251"><a href="#cb10-251" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-252"><a href="#cb10-252" aria-hidden="true" tabindex="-1"></a>I plan to first remove columns which has mostly NA values since that would not lead to any concrete insights. </span>
+<span id="cb10-253"><a href="#cb10-253" aria-hidden="true" tabindex="-1"></a>I have already filtered the data to focus on the year 2023 since the data is huge and processing so many rows will take some time. </span>
+<span id="cb10-254"><a href="#cb10-254" aria-hidden="true" tabindex="-1"></a>I also plan to mutate and add additional columns like months and quarters from the date column during the preprocessing step so that it will make it easier to plot graphs. </span>
+<span id="cb10-255"><a href="#cb10-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-256"><a href="#cb10-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-257"><a href="#cb10-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-258"><a href="#cb10-258" aria-hidden="true" tabindex="-1"></a><span class="ss">4.  </span>(Optional) It is encouraged, **but optional**, to include a coding component of tidy data in this part.</span>
+<span id="cb10-259"><a href="#cb10-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-262"><a href="#cb10-262" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb10-263"><a href="#cb10-263" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb10-264"><a href="#cb10-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-265"><a href="#cb10-265" aria-hidden="true" tabindex="-1"></a><span class="fu">## Special Note on the role of statistics {#special-note-on-the-role-of-statistics}</span></span>
+<span id="cb10-266"><a href="#cb10-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-267"><a href="#cb10-267" aria-hidden="true" tabindex="-1"></a>Statistical analyses **are not required**, but any students who wish to include these may do so. However, your primary analysis should center around visualization rather than inferential statistics. Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. Do not run a multiple regression with numerous predictors and report which predictors are significant!!</span>
+<span id="cb10-268"><a href="#cb10-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-269"><a href="#cb10-269" aria-hidden="true" tabindex="-1"></a>**Remember: The goal is to tell a story about the data**. For example, you might identify sports where winning athletes are younger or older than average and then try to see if you can find some sort of pattern that accounts for this difference. Or perhaps you might compare a country's performance to GDP and see if this changes over time. The goal is not to get a significant statistical result but to identify an interesting pattern in the data and then extract some sort of meaningful recommendation or information from it.</span>
+<span id="cb10-270"><a href="#cb10-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-271"><a href="#cb10-271" aria-hidden="true" tabindex="-1"></a><span class="fu">## Evaluation {#evaluation}</span></span>
+<span id="cb10-272"><a href="#cb10-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-273"><a href="#cb10-273" aria-hidden="true" tabindex="-1"></a>You will be evaluated on both the quality of your source code and your written report, with a greater emphasis on the clarity and details of the description of your dataset(s) and your research questions.</span>
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+</body></html>

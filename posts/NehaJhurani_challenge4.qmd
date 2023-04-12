@@ -1,0 +1,70 @@
+---
+title: "Tidy/Consolidate a dataset"
+author: "Neha Jhurani"
+desription: "Using mutate and lubridate to tidy dataset: hotel_bookings.csv"
+date: "04/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge4
+  - Neha Jhurani
+  - hotel_bookings.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analysing hotel_bookings data
+
+```{r}
+library(readr)
+
+#reading hotel_bookings csv data
+hotel_bookings_data <- read_csv("_data/hotel_bookings.csv")
+
+#extracting all the column names
+colnames(hotel_bookings_data)
+
+dim(hotel_bookings_data)
+# The dataset contains around 119300 bookings at 2 Hotels from July 2015 to August 2017. There are 32 features for each booking
+
+# We see that there are a lot of variables that can be combined as they represent the same information. For ex - if we wnt to know the arriavl date, we have 4 different attrs for it, i.e., year of arrival, month of arrival, day of arrival and week of arrival. These features separated might help us with some info like, if we want to know the busiest months every year, etc. But, for now, these information makes more sense to our usecase together.
+
+library(dplyr)
+library(lubridate)
+
+#need to format month from str to it's respective number. For example - 'January' -> 1. We can use case_when along with mutate() as shown below
+consolidated_hotel_bookings_data <- hotel_bookings_data %>%
+    mutate(month = case_when(
+       arrival_date_month == "January" ~ 1,
+       arrival_date_month == "February" ~ 2,
+       arrival_date_month == "March" ~ 3,
+       arrival_date_month == "April" ~ 4,
+       arrival_date_month == "May" ~ 5,
+       arrival_date_month == "June" ~ 6,
+       arrival_date_month == "July" ~ 7,
+       arrival_date_month == "August" ~ 8,
+       arrival_date_month == "September" ~ 9,
+       arrival_date_month == "October" ~ 10,
+       arrival_date_month == "November" ~ 11,
+       arrival_date_month == "December" ~ 12,
+     )) %>%
+    mutate(arrival_date = make_date(arrival_date_year, month, arrival_date_day_of_month)) %>% #combining separate parts of date into one
+    select(-c(arrival_date_year, arrival_date_month, arrival_date_day_of_month, month, arrival_date_week_number))  # removing extra columns
+
+view(consolidated_hotel_bookings_data)
+
+dim(consolidated_hotel_bookings_data)
+#The number of columns reduce to 29
+
+```

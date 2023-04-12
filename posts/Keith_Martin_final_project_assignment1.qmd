@@ -1,0 +1,180 @@
+---
+title: "Final Project Assignment 1: Keith Martin"
+author: "Keith Martin"
+description: "Project & Data Description"
+date: "04/10/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+This data set was gathered from almost 400 applications submitted in Pennsylvania (2022) from various companies attempting to get a license to operate a dispensary in the state. 
+
+Each case is a company (sometimes several applications from the same company) and their respective scores across 16 categories. The categories are diversity plan,	operational time table,	qualifications,	security	transportation,	storage,	labeling,	inventory,	diversion,	sanitation,	record keeping,	history,	capital,	community,	site plan and	personalid.
+
+These scores are then added up for a total score, the max being 800. In theory, the higher your total score, the higher chance you will receive a license. 
+
+I believe otherwise. After reviewing the data, it becomes evident that the company with the higher scores do not always receive licenses. Some with lower scores receive them and some with higher scores in specific categories receive licenses despite having a lower total score. I believe that if you we're to separate the higher scores in the capital category you would find that companies with more capital will receive licenses even if their overall score is not the highest.
+
+There are two main questions I want to answer:
+
+1) Does having higher capital contribute to a higher chance in receiving a license?
+2) Do any other category have a similar impact on receiving a license if final scores are similar?
+
+Since we will not be running any type of regression analysis, we will separatly analyze the categories individually. We will compare them to the total scores and whether or not they have received a license or not. 
+
+For visualization, I will use scatterplots and boxplots mostly to visualize any potential patterns between specific categories and whether or not they received a license. In addition to that, I will include some summary statistics for further comparison.
+
+
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(summarytools)
+library(ggrepel)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+
+```{r}
+PA_Dispensary_License_Data_tab <- read_excel("~/Downloads/PA Dispensary License Data.tab.xlsx")
+head(PA_Dispensary_License_Data_tab, 10)
+```
+
+I have included a header with the first 10 companies that applied for the license. From this information, you can see the various categories that are used to calculate the final score.
+
+```{r}
+colnames(PA_Dispensary_License_Data_tab)
+nrow(PA_Dispensary_License_Data_tab)
+ncol(PA_Dispensary_License_Data_tab)
+```
+
+There are 22 total columns and a 387 total rows. Almost 400 companies applied for a license in 2022.
+
+    ```{r}
+PA_Dispensary_License_Condensed<-PA_Dispensary_License_Data_tab %>%
+      select(name, diversityplan, qualifications, security, capital,licensed, awarded)
+PA_Dispensary_License_Condensed
+
+    ```
+
+I grouped the data set by the specific categories I want to focus on. I will create multiple bivariate visualizations to determine if there is any meaningful patterns between the scores and whether they receive a license.
+
+```{r}
+PA_Dispensary_License_Condensed%>%
+  group_by(licensed)%>%
+  summarise(
+      sd_year = sd (diversityplan, na.rm=TRUE),
+      max_year = max(diversityplan, na.rm = TRUE),
+      min_year = min(diversityplan, na.rm = TRUE),
+      avg_year = mean (diversityplan, na.rm = TRUE),
+      med_year = median(diversityplan, na.rm = TRUE))
+```
+
+```{r}
+PA_Dispensary_License_Condensed%>%
+  group_by(licensed)%>%
+  summarise(
+      sd_year = sd (qualifications, na.rm=TRUE),
+      max_year = max(qualifications, na.rm = TRUE),
+      min_year = min(qualifications, na.rm = TRUE),
+      avg_year = mean (qualifications, na.rm = TRUE),
+      med_year = median(qualifications, na.rm = TRUE))
+```
+
+
+```{r}
+PA_Dispensary_License_Condensed%>%
+  group_by(licensed)%>%
+  summarise(
+      sd_security = sd (security, na.rm=TRUE),
+      max_security = max(security, na.rm = TRUE),
+      min_security = min(security, na.rm = TRUE),
+      avg_security = mean (security, na.rm = TRUE),
+      med_security = median(security, na.rm = TRUE))
+```
+
+```{r}
+PA_Dispensary_License_Condensed%>%
+  group_by(licensed)%>%
+  summarise(
+      sd_capital = sd (capital, na.rm=TRUE),
+      max_capital = max(capital, na.rm = TRUE),
+      min_capital = min(capital, na.rm = TRUE),
+      avg_capital = mean (capital, na.rm = TRUE),
+      med_capital = median(capital, na.rm = TRUE))
+```
+
+```{r}
+PA_Dispensary_License_Condensed%>%
+  group_by(licensed)%>%
+  summarise(
+      sd_awarded = sd (awarded, na.rm=TRUE),
+      max_awarded = max(awarded, na.rm = TRUE),
+      min_awarded = min(awarded, na.rm = TRUE),
+      avg_awarded = mean (awarded, na.rm = TRUE),
+      med_awarded = median(awarded, na.rm = TRUE))
+```
+
+As mentioned above, each case or row represents a single application submitted by a company for a dispensary license. The company is given a score based on 16 different categories and that score is theoretically used to determine whether or not that company receives a license.
+
+Due to the large number of categories, we will be focusing on approximately 5 different categories. Specifically, we will be focusing on name, diversity plan, qualifications, security, capital, licensed, awarded. The reason we are focusing on these categories is because I believe these are the most important scores when determining whether or not a company will receive a license.
+
+As you can see from the "min awarded," the lowest score that received a license was 594, however, the highest score that did not receive a license was 760. I want to determine if there is a pattern between higher scores that receive licenses and those that do not. I then want to see if they have higher scores in the above mentioned categories. 
+
+
+
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+```{r}
+ggplot(cereal, aes(licensed, capital)) +
+  geom_boxplot()+
+  labs(title = "Average Capital for License")
+```
+
+I plan on using box plots and scatterplots to compare the above mentioned categories. I will then create a similar chart for the total points awarded to see if there are any patterns.
+
+I have included the very basic code I plan to use for these graphs. They do not work yet, as I have not re-coded the necessary variables.
+
+```{r}
+ggplot(PA_Dispensary_License_Condensed, aes(x=capital, y=awarded, col = licensed)) +
+  geom_point()
+```
+
+
+```{r}
+ggplot(PA_Dispensary_License_Condensed, aes(x=diversityplan, y=awarded, col = licensed)) +
+  geom_point()
+```
+
+As you can see from the above graph, the licensed variable needs to be re-coded, but at first glance, there seems to be some patterns.
+
+I will do similar visualizations for the other variables to see if there are any similar patterns.
+
+I chose these types of visualization because they offer the clearest picture between companies that received licenses and those that did not. Also, with scatterplots, you can see if there is a cluster hovering near a specific value. Box plots provide a similar result as we will be comparing the total scores, the category and whether or a company received a license. Since we are unable to do any meaningful regression analysis, we may be able to make some observations with those visualizations.
+
+Lastly, I am very pleased with the state of the data set. At this point, I do not see any extensive Tidying required.
+

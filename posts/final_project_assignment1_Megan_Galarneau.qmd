@@ -1,0 +1,140 @@
+---
+title: "Final Project Assignment#1: Megan Galarneau"
+author: "Megan Galarneau"
+description: "Project & Data Description"
+date: "04/11/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    css: "style.css"
+categories:
+  - final_Project_assignment_1
+  - final_project_world_energy_consumption
+  - Megan Galarneau
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(patchwork)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+Let's talk about the blue marble we call home. It is no mystery that the climate crisis and greenhouse gas emissions (carbon dioxide, methane, nitrous oxide and fluoridated gases) have dominated the news cycles (and for some, our head space). With each new record setting year of global warming, the rise of non-fossil fuel energy sources (hydro, nuclear, solar, wind and biofuel power) has not been able to keep up with the growing demand for more energy (Thunberg, G., & Peters, G., 2022). For high-income countries in the US & Europe, energy use has begun to flatten and solar and wind power is sufficient enough to capture energy demands (Thunberg, G., & Peters, G., 2022). This has resulted in a slow fall in CO2 emissions. However, this is not the case in middle to low-income countries where the standard of living is simply different (Thunberg, G., & Peters, G., 2022). Here, demand for more energy soars in a young energy infrastructure system and solar and wind power are not cutting it (Thunberg, G., & Peters, G., 2022). As a result, fossil fuels and CO2 emissions rise in these areas. There is no one size fits all policy or solution for all countries to solve the climate crisis. But we can seek to understand global energy consumption and production today and how it has changed over time to identify trends and the drivers of climate change on a granular level.
+
+To investigate this topic, I will be using the data set "*World Energy Consumption*" (2020). It was collected, aggregated, and documented by Hannah Ritchie, Pablo Rosado, and Max Roser. Primary data sources include [BP Statistical Review of World Energy](https://www.bp.com/en/global/corporate/energy-economics/statistical-review-of-world-energy.html), [SHIFT Data Portal](https://www.theshiftdataportal.org/energy), and [EMBER - Global Electricity Dashboard](https://ember.shinyapps.io/GlobalElectricityDashboard/). Other data sources include United Nations, World Bank, Gapminder, and Maddison Project Database. The complete [codebook is available here](https://github.com/owid/energy-data/blob/master/owid-energy-codebook.csv). It is published and regularly updated by [*Our World In Data*](https://ourworldindata.org/energy#introduction), an organization whose mission is to "make data and research on the world's largest problems understandable and accessible". They make data produced by third parties available and open access. I originally found this data set on [Kaggle.com](https://www.kaggle.com/datasets/pralabhpoudel/world-energy-consumption) by collaborator Pralabh Poudel.
+
+The "*World Energy Consumption*" data set describes global energy consumption and production by primary energy, per capita, growth rates, energy mix, and electricity mix. Each row represents each of these variables split by country and year. There are 242 unique countries represented ranging from 1900 to 2019 and about 11 primary energy sources:
+
+-   Fossil Fuels: coal, oil, gas
+
+-   Non-Fossil Fuels: biofuel, hydro, nuclear, solar, wind, low carbon, renewables, and other renewables
+
+With this data set, I would like to answer the following research questions:
+
+-   What is the global fossil fuel consumption, measured in terawatt-hours (sum of primary energy from coal, oil and gas)?
+
+    -   Investigate high income vs. middle to low-income countries
+
+-   What is the global non-fossil fuel consumption, measured in terawatt-hours (sum of primary energy from biofuel, hydro, nuclear, solar, wind, low carbon, renewables, and other renewables)?
+
+    -   Investigate high income vs. middle to low-income countries
+
+    -   Which countries are the early adopters of non-fossil fuel energy?
+
+```{=html}
+<!-- -->
+```
+-   What is the annual percentage change in primary energy consumption per country? (+ terawatt-hours)
+
+-   What are the consumption-based CO2 emissions per capita of each country?
+
+-   What is the correlation between population/GDP and energy consumption rates?
+
+    -   Investigate high income vs. middle to low-income countries
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+The following code was used to describe this data set. In the summary section, I have chosen to omit some of the energy source columns listed above because the data set is too large (17,432 rows x 122 columns). Each of the rows represents a country, year, GDP, population, and the corresponding energy consumption and production information. There are about 11 primary energy source types:
+
+-   Fossil Fuels: coal, oil, gas
+
+-   Non-Fossil Fuels: biofuel, hydro, nuclear, solar, wind, low carbon, renewables, and other renewables
+
+The data set analyzes these energy sources by annual percentage change (also in terawatt-hours), electricity generation, share of electricity consumption, share of primary energy consumption, per capita primary energy consumption, and more.
+
+Please note that the data was altered to standardize the names of countries and regions according to *Our World in Data*, recalculate primary energy in terawatt-hours, and calculate per capita figures (which are calculated from the population metric). Population figures are sourced from [Gapminder](https://www.gapminder.org/) and [UN World Population Prospects (UNWPP](https://population.un.org/wpp/)).
+
+Read the dataset
+
+```{r}
+#read in the raw data set
+library(readr)
+raw_world_energy <- read_csv("MeganGalarneau_FinalProjectData/World_Energy_Consumption.csv")
+```
+
+Descriptive information of the dataset
+
+```{r}
+head(raw_world_energy)
+```
+
+```{r}
+dim(raw_world_energy)
+```
+
+```{r}
+length(unique(raw_world_energy))
+```
+
+Summary statistics of the datasets (min, max, mean, median, etc.)
+
+```{r}
+
+#summary of data set statistics
+summary_world_energy <- raw_world_energy %>%
+select(-contains('gas')) %>%
+select(-contains('coal'))%>%
+select(-contains('oil'))%>%
+select(-contains('hydro'))%>%
+select(-contains('biofuel'))%>%
+select(-contains('nuclear'))%>%
+select(-contains('low_carbon'))%>%
+select(-contains('solar'))%>%
+select(-contains('wind'))%>%
+select(-contains('other_renewables'))
+print(summarytools::dfSummary(summary_world_energy,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+```
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+For my analysis, I want to focus on fossil vs. non-fossil fuel energy consumption for high-income and middle to low-income countries over time. I would like to see if there are any trends against carbon intensity of electricity production (i.e. non-fossil fuel consumption = low carbon intensity). I also want to give a big picture of total primary energy consumption per country and provide insights on GDP correlation to energy consumption rates per country. Most of these visualizations will be ggplot line graphs with facet wraps as these research questions are looking for correlations. It would also be nice to have map plots to easily visualize the amount of energy consumption per country. I hope to determine a standardized scale for energy consumption by terawatt-hour.
+
+While I have a plan for my visualizations, I need to tidy my data to achieve these goals. This will include finding the sum of multiple columns to produce average values for my non-fossil fuel graph. I will also need to select my high-income and middle to low-income countries for analysis and create new data set versions to work from. For the NA values, I will use the na.rm = TRUE function when graphing my data. I will definitely be dealing with missing data/NAs and outliers.
+
+## Bibliography
+
+Hannah Ritchie, Max Roser and Pablo Rosado (2022) - "Energy". Published online at OurWorldInData.org. Retrieved from: 'https://ourworldindata.org/energy' \[Online Resource\]
+
+Thunberg, G., & Peters, G. (2022). 'We are not moving in the right direction'. In *The Climate Book*. essay, Penguin Press.

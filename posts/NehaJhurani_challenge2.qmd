@@ -1,0 +1,56 @@
+---
+title: "Descriptive and Summary Statistics of a dataset"
+author: "Neha Jhurani"
+desription: "Using data wrangling commands to describe: birds.csv"
+date: "04/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge2
+  - Neha Jhurani
+  - birds.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analysing birds data
+
+```{r}
+library(readr)
+
+#reading birds csv data
+birds_data <- read_csv("_data/birds.csv")
+
+#extracting all the column names
+colnames(birds_data)
+
+#Extracting and formatting the important attributes of birds data which tells us the kind of poultry, the area, the year and the value for each.
+extracted_birds_data <- select(birds_data, "Area", "Item", "Year", "Value")
+extracted_birds_data %>% arrange(desc('value'))
+
+#filtering all the extracted birds data for the year 2003
+filtered_data <- filter(extracted_birds_data, Year == "2003")
+
+#Comprehending the size of stock for each poultry type and the amt of poultry present in each area. On average, we see that countries have more chickens (=58.4million head) than other livestock birds.
+birds_data %>% group_by(Area) %>% summarize(avg_stocks = mean(Value, na.rm = TRUE))
+
+#Analyzing the median and average values of the poultry type exported. You will notice that the average values are exponentially larger than the median values. This indicates that there is an extremely large value difference in the data.
+extracted_birds_data%>%
+  group_by(Year)%>%
+  select(Value)%>%
+    summarise (
+      avg_year = mean (Value, na.rm = TRUE),
+      med_year = median(Value, na.rm = TRUE)
+        )
+```

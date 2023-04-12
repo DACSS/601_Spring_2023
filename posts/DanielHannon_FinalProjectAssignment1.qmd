@@ -1,0 +1,101 @@
+---
+title: "Final Project Assignment#1: Daniel Hannon"
+author: "Daniel Hannon"
+description: "Project & Data Description"
+date: "04-11-2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+Music has always evolved alongside media and technology. From radio and cassets, to MTV and DVD's, to the present where streaming and internet music videos are the most common ways for people to enjoy their favorite artists. The dataset I am using connects these two mediums. It is a collection of data about songs on Spotify and the popularity of the most popular corresponding music video on Youtube. The data was collected on February 7th, 2023 using an API that interacted with both Spotify and YouTube. It was collected and edited by Kaggle users Salvatore Rastelli, Marco Guarisco, Marco Sallustio. It is in the public Domain and available for free download [here on Kaggle](https://www.kaggle.com/datasets/salvatorerastelli/spotify-and-youtube?resource=download) 
+
+
+I plan to use this dataset to try to answer questions about whether there are certain elements of a song that make it more likely to be a popular music video. Do videos of singles perform better than album songs? Are more energetic songs more likely to be popular on Youtube? Are there any trends that can be seen for songs that have more Youtube views than Spotify streams? I plan to compare the attributes of the highest Streamed songs to the attributes of the most viewed music videos to see if there are certain qualities that perform better on each platform. 
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+This part contains both a coding and a storytelling component.
+
+Each case in the dataset is a song from Spotify. Each observation is made up of identification data (a unique id, the track name, artist, album, URL on Spotify), then a section on descriptive data about the how the song sounds with measures that Spotify tracks such as the "dancability" of the song along with attributes such as the energy, key, tempo, duration, etc. The last part of the observation is information about the most popular video on Youtube when the title of the song is searched. It has identification data for the video (URL, title, description, channel name, and whether or not it is the official music video) as well as popularity measures (views, likes, comments). The last column of the data is the total number of streams that song has on Spotify, and will serve as the baseline popularity of the song. For our purposes, we will filter all the identifiers of a song besides the Track name and Album type, leaving all of the song measures from Spotify, the official_video flag, and the Stream and View numbers to serve as our popularity measures. 
+
+```{r}
+#read in the dataset
+spotify_yt_original <- read.csv("DanielHannon_FinalProjectData/Spotify_Youtube.csv")
+
+#remove all the unnecessary information columns, as well as likes and comments
+#for the purposes of this we will use views and Streams as our metrics of popularity because they are the most comparable 
+spotify_yt_data <- spotify_yt_original %>%
+                  select( c(Track, Album_type, Danceability:Duration_ms, Views, official_video, Stream)) %>%
+                  filter(!is.na(Views) & !is.na(Stream)) 
+
+#filter out any songs that don't have any data about views or streams
+
+```
+
+```{r}
+#|label: Descriptive statistics of the dataset 
+
+# Original dataset has dims 20718 x 28
+dim(spotify_yt_data) # After removing NA datapoints dims are 19692 x 16
+
+spotify_yt_data %>%
+    select(Track) %>%
+    n_distinct(.)  #16993 unique tracks
+
+spotify_yt_original %>%
+  filter(grepl("El Ultimo Adiós - Varios", Track)) #certain tracks featuring many artists are repeated because the tool that scraped for them took the top ten tracks from various artists. In this example  24 listings of the same song exist, but not all of them have the same Youtube video attached. 
+
+head(spotify_yt_data)
+
+    ```
+
+Right now the data has a lot of repeat tracks, about 2.7 thousand, and a big part of tidying the data is going to be cleaning up the repeat tracks, without throwing away tracks that simply have the same name as another track.
+
+
+```{r}
+#perform summary statistics on the dataset
+spotify_yt_data %>%
+  summarytools::dfSummary(varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.50, 
+                        valid.col    = FALSE)
+
+```
+Most of the songs in the are from albums, but about 1/4 of them are singles. All of the music related analytics range from 0.0 to 1.0 with the exception of key, which has 12 total values. For the number of streams per song, the data is skewed by some high outliers, with the median of the data at around 50 million streams, but the mean is 137 million. Similarly the Youtube views have a median much lower than the mean, with a median of 14.7 million but a mean of 95 million.
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+The plan for data analyses and visualization is to compare how the different song attributes (Dancability, Energy, etc) correlate to higher or lower Youtube Views and Spotify streams by constructing a series of scatterplots for the attributes and color coding youtube views to spotify streams. Also a color coded Scatter plot with be used to compare Spotify streams and Youtube Views for Singles and Albums to see if there are any trends that make singles more likely to make popular videos.  
+
+These specific analyses will help to show the correlation between the different variables the popularity metrics we have recorded in order to show any trends in what makes certain music videos for songs more popular than others.For example, if we can see that certain values for a given measure have very high stream numbers, but disproportionately low view numbers, then we can see a distinct pattern in the data. There is no timed data here, so there are no questions we can answer about changes in time.
+
+In order to do all the bivariate analyses, we will need to tidy the data. The first step of this is to remove duplicate tracks, or the same track that has been added to the dataset twice by the API. To do this we can group the data by track name, and if the songs have the same values for the Spotify metrics, they are the same song and we can just take the most streamed version, or in the case they all have the same stream count, the observation with the most viewed Youtube video will be kept. Then the data will be pivoted longer to have Youtube Views and Spotify Streams on separate observations, doubling the number of rows, and maintaining the number of columns. 
+
+```{r}
+spotify_yt_data %>%
+      rename("Spotify" = Stream, "YouTube"= Views) %>%
+      pivot_longer(c(Spotify, YouTube), names_to = "Platform", values_to = "Count")
+```

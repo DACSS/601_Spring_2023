@@ -1,0 +1,266 @@
+---
+title: "Final Project Assignment#1: Prachiti Parkar"
+author: "Prachiti Parkar"
+description: "San Francisco Crime Data Exploration"
+date: "04/12/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+## Overview of the Final Project {#overview-of-the-final-project}
+
+The goal is to tell a coherent and focused story with your data, which answers a question (or questions) that a researcher, or current or future employer, might want to have answered. The goal might be to understand a source of covariance, make a recommendation, or understand change over time. We don't expect you to reach a definitive conclusion in this analysis. Still, you are expected to tell a data-driven story using evidence to support the claims you are making on the basis of the exploratory analysis conducted over the past term.
+
+In this final project, statistical analyses **are not required**, but any students who wish to include these may do so. However, **your primary analysis should center around visualization rather than inferential statistics.** Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. **Do not run a multiple regression with numerous predictors and report which predictors are significant!!**
+
+## Tasks of Assignment#1 {#Tasks-of-assignment1}
+
+This assignment is the first component of your final project. Together with the later assignments, it make up a short paper/report. In this assignment, you should introduce a dataset(s) and how you plan to present this dataset(s). This assignment should include the following components:
+
+1.  **A clear description of the dataset(s) that you are using.**
+
+2.  **What "story" do you want to present to the audience? In other words, what "question(s)" do you like to answer with this dataset(s)?**
+
+3.  **The Plan for Further Analysis and Visualization.**
+
+We will have a special class meeting on April 12 to review and discuss students' proposed datasets for the final project. **If you want your project being discussed in the class, please submit this assignment before April 12.**
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+In this part, you should introduce the dataset(s) and your research questions.
+
+1.  Dataset(s) Introduction:
+
+The dataset is downloaded from DataSF, which has a number of open datasets provided by the San Francisco Government.
+Reference Link: https://datasf.org/opendata/ 
+
+This dataset includes incident reports that have been filed as of January 1, 2018. These reports are filed by officers or self-reported by members of the public using SFPD’s online reporting system. The reports are categorized into the following groups based on how the report was received and the type of incident:
+
+Initial Reports: the first report filed for an incident
+Coplogic Reports: incident reports filed by members of the public using SFPD’s online reporting system
+Vehicle Reports: any incident reports related to stolen and/or recovered vehicles
+
+Data is added to open data once incident reports have been reviewed and approved by a supervising Sergeant or Lieutenant. Incident reports may be removed from the dataset if in compliance with court orders to seal records or for administrative purposes such as active internal affair investigations and/or criminal investigations.
+
+2.  What questions do you like to answer with this dataset(s)?
+
+We can make observations about 
+1. the district wise distribution of crime,
+2. what is the most frequent resolution in different districts,
+3. what are the top crimes and what time does it occur,
+4. what are the crime hotspots, 
+5. frequency of category of crimes across months/quarters.
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+This part contains both a coding and a storytelling component.
+
+In the coding component, you should:
+
+1.  read the dataset;
+
+    -   (optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step.
+
+    -   (optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns.
+
+Since the data is huge containing 713107 columns and 35 columns, I decided to minimize my dataset to only the year 2023 which has around 30K rows. 
+
+```{r}
+data <- read.csv("PrachitiParkar_FinalProjectData/Police_Department_Incident_Reports__2018_to_Present.csv")
+
+data = filter(data, Incident.Year == 2023)
+```
+
+2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;
+
+    -   for examples: dim(), length(unique()), head();
+
+    ```{r}
+dim(data)
+length(unique(data))
+head(data)
+    ```
+
+3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
+
+```{r}
+summary(data)
+
+```
+
+
+
+Storytelling:
+
+The description of each column is -
+
+Incident Datetime - The date and time when the incident occurred
+
+Incident Date - The date the incident occurred
+
+Incident Time- The time the incident occurred
+
+Incident Year - The year the incident occurred, provided as a
+convenience for filtering
+
+Incident Day of Week - The day of week the incident occurred
+
+Report Datetime - Distinct from Incident Datetime, Report Datetime is
+when the report was filed.
+
+Row ID - A unique identifier for each row of data in the dataset
+
+Incident ID - This is the system generated identifier for incident
+reports. Incident IDs and Incident Numbers both uniquely identify
+reports, but Incident Numbers are used when referencing cases and report
+documents.
+
+Incident Number - The number issued on the report, sometimes
+interchangeably referred to as the Case Number. This number is used to
+reference cases and report documents.
+
+CAD Number - The Computer Aided Dispatch (CAD) is the system used by the
+Department of Emergency Management (DEM) to dispatch officers and other
+public safety personnel. CAD Numbers are assigned by the DEM system and
+linked to relevant incident reports (Incident Number).
+
+Report Type Code - A system code for report types, these have
+corresponding descriptions within the dataset.
+
+Report Type Description - The description of the report type, can be one
+of: Initial; Initial Supplement; Vehicle Initial; Vehicle Supplement;
+Coplogic Initial; Coplogic Supplement
+
+Filed Online - Non- emergency police reports can be filed online by
+members of the public using SFPD's self-service reporting system called
+Coplogic Values in this field will be "TRUE" if Coplogic was used to
+file the report.
+
+Incident Code - Incident Codes are the system codes to describe a type
+of incident. A single incident report can have one or more incident
+types associated. In those cases you will see multiple rows representing
+a unique combination of the Incident ID and Incident Code.
+
+Incident Category - A category mapped on to the Incident Code used in
+statistics and reporting. Mappings provided by the Crime Analysis Unit
+of the Police Department.
+
+Incident Subcategory - A subcategory mapped to the Incident Code that is
+used for statistics and reporting. Mappings are provided by the Crime
+Analysis Unit of the Police Department.
+
+Incident Description - The description of the incident that corresponds
+with the Incident Code. These are generally self-explanatory.
+
+Resolution - The resolution of the incident at the time of the report.
+Can be one of: • Cite or Arrest Adult • Cite or Arrest Juvenile\* •
+Exceptional Adult • Exceptional Juvenile\* • Open or Active • Unfounded
+Juvenile information not maintained in the dataset.
+
+Intersection - The 2 or more street names that intersect closest to the
+original incident separated by a backward slash.
+
+CNN - The unique identifier of the intersection for reference back to
+other related basemap datasets.
+
+Police District - The Police District where the incident occurred.
+District boundaries can be reviewed in the link below.
+
+Analysis Neighborhood - This field is used to identify the neighborhood
+where each incident occurs. Neighborhoods and boundaries are defined by
+the Department of Public Health and the Mayor's Office of Housing and
+Community Development.
+
+Supervisor District - There are 11 members elected to the Board of
+Supervisors in San Francisco, each representing a geographic district.
+The Board of Supervisors is the legislative body for San Francisco. The
+districts are numbered 1 through 11.
+
+Latitude - The latitude coordinate in WGS84, spatial reference is
+EPSG:4326
+
+Longitude - The longitude coordinate in WGS84, spatial reference is
+EPSG:4326
+
+Point - Geolocation in OGC WKT format (e.g, POINT(37.4,-122.3)
+
+
+
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+1.  Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above.
+
+I plan to plot some line graphs and bar graphs to answer the research questions. 
+
+  The district wise distribution of crime - I plan to plot a bar graph to show safe and unsafe districts - the tallest bar would be the one has the highest amount of crimes (unsafe) and the shortest would be the one which has the least amount of crimes. (safe)
+  
+  What is the most frequent resolution in different districts - I plan to plot compound bar graph to show various resolutions in each district, this would be a further deep down than the first plot. The larger proportion of the bar would point to highest number of crimes with that resolution. 
+  
+  What are the top crimes and what time does it occur - I plan to plot bar graphs and heat maps for this question. 
+  
+  What are the crime hotspots - I plan to use the map of San Francisco from get_statemap() library and then accordingly plot the crimes at the respective longitude and latitude. 
+  
+  Frequency of category of crimes across months and quarters - I plan to plot line graph/ bar graph (depending on better visual appearance) showing the crimes across months and quarters.  
+
+2.  Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?
+
+  The district wise distribution of crime - This will help us figure out the most unsafe and safe districts.
+     
+  What is the most frequent resolution in different districts - This would help us understand most and least adopted resolutions to deal with crimes.
+     
+  What are the top crimes and what time does it occur - This will help us identify the most unsafe times - day or night and this can help the police increase & tighten security during that time to prevent crimes.
+     
+  What are the crime hotspots - The San Francisco state map with the crimes plot will help us locate most unsafe cities in the state and can help the police department to tighten security there. 
+     
+  Frequency of category of crimes across months/quarters - Plotting a line/bar graph will help us understand the most unsafe months and we can according correlate it with inflation/recession and develop insights.
+
+3.  If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.
+
+    -   What do you need to do to mutate the datasets (convert date data, create a new variable, pivot the data format, etc.)?
+
+    -   How are you going to deal with the missing data/NAs and outliers? And why do you choose this way to deal with NAs?
+    
+I plan to first remove columns which has mostly NA values since that would not lead to any concrete insights. 
+I have already filtered the data to focus on the year 2023 since the data is huge and processing so many rows will take some time. 
+I also plan to mutate and add additional columns like months and quarters from the date column during the preprocessing step so that it will make it easier to plot graphs. 
+
+
+
+4.  (Optional) It is encouraged, **but optional**, to include a coding component of tidy data in this part.
+
+```{r}
+
+```
+
+## Special Note on the role of statistics {#special-note-on-the-role-of-statistics}
+
+Statistical analyses **are not required**, but any students who wish to include these may do so. However, your primary analysis should center around visualization rather than inferential statistics. Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. Do not run a multiple regression with numerous predictors and report which predictors are significant!!
+
+**Remember: The goal is to tell a story about the data**. For example, you might identify sports where winning athletes are younger or older than average and then try to see if you can find some sort of pattern that accounts for this difference. Or perhaps you might compare a country's performance to GDP and see if this changes over time. The goal is not to get a significant statistical result but to identify an interesting pattern in the data and then extract some sort of meaningful recommendation or information from it.
+
+## Evaluation {#evaluation}
+
+You will be evaluated on both the quality of your source code and your written report, with a greater emphasis on the clarity and details of the description of your dataset(s) and your research questions.

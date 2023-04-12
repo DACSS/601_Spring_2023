@@ -1,0 +1,68 @@
+---
+title: "Tidy a dataset"
+author: "Neha Jhurani"
+desription: "Using pivot_longer to tidy the dataset: eggs_tidy.csv"
+date: "04/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge3
+  - Neha Jhurani
+  - eggs_tidy.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analysing eggs dataset
+
+```{r}
+library(readr)
+
+#reading eggs_tidy csv data
+eggs_tidy_data <- read_csv("_data/eggs_tidy.csv")
+
+#extracting all the column names
+colnames(eggs_tidy_data)
+
+#getting the summary (minimum, 1st quartile, median, mean, 3rd quartile, maximum, number of NA's present) of each column in eggs tidy dataset
+summary(eggs_tidy_data)
+#Note: There are no NA's present in any column (confirmed from above result)
+
+dim(eggs_tidy_data)
+# The dataset contains 120 rows and 6 columns
+
+head(eggs_tidy_data)
+
+#We see that the dataset contains monthly data for ten years, i.e., from Jan 2004 to Dec 2013. It stores the average volumne of 6 different types of cartons of eggs. We know that the values are average because a unit of carton is not sold partially, but we still have few decimal point values in the dataset. For example - Feb 2004 has 128.5 large half dozen sized cartons. 
+
+#The following rules were explained for the data to be 'tidy'.
+# 1. Each variable must have it's own column
+# 2. Each observation must have it's own row.
+# 3. Each value must have it's own cell.
+
+# Analysis - The four data points stored in the dataset are a) month, b) year, c) carton_type, and d) units. We see that each of the variables have their own column, but against rule 2, the dataset includes columns which represent observations, i.e., large half dozen, large dozen, extra large half dozen and extra large dozen will no longer have it's own individual column. To do this, we will introduce a column name as 'carton_type' which will hold the info regarding the carton and we will store it's respective average value under 'units' column
+
+#eggs dataset will be made 'Tidy' by pivoting it to have more rows and fewer columns. The columns that needs to be pivoted are - large half dozen, large dozen, extra large half dozen and extra large dozen, they will become rows for the corresponding month and year of obeservation. We will use tidyverse function, pivot_longer to accomplish this
+
+pivoted_eggs_tidy_data <- eggs_tidy_data %>%
+  pivot_longer(
+    cols = ends_with("dozen"),
+    names_to = "carton_type",
+    values_to = "units")
+
+view(pivoted_eggs_tidy_data)
+
+dim(pivoted_eggs_tidy_data)
+# The dataset contains 480 rows and 4 columns
+```

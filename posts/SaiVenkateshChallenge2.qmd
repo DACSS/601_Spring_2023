@@ -1,0 +1,112 @@
+---
+title: "Challenge 2"
+author: "Sai Venkatesh"
+description: "Data wrangling: using group() and summarise()"
+date: "04/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+- challenge_2
+- railroads
+- faostat
+- hotel_bookings
+---
+  
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+
+We are going to load and use the railroad data.
+
+```{r}
+  library(readr)
+  railroaddata <-read_csv("_data/railroad_2012_clean_county.csv")
+
+  
+```
+
+
+## Describe the data
+
+
+```{r}
+#| label: summary
+
+  print("Lets load the data and see the dimensions and columns of the data.")
+
+  # The Dimensions 
+  dim(railroaddata)
+  
+  # The Column Names 
+  colnames(railroaddata)
+  
+  # THe total employees
+  summarize(railroaddata, sum(`total_employees`))
+
+```
+
+From the above, we can see that the Railroad data has 2930 rows and 3 columns.
+The 3 column names are state, county and total_employees.
+The data displayed shows that this is the railroad employees count distribution based on the state and county.
+
+We can also see the total number of employees as 255432.
+
+## Provide Grouped Summary Statistics
+
+
+```{r}
+
+# Number of Employees Per State
+print("The total number of employees in the states > 1000 ordered by the count:-")
+railroaddata %>%
+  group_by(state) %>%
+  summarize(state_total = sum(total_employees))  %>%
+  filter(state_total > 1000)  %>%
+  select(state, state_total)  %>%
+  arrange(desc(state_total))
+
+```
+
+
+Grouping By State
+
+We are going to consider state and group by it.
+We are then going to find the distribution of employees in each state and associated functions to get more sense of the underlying data.
+
+```{r}
+
+summarizedData <- railroaddata %>%
+  group_by(state) %>%
+  summarize(Mean = mean(total_employees, na.rm=TRUE), 
+            SD = sd(total_employees, na.rm = TRUE), 
+            Max = max(total_employees, na.rm = TRUE), 
+            Min = min(total_employees, na.rm = TRUE), 
+            Median = median(total_employees, na.rm = TRUE))
+
+print(summarizedData, n=60)
+```
+
+
+### Explain and Interpret
+
+I choose state because we are able to analyse the distributions of employees across counties using this. We are able to notice that Texas has the largest number of employees. However it is not the counties in Texas that have the maximum number of employees. But instead Cook county in IL has the maximum number of employees. Similarly there are counties whose mean employee counts exceed Texas like IL, NY even though the total is largest in the latter. Infact Texas median is 17 and mean is around 89 which means that there are a lot of counties in Texas with less than 100 employees. Hence having more total need not correlate to larger counties/employee count. It could be a large number of small counties which skews the overall count like Texas.

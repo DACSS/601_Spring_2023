@@ -1,0 +1,85 @@
+---
+title: "Challenge 4: Mutating hotel bookings dataset"
+author: "Saksham Kumar"
+description: "More data wrangling: mutate"
+date: "04/12/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - hotel_bookings
+  - Saksham Kumar
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+We read in the hotel_bookings.csv dataset, using the correct R package and command.
+
+```{r}
+bookings<-read_csv("_data/hotel_bookings.csv", show_col_types = FALSE)
+bookings
+```
+
+### Briefly describe the data
+
+The data corresponds to hotel bookings. There are 119390 rows and 32 variables in our data. The 32 data types and their data types are mentioned below.
+
+```{r}
+spec(bookings)
+```
+
+## Tidy Data (as needed)
+
+The data looks clean for an initial analysis and does not need to be tidied.
+
+## Identify variables that need to be mutated
+
+Looking at the data we see that we have 3 variables that can be coalesced into one - arrival_date_day_of_month, arrival_date_month, arrival_date_year.
+
+Using mutate the first three fields can be combined into a single arrival date field.
+
+```{r}
+
+bookings_mutate_date_arrival<-bookings%>%
+  mutate(date_arrival = str_c(arrival_date_day_of_month, arrival_date_month, arrival_date_year, sep="/"))
+
+bookings_mutate_strToDate<-bookings_mutate_date_arrival%>%
+  mutate(date_arrival = dmy(date_arrival))
+
+bookings_mutate_strToDate[ , c("arrival_date_day_of_month", "arrival_date_month", "arrival_date_year", "date_arrival")]  
+
+summary(bookings_mutate_strToDate$date_arrival)
+```
+
+We can now clean the data by removing the now redundant variables `arrival_date_day_of_month`, `arrival_date_month` and `arrival_date_year`
+
+```{r}
+bookings_final <- bookings_mutate_strToDate%>%
+  select(-starts_with("arrival"))
+
+bookings_final
+```

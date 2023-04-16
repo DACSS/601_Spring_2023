@@ -1,0 +1,97 @@
+---
+title: "Challenge 6 Instructions"
+author: "khadijat Adeleye"
+description: "Visualizing Time and Relationships"
+date: "04/16/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+library(lubridate)
+install.packages("readxl")
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+library(readxl)
+Loan<- read_excel("_data/debt_in_trillions.xlsx")
+```
+
+```{r}
+
+head(Loan, 10)
+```
+```{r}
+summary(Loan)
+```
+
+```{r}
+glimpse(Loan)
+```
+
+## tidy dataset
+```{r}
+Loan <- df %>%
+  mutate(date = parse_date_time(`Year and Quarter`, 
+                           orders="yq")) %>%
+  select(date,everything())
+  print(Loan)
+```
+
+
+
+```{r}
+Loan %>%
+  ggplot(aes(Mortgage,"Auto Loan",))+
+  geom_point()+
+  facet_wrap(vars("Auto Loan"))
+```
+```{r}
+###creating line and point plots for Student loan
+Loan %>% ggplot(aes(x = "Year and Quarter",y = "Student Loan",)) + geom_line()+
+          geom_point()+
+          labs(title= "Total Debt by Quarter", y= "Total Debt (in trillions)", x= "Fiscal Quarter")+
+          theme_bw()
+```
+
+## Time Dependent Visualization
+I want to visualize the mortgage trend.
+```{r}
+Loan %>%
+  ggplot(aes("Year and Quarter", Mortgage))+
+  geom_point()
+```
+
+##Visualizing Part-Whole Relationships
+
+Visualize the  rate of Mortgage per year
+```{r}
+bar_Loan <- df %>%
+  ggplot(mapping = aes(x = `Year and Quarter`, fill =Mortgage),position = "fill") + 
+  geom_bar()+
+   labs(x="Year and Quarter",y="Mortgage", title = "Mortgage per year") 
+bar_Loan
+```
+
+

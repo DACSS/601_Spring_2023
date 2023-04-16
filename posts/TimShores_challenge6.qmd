@@ -20,7 +20,7 @@ categories:
 #| warning: false
 #| message: false
 
-my_packages <- c("tidyverse", "ggplot2", "treemap", "knitr") # create vector of packages
+my_packages <- c("tidyverse", "ggplot2", "treemapify", "scales", "knitr") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
@@ -102,7 +102,7 @@ hotelsub %>% summarise(
 
 ```
 
-Before I visualize, I'll create two new dataframes: one grouped by Country, another grouped by Market Segment. I'll arrange by adrMean from highest to lowest, and slice to include the top 12 highest adrMean values in the country dataframe. This is not necessary in the market segment data frame, because there are only 7 segments.
+Before I visualize, I'll create two new dataframes: one grouped by Country, another grouped by Market Segment. I'll arrange by adrMean from highest to lowest, and slice to include the top 8 highest adrMean values in the country dataframe. This is not necessary in the market segment data frame, because there are only 7 segments.
 
 ```{r}
 
@@ -115,6 +115,15 @@ hotelByDay <- hotelsub %>%
 
 hotelByDay
 
+hotelByDaySegment <- hotelsub %>%
+  group_by(arrival_date, market_segment) %>%
+  summarise(weekendSum = sum(stays_in_weekend_nights),
+            weekdaySum = sum(stays_in_week_nights),
+            adrMean = num(mean(adr), digits = 2)) %>%
+  subset(select = c(arrival_date, market_segment, weekendSum, weekdaySum, adrMean))
+
+hotelByDaySegment
+
 hotelByCountry <- hotelsub %>%
   group_by(country) %>%
   summarise(weekendSum = sum(stays_in_weekend_nights),
@@ -122,7 +131,7 @@ hotelByCountry <- hotelsub %>%
             adrMean = num(mean(adr), digits = 2)) %>%
   subset(select = c(country, weekendSum, weekdaySum, adrMean)) %>%
   arrange(desc(adrMean)) %>%
-  slice_head(n = 12)
+  slice_head(n = 8)
 
 hotelByCountry
 
@@ -139,26 +148,61 @@ hotelBySegment
 
 ## Time Dependent Visualization
 
+With just two years of mean average daily rate (meanADR) data we glimpse patterns of annual ADR peak in August and the EOY holiday season. A geom_smooth line shows the upward linear trend in mean ADR during this two-year period, with shading around the blue line to indicate the 0.95 confidence level.
+
 ```{r}
 ggplot(hotelByDay, aes(x=arrival_date, y=adrMean)) +
   geom_line() + 
-  xlab("")
+  geom_smooth(method=lm, level=0.95, show.legend=TRUE) +
+  labs(title = "Change in mean Average Daily Rate (ADR)",
+              subtitle = "Plot of all observations",
+              caption = "Data source: hotel_bookings.csv",
+              x = "Arrival Date", y = "Mean ADR",
+              ) +
+  theme(axis.text.x = element_text(face="bold", color="#993333", 
+                           size=12),
+          axis.text.y = element_text(face="bold", color="#993333", 
+                           size=12)) +
+  scale_x_date(date_breaks = "3 months" , date_labels = "%b-%y")
 
 ```
 
+```{r}
+ggplot(hotelByDaySegment, aes(x=arrival_date, y=adrMean, fill=market_segment)) +
+  geom_area(colour = "black", size = .2, alpha = .4) + 
+  scale_fill_brewer(palette = "Dark2") +
+  labs(title = "Change in mean Average Daily Rate (ADR)",
+              subtitle = "Plot of all observations stacked by Market Segment",
+              caption = "Data source: hotel_bookings.csv",
+              x = "Arrival Date", y = "Mean ADR",
+              ) +
+  theme(axis.text.x = element_text(face="bold", color="#993333", 
+                           size=12),
+          axis.text.y = element_text(face="bold", color="#993333", 
+                           size=12)) +
+  scale_x_date(date_breaks = "6 months" , date_labels = "%b-%y")
+
+```
+
+By separating out Market Segments (which I mutated to a factor a few code blocks ago), we begin to see the proportion of mean ADR attributed to each segment, how that segment changes over time, and when segments go against the annual pattern -- such as the apparent absence of the Aviation Segment before 2016.
+
 ## Visualizing Part-Whole Relationships
 
-```{r}
-treemap(hotelByCountry,
-            index="country",
-            vSize="adrMean",
-            type="index"
-            )
+The treemaps below compare the mean ADR for the top 8 countries, and for all 7 market segments. 
 
-treemap(hotelBySegment,
-            index="market_segment",
-            vSize="adrMean",
-            type="index"
-            )
+
+```{r}
+ggplot(hotelByCountry, aes(area=adrMean, fill=country, label=country)) + 
+  geom_treemap() +
+  geom_treemap_text(color = "beige", place = "center") +
+  scale_fill_brewer(palette = "Dark2")
+
+```
+
+```{r}
+ggplot(hotelBySegment, aes(area=adrMean, fill=market_segment, label=market_segment)) + 
+  geom_treemap() +
+  geom_treemap_text(color = "darkblue", place = "center") +
+  scale_fill_brewer(palette = "Pastel2")
 
 ```

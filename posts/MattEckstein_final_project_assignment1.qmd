@@ -1,0 +1,199 @@
+---
+title: "Final Project Assignment#1: Matt Eckstein"
+author: "Matt Eckstein"
+description: "Project & Data Description"
+date: "04-09-2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+```{r}
+
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+In this part, you should introduce the dataset(s) and your research questions.
+
+1.  Dataset(s) Introduction:
+    
+    
+The main dataset comes from Partners in Flight, a set of databases published by the Bird Conservancy of the Rockies for tracking the estimated poulations of various bird species across various geographic regions.
+
+In this dataset, a case is a species-state - a particular bird species as it occurs in a particular US state, among land birds in the lower 48 states and Alaska. (The dataset does not include Hawaii or the District of Columbia. It does include Canadian provinces and territories, though I will keep the focus of my analysis to the United States.)
+
+The dataset provides several different population estimates for each species-state (main, upper and lower 80% and 95% bounds, median estimate, and unrounded estimate); I will use the main estimate that is simply titled Population Estimate.
+
+Citation for main dataset: Partners in Flight. 2020. Population Estimates Database, version 3.1. Available at http://pif.birdconservancy.org/PopEstimates. Accessed on April 9, 2023.
+
+Citation for dataset used for state population densities: "United States by Density 2020." n.d. Worldpopulationreview.com. https://worldpopulationreview.com/state-rankings/state-densities.
+
+
+2.  What questions do you like to answer with this dataset(s)?
+
+
+I will use this dataset to compute the population density of bird species in the United States by state and compare it with states' human population densities, to answer the question of which bird species are associated positively with human population density and which negatively so. Although this would not in and of itself prove that development causes harm to bird populations, it could shed light on which bird species might benefit from further research to determine if they are being adversely affected by development in areas with dense human populations.
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+
+```{r}
+
+library(readxl)
+birds <- read_xlsx("MattEckstein_FinalProjectData/PopEsts_ProvState_2021.02.05.xlsx")
+str(birds)
+
+#renaming State variable for compatibility with the state population density dataset 
+birds <- rename(birds, "State" = "Province / State / Territory")
+
+
+#dropping if the country is Canada, then removing the country variable
+
+birds <- select(birds, -c(`Sequence AOS 60`, `Data Source`, `Pair Adjust Category`, `Estimated % of Global Population`, `Estimated % of USA/Canada Population`, `BBS Average (birds/rte)`, `BBS Routes`, `Species Routes`, `Detection Distance Category (m)`, `Pair Adjust Category`, `Time Adjust Mean`, `Time Adjust             SD`))
+birds <- subset(birds, Country != "CAN")
+birds <- select(birds, -c(Country))
+
+states <- read_csv("MattEckstein_FinalProjectData/State_statistics.csv")
+
+#dropping variables that are unlikely to be useful for analysis, for the sake of neatness
+states <- select(states, -c(pop2022, pop2020, pop2019, pop2010, growthRate, growth, growthSince2010, fips))
+
+#replacing state names with abbreviations, for compatibility between the two starting datasets
+
+states[states == 'New Jersey'] <- 'NJ'
+states[states == 'Rhode Island'] <- 'RI'
+states[states == 'Massachusetts'] <- 'MA'
+states[states == 'Connecticut'] <- 'CT'
+states[states == 'Maryland'] <- 'MD'
+states[states == 'Delaware'] <- 'DE'
+states[states == 'Florida'] <- 'FL'
+states[states == 'New York'] <- 'NY'
+states[states == 'Pennsylvania'] <- 'PA'
+states[states == 'Ohio'] <- 'OH'
+states[states == 'California'] <- 'CA'
+states[states == 'Illinois'] <- 'IL'
+states[states == 'Hawaii'] <- 'HI'
+states[states == 'North Carolina'] <- 'NC'
+states[states == 'Virginia'] <- 'VA'
+states[states == 'Georgia'] <- 'GA'
+states[states == 'Indiana'] <- 'IN'
+states[states == 'South Carolina'] <- 'SC'
+states[states == 'Michigan'] <- 'MI'
+states[states == 'Tennessee'] <- 'TN'
+states[states == 'New Hampshire'] <- 'NH'
+states[states == 'Washington'] <- 'WA'
+states[states == 'Texas'] <- 'TX'
+states[states == 'Kentucky'] <- 'KY'
+states[states == 'Wisconsin'] <- 'WI'
+states[states == 'Louisiana'] <- 'LA'
+states[states == 'Alabama'] <- 'AL'
+states[states == 'Missouri'] <- 'MO'
+states[states == 'West Virginia'] <- 'WV'
+states[states == 'Minnesota'] <- 'MN'
+states[states == 'Vermont'] <- 'VT'
+states[states == 'Arizona'] <- 'AZ'
+states[states == 'Mississippi'] <- 'MS'
+states[states == 'Oklahoma'] <- 'OK'
+states[states == 'Arkansas'] <- 'AR'
+states[states == 'Iowa'] <- 'IA'
+states[states == 'Colorado'] <- 'CO'
+states[states == 'Maine'] <- 'ME'
+states[states == 'Oregon'] <- 'OR'
+states[states == 'Utah'] <- 'UT'
+states[states == 'Kansas'] <- 'KS'
+states[states == 'Nevada'] <- 'NV'
+states[states == 'Nebraska'] <- 'NE'
+states[states == 'Idaho'] <- 'ID'
+states[states == 'New Mexico'] <- 'NM'
+states[states == 'South Dakota'] <- 'SD'
+states[states == 'North Dakota'] <- 'ND'
+states[states == 'Montana'] <- 'MT'
+states[states == 'Wyoming'] <- 'WY'
+states[states == 'Alaska'] <- 'AK'
+
+
+#combining datasets into one
+states <- rename(states, "State" = "state")
+alldata <- merge(birds, states, by = "State")
+
+```
+
+
+2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;
+
+The overall dataset has 7,030 observations of 31 variables.
+
+    ```{r}
+
+dim(alldata)
+head(alldata)
+    ```
+
+3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
+
+
+```{r}
+
+library(vtable)
+
+alldata %>%
+  sumtable("Population Estimate")
+alldata %>%
+  sumtable("Total Area")
+alldata %>%
+  sumtable("densityMi")
+
+```
+
+
+
+In the PIF bird populations by state dataset, each row represents a bird species as it occurs in a given US state (except Hawaii) or Canadian province/territory. This analysis focuses on US data, so the Canadian data have been dropped. There are 7,030 observations of species-state, with 27 variables about each species-state collected. The variables most relevant to this analysis, which will examine bird species' population density in each state, are the bird's English Name, its State, and its Population Estimate. A median population estimate and an unrounded population estimate, as well as upper and lower 80% and 95% population estimates for each species, are also given, although as of now I am likely to stick with basing my analysis on the main Population Estimate for each species.
+
+In the state statistics dataset, each row represents a state. There are 50 observations, with each case being a US state. The various columns include ones representing the state's name, its population density, its population in 2023 and various recent past years, its population growth rate, and its total land area. For this analysis, I kept only four columns: state name (converted to an abbreviation), population density, 2023 population, and total area.
+
+The overall combined dataset contains 7,030 observations of 30 variables - all of the variables from the birds dataset, and the four variables retained from the state statistics dataset. (Ultimately, there are likely to be fewer variables as I drop some of the less relevant variables from the birds dataset). Additionally, I will use the information in the Population Estimate and TotalArea columns to create a new column containing the population density of each bird species in each state.
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+1.  Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above.
+
+I plan to divide the Population Estimate column by the TotalArea column to compute the population density for each bird species in each state. Then, I will create a line graph for each species with state on the horizontal axis and population density on the vertical axis; with human population density as another line for easy comparison on the same graph.
+
+2.  Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?
+
+Graphing bird species' population densities in eah state against human population density in the same state will let it be readily seen how the population density of each species is related to that of humanity, state by state. Although it can't prove causality, it can provide some evidence of which species are thriving in areas highly settled by humanity and which are suffering in similar areas.
+
+3.  If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.
+
+    -   What do you need to do to mutate the datasets (convert date data, create a new variable, pivot the data format, etc.)?
+    
+The main necessities are to decide on an approach for handling NA values of population for certain species-states and to calculate the new column of species population densities.
+
+    -   How are you going to deal with the missing data/NAs and outliers? And why do you choose this way to deal with NAs?
+    
+For the time being, I lean in favor of dropping the species-state cases where the Population Estimate is NA. There are only 38 species with missing Population Estimates (out of 404 in the database), and they are generally all birds whose populations one would not expect to be large enough to be reliably estimated or to substantially affect the overall analysis (fowl, certain birds of prey, endangered species, and predominantly Canadian or Mexican species whose breeding ranges only slightly extend into the United States). If I perform this drop, I will give my results the caveat that they are not applicable to fowl, birds of prey, and waterfowl (which are not included in the dataset in the first place). There is no apparent way to fill in the missing data, at least from sources that would be methodologically consistent with and comparable to the PIF database. The reason I am somewhat hesitant about this approach is that the low-population species that would be excluded are potentially some of the most relevant for conservation purposes.
+
+4.  (Optional) It is encouraged, **but optional**, to include a coding component of tidy data in this part.
+
+```{r}
+#I may update this component to include my approach for dropping NAs when I have settled on it
+```

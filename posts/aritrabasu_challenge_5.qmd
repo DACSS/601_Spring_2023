@@ -1,0 +1,203 @@
+---
+title: "Challenge 5"
+author: "Aritra Basu"
+description: "Introduction to Visualization"
+date: "04/16/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - Aritra Basu
+  - air_bnb
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+library(summarytools)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Reading in data
+
+
+```{r}
+mydata <- read.csv("_data/AB_NYC_2019.csv")
+glimpse(mydata)
+View(mydata)
+```
+
+### Briefly describing the data
+```{r}
+print(summarytools::dfSummary(mydata,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+The AB_NYC_2019 dataset describes listing activities of Airbnb properties in different boroughs of New York City, in New York for 2019. Each row contains the name of the listings, id, name of the host as well as information on rental types, geographical coordinates, prices, reviews and their availability in 2019.
+
+The data is already tidy. 
+
+I first summarise price, by grouping the data into neighbourhood groups and room types. I will group the data only by neighbourhood groups for bivariate visualization.
+
+For univariate visualization, I will first plot price. For that, I eliminate the outliers.
+
+I also want to plot the bnbs by neighbourhood groups and room types. 
+
+```{r}
+#I first select the required variables.
+select_df<-mydata %>%
+  select(id, neighbourhood_group:availability_365)
+head(select_df)
+
+#Removing the outliers for price
+df_no_outliers <- select_df %>% 
+  filter(price > quantile(price)[2] - 1.5 * IQR(price) & price < quantile(price)[4] + 1.5 * IQR(price)) 
+
+#Counting the total number of bnb in a neighbourhood.
+select_df_count <- select_df %>% group_by(neighbourhood_group) %>% summarise(count=n()) %>% ungroup()
+
+#Counting the total number of bnb by room type.
+select_df_count2 <- select_df %>% group_by(room_type) %>% summarise(count=n()) %>% ungroup()
+
+#Grouping by neighbourhood_group and room type before summarizing price without removing outliers. 
+summary_stats <-select_df  %>% 
+group_by( neighbourhood_group, room_type)  %>% 
+  summarise(
+    Mean=mean(price, na.rm = TRUE),
+    Quantile1 = quantile(price, c(0.25), q1 = c(0.25), na.rm = TRUE),
+    Median=median(price, na.rm = TRUE),
+    Quantile3 = quantile(price, c(0.75), q3 = c(0.75), na.rm = TRUE),
+    SD=sd(price, na.rm = TRUE),
+    min=min(price, na.rm = TRUE),
+    max=max(price, na.rm = TRUE),
+    )
+#Grouping only by neighbourhood group without removing outliers:
+summary_stats_group <-select_df  %>% 
+group_by( neighbourhood_group)  %>% 
+  summarise(
+    Mean=mean(price, na.rm = TRUE),
+    Quantile1 = quantile(price, c(0.25), q1 = c(0.25), na.rm = TRUE),
+    Median=median(price, na.rm = TRUE),
+    Quantile3 = quantile(price, c(0.75), q3 = c(0.75), na.rm = TRUE),
+    SD=sd(price, na.rm = TRUE),
+    min=min(price, na.rm = TRUE),
+    max=max(price, na.rm = TRUE),
+    )
+#Grouping only by neighbourhood group without outliers:
+summary_stats_group2 <-df_no_outliers  %>% 
+group_by( neighbourhood_group)  %>% 
+  summarise(
+    Mean=mean(price, na.rm = TRUE),
+    Quantile1 = quantile(price, c(0.25), q1 = c(0.25), na.rm = TRUE),
+    Median=median(price, na.rm = TRUE),
+    Quantile3 = quantile(price, c(0.75), q3 = c(0.75), na.rm = TRUE),
+    SD=sd(price, na.rm = TRUE),
+    min=min(price, na.rm = TRUE),
+    max=max(price, na.rm = TRUE),
+    )
+
+head(summary_stats_group)
+
+head(summary_stats)
+
+
+```
+
+## Univariate Visualizations
+I want an univariate visualization of price. I have already removed the outliers. I plot the histogram with a density curve. The density is in the Y axis. 
+```{r}
+
+ggplot(df_no_outliers, aes(x = price)) +
+  geom_histogram(aes(y = ..density..), binwidth = 25, colour = "black", fill = "#F7A78E") +
+  geom_density(alpha = 0.2, fill = "#3C8FAD") +
+  labs(title = "Price Distribution with Density Curve", x = "Price", y = "Density")
+
+
+```
+Here, histogram is an appropriate visualization of the distribution of prices. We can see that the peak is at the left, showing a high density of BNBs at a lower price range. The distribution has a long right tail, and there are less BNBs with high prices, and that pattern continues as we move to the further right.
+
+Next, I look at the number of BNBs in each neighbourhood, analso the types of BNBs:
+
+```{r}
+my_colors <- c("#C3E8D8", "#F0E8D8", "#E8C3D8", "#D8E8C3", "#D8C3E8")
+
+ggplot(select_df_count, aes(x=neighbourhood_group, y=count, fill=neighbourhood_group)) +
+  geom_bar(stat="identity") +
+  ggtitle("Total AirBnBs in each Neighbourhood Group") +
+  xlab("Neighbourhood Groups") +
+  ylab("Number of BNBs") +
+  scale_fill_manual(values=my_colors)
+
+my_colors2 <- c("#C3E8D8", "#F0E8D8", "#E8C3D8")
+ggplot(select_df_count2, aes(x=room_type, y=count, fill=room_type)) +
+  geom_bar(stat="identity") +
+  ggtitle("Room types in BNBs") +
+  xlab("Room types") +
+  ylab("Number") +
+  scale_fill_manual(values=my_colors2)
+
+```
+Here, I have visually represented categories in an univariate visualization, and hence considered bar graph to be appropriate.
+## Bivariate Visualization(s)
+
+Here, I first do a simple bivariate representation of prices and neighbourhood groups. Next, I add color to the graph. In both these plots, the lines represent the inter-quartile range. And the dot represents the mean. That the mean is near the third quartile and above in the last case. This might not be an accurate visualization of the distribution, and might be affected by the outliers.
+
+```{r}
+
+ggplot(summary_stats_group, aes(x = neighbourhood_group, y = Mean)) +
+  geom_point(size = 3, shape = 21) +
+  geom_errorbar(aes(ymin = Quantile1, ymax = Quantile3), width = 0.2) +
+  ggtitle("Summary statistics by neighbourhood group") +
+  xlab("Neighbourhood Group") +
+  ylab("Price")
+
+ggplot(summary_stats_group, aes(x = neighbourhood_group, y = Mean, fill = neighbourhood_group)) +
+  geom_point(size = 3, shape = 21) +
+  geom_errorbar(aes(ymin = Quantile1, ymax = Quantile3), width = 0.2) +
+  ggtitle("Summary statistics by neighbourhood group") +
+  xlab("Neighbourhood Group") +
+  ylab("Price")+
+  scale_fill_brewer(palette = "Dark2")
+
+```
+```{r}
+ggplot(summary_stats_group2, aes(x = neighbourhood_group, y = Mean, fill = neighbourhood_group)) +
+  geom_point(size = 3, shape = 21) +
+  geom_errorbar(aes(ymin = Quantile1, ymax = Quantile3), width = 0.2) +
+  ggtitle("Summary statistics by neighbourhood group") +
+  xlab("Neighbourhood Group") +
+  ylab("Price")+
+  scale_fill_brewer(palette = "Dark2")
+```
+Thus, we can see that mean was pulled towards the outliers.

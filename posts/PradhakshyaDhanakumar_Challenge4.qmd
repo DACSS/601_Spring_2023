@@ -1,0 +1,92 @@
+---
+title: "Challenge 3"
+author: "Pradhakshya Dhanakumar"
+desription: "Worked with ABC Poll Dataset"
+date: "04/16/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - Challenge 4
+  - Pradhakshya Dhanakumar
+  - ABC Poll
+---
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(lubridate)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Reading Data
+Read the data from a .csv file
+```{r}
+data <- read_csv("_data/abc_poll_2021.csv")
+head(data)
+```
+
+
+```{r}
+colnames(data)
+dim(data)
+```
+
+
+```{r}
+summary(data)
+```
+## Data Description
+
+The ABC Poll dataset is a national survey taken for 527 people over 31 questions. The survey delves into various subjects, including 10 questions related to political opinions and beliefs, as well as party identification. Along with this, the dataset comprises 15 demographic variables, which have undergone recoding to make the analysis more accessible. Furthermore, the dataset includes 5 survey administration variables, offering information about the survey's methodology and logistics. The dataset is a comprehensive collection of information on the surveyed population's political attitudes and demographics, and it serves as a crucial resource for researchers and analysts seeking to understand these topics.
+
+
+## Tidy and Mutate Data
+
+First we can check if there are is data with any NULL values
+
+```{r}
+sum(is.na(data))
+```
+
+From the above output we can see that there are 0 entries with NA.But on analysing further we can see that there is a value 'Skipped' for certain questions. So we can replace these values with NA.
+```{r}
+table(data$Q1_a)
+```
+
+Now we can change the 'Skipped' values to NA.
+```{r}
+data<- data %>% mutate(across(starts_with("Q"), ~ifelse(.=="Skipped", NA, .)))
+table(data$Q1_a)
+```
+Similarly, we can do for QPID too.
+```{r}
+unique(data$QPID)
+```
+We can see that there are specific articles like A, An used infront of the column names. It is not necessary, we can remove them.
+```{r}
+data <- data %>%
+  mutate(QPID = gsub("^A\\s|^An\\s", "", QPID))
+table(data$QPID)
+```
+
+```{r}
+#mutate
+df1<-data%>%
+  mutate(ethnic = str_remove(ppethm, ", Non-Hispanic"))%>%
+  select(-ppethm)
+
+#sanity check
+table(df1$ethnic)
+```
+
+
+
+
+

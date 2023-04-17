@@ -1,0 +1,87 @@
+---
+title: "Challenge 5 Instructions"
+author: "Khadijat Adeleye"
+description: "Introduction to Visualization"
+date: "04/16/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - railroads
+  - cereal
+  - air_bnb
+  - pathogen_cost
+  - australian_marriage
+  - public_schools
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+## Dataset description
+This data set shows Air BnB in New York Cit in 2019 with 16 variables and 48,895 rows. The variables includes NYC neighborhood and neighborhood group, type of rental (entire home, private room, shared room), their prices, the minimum required number of nights, and number of guest reviews.
+```{r}
+library(tidyverse)
+ AB_NYC_2019 <- read.csv("_data/AB_NYC_2019.csv")
+ dim(AB_NYC_2019)
+```
+
+```{r}
+colnames(AB_NYC_2019)
+```
+###pivot 
+```{r}
+head(AB_NYC_2019,10)
+```
+```{r}
+AB_NYC_2019 %>% 
+    select( "room_type",  "neighbourhood", "price", everything())%>%
+    group_by(room_type) %>%
+    summarise(avg_price = mean(price, na.rm = TRUE))
+```
+##TIDY DATASET
+```{r}
+AB_NYC_2019 %>% 
+  select(-c("id","host_id","host_name","last_review","calculated_host_listings_count" )) %>%
+  print(AB_NYC_2019)
+```
+#Visualization univarate
+```{r}
+  ggplot(AB_NYC_2019,aes(price))+
+  geom_histogram()
+```
+
+```{r}
+# Price ggplot
+ggplot(data,aes(x="Price_Property")) + geom_bar(position = "dodge", stat = "count", fill="orange", colour="blue") +
+  labs (title = "NYC AirBnB Property Prices in 2019", x = "Price of Property", y = "Count of Properties")
+```
+###neighbourhood group
+```{r}
+AB_NYC_2019 %>%
+  ggplot(aes(neighbourhood_group,price))+
+  geom_boxplot()
+```
+```{r}
+AB_NYC_2019 %>%
+  ggplot(aes(number_of_reviews,neighbourhood_group,))+
+  geom_point()+
+  facet_wrap(vars(neighbourhood_group))
+```
+###Number of review
+```{r}
+  AB_NYC_2019 %>%
+  ggplot(aes(price, number_of_reviews))+
+  geom_point()
+```

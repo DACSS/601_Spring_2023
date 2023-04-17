@@ -1,0 +1,253 @@
+---
+title: "Challenge 6"
+author: "Linda Humphrey"
+description: "Visualizing Time and Relationships"
+date: "04/01/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6: abc_poll
+  - abc_poll: abc_poll_2021.csv
+  - name: Linda Humphrey
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+
+```{r}
+#Load data 
+abc_poll_2021 <- read.csv("~/Desktop/601_Spring_2023/posts/_data/abc_poll_2021.csv")
+head(abc_poll_2021)
+
+```
+
+Pivot Longer function 
+```{r}
+str(abc_poll_2021)
+ pivot_longer(abc_poll_2021, cols = ppstaten, names_to = "variable", values_to = "ppstaten")
+```
+
+Pivot wider function from ppeducat from abcage.
+
+```{R}
+pivot_wider(abc_poll_2021, names_from = 'ppeducat', values_from = "ABCAGE" )
+```
+
+We mutate(row=row_number()) to give each row unique identification.
+
+```{R}
+abc_poll_2021 %>%
+  mutate(row=row_number()) %>%
+  pivot_wider(names_from = ppreg4, values_from = ABCAGE)
+  select(abc_poll_2021, 'ppage', 'id') %>%
+    summarize_all(mean, na.rm = TRUE)
+
+```
+
+Filter rows by age greater than 30
+
+```{R}
+filter(abc_poll_2021, ABCAGE > 30 )
+```
+
+Filter ppinc7 earnings that are above 50
+
+```{R}
+filter(abc_poll_2021, ppinc7 < 65000 & ABCAGE > 50)
+```
+
+Slice the lowest age values in abc_poll_2021
+
+```{R}
+abc_poll_2021 %>%
+  arrange('ABCAGE') %>%
+  slice(1:10)
+```
+
+Arranging abc_polls based on ppeduc5, Selecting columns ppeduc5 & ppinc7 then slice the top values
+
+```{R}
+abc_poll_2021 %>%
+  arrange(desc(ppinc7)) %>%
+  select(ppeduc5, ppinc7) %>%
+  group_by(ppeduc5) %>%
+  slice(1)
+```
+
+### Briefly describe the data
+
+The abc_poll_2021.csv dataset contains the results of a public opinion poll conducted by ABC News and the Washington Post in January 2021. It consists of 29 variables, including approval ratings for Biden and Harris, measures of public opinion on the pandemic and the economy, and attitudes towards policy proposals.
+
+```{R}
+
+#Load data 
+abc_poll_2021 <- read.csv("~/Desktop/601_Spring_2023/posts/_data/abc_poll_2021.csv")
+
+# This function provides a structure of the data frame, including the number of rows and columns, variable names, and variable types.
+str(abc_poll_2021)
+
+# This function displays the first few rows of the data frame, giving you a quick overview of what the data looks like.
+head(abc_poll_2021)
+
+# This function provides summary statistics for each variable in the data frame, including the minimum, maximum, mean, and median values.
+summary(abc_poll_2021)
+
+# This function displays the variable names in the data frame.
+names(abc_poll_2021)
+
+# This function displays the number of rows and columns in the data frame.
+dim(abc_poll_2021)
+
+```
+
+## Tidy Data (as needed)
+
+Remove any unnecessary columns using select() function, keeping only the variables that are needed for analysis.
+
+```{r}
+#Load data 
+abc_poll_2021 <- read.csv("~/Desktop/601_Spring_2023/posts/_data/abc_poll_2021.csv")
+
+# Check for missing values and handle them if necessary using functions below:
+
+# Check for missing values
+sum(is.na(df))
+
+# Remove rows with missing values
+df <- na.omit(df)
+
+```
+
+Tyding steps using Drop variables that are not needed for analysis using the select() function, Clean and transform the data as needed using functions such as gsub(), as.numeric(), and factor() and Rename variables if necessary using the rename() function from the dplyr package.
+
+```{R}
+library(dplyr)
+#Load data 
+df <- read.csv("~/Desktop/601_Spring_2023/posts/_data/abc_poll_2021.csv")
+
+# Drop the id and weights_pid variables
+df <- select(abc_poll_2021, -c(id, weights_pid))
+
+# Clean the ABCAGE variable
+abc_poll_2021$ABCAGE <- as.numeric(gsub('[^0-9]+', '', abc_poll_2021$ABCAGE))
+
+
+library(dplyr)
+
+# Rename the ppgender variable to sex
+df <- rename(abc_poll_2021, sex = ppgender)
+
+```
+
+We use the case_when() function to recode the abc_poll_2021.csv dataset into categorical values using logical expressions and a final expression that assigns NA if none are TRUE.
+
+```{r}
+#Load data 
+df <- read.csv("~/Desktop/601_Spring_2023/posts/_data/abc_poll_2021.csv")
+library(dplyr)
+
+# Recode the ppeducat variable
+df <- mutate(df, education = case_when(
+  ppeducat == 1 ~ "Less than high school",
+  ppeducat == 2 ~ "High school graduate",
+  ppeducat == 3 ~ "Some college/Associate degree",
+  ppeducat == 4 ~ "Bachelor's degree",
+  ppeducat == 5 ~ "Postgraduate degree",
+  TRUE ~ NA_character_
+))
+
+# View the new education variable
+tail(df$education)
+
+
+```
+
+We recoded the ppeduc5 variable into categorical values using the case_when() function and view the new education variable using head().
+```{R}
+library(dplyr)
+
+#Load data 
+df <- read.csv("~/Desktop/601_Spring_2023/posts/_data/abc_poll_2021.csv")
+
+# Recode the ppeduc5 variable
+df <- mutate(df, education = case_when(
+  ppeduc5 == 1 ~ "Less than high school",
+  ppeduc5 == 2 ~ "High school graduate",
+  ppeduc5 == 3 ~ "Some college, no degree",
+  ppeduc5 == 4 ~ "Associate degree",
+  ppeduc5 %in% c(5, 6) ~ "Bachelor's degree or higher",
+  TRUE ~ NA_character_
+))
+
+# View the new education variable
+tail(df$education)
+
+
+```
+
+Ethnicity representation, we view the new race_ethnicity variable using head(). The race_ethnicity variable should now contain categorical values that are easier to interpret than the original numeric values in ppethm.
+```{R}
+library(dplyr)
+
+#Load data 
+abc_poll_2021 <- read.csv("~/Desktop/601_Spring_2023/posts/_data/abc_poll_2021.csv")
+
+# Recode the ppethm variable
+abc_poll_2021 <- mutate(abc_poll_2021, race_ethnicity = case_when(
+  ppethm == 1 ~ "White, non-Hispanic",
+  ppethm == 2 ~ "Black, non-Hispanic",
+  ppethm == 3 ~ "Hispanic",
+  ppethm == 4 ~ "Asian, non-Hispanic",
+  ppethm == 5 ~ "Other, non-Hispanic",
+  TRUE ~ NA_character_
+))
+
+# View the new race_ethnicity variable
+tail(abc_poll_2021$race_ethnicity)
+
+```
+
+## Visualizing Part-Whole Relationships
+
+```{R}
+
+library(ggplot2)
+library(dplyr)
+
+# Load the abc_poll_2021.csv dataset
+abc_poll_2021 <- read.csv("~/Desktop/601_Spring_2023/posts/_data/abc_poll_2021.csv")
+
+ggplot(abc_poll_2021, aes(ppgender, ppmarit5)) + geom_point() 
+
+
+```
+
+## Ethnicity dependant visualization
+
+```{R}
+library(ggplot2)
+library(dplyr)
+
+# Load the abc_poll_2021.csv dataset
+abc_poll_2021 <- read.csv("~/Desktop/601_Spring_2023/posts/_data/abc_poll_2021.csv")
+
+# Using geom_histogram we observe count of ethnicity.
+
+ggplot(abc_poll_2021, aes(ppethm)) + geom_bar()
+  
+```
+

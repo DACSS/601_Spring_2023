@@ -69,9 +69,10 @@ hotelsub <- hotelbks %>%
   mutate(
     arrival_date_month = as.integer(factor(arrival_date_month, levels = month.name)),
     arrival_date = make_date(year = arrival_date_year, month = arrival_date_month, day = arrival_date_day_of_month),
+    arrival_month = floor_date(arrival_date, unit = "month"),
     market_segment = factor(market_segment)) %>%
     filter(is_canceled == 0 & adr > 0 & (stays_in_weekend_nights > 0 | stays_in_week_nights > 0)) %>%
-  subset(select = c(arrival_date, stays_in_weekend_nights, stays_in_week_nights, adr, country, market_segment))
+  subset(select = c(arrival_date, arrival_month, stays_in_weekend_nights, stays_in_week_nights, adr, country, market_segment))
 
 hotelsub
 ```
@@ -115,6 +116,15 @@ hotelByDay <- hotelsub %>%
 
 hotelByDay
 
+hotelByMonth <- hotelsub %>%
+  group_by(arrival_month) %>%
+  summarise(weekendSum = sum(stays_in_weekend_nights),
+            weekdaySum = sum(stays_in_week_nights),
+            adrMean = num(mean(adr), digits = 2)) %>%
+  subset(select = c(arrival_month, weekendSum, weekdaySum, adrMean))
+
+hotelByMonth
+
 hotelByDaySegment <- hotelsub %>%
   group_by(arrival_date, market_segment) %>%
   summarise(weekendSum = sum(stays_in_weekend_nights),
@@ -123,6 +133,15 @@ hotelByDaySegment <- hotelsub %>%
   subset(select = c(arrival_date, market_segment, weekendSum, weekdaySum, adrMean))
 
 hotelByDaySegment
+
+hotelByMonthSegment <- hotelsub %>%
+  group_by(arrival_month, market_segment) %>%
+  summarise(weekendSum = sum(stays_in_weekend_nights),
+            weekdaySum = sum(stays_in_week_nights),
+            adrMean = num(mean(adr), digits = 2)) %>%
+  subset(select = c(arrival_month, market_segment, weekendSum, weekdaySum, adrMean))
+
+hotelByMonthSegment
 
 hotelByCountry <- hotelsub %>%
   group_by(country) %>%
@@ -150,12 +169,14 @@ hotelBySegment
 
 With just two years of mean average daily rate (meanADR) data we glimpse patterns of annual ADR peak in August and the EOY holiday season. A geom_smooth line shows the upward linear trend in mean ADR during this two-year period, with shading around the blue line to indicate the 0.95 confidence level.
 
+By day: 
+
 ```{r}
 ggplot(hotelByDay, aes(x=arrival_date, y=adrMean)) +
   geom_line() + 
   geom_smooth(method=lm, level=0.95, show.legend=TRUE) +
   labs(title = "Change in mean Average Daily Rate (ADR)",
-              subtitle = "Plot of all observations",
+              subtitle = "Plot of all observations grouped by arrival date",
               caption = "Data source: hotel_bookings.csv",
               x = "Arrival Date", y = "Mean ADR",
               ) +
@@ -167,9 +188,34 @@ ggplot(hotelByDay, aes(x=arrival_date, y=adrMean)) +
 
 ```
 
+Grouping and plotting by month makes it easier to interpret the trend. However, grouping by month means that we lose sight of the EOY holiday spike.
+
+```{r}
+ggplot(hotelByMonth, aes(x=arrival_month, y=adrMean)) +
+  geom_line(size=3) + 
+  geom_smooth(method=lm, level=0.95, show.legend=TRUE) +
+  labs(title = "Change in mean Average Daily Rate (ADR)",
+              subtitle = "Plot of all observations grouped by arrival month, year",
+              caption = "Data source: hotel_bookings.csv",
+              x = "Arrival Month", y = "Mean ADR",
+              ) +
+  theme(axis.text.x = element_text(face="bold", color="#993333", 
+                           size=12),
+          axis.text.y = element_text(face="bold", color="#993333", 
+                           size=12)) +
+  scale_x_date(date_breaks = "3 months" , date_labels = "%b-%y")
+
+```
+
+
+## Visualizing Part-Whole Relationships
+
+I can use additional grouping to update the plot of mean ADR change over time by coloring according to market segment (which I mutated to a factor a few code blocks ago). 
+
 ```{r}
 ggplot(hotelByDaySegment, aes(x=arrival_date, y=adrMean, fill=market_segment)) +
-  geom_area(colour = "black", size = .2, alpha = .4) + 
+  geom_bar(position="stack", stat="identity"#, colour = "black", size = .2, alpha = .4) 
+           ) + 
   scale_fill_brewer(palette = "Dark2") +
   labs(title = "Change in mean Average Daily Rate (ADR)",
               subtitle = "Plot of all observations stacked by Market Segment",
@@ -184,9 +230,51 @@ ggplot(hotelByDaySegment, aes(x=arrival_date, y=adrMean, fill=market_segment)) +
 
 ```
 
-By separating out Market Segments (which I mutated to a factor a few code blocks ago), we begin to see the proportion of mean ADR attributed to each segment, how that segment changes over time, and when segments go against the annual pattern -- such as the apparent absence of the Aviation Segment before 2016.
+We begin to see the proportion of mean ADR attributed to each segment, how that segment changes over time, and when segments go against the annual pattern -- such as the apparent absence of the Aviation Segment before 2016.
 
-## Visualizing Part-Whole Relationships
+However, it's difficult to make out the trends. It helps to group by month:
+
+```{r}
+
+hotelByMonthSegment %>% 
+  ggplot(aes(x=arrival_month, y=adrMean, fill=market_segment)) + 
+  geom_bar(position="stack", stat="identity") + 
+  scale_fill_brewer(palette = "Dark2") +
+  labs(title = "Change in mean Average Daily Rate (ADR)",
+              subtitle = "Plot of all observations grouped by arrival month, year, and stacked by market segment",
+              caption = "Data source: hotel_bookings.csv",
+              x = "Arrival Date", y = "Mean ADR",
+              ) +
+  theme(axis.text.x = element_text(face="bold", color="#993333", 
+                           size=12),
+          axis.text.y = element_text(face="bold", color="#993333", 
+                           size=12)) +
+  scale_x_date(date_breaks = "6 months" , date_labels = "%b-%y")
+
+```
+
+Reordering the market segment factor by their share of adrMean (using the mean of each segment's monthly means) isn't helpful, in this case.
+
+```{r}
+
+hotelByMonthSegment %>% 
+  mutate(market_segment = fct_reorder(market_segment, adrMean, .fun='mean')) %>% 
+  ggplot(aes(x=arrival_month, y=adrMean, fill=market_segment)) + 
+  geom_bar(position="stack", stat="identity") + 
+  scale_fill_brewer(palette = "Dark2") +
+  labs(title = "Change in mean Average Daily Rate (ADR)",
+              subtitle = "Plot of all observations grouped by arrival month, year, and stacked by market segment",
+              caption = "Data source: hotel_bookings.csv",
+              x = "Arrival Date", y = "Mean ADR",
+              ) +
+  theme(axis.text.x = element_text(face="bold", color="#993333", 
+                           size=12),
+          axis.text.y = element_text(face="bold", color="#993333", 
+                           size=12)) +
+  scale_x_date(date_breaks = "6 months" , date_labels = "%b-%y")
+
+```
+
 
 The treemaps below compare the mean ADR for the top 8 countries, and for all 7 market segments. 
 

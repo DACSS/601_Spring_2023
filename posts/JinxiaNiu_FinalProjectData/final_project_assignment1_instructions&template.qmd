@@ -1,0 +1,153 @@
+---
+title: "Final Project Assignment#1: Jinxia Niu"
+author: "Jinxia Niu"
+description: "Project & Data Description"
+date: "04/12/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction 
+
+My project focuses on disinformation in the Chinese-American community. I would like to know the current extent of this dis/misinformation, which digital platforms or social media they are mainly on, and what kind of topics/themes they focus on. Additionally, I am interested in the reader engagement numbers associated with these topics.
+
+Particularly, I am interested in the disinformation surrounding community safety and justice, including disinformation about gun violence, crime, and safety issues such as homelessness, drug use, and anti-Asian hate incidents. 
+
+Disinformation is often a reflection of people’s fear and confusion. As we are currently experiencing the COVID-19 pandemic, we are also dealing with a gun violence pandemic, which disproportionately impacts immigrant communities. Additionally, the rise of anti-Asian sentiment, such as the use of terms like "China virus," has resulted in increased anti-Asian incidents. Community safety has become a major concern for many Chinese-American communities, particularly those in large cities like San Francisco.
+
+My data comes from the first Chinese-language fact-checking website in the U.S., Piyaoba.org. This website is managed by Chinese for Affirmative Action, a non-profit social justice organization based in San Francisco. 
+
+The data is collected by the Piyaoba.org team, who are systematically monitoring and documenting disinformation in the Chinese-American community. 
+
+The dataset is called "Piyaoba Disinformation Alerts," and it contains disinformation pieces collected manually from digital spaces and platforms from 2022 to 2023. The dataset includes the title, link, and theme/topic of the disinformation, the date it was monitored, the platforms it was published on (such as WeChat, Twitter, and YouTube), the username, and the engagement numbers.
+
+I would like to answer the following research questions:
+
+1.What is the overall scale of disinformation in the Chinese-American community in 2023, including the topics and platforms being used?
+
+
+2.What is the scale of disinformation related to gun violence, crime, and other community safety issues in 2023, and which platforms are being used for dissemination?
+
+3.Who are the key influencers spreading disinformation about community safety, what platforms are they using, and what kind of impact/engagement numbers are they having?"
+
+4.Does the amount of disinformation about community safety continue to increase on major social media platforms throughout 2022 and 2023?
+
+
+5.Is there a correlation between the topic of disinformation (specifically related to gun violence, crime, and other community safety issues) and the level of reader engagement?
+
+
+6.What is the original source of the disinformation - is it coming from English language media and social media, or from Chinese state media and social media?
+
+   
+## Part 2. Describe the data set(s) 
+
+1.  read the dataset. 
+
+As there are some obvious problems after reading in the data,
+such as the date format from Excel is "49027", "49013" and some column names are missing, I would like to solve these problems first, so we can have a better and clearer understanding of the dataset. 
+
+```{r}
+
+getwd()
+setwd('C:/Users/scaru/Documents/Github/JXN_601_Spring_2023/posts')
+
+install.packages("readxl")
+library(readxl)
+PYB2023 <- read_xlsx ("_data/PYB2023.xlsx") 
+
+```
+
+2.  present the descriptive information of the dataset(s) 
+```{r}
+
+dim(PYB2023)
+```
+[1] 202   9
+    ```{r}
+
+colnames(PYB2023) 
+
+    ```
+[1] "Date"        "Theme_EN"    "Platforms"   "Views(K)"    "Engagements" "Source_EN"  
+[7] "Username"    "Title_CH"    "Link"  
+
+The Piyaoba.org 2023 Chinese-language disinformation dataset contains 202 observations and 9 columns. It comprises disinformation pieces collected from January 2023 until April 2023 in the Chinese-language digital space.
+
+The "Date" column indicates the date the disinformation was monitored.
+The "Theme_EN" column contains the theme or topic of the disinformation.
+The "Platforms" column shows which social media platforms it circulated on, including platforms such as WeChat, Twitter, YouTube, and Telegram.
+The "Views(K)" column indicates the number of views it received, calculated in thousands.
+The "Engagements" column includes engagement numbers, such as the number of likes, forwards, and comments it generated.
+
+The "Source_EN" column indicates whether the original piece of disinformation came from English media or social media.
+The "Username" column includes the usernames of the users on these social media platforms who generated and spread the disinformation.
+
+The "Title_CH" and "Link" columns contain the original titles of the disinformation and their corresponding links.
+
+3.  conduct summary statistics of the dataset(s)
+ 
+```{r}
+#convert character values to numeric
+library(tidyverse)
+class(PYB2023$"Views(K)")
+PYB2023$"Views(K)"<- as.numeric(PYB2023$"Views(K)")
+mean(PYB2023$"Views(K)",na.rm = TRUE)
+
+```
+
+First, I will look at summary statistics for disinformation by theme, what kind of disinformation are popular in the Chinese-American community? 
+
+```{r}
+#Summarize the mean value, group by the theme
+Disinfortopics <- PYB2023 %>%
+  group_by(Theme_EN) %>%
+  summarize(avg_views = mean(PYB2023$"Views(K)", na.rm = TRUE))
+
+head(arrange(Disinfortopics, desc(avg_views)))
+```
+
+Next, I will look at summary statistics for disinformation platforms, which are the platforms are spreading them? 
+
+```{r}
+library(tidyverse)
+ Disinforplatfroms <- PYB2023 %>%
+  group_by(Platforms) %>%
+  summarize(avg_views = mean(PYB2023$"Views(K)", na.rm = TRUE))
+
+ print(Disinforplatfroms)
+```
+
+
+## 3. The Tentative Plan for Visualization 
+
+1.I am planning to use barplots and histograms to answer the question of the scale of disinformation in the Chinese-American community in 2023, including the topics and platforms being used. I believe barplots are simple and clear in presenting the top ranked disinformation topics and platforms.
+
+
+2.I will use grouped and stacked barplots, pie charts, and doughnuts to answer the question of the scale of disinformation about gun violence and other community safety issues. As disinformation about gun violence is a subgroup of the broader disinformation, grouped and stacked barplots can clearly illustrate the scale of this particular disinformation within the larger context. They are designed to present the "part of the whole" relationship.
+
+
+3.I am planning to use line plots and time series to answer the question of whether the amount of disinformation about community safety is increasing on major social media platforms throughout 2022 and 2023. Line plots and time series can reveal the evolution of variables over time and help to understand if the amount of disinformation is increasing or decreasing.
+
+
+4.I am planning to mainly use scatter plots and heatmaps to answer the question of the correlation between the topic of disinformation (specifically related to gun violence, crime, and other community safety issues) and the level of reader engagement. Scatter plots can show the correlation between two variables, and heatmaps can help visualize the correlation between the topic of disinformation and reader engagement levels. These visualizations can explore to what extent disinformation related to community safety issues drives reader engagement on various platforms.
+
+Note: In order to get the current PYB2023 data, I've already did some data wrangling, includes converting the correct date format, translate, rename and reorder the variables needed. However, the current data is still not a tidy data. In order to answer my research questions, I still need to combine or merge the duplicated observations, especially the "Theme" variable. I also need to separate the "Engagements" variable, pivot the data longer.

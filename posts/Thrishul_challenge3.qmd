@@ -1,8 +1,8 @@
 ---
-title: "Challenge 3"
+title: "Thrishul Challenge 3"
 author: "Meredith Rolfe"
-desription: "Tidy Data: Pivoting"
-date: "08/17/2022"
+desription: ""
+date: "08/16/2022"
 format:
   html:
     toc: true
@@ -10,12 +10,10 @@ format:
     code-copy: true
     code-tools: true
 categories:
-  - challenge_3
-  - animal_weights
-  - eggs
-  - australian_marriage
-  - usa_households
-  - sce_labor
+  - challenge_2
+  - railroads
+  - faostat
+  - hotel_bookings
 ---
 
 ```{r}
@@ -30,149 +28,123 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 
 ## Challenge Overview
 
-Today's challenge is to:
+Today's challenge is to
 
-1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
-2.  identify what needs to be done to tidy the current data
-3.  anticipate the shape of pivoted data
-4.  pivot the data into tidy format using `pivot_longer`
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
 
-## Read in data
+## Read in the Data
 
-Read in one (or more) of the following datasets, using the correct R package and command.
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
 
--   animal_weights.csv ⭐
--   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
--   australian_marriage\*.xls ⭐⭐⭐
--   USA Households\*.xlsx ⭐⭐⭐⭐
--   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
 
 ```{r}
-aus_marriage <- readxl::read_excel("_data/australian_marriage_law_postal_survey_2017_-_response_final.xls", sheet="Table 2", skip=7)
+df<- read.csv(file = "_data/hotel_bookings.csv")
+```
 
-aus_marriage <- aus_marriage[1:172,] #remove footnotes
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
 
-aus_marriage$division <- NA #initialize division variable
+## Describe the data
 
-aus_marriage$division[1:47] <- "New South Wales"
-aus_marriage$division[51:87] <- "Victoria"
-aus_marriage$division[91:120] <- "Queensland"
-aus_marriage$division[124:134] <- "South Australia"
-aus_marriage$division[157:161] <- "Tasmania"
-aus_marriage$division[165:166] <- "Northern Territory"
-aus_marriage$division[170:171] <- "Australian Capital Territory"
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
 
-aus_marriage <- aus_marriage %>%
-  filter(!is.na(division)) %>% #remove any invalid divisions
-    rename(x1 = 1, x2 = 2, x3 = 3, x4 = 4, x5 = 5, x6 = 6, x7 = 7, x8 = 8, x9 = 9, x10 = 10, x11 = 11, x12 = 12, x13 = 13, x14 = 14, x15 = 15, x16 = 16) %>%
-  mutate(x1 = gsub("\\(c)", "", x1)) %>%
-  mutate(x1 = gsub("\\(d)", "", x1)) %>%
-  mutate(x1 = gsub("\\(e)", "", x1)) #eliminate footnote letters in district name
+```{r}
+#| label: summary
+str(data)
+num_observations <- nrow(df)
+num_variables <- ncol(df)
+cat("Dataset Size: ", num_observations, " observations, ", num_variables, " variables\n")
 
-head(aus_marriage)
+
+# histogram of is_canceled
+hist(df$is_canceled)
+
+#scatterplot of stays_in_weekend_nights, stays_in_week_nights
+plot(df$stays_in_weekend_nights, df$stays_in_week_nights)
+
+# boxplot of arrival_date_week_number
+boxplot(df$arrival_date_week_number, )
+summary(data)
+
 
 ```
 
-### Briefly describe the data
+## Provide Grouped Summary Statistics
 
-Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
-
-## Anticipate the End Result
-
-The first step in pivoting the data is to try to come up with a concrete vision of what the end product *should* look like - that way you will know whether or not your pivoting was successful.
-
-One easy way to do this is to think about the dimensions of your current data (tibble, dataframe, or matrix), and then calculate what the dimensions of the pivoted data should be.
-
-Suppose you have a dataset with $n$ rows and $k$ variables. In our example, 3 of the variables are used to identify a case, so you will be pivoting $k-3$ variables into a longer format where the $k-3$ variable names will move into the `names_to` variable and the current values in each of those columns will move into the `values_to` variable. Therefore, we would expect $n * (k-3)$ rows in the pivoted dataframe!
-
-### Example: find current and future data dimensions
-
-Lets see if this works with a simple example.
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
 
 ```{r}
-#| tbl-cap: Example
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
 
-df<-tibble(country = rep(c("Mexico", "USA", "France"),2),
-           year = rep(c(1980,1990), 3), 
-           trade = rep(c("NAFTA", "NAFTA", "EU"),2),
-           outgoing = rnorm(6, mean=1000, sd=500),
-           incoming = rlogis(6, location=1000, 
-                             scale = 400))
-df
-
-#existing rows/cases
-nrow(df)
-
-#existing columns/cases
-ncol(df)
-
-#expected rows/cases
-nrow(df) * (ncol(df)-3)
-
-# expected columns 
-3 + 2
-```
-
-Or simple example has $n = 6$ rows and $k - 3 = 2$ variables being pivoted, so we expect a new dataframe to have $n * 2 = 12$ rows x $3 + 2 = 5$ columns.
-
-### Challenge: Describe the final dimensions
-
-This results in a new dataframe with 5 columns, where two columns identify the case (division and district) and the remaining three columns represent the pivoted variables (count, percent, and response type).
-
-To calculate the total number of columns in the new dataframe, the text uses the formula k = 2 + 2 + 1, where k represents the total number of columns. The first two terms, 2 + 2, represent the number of columns used to identify the case, and the last term, 1, represents the response type variable. Applying this formula yields a total of 5 columns.
-
-However, the text does not provide enough information to determine the exact number of columns in the resulting dataframe. Instead, we can infer that the dataframe will have at least 5 columns, based on the description of the data transformation process.
-
-To determine the exact number of columns in the new dataframe, we would need additional information about the original dataframe, such as the number of rows, the names and types of the original columns, and the specific method used to pivot the data. Without this information, we cannot calculate the exact number of columns in the resulting dataframe.
-
-```{r}
-aus_marriage2 <- aus_marriage %>%
-    select(x1, x2, x3, x4, x5, division) %>%
-  rename(district = x1, yes1count=x2, yes1percent=x3, no2count=x4, no2percent=x5)
-
-#existing rows/cases
-nrow(aus_marriage2)
-
+# Read data
+hotel_data <- df
 ```
 
 ```{r}
-#existing columns/cases
-ncol(aus_marriage2)
-#expected rows/cases
-nrow(aus_marriage2) * (ncol(aus_marriage2)-2)
-# expected columns 
-2 + 2 + 1
-```
-
-
-## Pivot the Data
-
-Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
-
-### Example
-
-```{r}
-#| tbl-cap: Pivoted Example
-
-df<-pivot_longer(df, col = c(outgoing, incoming),
-                 names_to="trade_direction",
-                 values_to = "trade_value")
-df
-```
-
-Yes, once it is pivoted long, our resulting data are $12x5$ - exactly what we expected!
-
-### Challenge: Pivot the Chosen Data
-The dataset contains information on responses to a single type of question (yes or no) in a specific district within a particular division in Australia. Each row in the dataset represents a unique observation of this type of response in the district, and each column represents a distinct variable of interest. The dataset satisfies the principles of tidy data, meaning that each cell in the dataset contains a single value, and there are no duplicate or missing values. In total, the tidy dataset contains 268 rows and 5 columns.
-
-```{r}
-aus_marriage_tidy <- aus_marriage2 %>%
-    pivot_longer(-c('district', 'division'), names_to=c("resp", ".value"), names_sep = "\\d")
-
-aus_marriage_tidy
+data <- select(df,-where(is.character))
+cor(data)
 
 ```
 
 
-When performing data pivoting in R, it can be useful to rename the new columns created by the pivot operation based on a consistent pattern. This helps R identify which columns correspond to which values in the resulting table. By renaming the columns in this way, we can make it easier to work with the pivoted data and apply additional data manipulations or analysis. Essentially, renaming the columns in a consistent way after pivoting allows for clearer identification and organization of the resulting data.
 
+
+### Group by City hotel and mean, median, and mode of lead_time
+
+```{r}
+
+# Group by hotel type and calculate mean, median, and mode of lead_time
+hotel_lead_time_city <- hotel_data %>%
+  group_by(hotel = 'City Hotel') %>%
+  summarise(
+    mean_lead_time = mean(lead_time),
+    median_lead_time = median(lead_time),
+    mode_lead_time = lead_time[which.max(table(lead_time))]
+  )
+print(hotel_lead_time_city)
+```
+
+### Group by Resort hotel and mean, median, and mode of lead_time
+
+```{r}
+# Group by hotel type and calculate mean, median, and mode of lead_time
+hotel_lead_time_resort <- hotel_data %>%
+  group_by(hotel = 'Resort Hotel') %>%
+  summarise(
+    mean_lead_time = mean(lead_time),
+    median_lead_time = median(lead_time),
+    mode_lead_time = lead_time[which.max(table(lead_time))]
+  )
+print(hotel_lead_time_resort)
+```
+
+### only reservations from Portugal and standard deviation of adr
+
+```{r}
+# Filter for only reservations from Portugal and calculate standard deviation of adr
+portugal_adr_sd <- hotel_data %>%
+  filter(country == "PRT") %>%
+  summarise(adr_sd = sd(adr))
+print(portugal_adr_sd)
+```
+
+### min, max, and 25th, 50th, and 75th percentiles of total_of_special_requests
+
+```{r}
+# Calculate min, max, and 25th, 50th, and 75th percentiles of total_of_special_requests
+special_req_summary <- hotel_data %>%
+  summarise(
+    min_special_req = min(total_of_special_requests),
+    max_special_req = max(total_of_special_requests),
+    q25_special_req = quantile(total_of_special_requests, 0.25),
+    q50_special_req = quantile(total_of_special_requests, 0.5),
+    q75_special_req = quantile(total_of_special_requests, 0.75))
+print(special_req_summary)
+
+
+```

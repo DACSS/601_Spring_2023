@@ -1,0 +1,144 @@
+---
+title: "Challenge 6 Fed Rates "
+author: "Keith Martin"
+description: "Visualizing Time and Relationships"
+date: "04/17/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - fed_rate
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+
+## Read in data
+
+I started off with reading in the FedFundsRate data. Since it was a csv, it was relatively easy to read in with no issues. After examining the data set, I was able to determine that a case was a specific date accompanied by several economic indicators for that time period. 
+
+The indicators we're GDP, inflation rate, unemployment rate, Fed target rate, Fed Lower Rate and Fed Higher Rate. Each has a numerical value that determines that specific rate for the indicator on a given date. Each case is a date and its tracked economic inidcators at that period of time.
+  
+
+```{r}
+FedRate <- read.csv("_data/FedFundsRate.csv")
+
+```
+
+
+### Briefly describe the data
+As you can see from the head, the data set needs some Tidying before we can create any visualizations from it. There are a total of 904 cases (Rows) and 10 columns before Tidying.
+
+```{r}
+head(FedRate, 10)
+ncol(FedRate)
+nrow(FedRate)
+```
+
+
+## Tidy Data (as needed)
+
+First, I wanted to combine the dates into one column instead of three. So I used the lubridate function to combine the dates and then remove the previous date columns. At first this made the data look strange since the date was the last column added, but it made visualization much easier.
+
+```{r}
+### Combine columes to make date one column
+FedRateDates<-FedRate%>%
+  mutate( date = str_c(Month, Day, Year , sep = "-"),
+          date = mdy(date)) %>%
+ select(-c(Year, Month, Day)) ### Remove Previous columns for Month, Year and Day
+head(FedRateDates,10)
+
+```
+
+I then decided to pivot the data longer so that the economic indicators we're under one tab. This increased the number of rows, but made the visualization much easier.
+```{r}
+FedRateLonger<-FedRateDates%>%
+ pivot_longer( cols= "Federal.Funds.Target.Rate":"Inflation.Rate",
+                names_to = 'Economic Indicator',
+                values_to = "Rates")
+head(FedRateLonger, 10)
+```
+
+I then included the summary statistics for each of the variables below.
+
+
+```{r}
+print(summarytools::dfSummary(FedRate,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+## Time Dependent Visualization
+I included a basic graph, however, it was crowded and ugly. It was difficult to make any meaningful conclusions with this first basic graph.
+
+```{r}
+ggplot(FedRateLonger, aes(x=date, y=Rates)) +
+  geom_point(size=.5) 
+```
+
+I then specicified the graphs so that it could included only a few of the economic indicators. As you can see, the interest rates shot up to almost 20% in the 1980s and then steadily dropped back down. However, you can see from the below graphs, that as inflation raises the rates typically rise as well. 
+
+```{r}
+FedRateLonger%>%
+  filter(`Economic Indicator` %in% c("Federal.Funds.Target.Rate", "Federal.Funds.Upper.Target", "Federal.Funds.Lower.Target", "Effective.Federal.Funds.Rate"))%>%
+ggplot(., aes(x=date, y=Rates, color=`Economic Indicator`))+
+  geom_point(size=0)+
+  geom_line()+
+  scale_y_continuous(labels = scales::label_percent(scale = 1))
+
+```
+As you can see, there is a relationship between the Federal Effective Rate and inflation. Rates spikes with inflation and then as inflation decreases so do the interest rates. It is interesting to note that while there is a clear relationship between the Interest Rates and Inflation, the unemployment rate does not always share a similar relationship. 
+
+Until the 2000s, there is a clear relationship between the three until the 2020s where interest rates and inflation are low, but unemployment is high. This could be due to the COVID-19 outbreak. It would be interesting to see what other phenomena disrupted the relationship between Interest Rates, Inflation and Unemployment in recent years.
+```{r}
+FedRateLonger%>%
+  filter(`Economic Indicator` %in% c("Inflation.Rate", "Effective.Federal.Funds.Rate","Unemployment.Rate" ))%>%
+ggplot(., aes(x=date, y=Rates, color=`Economic Indicator`))+
+  geom_point(size=0)+
+  geom_line()+
+  scale_y_continuous(labels = scales::label_percent(scale = 1))
+```
+
+I have included below, several of the graphs individually so that they can be easy analyzed and compared.
+
+```{r}
+FedRateLonger%>%
+  filter(`Economic Indicator` %in% c("Real.GDP..Percent.Change.", "Unemployment.Rate", "Inflation.Rate", "Effective.Federal.Funds.Rate"))%>%
+ggplot(., aes(x=date, y=Rates, color=`Economic Indicator`))+
+  geom_point(size=0)+
+  geom_line()+
+  facet_grid(rows = vars(`Economic Indicator`))
+```
+
+
+
+## Visualizing Part-Whole Relationships
+
+Finally, I included a scatterplot that included all of the economic indicators. While crowded, the color makes it significantly more readable. As you can see, there is some relationships between the indicators and they all seem to depend on the other. However, a full regression analysis would be required before you can actually test the statistical significance.
+
+```{r}
+ggplot(FedRateLonger, aes(x=date, y=Rates, color=`Economic Indicator`))+
+  geom_point(size=0)+
+  geom_line()+
+  scale_y_continuous(labels = scales::label_percent(scale = 1))
+```
+

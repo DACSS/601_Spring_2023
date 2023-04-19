@@ -60,7 +60,7 @@ To begin with, I am interested in exploring the careers of my favorite players a
 
 Secondly, I am curious to investigate whether height has an impact on a player's rebound skills. I want to determine if there is evidence to support this theory or not.
 
-**Additionally, I want to use the data to analyze the body mass index (BMI) of players. I am interested in exploring whether players who have a high weight are more prone to injuries than players who have a lower BMI. However, this data does not provide injure data. Thus, I would analysis of player with high BMI and investigate how often they are injured. **
+**Additionally, I want to use the data to analyze the body mass index (BMI) of players. I am interested in exploring whether players who have a high weight are more prone to injuries than players who have a lower BMI. However, this data does not provide injure data. Thus, I would analysis of player with high BMI and investigate how often they are injured.**
 
 Lastly, I want to explore the impact of age on player performance. I would like to investigate whether age has a significant effect on the performance of players or not.
 
@@ -87,7 +87,7 @@ df <- read_csv("Po-chunYang_FinalProjectData/all_seasons.csv")
 
 ```
 
-The 23 column show players' name, team abbreviation, age, height, weight, college, country, draft round, draft number, games played, points, rebound, assist, net rating, Offensive Rebounds, Defensive Rebounds, Usage Percentage, True Shooting Percentage, Assists Percentage, and season. In addition, there are 2463 players play for NBA from 1991 to 2022.
+The 23 column show players' name, team abbreviation, age, height, weight, college, country, draft round, draft number, games played, points, rebound, assist, net rating, Offensive Rebounds, Defensive Rebounds, Usage Percentage, True Shooting Percentage, Assists Percentage, and season. In addition, there are 12305 rows of data. Those rows shows all the players' data every season.
 
 ```{r}
 dim(df)
@@ -100,44 +100,56 @@ df%>%
 #描述有多少columns以及每一行代表什麽（球員）；一共有多少cases（球員)
 ```
 
-There are a lot of NBA players who play for several years so they have many rows of data and I try to merge all of them. Moreover, the summary shows 2463 players' average height, weight, point, rebound, and assist. In addition, I tidy players' data of their all careers with point, rebound, assist, and net ratings. 
+There are a lot of NBA players who play for several years so they have many rows of data and I try to merge all of them. After we tidy the data, I got the 2463 rows of data. Moreover, the summary shows 2463 players' average height, weight, point, rebound, and assist. In addition, I tidy players' data of their all careers with point, rebound, assist, and net ratings. Additionally, I integrate the players' average points, average assists, and average rebounds.
 
 ```{r}
+
+
 summarise(df,height = mean(player_height), weight = mean(player_weight),
           point = mean(pts), rebound = mean(reb), assist = mean(ast))
 
-performance_data<-df%>%
+dp<-mutate(df,point= pts*gp, assist = ast*gp, rebound = reb*gp)
+performance<-dp%>%
   group_by(player_name)%>%
-  summarise(point = mean(pts), rebound = mean(reb), assist = mean(ast),
-            net_rating=mean(net_rating))
+  summarise(game_play=sum(gp),total_point = sum(point),
+            total_rebound=sum(rebound), total_assist = sum(assist),
+            net_rating = mean(net_rating))%>%
+  mutate(average_point = total_point/game_play,
+         average_rebound = total_rebound/game_play,
+         average_assist = total_assist/game_play)
 
 body_data <- df %>%
   group_by(player_name)%>%
   summarise(height = mean(player_height), weight=mean(player_weight))
 
+
+```
+
+In the storytelling component, you should describe the basic information of the dataset(s) and the variables in a way that corresponds to your descriptive and summary statistics in the above coding component. **DO NOT** simply report the number of rows. Instead, describe the dataset(s) fully by **specifying what each row and column mean.** In other words, your description should be comprehensive and detailed enough for readers to picture or envision the dataset(s) in their brains.
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+-   Analysis of several my favorite players I am interested in exploring the careers of my favorite players and analyzing their data. I am not particularly interested in following new star players, so I will analyze the data for their careers. My aim is to gain a deeper understanding of their performances through this report.
+
+```{r}
 Kobe<-df[df$player_name=='Kobe Bryant',]
 Durant<-df[df$player_name=='Kevin Durant',]
 Curry<-df[df$player_name=='Stephen Curry',]
 Thompson<-df[df$player_name=='Klay Thompson',]
 Tatum<-df[df$player_name=='Jayson Tatum',]
+favorite_player<-rbind(Kobe, Durant, Curry, Thompson, Tatum)
+favorite_player<- subset(favorite_player, select = -...1)
+player_point<- select(favorite_player, player_name, age, pts)
+
+df3<-df%>%
+  ggplot(y=pts, x="", geom = "boxplot")
 ```
 
-In the storytelling component, you should describe the basic information of the dataset(s) and the variables in a way that corresponds to your descriptive and summary statistics in the above coding component. **DO NOT** simply report the number of rows. Instead, describe the dataset(s) fully by **specifying what each row and column mean.** In other words, your description should be comprehensive and detailed enough for readers to picture or envision the dataset(s) in their brains.
+-   Analysis of **Height and Weight** of NBA Players Additionally, I want to use the data to analyze the body mass index (BMI) of players. I am interested in exploring whether players who have a high weight are more prone to injuries than players who have a lower BMI. However, this data does not provide injure data. Thus, I would analysis of player with high BMI and investigate how often they are injured.
 
+-   Height and **rebound** relative analyze I am curious to investigate whether height has an impact on a player's rebound skills. I want to determine if there is evidence to support this theory or not.
 
-## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
--   Analysis of several my favorite players
- I am interested in exploring the careers of my favorite players and analyzing their data. I am not particularly interested in following new star players, so I will analyze the data for their careers. My aim is to gain a deeper understanding of their performances through this report.
-
--   Analysis of **Height and Weight** of NBA Players
-Additionally, I want to use the data to analyze the body mass index (BMI) of players. I am interested in exploring whether players who have a high weight are more prone to injuries than players who have a lower BMI. However, this data does not provide injure data. Thus, I would analysis of player with high BMI and investigate how often they are injured.
-
--   Height and **rebound** relative analyze
-I am curious to investigate whether height has an impact on a player's rebound skills. I want to determine if there is evidence to support this theory or not.
-
--   Analysis players **age with their net rating**
-I want to explore the impact of age on player performance. I would like to investigate whether age has a significant effect on the performance of players or not.
-  
+-   Analysis players **age with their net rating** I want to explore the impact of age on player performance. I would like to investigate whether age has a significant effect on the performance of players or not.
 
 ```{r}
 

@@ -1,0 +1,195 @@
+---
+title: "2019 AirBnB Rentals in NYC Boroughs"
+author: "Michele Carlin"
+desription: "Imported, Tidied, Summarized/Graphed data"
+date: "04/19/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - Michele Carlin
+  - air_bnb
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(summarytools)
+library(dbplyr)
+library(readxl)
+library(readr)
+library(ggplot2)
+library(forcats)
+library(scales)
+
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read in and view summary of 'AB_NYC_2019' dataset
+
+```{r}
+AB_NYC <- read_csv ("_data/AB_NYC_2019.csv")
+View(AB_NYC)
+view(dfSummary(AB_NYC))
+```
+
+
+This dataset contains 48895 rows and 16 columns.  Each row/observation contains information on Airbnb rentals in NYC during 2019, including the type of rental (e.g., entire home, private room, shared room), the NYC borough, the price, minimum number of nights, and number of reviews. 
+
+Per the data frame summary, the price variable contains some $0's; sort dataframe to review before recoding.
+
+```{r}
+arrange(AB_NYC, price)
+```
+
+Recode price=$0 to NA.
+
+```{r}
+AB_NYC <- AB_NYC %>% 
+  mutate_at(c("price"), ~ na_if(., 0))
+
+arrange(AB_NYC, price)
+```
+
+Recode 'price' variable into new 'price_range' variable.
+
+```{r}
+AB_NYC <- AB_NYC %>%
+  mutate(price_range = case_when(
+         price < 100 ~ "less than $100",
+         price >= 100 & price < 250 ~ "$100 - $249",
+         price >= 250 & price < 500 ~ "$250 - $499",
+         price >= 500 & price < 750 ~ "$500 - $749",
+         price >= 750 & price < 1000 ~ "$750 - $999",
+         price >= 1000 ~ "$1000 or more")
+  )
+AB_NYC %>% count(price_range)
+```
+
+Determine the values associated with each price range category. 
+
+```{r}
+levels(factor(AB_NYC$price_range))
+  
+```
+
+Specify the factor order. I am having trouble re-ordering the factor levels on the graph.
+
+```{r}
+AB_NYC %>%
+  filter (!is.na(price_range)) %>% 
+ ggplot(aes(x=price_range)) + 
+   geom_bar(position = "dodge",
+           stat = "count", fill="purple", colour="black")+
+   labs(title = "Frequency of Various Price Ranges", y = "Frequency", x = "Price Range")
+
+AB_NYC %>%
+ mutate(price_range_ordered = factor(price_range, levels = c(6,1,3,4,5,2))) %>%
+ ggplot(aes(x=price_range_ordered)) + 
+   geom_bar(position = "dodge", stat = "count", fill="purple", colour="black") +
+   labs(title = "Frequency of Various Price Ranges", y = "Frequency", x = "Price Range")
+```
+Create ggplot of rentals by NYC Borough, order bars from highest to lowest value.
+
+```{r}
+AB_NYC %>%
+ ggplot(aes(x=fct_infreq(neighbourhood_group))) + 
+   geom_bar(stat = "count", fill="blue", colour="black")+
+   labs(title = "AirBnB Rentals by NYC Borough", y = "Frequency", x = "NYC Borough")
+```
+
+Calculate min/max/mean price (price) and group data by neighbourhood_group and room_type.
+
+```{r}
+GrpByNeighborhoodRoom <- AB_NYC %>%
+	group_by(neighbourhood_group) %>%
+	summarise(minADR = min(price, na.rm = TRUE), maxADR = max(price, na.rm = TRUE), meanADR = mean(price, na.rm = TRUE)) 
+head(GrpByNeighborhoodRoom)
+
+AB_NYC %>%
+ ggplot(aes(x=neighbourhood_group, y=price)) + 
+   geom_bar(position = "dodge",fill="pink", colour="black",
+           stat = "summary",
+           fun = "mean")+
+   labs(title = "Average AirBnB Nightly Cost by NYC Borough", y = "Average Nighyly Cost", x = "NYC Borough")
+```
+
+Adding facet wrap to graph.
+
+```{r}
+GrpByNeighborhoodRoom <- AB_NYC %>%
+	group_by(neighbourhood_group, room_type) %>%
+	summarise(minADR = min(price, na.rm = TRUE), maxADR = max(price, na.rm = TRUE), meanADR = mean(price, na.rm = TRUE)) 
+head(GrpByNeighborhoodRoom)
+tail(GrpByNeighborhoodRoom)
+
+AB_NYC %>%
+ggplot(aes(x=neighbourhood_group, y=price, fill=room_type)) + 
+   geom_bar(position = "dodge",
+           stat = "summary",
+           fun = "mean")+
+   facet_wrap(vars(room_type), scales = "free_x") +
+  scale_fill_manual(values=c("green","orange","blue"))+
+  theme(legend.position="none")+
+   scale_x_discrete(guide = guide_axis(n.dodge=2))+
+   labs(title = "Average AirBnB Nightly Cost by NYC Borough and Room Type", y = "Average Nightly Cost", x = "NYC Borough")
+```
+
+```{r}
+AB_NYC %>%
+  ggplot(aes(fill=price_range, x=room_type)) + 
+    geom_bar(position="dodge", stat="count")
+```
+
+Read in and view summary of 'debt_in_trillions' dataset.
+
+```{r}
+sheet_names <- excel_sheets("_data/debt_in_trillions.xlsx")
+sheet_names 
+debt_trillions <- read_xlsx ("_data/debt_in_trillions.xlsx")
+View(debt_trillions)
+view(dfSummary(debt_trillions))
+```
+
+This dataset contains 74 rows and 8 columns.  Each row represents a particular year/quarter and provides the average debt in trillions for various types of household expenses (e.g., mortgage, auto loan, credit card, etc.). 
+
+Pivot longer so that each row contains one observation.
+
+```{r}
+debt_trillions_long <- pivot_longer(debt_trillions, col = c(Mortgage, 'HE Revolving', 'Auto Loan', 'Credit Card', 'Student Loan', Other, Total),
+                 names_to="debt_type",
+                 values_to = "value")
+View(debt_trillions_long)
+view(dfSummary(debt_trillions_long))
+```
+
+Separate 'Year and Quarter' into two variables.
+
+```{r}
+debt_trillions_long <- debt_trillions_long %>%
+  separate("Year and Quarter", c("year", "quarter"), ":")
+view(dfSummary(debt_trillions_long))
+
+```
+
+Create stacked bar chart of debt type by year for quarter 1 only.
+
+```{r}
+theme_update(plot.title = element_text(hjust = 0.5))
+
+debt_trillions_long %>%
+  mutate(debt_type = factor(debt_type, levels=c("Auto Loan", "Credit Card", "HE Revolving", "Mortgage", "Student Loan", "Other"))) %>%
+  filter(debt_type != 'Total') %>%
+  ggplot(aes(x = year, y = value, fill = debt_type)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent) +
+  labs(title = "Total Debt by Year and Type of Debt", y = "Quarter 1 Percent", x = "Year", fill="Type of Debt") 
+```

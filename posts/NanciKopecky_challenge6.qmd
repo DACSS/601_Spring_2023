@@ -1,0 +1,91 @@
+---
+title: "Challenge 6 Instructions"
+author: "Nanci Kopecky"
+description: "Visualizing Time and Relationships"
+date: "08/23/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - fed_rate
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+```{r}
+library(readr)
+fedrate <- read.csv(file = "_data/FedFundsRate.csv",
+                header=TRUE,
+                sep = ","
+                )
+fedrate
+view(fedrate)
+head(fedrate)
+dim(fedrate)
+```
+### Briefly describe the data
+
+The FedFundRate data set shows different monthly economic measurements such as federal interest rate, employment rate, and inflation rate from 1954 to 2017. 
+
+## Tidy Data (as needed)
+
+To plot the date, I combined the three columns, Year, Month, and Day into one column *Date*.
+
+```{r}
+library(dplyr)
+fedrate$Date <- as.Date(with(fedrate,paste(Year,Month,Day,sep = "-")), "%Y-%m-%d")
+#Sanity Check
+fedrate
+
+```
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+There are no variables to mutate.
+
+## Time Dependent Visualization
+This scatterplot looks at the unemployment rate over time. 
+```{r}
+ggplot(fedrate, aes(`Date`, `Unemployment.Rate`)) + 
+  geom_point(na.rm=TRUE) + 
+  geom_smooth(na.rm=TRUE ) 
+```
+This scatterplot looks to see if there is a relation between the Unemployment Rate and Effective Federal Funds Rate and colors each data point by month to see if there are clusters. The graph appears to show no correlation or pattern by month. 
+```{r}
+ggplot(fedrate, aes(`Unemployment.Rate`, `Effective.Federal.Funds.Rate`, color = as.factor(Month))) + 
+  geom_point(na.rm=TRUE) + 
+  geom_smooth(na.rm=TRUE ) 
+```
+## Visualizing Part-Whole Relationships
+The Fed Rate data does not seem to have data to visualize the Part-Whole Relationship. 

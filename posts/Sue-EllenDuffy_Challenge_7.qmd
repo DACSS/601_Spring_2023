@@ -1,0 +1,86 @@
+---
+title: "Challenge 7 AirBnB Data with Modified Maps"
+author: "Sue-Ellen Duffy"
+description: "Visualizing Multiple Dimensions"
+date: "04/17/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - air_bnb
+  - Sue-Ellen Duffy
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(treemap)
+library(treemapify)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## AirBnB Listing Data in New York City 2019
+
+This dataset shows AirBnB listings in NYC in 2019 with 48,895 rows (listings) and 17 columns (data for each listing). We see different types of observations including NYC neighborhood and neighborhood group, type of rental (entire home, private room, shared room), their prices, the minimum required number of nights, and number of guest reviews. Additionally we can see how many listing each host has on AirBnB, how many days a listing was available throughout 2019, and the date of the last guest review.
+
+## Read in the Data
+
+I chose not to pivot this data because each listing was unique, even if a host had different listings, each had different price points, neighborhoods, room types, and names.
+
+```{r}
+mydata <- read.csv("_data/AB_NYC_2019.csv", na.strings=c('','  ','   '))
+tibble(mydata, 10)
+```
+
+## Date Tidying
+
+The date was originally characters, I used transform and as.date to mutate last_review into date format.
+
+```{r}
+mydata <- transform(mydata, last_review=as.Date(last_review))
+```
+
+## Visualization with Multiple Dimensions
+
+In this series of graphs I was intentional about matching colors in neighborhood groups. I believe this will give the reader an easier time making connections between neighborhood groups.
+
+```{r}
+ggplot(mydata, aes(longitude, latitude, color = neighbourhood_group), group = neighbourhood_group) + geom_point() +
+  labs (size = "Price of Property", color = "NYC Neighborhoods", title = "NYC AirBnB by Neighborhood Groups")
+
+```
+
+The above map gives us an overview of where the units are mapped, and below we can see that while, Brooklyn and Manhattan have similar amounts of Airbnb units, Staten island and Bronx have very few comparatively.
+
+```{r}
+mydata %>%
+  count(neighbourhood_group) %>%
+  ggplot(aes(area= n, fill= neighbourhood_group, label = neighbourhood_group)) + 
+  geom_treemap() + 
+  labs(title = "Airbnb Units by Neighborhood Group") + 
+  scale_fill_discrete(name = "Neighborhood Group") +
+  geom_treemap_text(colour = "black",
+                    place = "centre")
+```
+
+```{r}
+# If you wanted to just see the price for a listing under $500 this graph is more useful
+gg<- ggplot(mydata, aes(neighbourhood_group, price, color = neighbourhood_group)) + geom_boxplot() + ylim(0, 500) + 
+  labs (x = "Neighbourhood Group", y = "Price of Property") 
+plot(gg) + labs(title = "NYC AirBnB Property Prices (Under $500) in 2019 by Neighborhood Group")
+```
+
+Here we can see the average price per neighborhood group and room type, giving us an understanding of how each neighborhood group prices their units. For example we can see here that a private home in Manhattan is roughly the same price as an entire home/apt in Bronx and Staten Island.
+
+```{r}
+gg + facet_wrap ( ~ room_type) + labs(title = "NYC AirBnB Property Prices (Under $500) in 2019 by Neighborhood Group and Room Type", color = "Neighborhood Group" )  + theme(axis.text.x = element_text(angle = 90), plot.title = element_text(size = 9.5))
+
+```

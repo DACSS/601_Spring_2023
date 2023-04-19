@@ -7,6 +7,7 @@ format:
   html:
     df-print: paged
     toc: true
+    code-fold: true
     code-copy: true
     code-tools: true
 categories:
@@ -61,29 +62,85 @@ Is your data already tidy, or is there work to be done? Be sure to anticipate yo
 
 ```{r}
 
-tableHeaders <- c(df_USHouseholds[1,1], df_USHouseholds[2,1])
+  # capture info from header and footnotes in a separate df
+df_footnotes <- df_USHouseholds %>%
+  slice(1:2, 358:n()) %>%
+  setNames(c("dataHeaderAndFootnotes"))
 
+  # the big tidy and mutation spree on the primary df
 df_USHouseholds <- df_USHouseholds %>%
+    # don't need the header
   slice(-(1:2)) %>%
+    # renaming just to make the next line of code easier to read
   rename(hh_yrh_origin = 1) %>%
-  mutate(year = hh_yrh_origin, hh_RaceHisp = hh_yrh_origin) %>%
-  relocate(c("year", "hh_RaceHisp")) %>%
-  mutate(across(year, str_replace, '^Note:.+$|^Source:.+$|^N\\s.+$|^\\d{1,2}\\s.+$', '')) %>% # erase end notes
-  mutate(across(year, str_replace, '^[[:alpha:]]+[[:alpha:],()\\d\\s\\\\]+$', '')) %>% # erase text labels
-  mutate(across(year, str_replace, '[,]', '')) %>% # erase commas
-  mutate(across(year, str_replace, '\\s[\\d\\s]+$', '')) %>% # erase superscript digits
-  mutate(across(hh_RaceHisp, str_replace, '^Note:.+$|^Source:.+$|^N\\s.+$|^\\d{1,2}\\s.+$', '')) %>% # erase end notes))
-  mutate(across(hh_RaceHisp, str_replace, "^\\d{4}\\s?", '')) %>% #erase year and space
-  mutate(across(hh_RaceHisp, str_replace, "\\d{1,2}", '')) %>% # remove superscript digits
-  mutate(across(hh_RaceHisp, str_replace, ",\\s\\d{1,2}", '')) %>% # remove superscript digits with comma
-  mutate(across(hh_RaceHisp, str_replace, "\r\n.*$", '')) %>% # remove \r\n
-  mutate(across(c("year","hh_RaceHisp"), ~ifelse(.=="", NA, as.character(.)))) %>%
-  fill(hh_RaceHisp)
-
-# need to remove rows if year = NA
-# can I combine by mutate acrosses for neater code?
+    # by making 3 copies of this column, I can more easily tidy up values
+  mutate(year = hh_yrh_origin, hh_RaceHisp = hh_yrh_origin, footnote = hh_yrh_origin) %>%
+    # moving my new columns to the beginning
+  relocate(c("year", "hh_RaceHisp", "footnote")) %>%
+    # erase end notes
+  mutate(across(c("year","hh_RaceHisp","footnote"), str_replace, '^Note:.+$|^Source:.+$|^N\\s.+$|^\\d{1,2}\\s.+$', '')) %>%
+    # erase text labels
+  mutate(across(year, str_replace, '^[[:alpha:]]+[[:alpha:],()\\d\\s\\\\]+$', '')) %>%
+    # erase commas
+  mutate(across(year, str_replace, '[,]', '')) %>%
+    # erase superscript digits
+  mutate(across(year, str_replace, '\\s[\\d\\s]+$', '')) %>%
+    # erase year and space
+  mutate(across(c("hh_RaceHisp","footnote"), str_replace, "^\\d{4}\\s?", '')) %>%
+    # erase superscript digits
+  mutate(across(hh_RaceHisp, str_replace, "\\d{1,2}", '')) %>%
+    # erase superscript digits with comma
+  mutate(across(hh_RaceHisp, str_replace, ",\\s\\d{1,2}", '')) %>%
+    # erase \r\n
+  mutate(across(c("hh_RaceHisp","footnote"), str_replace, "\r\n.*$", '')) %>%
+    # replace empty values with NA
+  mutate(across(c("year","hh_RaceHisp","footnote"), ~ifelse(.=="", NA, as.character(.)))) %>%
+    # populate hh_RaceHisp column with values
+  fill(hh_RaceHisp) %>%
+    # omit unnecessary columns
+  select(-c("hh_yrh_origin","...3")) %>%
+    # tidy up column names for the rest of the table
+  rename(
+    hh_numInThousands = ...2,
+    est_medIncomeInDollars = ...13,
+    margErr_medIncomeInDollars = ...14,
+    est_meanIncomeInDollars = ...15,
+    margErr_meanIncomeInDollars = ...16
+  ) %>%
+    # remove rows where year is NA
+  filter(!is.na(year)) %>%
+    # convert data types
+  mutate(
+    hh_RaceHisp = factor(hh_RaceHisp),
+    year = make_date(year = year, month = 1, day = 1),
+    across(hh_numInThousands:margErr_meanIncomeInDollars, as.numeric)
+    ) %>%
+    # make it long for better normalization
+  pivot_longer(
+    cols = ...4:...12,
+    names_to = "income",
+    values_to = "percentDistribution"
+  ) %>%
+    # 
+  mutate(
+    income = case_match(
+      income,
+      "...4" ~ "Under $15,000",
+      "...5" ~ "$15,000 to $24,999",
+      "...6" ~ "$25,000 to $34,999",
+      "...7" ~ "$35,000 to $49,999",
+      "...8" ~ "$50,000 to $74,999",
+      "...9" ~ "$75,000 to $99,999",
+      "...10" ~ "$100,000 to $149,999",
+      "...11" ~ "$150,000 to $199,999",
+      "...12" ~ "$200,000 and over"
+    ),
+    income = factor(income, levels = c("Under $15,000", "$15,000 to $24,999", "$25,000 to $34,999", "$35,000 to $49,999", "$50,000 to $74,999", "$75,000 to $99,999", "$100,000 to $149,999", "$150,000 to $199,999", "$200,000 and over"))) %>%
+  relocate(c("income", "percentDistribution"), .after = footnote) %>%
+  arrange(year, hh_RaceHisp, income, footnote)
 
 df_USHouseholds
+df_footnotes
 
 ```
 

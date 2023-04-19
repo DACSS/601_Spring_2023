@@ -1,0 +1,121 @@
+---
+title: "Challenge 7 - Airbnb Listings"
+author: "Megan Galarneau"
+description: "Visualizing Multiple Dimensions"
+date: "04/17/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    css: "style.css"
+categories:
+  - challenge_7
+  - air_bnb
+  - Megan Galarneau
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(patchwork)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  Read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  Tidy data & mutate variables as needed (including sanity checks)
+3)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+5)  If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+## Read in data
+
+```{r}
+#read in the data set, raw
+library(readr)
+raw_airbnb <- read_csv("_data/AB_NYC_2019.csv")
+raw_airbnb
+```
+
+### Briefly describe the data
+
+I analyzed this data set in Challenge 5. It describes around 49k Airbnb property listings in NYC boroughs for the year of 2019. Each property listing includes information about geographical location (neighborhood borough/name, latitude/longitude), rental type (entire home/apt, private room, or shared room), price, minimum nights stayed, reviews (last review, total number & per month) and how many days available in 2019. In the next code chunk, I tidied up the data so I can graph price by NYC borough later on.
+
+```{r}
+#summary of data set statistics
+print(summarytools::dfSummary(raw_airbnb,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+```
+
+```{r}
+#created new data table in order to graph borough by price segmented by room type
+tidy_Airbnb <- raw_airbnb %>%
+  filter(room_type == "Shared room" | room_type == "Entire home/apt" | room_type == "Private room") %>% 
+  group_by(neighbourhood_group, room_type) %>%
+  summarise(mean_price=mean(price))
+tidy_Airbnb
+
+```
+
+## Visualization with Multiple Dimensions
+
+In my previous challenge, I created univariate and bivariate visualizations of this data which analyzed price, neighborhood borough, and room type. Today, I will revisit these graphs and create new visualizations which introduce at least one additional dimension.
+
+See the first graph below. It shows number of property listings by neighborhood borough segmented by room type. Key takeaways:
+
+-   Manhattan and Brooklyn have the most listings while Staten Island and Bronx have the least number of listings
+
+-   The most common room type for the majority of listings is entire home/apartment with shared room being the least common
+
+-   Overall, Manhattan has the most listings and highest ratio of entire home/apartment to other room types
+
+```{r}
+#bar graph to visualize number of listings by borough and room type
+cbbPalette <- c("#B74F6F", "#ADBDFF", "#3185FC")
+bar_Airbnb <- ggplot(raw_airbnb, aes(neighbourhood_group, fill = room_type, na.rm = TRUE)) + 
+  geom_bar(stat = "count", colour="black") + 
+  labs(title = "Airbnb Property Listings by NYC Borough & Room Type", x = "NYC Borough", y = "Number of Listings", subtitle = "Data time frame: 2019") +
+  scale_fill_discrete(name = "Room Type") + 
+  theme_bw() +
+  theme(legend.position = "left") +
+  scale_fill_manual(values=cbbPalette)
+bar_Airbnb
+
+```
+
+
+At a high level, it is clear that Manhattan has the most listings, but it is the most expensive? The graph below answers that question, yes! Not only are it's property prices the most expensive on average, but the entire home/apartment price is the highest priced of all the NYC boroughs. For NYC, this result makes sense since it is a highly sought after neighborhood.
+
+
+```{r}
+#bar graph to visualize price of listings by borough and room type
+price_Airbnb <- tidy_Airbnb %>%
+  ggplot(tidy_airbnb, mapping = aes(neighbourhood_group, mean_price, fill = room_type)) +
+  geom_bar(position = "dodge", stat = "identity", colour="black") + 
+  labs(title = "Airbnb Property Listings by NYC Borough & Price", x = "NYC Borough", y = "Price in U.S. Dollars ($)", subtitle = "Data time frame: 2019") +
+  scale_fill_discrete(name = "Room Type") + 
+  theme_bw() +
+  theme(legend.position = "left") +
+  scale_fill_manual(values=cbbPalette)
+price_Airbnb
+
+```
+
+

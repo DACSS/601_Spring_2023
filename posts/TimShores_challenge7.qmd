@@ -65,9 +65,24 @@ tableHeaders <- c(df_USHouseholds[1,1], df_USHouseholds[2,1])
 
 df_USHouseholds <- df_USHouseholds %>%
   slice(-(1:2)) %>%
-  rename(hh_Race_Hisp_origin = 1) %>%
-  separate_wider_regex(hh_Race_Hisp_origin, c(year = "^[0-9\\s]+$", hh_Race_Hisp_origin = "^[^0-9]+$"), too_few = "debug") #%>%
-# the non-numeric match for hh_ is overgeneralizing. but see 'remainder' field in debug output. 
+  rename(hh_yrh_origin = 1) %>%
+  mutate(year = hh_yrh_origin, hh_RaceHisp = hh_yrh_origin) %>%
+  relocate(c("year", "hh_RaceHisp")) %>%
+  mutate(across(year, str_replace, '^Note:.+$|^Source:.+$|^N\\s.+$|^\\d{1,2}\\s.+$', '')) %>% # erase end notes
+  mutate(across(year, str_replace, '^[[:alpha:]]+[[:alpha:],()\\d\\s\\\\]+$', '')) %>% # erase text labels
+  mutate(across(year, str_replace, '[,]', '')) %>% # erase commas
+  mutate(across(year, str_replace, '\\s[\\d\\s]+$', '')) %>% # erase superscript digits
+  mutate(across(hh_RaceHisp, str_replace, '^Note:.+$|^Source:.+$|^N\\s.+$|^\\d{1,2}\\s.+$', '')) %>% # erase end notes))
+  mutate(across(hh_RaceHisp, str_replace, "^\\d{4}\\s?", '')) %>% #erase year and space
+  mutate(across(hh_RaceHisp, str_replace, "\\d{1,2}", '')) %>% # remove superscript digits
+  mutate(across(hh_RaceHisp, str_replace, ",\\s\\d{1,2}", '')) %>% # remove superscript digits with comma
+  mutate(across(hh_RaceHisp, str_replace, "\r\n.*$", '')) %>% # remove \r\n
+  mutate(across(c("year","hh_RaceHisp"), ~ifelse(.=="", NA, as.character(.)))) %>%
+  fill(hh_RaceHisp)
+
+# need to remove rows if year = NA
+# can I combine by mutate acrosses for neater code?
+
 df_USHouseholds
 
 ```

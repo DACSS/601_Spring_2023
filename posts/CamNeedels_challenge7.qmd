@@ -1,0 +1,81 @@
+---
+title: "Challenge 7 Submission"
+author: "Cam Needels"
+description: "Visualizing Multiple Dimensions"
+date: "04/18/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - CamNeedels
+  - eggs
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(summarytools)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+```{r}
+Eggs <- read_csv(("B:/Needels/Documents/DACCS 601/DACSS_601_New/posts/_data/eggs_tidy.csv"))
+Eggs
+```
+
+### Briefly describe the data
+
+This data is about the number of eggs coming from various dozen sizes. The dates vary from January 2004 until December 2013. This data looks solid however the extra large dozen column is all by itself and it isn't very tidy. In order to make it tidy I decided to make it long by having each category of dozen be a different data point so that extra large dozen can fit in. I also lubridated the date in case I wanted to use the month in a data analysis.
+
+## Tidy Data (as needed)
+
+```{r}
+#pivot longer to make each carton size into one category
+EggsTidy <- Eggs%>%
+  pivot_longer(col = c(large_half_dozen, large_dozen, extra_large_half_dozen, extra_large_dozen),
+                         names_to= "carton_size",
+                         values_to= "price_per_pound")
+EggsTidy
+```
+
+
+```{r}
+#lubridate in order to make month and year combined, unfortunately it doesn't have the day so it assumes every month is on the first.
+EggsLubridate <- EggsTidy%>%
+  mutate( date = str_c(month, year , sep = "-"),
+          date = my(date))
+EggsLubridate
+
+```
+
+
+## Visualization with Multiple Dimensions
+
+I decided to go with a histogram with the first graph because I wanted to show the amount of cartons that sold at a specific price. I took it a step further this time by adding a title and newly named x and y axis'. Plus the color shows the distribution of prices quite nicely.
+
+The second graph is a stacked bar chart and it works excellently. Many of the dates overlap with each other and I was trying to figure out a way to combine the specific data points. This combines all of the prices per pound and generates them into a year by year profit. It also does a good job separating the amounts because of the colors so you can easily see which carton_size had the greatest amount sold.
+
+
+```{r}
+#I went with a point graph except this time I wanted to add a color fo each specific carton size. It looks nice but there are multiple data points on the same day so its weird seeing it stacked on each other
+EggsLubridate%>%
+  ggplot(aes(x= price_per_pound,color = carton_size)) + geom_histogram() + labs(title = "The number of prices per pound for carton sizes", x = "Price Per Pound", y = "Amount")
+```
+
+```{r}
+#stacked bar graph with a title listed below. I filled the colors with each carton size as well thanks to the pivot_long.
+EggsLubridate%>%
+  ggplot(aes(x = year, y = price_per_pound, fill = carton_size)) + geom_bar(position = "stack", stat = "identity") + labs(title = "Total Price per Pound for Given Years", x = "Year", y = "price per pound")
+```
+

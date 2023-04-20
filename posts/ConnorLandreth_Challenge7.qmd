@@ -1,0 +1,138 @@
+---
+title: "ConnorLandreth_Challenge 7 "
+author: "Connor Landreth"
+description: "Visualizing Multiple Dimensions"
+date: "2023-20-04"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - Hotel
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+  
+  Below I will read in the hotel data set
+  
+setwd("C:/Github Projects/601_Spring_2023/posts/_data")
+
+hotel <- read.csv("hotel_bookings.csv")
+
+
+```{r}
+setwd("C:/Github Projects/601_Spring_2023/posts/_data")
+hotel <- read.csv("hotel_bookings.csv")
+summary(hotel)
+```
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+
+```{r}
+head(hotel)
+hist(hotel$lead_time, col = "lightblue",
+xlab = 'Lead Time')
+
+```
+
+
+
+```{r}
+hist(hotel$stays_in_weekend_nights, col = "lightblue",
+     xla = 'Number of Weekend Nights Stayed')
+```
+
+```{r}
+hist(hotel$stays_in_week_nights, col = "lightblue",
+     xlab = 'Number of Week Nights Stayed')
+#change bins
+
+```
+
+```{r}
+hist(hotel$days_in_waiting_list, col = "lightblue",
+     xlab = 'Number of Days in Waiting List')
+
+```
+
+Next, I want to find out why people tended to have shorter stays. Were these short stays always planned, were they cut short? Were there kids involved, company listed? I'll filter out stays where the individual stayed only one night. Will also mutate company to binary
+```{r}
+hotel_short_stay <- hotel %>% 
+  select(stays_in_weekend_nights, stays_in_week_nights, company, adults, children, babies, is_repeated_guest, total_of_special_requests) %>% 
+  mutate(company = ifelse(company == "NULL",0,1))
+```
+
+```{r}
+hotel_short_stay %>% 
+  filter(stays_in_week_nights <= 3)
+
+```
+```{r}
+summary(hotel_short_stay)
+```
+The summary of the short stay data shows a company listed roughly half the time and for adults, a mean of 1.856, meaning there are 2 adults more often than there is one. There are typically not children involved in short stays, and there are even less babies. Rarely is the guest a repeat guest and there tends to be either zero or one special request. 
+
+We'll look at this information graphically and more clearly see what parameters exist around short stays. A hotel could use this information to shift marketing/advertising efforts toward different demographics. For example, since short stays during the week involve mostly 2 adults, should marketing efforts target that group even more, or look at singles/groups?
+
+```{r}
+hotel_short_stay %>% 
+  drop_na(stays_in_week_nights) %>% 
+  ggplot(mapping = aes(x = stays_in_week_nights))+
+  
+  geom_boxplot(fill="royalblue",
+               bins = 5)+
+  theme_economist()+
+  labs(title = "Boxplot of Week night stays",
+       x = "Number of Weeknight Stays")
+```
+
+```{r}
+hotel_short_stay %>% 
+  drop_na(children) %>% 
+  ggplot(mapping = aes(x = children))+
+  
+  geom_boxplot(fill="royalblue",
+               bins = 5)+
+  theme_economist()+
+  labs(title = "Boxplot of Number of Children",
+       x = "Number of Children")
+```
+Again, this shows short stays do not seem to be associated with any children. It's possible the trips are short because the traveler has to get home to children.
+
+
+
+
+

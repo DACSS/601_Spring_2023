@@ -1,0 +1,132 @@
+---
+title: "Challenge 7 Instructions"
+author: "Nanci Kopecky"
+description: "Visualizing Multiple Dimensions"
+date: "04/19/23"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+
+-   Explain why you choose the specific graph type
+
+5)  If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+-   abc_poll ⭐⭐
+
+```{r}
+library(readr)
+abcpoll <- read.csv(file = "_data/abc_poll_2021.csv",
+                header=TRUE,
+                sep = ","
+                )
+#abcpoll
+```
+
+### Briefly describe the data
+
+The data set is a 2021 ABC poll that include demographics such as age, education, employment, ethnicity, political opinions, and geographic area.
+
+```{r}
+head(abcpoll)
+#view(abcpoll)
+ncol(abcpoll)
+nrow(abcpoll)
+dim(abcpoll)
+```
+
+## Tidy Data (as needed)
+
+The income and household size variables were changed from character data to numerical data. Cell entries for household size *6 or more* will be *6*. Cell entries for income were changed to be the mean value for the income range, so *\$25000 to \$49,999* was changed to *\$37,500*.
+
+```{r}
+abcpoll1<-as.data.frame.matrix(abcpoll)
+abcpoll1$pphhsize[abcpoll1$pphhsize == '6 or more'] <- '6'
+abcpoll1$ppinc7[abcpoll1$ppinc7 == '$10,000 to $24,999'] <- '17500'
+abcpoll1$ppinc7[abcpoll1$ppinc7 == '$25,000 to $49,999'] <- '37500'
+abcpoll1$ppinc7[abcpoll1$ppinc7 == '$150,000 or more'] <- '150000'
+abcpoll1$ppinc7[abcpoll1$ppinc7 == '$50,000 to $74,999'] <- '62500'
+abcpoll1$ppinc7[abcpoll1$ppinc7 == '$75,000 to $99,999'] <- '87500'
+abcpoll1$ppinc7[abcpoll1$ppinc7 == '$100,000 to $149,999'] <- '124500'
+abcpoll1$ppinc7[abcpoll1$ppinc7 == 'Less than $10,000'] <- '5000'
+#abcpoll1
+abcpoll2 <- transform(abcpoll1,
+                 pphhsize =as.numeric(pphhsize))
+abcpoll3 <- transform(abcpoll2, 
+                      ppinc7 = as.numeric(ppinc7))
+#abcpoll3
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+abcpoll4<-abcpoll3%>%
+  mutate(partyid = str_remove(QPID, "A[n]* "),
+         partyid = na_if(partyid, "Skipped"))%>%
+  select(-QPID)%>%
+  mutate(Q5 = na_if(Q5,"Skipped"))
+#abcpoll4
+
+```
+
+## Visualization with Multiple Dimensions
+
+The bar graph shows the proportion of gender for each political party.
+
+```{r}
+table(abcpoll4$QPID)
+ggplot(data = abcpoll4) +
+geom_bar(mapping = aes(x=partyid, fill = ppgender),position = "fill") +
+  labs(title = "Political Party and Gender", x = "Political Party", y = "Percent")
+```
+
+This geom_point graph plots age on the x-axis and income on the y-axis in four different graphs on level of education. Each point is colored in by political party. Because the numerical data is discrete, the graph does not show clear association between age and income. There are no obvious clusters of colored points that would be telling about distribuion of income or age based on education or political party.
+
+```{r}
+ggplot(data = abcpoll3) +
+  geom_point(mapping = aes(x=ppage, y=ppinc7, color=QPID))+
+  facet_wrap(~ppeducat,nrow=1)+
+  labs(title = "Age and Income by Level of Education and Political Party", x = "Age", y = "Income", fill = "Political Party")
+  
+```
+
+This violin graph shows the distrution of income based on gender and political party.
+
+```{r}
+ggplot(abcpoll3, aes(x=ppgender, y=ppinc7, fill = ppeducat)) + # fill=name allow to automatically dedicate a color for each group
+  geom_violin()+
+  labs(title = "Distribution of Income by Gender and Education", x = "Gender", y = "Income", fill = "Education")
+```

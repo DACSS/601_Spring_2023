@@ -1,0 +1,142 @@
+---
+title: "Challenge_6"
+author: "Xinyang Mao"
+description: "Visualizing Time and Relationships"
+date: "04/19/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+  - hotel_bookings ⭐⭐⭐⭐
+
+```{r}
+hotel_raw <- read.csv("_data/hotel_bookings.csv")
+print(summarytools::dfSummary(hotel_raw,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+We can see there are lots of attributes in these dataset.
+In this challenge I mainly focus on the number of guests and time.
+```{r}
+str(hotel_raw)
+```
+
+## Tidy Data
+
+Firstly,I transfer string type of month to int for combine year and month,thus more convenient to observe the relationship between the total number of guests of each month and time.
+```{r}
+hotel_raw<- na.omit(hotel_raw)
+hotel <- hotel_raw%>%
+  mutate(Month = match(arrival_date_month,month.name))
+head(hotel$Month)
+```
+Combine year and month used to display the graph later.
+```{r}
+
+hotel1 <- hotel%>%
+  mutate(date = str_c(arrival_date_year,Month,sep = "-"))
+```
+check the result,it's what I want!
+```{r}
+head(hotel1$date)
+```
+Calculate the total number of guests for each day.
+```{r}
+hotel_month <- hotel1%>%
+  mutate(total_guests = rowSums(select(.,adults,children,babies),na.rm = TRUE))
+summary(hotel_month$total_guests)
+
+```
+## Time Dependent Visualization
+According to the `date` column I processed previously,I grouped the rows by month and use `summarise()` to calculate the total guests number of each month from 2015 to 2017.
+```{r}
+hotel_month<-hotel_month%>%
+  group_by(date) %>%
+  summarise(month_total = sum(total_guests)) %>%
+  ungroup() %>%
+  mutate(month_total = as.integer(month_total))
+hotel_month
+```
+Then draw a gragh for observing,we can see it was floated a lot,and the least crowded months are November 2015,Jan of both 2016 and 2017.
+```{r}
+ggplot(hotel_month, aes(x = date, y = month_total,group = 1)) +
+  geom_line() +
+  theme(axis.text.x = element_text(size = 5 ))
+```
+
+## Visualizing Part-Whole Relationships
+In this part I'd like exploring the relationship between months and different type of guests.
+Firstly I I calculated the total monthly amount of different kinds of guests separately.
+```{r}
+hotel_type<-hotel1%>%
+  group_by(Month) %>%
+  summarise(month_child = sum(children),month_babies = sum(babies),month_adults = sum(adults)) %>%
+  ungroup() %>%
+  mutate(month_child = as.integer(month_child),month_babies = as.integer(month_babies),month_adults = as.integer(month_adults),Month = month(Month))
+
+
+hotel_type
+```
+Then I drawed lines for each kind of guests:adults,child and babies.
+I find that there are many more adult guests than children and babies!And almost all year round at a very high level except from November to January it may means people will travel less in winter.
+For children,although the number of children is very low,but what is interesting is that during the summer holidays (June to September) there is a significant increase.It can be seen that children usually go out in the summer holidays.
+As for babies, the number of hotel reservations has remained at a very low number.
+```{r}
+ggplot(hotel_type, aes(Month,month_child,group = 1,col = "child")) +
+  geom_line() +
+  geom_line(aes(Month,month_babies, group = 1,col = "babies")) +
+  geom_line(aes(Month,month_adults, group = 1,col ="adults")) +
+  scale_x_continuous(breaks = seq(1,12,1)) +
+  scale_color_manual(values = c("red","blue","green"))
+  theme(axis.text.x = element_text(size = 2 ))
+```
+
+
+
+
+
+

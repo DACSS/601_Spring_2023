@@ -121,7 +121,7 @@ df_USHouseholds <- df_USHouseholds %>%
     names_to = "income",
     values_to = "percentDistribution"
   ) %>%
-    # 
+    # Update the income text to match the original data headers
   mutate(
     income = case_match(
       income,
@@ -135,8 +135,11 @@ df_USHouseholds <- df_USHouseholds %>%
       "...11" ~ "$150,000 to $199,999",
       "...12" ~ "$200,000 and over"
     ),
+    # Convert income to factor and set levels to match numerical order
     income = factor(income, levels = c("Under $15,000", "$15,000 to $24,999", "$25,000 to $34,999", "$35,000 to $49,999", "$50,000 to $74,999", "$75,000 to $99,999", "$100,000 to $149,999", "$150,000 to $199,999", "$200,000 and over"))) %>%
+    # put this at the beginning
   relocate(c("income", "percentDistribution"), .after = footnote) %>%
+    # sort
   arrange(year, hh_RaceHisp, income, footnote)
 
 df_USHouseholds
@@ -149,9 +152,100 @@ Are there any variables that require mutation to be usable in your analysis stre
 Document your work here.
 
 ```{r}
+# count unique and missing values
+df_USHouseholds %>% summarize(
+  yearNA = sum(is.na(year)),
+  hh_RaceHispNA = sum(is.na(hh_RaceHisp)),
+  footnoteNA = sum(is.na(footnote)),
+  incomeNA = sum(is.na(income)),
+  percentDistributionNA = sum(is.na(percentDistribution)),
+  hh_numInThousandsNA = sum(is.na(hh_numInThousands))
+  )
+
+# The second set is less important to my analysis and has a lot of NAs
+df_USHouseholds %>% summarize(  
+  est_medIncomeInDollarsNA = sum(is.na(est_medIncomeInDollars)),
+  margErr_medIncomeInDollarsNA = sum(is.na(margErr_medIncomeInDollars)),
+  est_meanIncomeInDollarsNA = sum(is.na(est_meanIncomeInDollars)),
+  est_meanIncomeInDollarsNA = sum(is.na(est_meanIncomeInDollars)),
+  margErr_meanIncomeInDollarsNA = sum(is.na(margErr_meanIncomeInDollars))
+  )
+
+
+# these two groupings reveal which years are duplicated by footnotes: 2013 (with footnotes 3 and 4) and 2017 (with footnote 2)
+
+df_USHouseholds %>% 
+  group_by(year,hh_RaceHisp) %>%
+  summarize(
+    countIncome = n(),
+    sumPD = sum(percentDistribution),
+    numMean = mean(hh_numInThousands)
+    ) %>%
+  subset(select = c(year, hh_RaceHisp, countIncome, sumPD, numMean))
+
+df_USHouseholds %>% 
+  group_by(year,footnote) %>%
+  summarize(
+    countFeet = n()
+    ) %>%
+  subset(select = c(year, footnote, countFeet))
+
+# These are the footnotes for 2013. Based on this, it sounds like 2013^4 is the corrected data. I will omit 2013^3.
+
+# 3 The 2014 CPS ASEC included redesigned questions for income and health insurance coverage. All of the approximately 98,000 addresses were eligible to receive the redesigned set of health insurance coverage questions. The redesigned income questions were implemented to a subsample of these 98,000 addresses using a probability split panel design. Approximately 68,000 addresses were eligible to receive a set of income questions similar to those used in the 2013 CPS ASEC and the remaining 30,000 addresses were eligible to receive the redesigned income questions. The source of these 2013 estimates is the portion of the CPS ASEC sample which received the redesigned income questions, approximately 30,000 addresses.	
+# 4 The source of these 2013 estimates is the portion of the CPS ASEC sample which received the income questions consistent with the 2013 CPS ASEC, approximately 68,000 addresses.
+
+# This is the footnote for 2017. Again, a correction. Therefore, I will omit the 2017^NA rows.
+
+# 2 Estimates reflect the implementation of an updated data processing system, allowing users to evaluate the impact, and should be used to make comparisons to 2018 and subsequent years. \r\n
+
+# filtering with NAs in play is tricky...
+df_USHouseholdsFILTER <- df_USHouseholds %>%
+  filter(is.na(footnote) | (year != '2013-01-01' | footnote != 3))
+
+df_USHouseholdsFILTER <- df_USHouseholdsFILTER %>%
+  filter((is.na(footnote) & year != '2017-01-01') | (!is.na(footnote)))
+
+# sanity check the results
+
+df_USHouseholdsFILTER
+
+df_USHouseholdsFILTER %>% 
+  group_by(year,hh_RaceHisp) %>%
+  summarize(
+    countIncome = n(),
+    sumPD = sum(percentDistribution),
+    numMean = mean(hh_numInThousands)
+    ) %>%
+  subset(select = c(year, hh_RaceHisp, countIncome, sumPD, numMean))
+
+df_USHouseholdsFILTER %>% 
+  group_by(year,footnote) %>%
+  summarize(
+    countFeet = n()
+    ) %>%
+  subset(select = c(year, footnote, countFeet))
 
 ```
 
 ## Visualization with Multiple Dimensions
 
+```{r}
 
+# footnotes complicate things and introduce duplicate rows.
+ggplot(filter(df_USHouseholds, str_detect(hh_RaceHisp, "WHITE")), aes(x=year, y=est_medIncomeInDollars, fill=hh_RaceHisp)) +
+  #geom_line() + 
+  geom_bar(position="stack", stat="identity") +
+  #geom_smooth(method=lm, level=0.95, show.legend=TRUE) +
+  labs(title = "Change in estimated median income (dollars)",
+              subtitle = "Plot of all observations",
+              caption = "Data source: USA Households [...] 1967 to 2019.xlsx",
+              x = "Year", y = "Estimated Median Income (Dollars)",
+              ) +
+  theme(axis.text.x = element_text(face="bold", color="#993333", 
+                           size=12),
+          axis.text.y = element_text(face="bold", color="#993333", 
+                           size=12)) +
+  scale_x_date(date_breaks = "10 years" , date_labels = "%Y")
+
+```

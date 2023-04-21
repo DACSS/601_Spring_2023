@@ -1,0 +1,175 @@
+---
+title: "Final Project Assignment#1: Project & Data Description"
+author: "Rahul Somu"
+description: "Project & Data Description"
+date: "04/18/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+## Overview of the Final Project {#overview-of-the-final-project}
+
+Introduction:
+
+Housing affordability is one of the major problems in the United States. With many households struggling to afford the rising cost of housing, it is critical to analyze the data trends over the country. According to statistics from the U.S. Census Bureau on median household income by city and region from 1996 to the present, Housing affordability has changed significantly over the time.
+
+Although there has been general increase in median household income over the previous few decades, it has not been uniform across all the regions. Some regions have seen greater growth than others and similar swings have been observed in the median home prices, with some regions seeing more significant price increases than others. 
+
+The widening disparity between median household incomes and median property prices is one of the most obvious patterns in the statistics which is becoming more challenging for many Americans to afford homeownership as median property prices in many locations have been rising more quickly than median household incomes. The affordability issue has also been made worse by the fact that, despite the median household income rising, it has not kept up with the cost of living.
+
+Overall, according to data from the U.S. Census Bureau, the affordability of housing has become a major worry over time, with many Americans finding it difficult to keep up with the rising cost of housing. The data emphasize the necessity of making policy changes to address the housing affordability crisis and guarantee that all Americans have access to safe, reasonably priced housing.
+
+As part of this project I’m trying to focus on below:
+Visualize the trends in home values, the average household income, and inflation rates through time, broken down by area and city size.
+Create graphs showing the evolution of housing affordability over time in the country's largest cities and how it differs by area and city size.
+
+Data Sources:
+
+As part of this project I found below resources that will help me understand the issue.
+Zillow Home Value Index (ZHVI) - a dataset from Zillow with the median home value for each region and city in the United States from 1996 to the present.
+https://www.kaggle.com/datasets/robikscube/zillow-home-value-index?resource=download
+
+U.S. Census Bureau data on median household income by city and region from 1996 to the present.
+https://www.census.gov/data/tables/time-series/demo/income-poverty/historical-income-households.html
+
+U.S. Bureau of Labor Statistics data on inflation rates by region and year from 1996 to the present.
+https://www.bls.gov/cpi/regional-resources.htm
+
+
+1. Util to Create a look up for states to region
+
+```{r}
+
+state_to_region <- function(state) {
+  region_lookup <- list(
+    Northeast = c("Connecticut", "Maine", "Massachusetts", "New Hampshire", "New Jersey", "New York", "Pennsylvania", "Rhode Island", "Vermont"),
+    South = c("Delaware", "District of Columbia", "Florida", "Georgia", "Maryland", "North Carolina", "South Carolina", "Virginia", "West Virginia", "Alabama", "Kentucky", "Mississippi", "Tennessee", "Arkansas", "Louisiana", "Oklahoma", "Texas"),
+    Midwest = c("Illinois", "Indiana", "Michigan", "Ohio", "Wisconsin", "Iowa", "Kansas", "Minnesota", "Missouri", "Nebraska", "North Dakota", "South Dakota"),
+    West = c("Arizona", "Colorado", "Idaho", "Montana", "Nevada", "New Mexico", "Utah", "Wyoming", "Alaska", "California", "Hawaii", "Oregon", "Washington")
+  )
+  region <- NA
+  for (r in names(region_lookup)) {
+    if (state %in% region_lookup[[r]]) {
+      region <- r
+      break
+    }
+  }
+  return(region)
+}
+
+```
+
+2. Read The Datasets
+
+```{r}
+
+income_data <- read_excel("Rahul_Final_projectData/income_state.xlsx")
+
+df_inflation <- read_excel("Rahul_Final_projectData/USA_inflation_data.xlsx")
+
+df_rentalindex <- read.csv("Rahul_Final_projectData/ZHVI.csv")
+
+```
+
+3. Create functions for getting data for each state
+```{r}
+#Function to get income data by state and year
+
+get_median_se <- function(income_data, year, state){
+  rownum <- which(income_data$State == state)
+  colnum <- which(colnames(income_data) == year)
+  median_income <- as.numeric(income_data[rownum, colnum])
+  se <- as.numeric(income_data[rownum, colnum+1])
+  #diff <- median_income - se
+  return(c(as.character(median_income), as.character(se)))
+}
+
+get_median_se(income_data, "2021", "Alabama")
+
+
+#Function to get inflation data
+
+avg_by_region_and_year <- function(df, state, year) {
+  region <- state_to_region(state)
+  subset_df <- subset(df, Region == region & Year == year)
+  row_avgs <- apply(subset_df[, 4:ncol(subset_df)], 1, mean, na.rm = TRUE)
+  overall_avg <- mean(row_avgs, na.rm = TRUE)
+  return(overall_avg)
+}
+
+# example usage
+avg_by_region_and_year(df_inflation, "Texas", 2000)
+
+
+df_rentalindex$Date <- as.Date(df_rentalindex$Date, format = "%Y-%m-%d")
+
+# function to calculate average rental index for a state and year
+get_state_rentalindex <- function(df,state, year) {
+  df_filtered <- subset(df, format(as.Date(Date), "%Y") == year)
+  state_avg <- mean(df_filtered[[state]])
+  return(state_avg)
+}
+# example usage
+get_state_rentalindex(df_rentalindex,"California", "2000")
+
+```
+
+
+2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;
+
+```{r}
+dim(income_data)
+dim(df_inflation)
+dim(df_rentalindex)
+head(income_data)
+```
+
+3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
+
+```{r}
+summary(df_rentalindex)
+```
+
+
+Visualisation:
+
+To visualize the affordability, I’m planning the states into three categories : "Highly Affordable and Healthy", "Moderately Affordable and Healthy", and "Unaffordable and Unhealthy”. To categorize the states, a composite index that takes into account of major factors as Zillow Home Value Index (ZHVI) , median household income by state, inflation rates by region. 
+
+Variables: Zillow Home Value Index (ZHVI) - Measure of median home value in each state, 
+Median household income by state - average income earned by households in each state, 
+Inflation rates by region - Measure of change in prices of goods and services over time in each region.
+
+Index on healthy housing affordability could be done using below formula:
+Affordability Score = (ZHVI / Income) * (1 + Inflation)
+
+Based on the Affordability Score, we could categorize states into different tiers of affordability, such as:
+Affordable: States with a score below 1.0, indicating that housing is relatively affordable compared to income levels.
+Moderately Affordable: States with a score between 1.0 and 1.5, indicating that housing is somewhat affordable but may be becoming less so over time.
+Unaffordable: States with a score above 1.5, indicating that housing is significantly unaffordable relative to income levels and inflation rates.
+
+Using a heat map, where each state is colored according to how affordable it is, with a legend showing the range of scores could offer a quick and simple way to discover states that have affordability scores that are consistently high or low over time, and how these scores fluctuate in relation to one another over time.
+
+Did real incomes rise?
+With CPI prices for the states available between 2000 and 2023 and then compare median real incomes in these cities for the respective periods. First, we convert 2011 median incomes grouped by the city into 2018 dollars by using CPI’s of both time periods.

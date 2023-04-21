@@ -2,7 +2,7 @@
 title: "Challenge 7"
 author: "Tim Shores"
 description: "Visualizing Multiple Dimensions"
-date: "04/17/2022"
+date: "04/20/2022"
 format:
   html:
     df-print: paged
@@ -27,38 +27,43 @@ invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple p
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
-## Challenge Overview
-
-Today's challenge is to:
-
-1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
-2)  tidy data (as needed, including sanity checks)
-3)  mutate variables as needed (including sanity checks)
-4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
-   - Explain why you choose the specific graph type
-5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
-
-[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
-
-(be sure to only include the category tags for the data you use!)
-
 ## Read in data
 
-I chose to read in the USA Households Excel spreadsheet.
+I mustered up the courage to take on the USA Households Excel spreadsheet for Challenge 7. I needed more mutation practice, and with extra table headers, multi-row column headings, a ton of footnotes, changes in labeling over time, and several columns for totals and spread around the center, that spreadsheet demands mutation.
 
 ```{r}
 
 df_USHouseholds <- read_excel("../posts/_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", na = "N") # the Excel workbook has one worksheet to read in. Empty values are represented by cells with character "N".
 
-df_USHouseholds
-
 ```
 
 ### Briefly describe the data
 
-## Tidy Data (as needed)
+It looks downright ugly. 
 
-Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+```{r}
+df_USHouseholds
+```
+
+As described in the table header, USA Households shows *Households by Total Money Income, Race, and Hispanic Origin of Householder: 1967 to 2019*. 
+
+For additional detail, the header refers to a report described as *Current Population Survey, 2020 Annual Social and Economic (ASEC) Supplement conducted by the Bureau of the Census for the Bureau of Labor Statistics. – Washington: U.S. Census Bureau [producer and distributor], 2020.*
+
+The Current Population Survey (CPS) is the source of official US Federal Government statistics on employment and unemployment. This program interviews tens of thousands of households every year (I have visualized the number of households over time at the bottom of this page). For each year, the USA Households data represents household summaries by race, Hispanic ethnicity, and income bracket.
+
+## Tidy Data
+
+My approach to tidy this data set begins by slicing off the extra header and footnote rows. 
+
+Then I make three copies of the first column, because the first column contains three variables:
+
+1) Year of the observation;
+2) Footnotes that add contextual information about the observation;
+3) Race and Hispanic identity of households -- these are subheadings added to the spreadsheet to make it more readable, and since they're in spreadsheet column A, they become part of the first column of the data frame.
+
+I separated those three variables using a piped series of mutations with regex patterns. When **year == NA**, it indicates a junk row left over from the subheaders, so I filter those out. 
+
+I also filter out a row with **NA** number of households, convert race/hispanic values to factor, and convert variables to numeric where appropriate.
 
 ```{r}
 
@@ -109,12 +114,26 @@ df_USHouseholds <- df_USHouseholds %>%
   ) %>%
     # remove rows where year is NA
   filter(!is.na(year)) %>%
+    # one observation (ASIAN AND PACIFIC ISLANDER, 1987) is missing a number of households. I remove to prevent summarization errors below.
+  filter(!is.na(hh_numInThousands)) %>% 
     # convert data types
   mutate(
     hh_RaceHisp = factor(hh_RaceHisp),
     year = make_date(year = year, month = 1, day = 1),
     across(hh_numInThousands:margErr_meanIncomeInDollars, as.numeric)
-    ) %>%
+    )
+
+df_USHouseholds
+
+df_rows <- nrow(df_USHouseholds)
+
+```
+
+I handle the rest of the variables and pivot longer by converting the income bracket columns to a single income factor variable.
+
+```{r}
+
+df_USHouseholds <- df_USHouseholds %>%  
     # make it long for better normalization
   pivot_longer(
     cols = ...4:...12,
@@ -142,14 +161,27 @@ df_USHouseholds <- df_USHouseholds %>%
     # sort
   arrange(year, hh_RaceHisp, income, footnote)
 
+incomeBracketCount <- n_distinct(df_USHouseholds$income)
+
+```
+
+**Sanity check:** before pivoting, **df_USHouseholds** had `r df_rows` rows. Pivoting **`r incomeBracketCount` columns** by **`r df_rows` rows** should give us **`r incomeBracketCount * df_rows`** observations in the new table. Indeed, it does: 
+
+```{r}
+
 df_USHouseholds
+
+```
+
+For reference, I loaded the header and footnote values in a separate data frame. As I show below, a couple years have duplicate values that are explained by footnotes.
+
+```{r}
+
 df_footnotes
 
 ```
 
-Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
-
-Document your work here.
+I summarized data in search of **NA** values that may foul up my analysis. There are many missing footnote values, but those are not important for summary and plotting. There are **NA** values in the margin of error for estimated mean incomes ... important to note, however I am not looking at these margin of error estimates in my plots below.
 
 ```{r}
 # count unique and missing values
@@ -171,46 +203,33 @@ df_USHouseholds %>% summarize(
   margErr_meanIncomeInDollarsNA = sum(is.na(margErr_meanIncomeInDollars))
   )
 
+# filtering with NAs in play is tricky... I tried to filter these out in the big mutation pipeline above, but it doesn't work. So I run two separate filters here.
 
-# these two groupings reveal which years are duplicated by footnotes: 2013 (with footnotes 3 and 4) and 2017 (with footnote 2)
+    # remove duplicate rows for 2013. Footnote 3 indicates that 2013 interviewees were eligible for a second interview after redesign of questions to do with income and health insurance. Observations for year 2013 that have footnote 4 are from the redesigned interviews. Therefore, I remove all observations for 2013 footnote 3.
+df_USHouseholds <- df_USHouseholds %>%
+   filter(is.na(footnote) | (year != '2013-01-01' | footnote != 3))
 
-df_USHouseholds %>% 
-  group_by(year,hh_RaceHisp) %>%
-  summarize(
-    countIncome = n(),
-    sumPD = sum(percentDistribution),
-    numMean = mean(hh_numInThousands)
-    ) %>%
-  subset(select = c(year, hh_RaceHisp, countIncome, sumPD, numMean))
+    # remove duplicate rows for 2017. Footnote 2 indicates a second set of observations for 2017 after the update of a data processing system. Therefore, I remove all observations for 2017 with no footnote.
+df_USHouseholds <- df_USHouseholds %>%
+   filter((is.na(footnote) & year != '2017-01-01') | (!is.na(footnote)))
 
-df_USHouseholds %>% 
-  group_by(year,footnote) %>%
-  summarize(
-    countFeet = n()
-    ) %>%
-  subset(select = c(year, footnote, countFeet))
 
-# These are the footnotes for 2013. Based on this, it sounds like 2013^4 is the corrected data. I will omit 2013^3.
+yearCount <- n_distinct(df_USHouseholds$year)
+hhRHCount <- n_distinct(df_USHouseholds$hh_RaceHisp)
+yearhhRHCount <- n_distinct(df_USHouseholds$year, df_USHouseholds$hh_RaceHisp)
 
-# 3 The 2014 CPS ASEC included redesigned questions for income and health insurance coverage. All of the approximately 98,000 addresses were eligible to receive the redesigned set of health insurance coverage questions. The redesigned income questions were implemented to a subsample of these 98,000 addresses using a probability split panel design. Approximately 68,000 addresses were eligible to receive a set of income questions similar to those used in the 2013 CPS ASEC and the remaining 30,000 addresses were eligible to receive the redesigned income questions. The source of these 2013 estimates is the portion of the CPS ASEC sample which received the redesigned income questions, approximately 30,000 addresses.	
-# 4 The source of these 2013 estimates is the portion of the CPS ASEC sample which received the income questions consistent with the 2013 CPS ASEC, approximately 68,000 addresses.
+```
 
-# This is the footnote for 2017. Again, a correction. Therefore, I will omit the 2017^NA rows.
+**Sanity check:** How many observations should we end up with when grouping by year and hh_RaceHisp? 
 
-# 2 Estimates reflect the implementation of an updated data processing system, allowing users to evaluate the impact, and should be used to make comparisons to 2018 and subsequent years. \r\n
+There are **`r yearCount` distinct years** and **`r hhRHCount` distinct race/Hispanic categories**. However, the use of race/Hispanic categories changed over time, so it's not as simple as multiplying the number of years by the number of hh_RaceHisp categories. 
 
-# filtering with NAs in play is tricky...
-df_USHouseholdsFILTER <- df_USHouseholds %>%
-  filter(is.na(footnote) | (year != '2013-01-01' | footnote != 3))
+In the previous code block, **n_distinct(year, hh_RaceHisp)** gave us the number of unique combinations of **year** and **hh_RaceHisp**: **`r yearhhRHCount`**. We should see that in the grouped table -- indeed, we do:
 
-df_USHouseholdsFILTER <- df_USHouseholdsFILTER %>%
-  filter((is.na(footnote) & year != '2017-01-01') | (!is.na(footnote)))
-
+```{r}
 # sanity check the results
 
-df_USHouseholdsFILTER
-
-df_USHouseholdsFILTER %>% 
+df_USHouseholds %>% 
   group_by(year,hh_RaceHisp) %>%
   summarize(
     countIncome = n(),
@@ -219,33 +238,147 @@ df_USHouseholdsFILTER %>%
     ) %>%
   subset(select = c(year, hh_RaceHisp, countIncome, sumPD, numMean))
 
-df_USHouseholdsFILTER %>% 
-  group_by(year,footnote) %>%
-  summarize(
-    countFeet = n()
-    ) %>%
-  subset(select = c(year, footnote, countFeet))
+```
+
+
+```{r}
+
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
 
 ```
 
 ## Visualization with Multiple Dimensions
 
+My first plot shows the change over time in number of all households interviewed. This is summarized in the table. The plot shows a line of change over time with a transparent box plot of the summary table. I'm not sure this works well, but it's a communication device that I'd like to keep experimenting with.
+
 ```{r}
 
-# footnotes complicate things and introduce duplicate rows.
-ggplot(filter(df_USHouseholds, str_detect(hh_RaceHisp, "WHITE")), aes(x=year, y=est_medIncomeInDollars, fill=hh_RaceHisp)) +
-  #geom_line() + 
+# how many households for all races each year?
+df_USHouseholds %>%
+  filter(str_detect(hh_RaceHisp, "ALL RACES")) %>%
+  summarize(
+    meanHH = mean(hh_numInThousands, na.rm = TRUE), 
+    modeHH = find_mode(hh_numInThousands), 
+    minHH = fivenum(hh_numInThousands, na.rm = TRUE)[1], 
+    lowHingeHH = fivenum(hh_numInThousands, na.rm = TRUE)[2], 
+    medianHH = median(hh_numInThousands, na.rm = TRUE), 
+    upHingeHH = fivenum(hh_numInThousands, na.rm = TRUE)[4], 
+    maxHH = fivenum(hh_numInThousands, na.rm = TRUE)[5], 
+    count = n()
+    )
+
+ggplot(filter(df_USHouseholds, str_detect(hh_RaceHisp, "ALL RACES")), aes(x = year, y = hh_numInThousands)) +
+  geom_line() +
+  geom_smooth(method=lm, level=0.95, show.legend=TRUE) +
+  geom_boxplot(alpha = 0.4) +
+  labs(title = "Number of Households interviewed over time",
+       caption = "Data source: USA Households [...] 1967 to 2019.xlsx",
+       x = "Year", y = "Number of Households Interviewed") +
+  theme(axis.text.x = element_text(face="bold", color="#993333", size=12),
+        axis.text.y = element_text(face="bold", color="#993333", size=12)) +
+  scale_x_date(date_breaks = "10 years" , date_labels = "%Y")
+  
+```
+
+This table verifies the data plotted above: number of 'all races' households interviewed each year.
+
+```{r}
+
+df_USHouseholds %>% 
+  filter(str_detect(hh_RaceHisp, "ALL RACES")) %>%
+  select(year, hh_numInThousands) %>%
+  arrange(year) %>%
+  distinct()
+
+```
+
+This plot breaks out the above by each race/Hispanic category. It's difficult to read, although it makes clear that White households are predominant in the interview sample.
+
+```{r}
+
+# how many households for all races each year?
+ggplot(filter(df_USHouseholds, !str_detect(hh_RaceHisp, "ALL RACES")), aes(x = year, y = hh_numInThousands, color = hh_RaceHisp)) +
+  geom_line() +
+  labs(title = "Number of Households interviewed over time",
+       caption = "Data source: USA Households [...] 1967 to 2019.xlsx",
+       x = "Year", y = "Number of Households Interviewed") +
+  theme(axis.text.x = element_text(face="bold", color="#993333", size=12),
+        axis.text.y = element_text(face="bold", color="#993333", size=12)) +
+  scale_x_date(date_breaks = "10 years" , date_labels = "%Y")
+
+```
+
+To make a more readable plot, I used separate_wider_regex to pull the first word from each hh_RaceHisp value, creating larger race/ethnicity groups ASIAN, BLACK, HISPANIC, WHITE.
+
+```{r}
+
+df_USHouseholdsRHGROUP <- df_USHouseholds %>%
+  filter(!str_detect(hh_RaceHisp, "ALL RACES")) %>%
+  separate_wider_regex(hh_RaceHisp, c(hh_RHGroup = "^HISPANIC|[[:alpha:]]{5}"), too_few = "debug") %>%
+  group_by(hh_RHGroup, year) %>%
+  summarize(
+    hh_numInThousandsSUM = sum(hh_numInThousands),
+    est_medIncomeInDollarsMED = median(est_medIncomeInDollars)
+  )
+
+df_USHouseholdsRHGROUP
+
+```
+
+This grouping makes it easier to differences in long-term change of representation in this research and of income between racial and ethnic groups in the US. 
+
+The stacked bar charts are interesting, but I found that showing the trend line alone revealed possible disparities in both variables. The first pair of plots shows number of households. The second pair shows estimated median income.
+
+```{r}
+# how many households for all races each year?
+ggplot(df_USHouseholdsRHGROUP, aes(x = year, y = hh_numInThousandsSUM, fill = hh_RHGroup)) +
   geom_bar(position="stack", stat="identity") +
-  #geom_smooth(method=lm, level=0.95, show.legend=TRUE) +
-  labs(title = "Change in estimated median income (dollars)",
-              subtitle = "Plot of all observations",
-              caption = "Data source: USA Households [...] 1967 to 2019.xlsx",
-              x = "Year", y = "Estimated Median Income (Dollars)",
-              ) +
+  labs(title = "Number of Households interviewed over time",
+       subtitle = "Grouped by simplified Race/Hispanic factor",
+       caption = "Data source: USA Households [...] 1967 to 2019.xlsx",
+       x = "Year", y = "Number of Households Interviewed") +
+  theme(axis.text.x = element_text(face="bold", color="#993333", size=12),
+        axis.text.y = element_text(face="bold", color="#993333", size=12)) +
+  scale_x_date(date_breaks = "10 years" , date_labels = "%Y")
+
+ggplot(df_USHouseholdsRHGROUP, aes(x = year, y = hh_numInThousandsSUM, color = hh_RHGroup)) +
+  geom_smooth(method=lm, level=0.95, show.legend=TRUE) +
+  labs(title = "Trend line change in number of Households interviewed over time",
+       subtitle = "Grouped by simplified Race/Hispanic factor",
+       caption = "Data source: USA Households [...] 1967 to 2019.xlsx",
+       x = "Year", y = "Number of Households Interviewed") +
+  theme(axis.text.x = element_text(face="bold", color="#993333", size=12),
+        axis.text.y = element_text(face="bold", color="#993333", size=12)) +
+  scale_x_date(date_breaks = "10 years" , date_labels = "%Y")
+
+# change in estimated median income for all races each year?
+ggplot(df_USHouseholdsRHGROUP, aes(x = year, y = est_medIncomeInDollarsMED, fill = hh_RHGroup)) +
+  geom_bar(position="stack", stat="identity") +
+  labs(title = "Change in estimated median income (dollars)", 
+       subtitle = "Grouped by simplified Race/Hispanic factor",
+       caption = "Data source: USA Households [...] 1967 to 2019.xlsx",
+       x = "Year", y = "Estimated Median Income (Dollars)") +
   theme(axis.text.x = element_text(face="bold", color="#993333", 
                            size=12),
           axis.text.y = element_text(face="bold", color="#993333", 
                            size=12)) +
   scale_x_date(date_breaks = "10 years" , date_labels = "%Y")
 
+ggplot(df_USHouseholdsRHGROUP, aes(x = year, y = est_medIncomeInDollarsMED, color = hh_RHGroup)) +
+  geom_smooth(method=lm, level=0.95, show.legend=TRUE) +
+  labs(title = "Trend line change in estimated median income (dollars)", 
+       subtitle = "Grouped by simplified Race/Hispanic factor",
+       caption = "Data source: USA Households [...] 1967 to 2019.xlsx",
+       x = "Year", y = "Estimated Median Income (Dollars)") +
+  theme(axis.text.x = element_text(face="bold", color="#993333", 
+                           size=12),
+          axis.text.y = element_text(face="bold", color="#993333", 
+                           size=12)) +
+  scale_x_date(date_breaks = "10 years" , date_labels = "%Y")
 ```

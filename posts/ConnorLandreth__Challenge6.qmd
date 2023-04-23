@@ -1,0 +1,228 @@
+---
+title: "Challenge 6"
+author: "Connor Landreth"
+description: "Visualizing Time and Relationships"
+date: "2023-04-03"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+
+-   try to make them "publication" ready (optional)
+-   Explain why you choose the specific graph type
+
+5)  Create at least one graph depicting part-whole or flow relationships
+
+-   try to make them "publication" ready (optional)
+-   Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   debt ⭐
+-   fed_rate ⭐⭐
+-   abc_poll ⭐⭐⭐
+-   usa_hh ⭐⭐⭐
+-   hotel_bookings ⭐⭐⭐⭐
+-   AB_NYC ⭐⭐⭐⭐⭐
+
+setwd("C:/Github Projects/601_Spring_2023/posts/_data")
+poll <- read.csv("abc_poll_2021.csv")
+
+```{r}
+
+head(poll)
+View(poll)
+
+```
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+First off, below I will rename all the columns to actually be usable. Some of them such as ppmsacat aren't impossible to identify, but the layman would have no idea what that means. Additionally, at first glance, this data is 31 variables and 527 observations. I would be inclined to assume those behind the server seek to identify trends in political parties. (eg do republicans have less education? Do democrats have higher income?, Do independents live in the suburbs with big families or in cities alone?, etc..)
+
+```{r}
+Poll <- poll %>% 
+  rename(ID = 'id', Degree = 'ppeduc5', Primary_Language  = 'xspanish', Page = 'ppage', Education_Level = 'ppeducat', Gender = 'ppgender', Household_Size = 'pphhsize', Ethnicity = 'ppethm', Income = 'ppinc7', Marital_Status = 'ppmarit5', Metro_Stat_Area ='ppmsacat', Region = 'ppreg4', Rental_Status = 'pprent', State = 'ppstaten', Retired ='PPWORKA', Employment_Status = 'ppemploy', Complete_Status = 'complete_status', Political_Affiliation = 'QPID', Age = 'ABCAGE', Interview = 'Contact')
+
+View(Poll)
+
+
+```
+
+Next, I will remove some columns that won't be helpful for this analysis
+
+```{r}
+Poll$Page <- NULL
+Poll$ID <- NULL
+Poll$Complete_Status <- NULL
+Poll$weights_pid <- NULL
+
+# My analysis will look at the working class, so I will filter out any retired individuals
+
+Poll_re <- Poll %>% 
+  select(Retired, Employment_Status, Education_Level, Income, Household_Size, Ethnicity, Metro_Stat_Area, Region, Political_Affiliation, Age) %>%
+  filter(Retired != 'Retired')
+ 
+View(Poll_re)
+```
+
+I want to look at the role education and employment status might play in political affiliation. I am going to hypothesize non-retired, unemployed individuals are less educated, but will explore this below and see where their political affiliation falls (Only democrat vs republican)
+
+```{r}
+
+Democrat_Income <- Poll_re[order(Poll_re$Political_Affiliation), ] %>% 
+
+  select(Income, Political_Affiliation) %>% 
+  filter(Political_Affiliation %in% c('A Democrat',"A Republican"))
+
+View(Democrat_Income)
+```
+```{r}
+Democrat_Income %>% 
+  ggplot(aes(x=Political_Affiliation)) +
+  geom_histogram(stat = "count") +
+  theme_economist() +
+  labs(title = " Average Income by Political Affiliation")+
+  ylab('Income') +
+  xlab('Political Affiliation')
+```
+
+
+
+```{r}
+n = nrow(poll)
+
+Poll %>% 
+  select(Education_Level, Political_Affiliation) %>% 
+  filter(Education_Level == 'Less than high school') %>% 
+  count()/n
+
+```
+29 individuals (or 5.5%) have less than a high school degree
+```{r}
+Poll %>% 
+  select(Education_Leveal, Political_Affiliation) %>% 
+  filter(Education_Leveal == 'High school') %>% 
+  count()/n
+```
+133 or 25.2% have a high school diploma. I'm interested in seeing what voting preference those with less traditional education have. One step further, we'll add in political affiliation to the above.
+
+```{r}
+Poll %>% 
+  select(Education_Level, Political_Affiliation) %>% 
+  filter(Education_Level == 'Less than high school') %>% 
+  filter(Political_Affiliation == 'An Independent') %>% 
+
+  count()
+```
+
+```{r}
+Poll %>% 
+  select(Education_Level, Political_Affiliation) %>% 
+  filter(Education_Level == 'Less than high school') %>% 
+  filter(Political_Affiliation == 'Skipped') %>% 
+
+  count()
+
+```
+
+
+```{r}
+poll %>% 
+  select(ppeducat, QPID) %>% 
+  filter(ppeducat == 'Less than high school') %>% 
+  filter(QPID == 'A Democrat') %>% 
+
+  count()
+```
+
+```{r}
+Poll %>% 
+  select(Education_Level, Political_Affiliation) %>% 
+  filter(Education_Level == 'Less than high school') %>% 
+  filter(Political_Affiliation == 'A Republican') %>% 
+
+  count()
+
+```
+That actually surprises me that for such a small sample the numbers are dispersed about as I would have expected. I'll do the same thing for people with only a high school degree and see if their affiliation lines up with what I might expect. 
+
+```{r}
+Poll %>% 
+  select(Education_Level, Political_Affiliation) %>% 
+  filter(Education_Level == 'High school') %>% 
+  filter(Political_Affiliation == 'An Independent') %>% 
+
+  count()
+```
+
+```{r}
+Poll %>% 
+  select(Education_Level, Political_Affiliation) %>% 
+  filter(Education_Level == 'High school') %>% 
+  filter(Political_Affiliation == 'Skipped') %>% 
+
+  count()
+```
+`
+```{r}
+Poll %>% 
+  select(Education_Level, Political_Affiliation) %>% 
+  filter(Education_Level == 'High school') %>% 
+  filter(Political_Affiliation == 'A Republican') %>% 
+
+  count()
+``` 
+
+```{r}
+Poll %>% 
+  select(Education_Level, Political_Affiliation) %>% 
+  filter(Education_Level == 'High school') %>% 
+  filter(Political_Affiliation == 'A Democrat') %>% 
+
+  count()
+```
+Again, honestly a shockingly clean dispersion. ~40 each for independent, republican, and democrat.
+
+
+```{r}
+
+mycols <- c("lightpink", "lightblue","lightyellow", "lightgreen","orange")
+
+barplot(Poll$Political_Affiliation, names.arg = Poll$Political_Affiliation, ylab = "Age",
+
+
+
+
+
+```
+

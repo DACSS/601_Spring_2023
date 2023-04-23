@@ -1,0 +1,213 @@
+---
+title: "Challenge 7 - Hotel Bookings"
+author: "Joseph Vincent"
+description: "Visualizing Multiple Dimensions"
+date: "04/23/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+  - JosephVincent
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data (hotel bookings)
+
+  - hotel_bookings ⭐⭐⭐
+
+```{r}
+hoteldata <- read.csv("_data/hotel_bookings.csv")
+head(hoteldata)
+dim(hoteldata)
+```
+
+### Briefly describe the data
+
+The data set consists of information about hotel stays between July 2015 and August 2017.
+There are 33 variables and over 100,000 stays.
+
+Some of the key variables worth mentioning are:
+
+* Type of hotel (either Resort Hotel or City Hotel) - presumably this is data from a booking service that has multiple hotel customers
+
+* Arrival date, which is broken into several columns including year, month, day, week, etc.
+* Occupants of each stay (adults, children, babies)
+
+* Market segments and distribution channels
+
+* Average daily rate (ADR) - from some research this seems to be the average rate across all rooms for a given date
+
+* Lead time - or the time from booking to arrival
+
+## Tidy Data (as needed) and Mutating
+
+One of the main problems with the data set for analysis purposes is that the arrival date is broken into various character columns. To fix this, I mutated the the arrival month names into numeric values, and then used lubridate to create a new single column for arrival date in the proper format.
+
+Some of the variables (such as whether the stay was canceled, or whether it was a repeat guest) were in binary (0,1) format. I converted these into logical TRUE/FALSE variables.
+
+I also created a new column for total nights stayed, which combined week and weekend nights stayed.
+
+After completing these steps I would expect to see:
+33(original) - 4 (individual arrival date columns) + 1 (new arrival date) + 1 (custom arrival date with month only for further anlysis) = 31 columns
+Which is confirmed by my sanity check below.
+
+You can also see that the new "arrival_date" column is in date format.
+
+```{r}
+#converting months to numerics to use in make date
+hoteldatatidy <- hoteldata %>%
+  mutate(monthnumeric = case_when(
+    `arrival_date_month` == "January" ~ 1,
+    `arrival_date_month` == "February" ~ 2,
+    `arrival_date_month` == "March" ~ 3,
+    `arrival_date_month` == "April" ~ 4,
+    `arrival_date_month` == "May" ~ 5,
+    `arrival_date_month` == "June" ~ 6,
+    `arrival_date_month` == "July" ~ 7,
+    `arrival_date_month` == "August" ~ 8,
+    `arrival_date_month` == "September" ~ 9,
+    `arrival_date_month` == "October" ~ 10,
+    `arrival_date_month` == "November" ~ 11,
+    `arrival_date_month` == "December" ~ 12)) %>%
+  
+  #turning separate arrival date columns into a single arrival date
+  mutate(arrival_date = make_date(year = arrival_date_year, month = monthnumeric, day = arrival_date_day_of_month)) %>%
+  
+  #making custom month-only column
+  mutate(arrival_month = make_date(year = arrival_date_year, month = monthnumeric)) %>%
+  
+  #mutating binary 0/1 columns to be TRUE/FALSE
+  mutate(is_canceled = case_when(
+    `is_canceled` == 0 ~ FALSE,
+    `is_canceled` == 1 ~ TRUE,)) %>%
+  mutate(is_repeated_guest = case_when(
+    `is_repeated_guest` == 0 ~ FALSE,
+    `is_repeated_guest` == 1 ~ TRUE,)) %>%
+  
+  #combining week and weekend nights stayed for a total column
+  mutate(total_nights_stayed = stays_in_weekend_nights + stays_in_week_nights) %>%
+  
+  #deselecting unused columns
+  select(-c(`monthnumeric`, `arrival_date_day_of_month`, `arrival_date_week_number`, `arrival_date_month`, `arrival_date_year`))
+
+#doing some sanity checks
+head(hoteldatatidy$arrival_date)
+dim(hoteldatatidy)
+
+```
+
+##Preparing data for visualization
+
+Before creating a time series visualization, I wanted to create a summary table, showing the means of key values like Lead Time, ADR and Total Nights Stayed, grouped by hotel type.
+
+```{r}
+monthlymeansbyhoteltype <- hoteldatatidy %>%
+  group_by(arrival_month, hotel) %>%
+  summarize(mean_lead_time = mean(lead_time),
+            mean_adr = mean(adr),
+            mean_stay = mean(total_nights_stayed))
+head(monthlymeansbyhoteltype)
+```
+
+## Visualization with Multiple Dimensions
+
+As we saw in the previous challenge, mean Lead Time and ADR tracked each other closely, tending to rise in the busier summer months and fall in the winter months.
+
+To expand upon this, I'd like to add the additional dimensions of hotel type (city vs resort) and mean length of stay to see if they follow the similar trends.
+
+### Mean lead time by month and hotel type
+
+Using our means table, below I have plotted a time-series chart of mean lead time, with each line representing a hotel type. They trend similarly over time, though the lead times for the resort hotel appear to be slightly more extreme in either direction. Particularly in the winter months, lead time for the resort hotel is quite low. This makes sense, as you'd expect that people might not plan far in advance for a resort trip in the winter.
+
+```{r}
+#creating a ggplot using monthlymeans table
+#setting the x axis as arrival date
+leadtimebyhotel <- ggplot(monthlymeansbyhoteltype, aes(x = arrival_month, y = mean_lead_time, color = hotel)) + 
+  
+  geom_line() +
+  
+  #setting y scale and creating an additional y axis on the right side
+  scale_y_continuous(name = "Mean Lead Time (Days)") +
+  scale_x_date(date_labels = "%b %y", date_breaks = "2 months", name = "Month") +
+  
+  #setting theme options
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) +
+  ggtitle("Mean Lead Time by Month and Hotel")
+
+#plotting
+leadtimebyhotel
+
+```
+
+### Mean lead time by month and hotel type, scaled by stay length
+
+To take this a step further, I will look at whether stay length is also greater during months when lead time is.
+
+Below I've graphed the same data as before, but this time used points to represent each monthly mean. Triangles represent the resort hotel, while circles represent the city hotel. 
+
+As you can see from the stay length scale (and color gradient) the mean resort hotel stays tend to be longer than the city hotel stays. The hotel stays in general seem to be longer during the summer months, but this is much clearer for the resort stays.
+
+```{r}
+
+leadtimeandstay <- ggplot(monthlymeansbyhoteltype, aes(x = arrival_month, y = mean_lead_time, size = mean_stay, color = mean_stay, shape = hotel)) + 
+  
+  geom_point() +
+  
+    #setting y scale and creating an additional y axis on the right side
+  scale_y_continuous(name = "Mean Lead Time (Days)") +
+  scale_x_date(date_labels = "%b %y", date_breaks = "2 months", name = "Month") +
+
+  #setting theme options
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) +
+  ggtitle("Mean Lead Time by Month (Scaled by Length of Stay)") +
+  guides(color = FALSE) + 
+  labs(size = "Mean Length of Stay")
+
+leadtimeandstay
+
+```
+### Mean ADR by month and hotel type, scaled by stay length
+
+Finally, I'll look at the same graph but by ADR instead of lead time. 
+
+This results in some interesting findings. The Mean ADR varies much more in for the resort hotel than the city hotel, with the summer "peaks" and winter "valleys" being very pronounced vs the relatively smoother shape of the city hotel ADR plot.
+
+Length of stay is still clearly greater during the summer months for the resort hotel, while length of stay remains relatively consistent throughout the year for the city hotel.
+
+```{r}
+
+adrandstay <- ggplot(monthlymeansbyhoteltype, aes(x = arrival_month, y = mean_adr, size = mean_stay, color = mean_stay, shape = hotel)) + 
+  
+  geom_point() +
+  
+    #setting y scale and creating an additional y axis on the right side
+  scale_y_continuous(name = "Mean ADR") +
+  scale_x_date(date_labels = "%b %y", date_breaks = "2 months", name = "Month") +
+
+  #setting theme options
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) +
+  ggtitle("Mean ADR by Month (Scaled by Length of Stay)") +
+  guides(color = FALSE) + 
+  labs(size = "Mean Length of Stay")
+
+adrandstay
+
+```

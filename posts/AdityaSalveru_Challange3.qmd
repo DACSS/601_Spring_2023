@@ -1,0 +1,100 @@
+---
+title: "Challenge 3"
+author: "Aditya Salveru"
+desription: "Tidy Data: Pivoting"
+date: "04/25/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - eggs
+  - australian_marriage
+  - usa_households
+  - sce_labor
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+eggs_tidy_data <- read_csv("_data/eggs_tidy.csv", show_col_types = FALSE)
+
+```
+
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+
+```{r}
+dim(eggs_tidy_data)
+
+summary(eggs_tidy_data)
+```
+
+```{r}
+head(eggs_tidy_data)
+```
+
+## Anticipate the End Result
+
+The first step in pivoting the data is to try to come up with a concrete vision of what the end product *should* look like - that way you will know whether or not your pivoting was successful.
+
+One easy way to do this is to think about the dimensions of your current data (tibble, dataframe, or matrix), and then calculate what the dimensions of the pivoted data should be.
+
+Suppose you have a dataset with $n$ rows and $k$ variables. In our example, 3 of the variables are used to identify a case, so you will be pivoting $k-3$ variables into a longer format where the $k-3$ variable names will move into the `names_to` variable and the current values in each of those columns will move into the `values_to` variable. Therefore, we would expect $n * (k-3)$ rows in the pivoted dataframe!
+
+
+From January 2004 through December 2013, or ten years, the dataset provides monthly data. It can hold the volume of six different types of egg cartons on average. Because a carton is never sold in parts, we may assume that the numbers are average, however the dataset only contains a small number of decimal point values. For instance, the month of February 2004 has 128.5 huge half-dozen sized boxes. 
+The following guidelines were given in order to make the data "tidy."
+A) Every variable needs to have its own column
+B) Each observation requires a separate row.
+C) Every value needs to be in its own cell.
+
+#### Analysis:
+Month, Year, Carton_Type, and Units are the four data points that make up the dataset. 
+We can see that each variable has its own column, but contrary to rule 2, the dataset also contains columns for observations, therefore the large half dozen, large dozen, extra large half dozen, and extra large dozen no longer have their own unique columns. To do this, a new column called "carton_type" will be added, including information on the carton, and its corresponding average value will be stored in the "units" column.
+By pivoting it to have more rows and fewer columns, the #eggs dataset will be made "Tidy". The following columns need to be pivoted: large half dozen, large dozen, extra large half dozen, and extra large dozen. These columns will turn into rows for the respective month and year of observation.
+
+
+
+```{r}
+pivoted_eggs_tidy_data <- eggs_tidy_data %>%
+  pivot_longer(
+    cols = ends_with("dozen"),
+    names_to = "carton_type",
+    values_to = "units")
+dim(pivoted_eggs_tidy_data)
+```
+# The dataset has four columns and 480 rows.
+

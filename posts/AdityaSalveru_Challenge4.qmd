@@ -1,0 +1,94 @@
+---
+title: "Challenge 4"
+author: "Aditya Salveru"
+desription: "More data wrangling: pivoting"
+date: "04/25/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - abc_poll
+  - eggs
+  - fed_rates
+  - hotel_bookings
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(stringr)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+debt_t <- readxl::read_excel("_data/debt_in_trillions.xlsx", sheet="Sheet1")
+table(select(debt_t, `Year and Quarter`))
+```
+
+### Briefly describe the data
+The dataset debt_in_trillions has 8 columns and 74 rows.Amounts for the seven debt categories (mortgage, HE revolving, auto loan, credit card, student loan, other, total) are listed in each row for each year and quarter from 2003Q1 to 2021Q2. The data contains no missing values.
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data is broad and not organized well. The other columns, outside the "Year and Quarter" column, show the amounts of other debt kinds. These columns can be split into two columns, one for each sort of debt and one for its total. Since each row would therefore represent a single sort of debt amount in a specific year-quarter, the pivoted data would be neat. Mortgage, HE Revolving, Auto Loan, Credit Card, Student Loan, Other, and Total are the seven factors that need to be pivotalized. 518 rows and three columns (Year and Date, Debt Type, and Debt Amount) make up the final data set.
+
+```{r}
+nrow(debt_t)
+
+ncol(debt_t)
+
+nrow(debt_t) * (ncol(debt_t)-1)
+
+8 - 7 + 2
+
+debt_t2 <- debt_t %>%
+  pivot_longer(col = -c(`Year and Quarter`), names_to="debt_type", values_to = "debt_value")
+
+```
+
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+The 'Year and Quarter' variable has to be mutated to make analysys more efficient. Since 'Year and Quarter' denotes a date or time, this is not right and needs to be converted to Date object.
+
+```{r}
+debt_t3 <- debt_t2 %>%
+  mutate(year = str_c("20", str_sub(`Year and Quarter`, 1, 2)),quarter = str_sub(`Year and Quarter`, 5, 5), year_and_quarter = quarter(as_date(str_c(year, quarter), format="%Y%q"), with_year=TRUE)) %>% 
+  select(-c(`Year and Quarter`, `year`, `quarter`)) %>%
+  relocate(debt_type, debt_value, year_and_quarter) %>%
+  mutate(debt_value = str_remove(as.character(debt_value), ".0+$"))
+head(debt_t3)
+```

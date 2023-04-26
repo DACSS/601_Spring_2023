@@ -1,0 +1,104 @@
+---
+title: "Challenge 4"
+author: "Gauri Naik"
+date: "04/08/2023"
+output: html_document
+---
+```{r setup, include=FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+We are going to look at the data set for the federal funds rate in this challenge. Let us load a preview of the raw data.
+
+```{r table, echo = FALSE}
+ffr <- read.csv("_data/FedFundsRate.csv")
+knitr::kable(head(ffr))
+```
+
+The first six rows of our data show we are dealing with ten variables. Let's find the type of variable and how many total rows of data we have.
+
+```{r type, echo = FALSE}
+dim(ffr)
+str(ffr)
+```
+Here we see that we have several types of data, as well as a lot of missing data. We see that for some number of rows, we have a lot of missing values. For many years we seem to be missing the target rate while for other years we are missing the upper and lower target. For most years we seem to have the effective federal funds rate, which is the weighted average of interest across bank transactions for the year rather than the target rate the FOMC sets.
+
+```{r missing, echo = FALSE}
+ffr %>%  
+  select(Year,
+         Month,
+         Effective.Federal.Funds.Rate,
+         Real.GDP..Percent.Change.,
+         Unemployment.Rate,
+         Inflation.Rate) %>%
+  arrange(Year, Month) %>%
+knitr::kable() %>%
+  kable_styling(html_font = 'arial', htmltable_class = "lightable-minimal") %>%
+  kableExtra::scroll_box(ffr, height = "500px", width = "100%")
+
+ffrEFFR <- ffr %>%
+  group_by(Year) %>%
+  summarise(Year.EFFR.Mean = mean(Effective.Federal.Funds.Rate, na.rm = TRUE))
+ffrUR <- ffr %>%
+  group_by(Year) %>%
+  summarise(Year.UR.Mean = mean(Unemployment.Rate, na.rm = TRUE))
+ffrIR <- ffr %>%
+  group_by(Year) %>%
+  summarise(Year.IR.Mean = mean(Inflation.Rate, na.rm = TRUE))
+
+ffr_list <- list(ffrEFFR,ffrUR, ffrIR)
+ffrmean = Reduce(function(x,y) merge(x,y, all=T), ffr_list)
+
+ffrmean %>%
+  knitr::kable(caption = NULL) %>%
+  kable_styling(html_font = 'arial', htmltable_class = "lightable-minimal") %>%
+  kableExtra::scroll_box(ffrmean, height = "200px", width = "100%")
+```
+
+So now I have two tables: one is the original and the other is a set of means for each year. For this data set, we're going to use the effective federal funds rate rather than the other available rates because it is the most widely available. In this case, we want to map out the effective federal funds rate over the course of 1954-2017.
+
+Now we're going to create some graphs to see the effect of the effective federal funds rate on unemployment and inflation rates.
+
+```{r graph, echo = FALSE, message = FALSE}
+
+ffr %>%
+  ggplot(aes(Year, Effective.Federal.Funds.Rate)) + 
+  geom_point(size = 1) + 
+  labs(title = "Effective Federal Funds Rate Over the Years 1954-2017", 
+       x = "Year", 
+       y = "Effective Federal Funds Rate", 
+       caption = "The effective federal funds rate is the actual rate at which banks trade, influenced by the federal funds target rate.") +
+  geom_smooth(color = "red") +
+  theme_light()
+
+ffrmeanpivot <- ffrmean %>%
+  rename(EFFR = Year.EFFR.Mean,
+        UR = Year.UR.Mean,
+        IR = Year.IR.Mean) %>%
+ pivot_longer(-Year,
+              names_to = "Type",
+              values_to = "Mean")
+ 
+ ffrmeanpivot %>%
+   ggplot(aes(x = Year, y = Mean, colour = Type)) +
+   geom_point() +
+   labs(title = "Means of EFFR, UR, and IR Over 1954-2017", 
+        x = "Year", 
+        y = "Mean") +
+   theme_light()
+
+ffr %>%
+  ggplot(aes(x = Effective.Federal.Funds.Rate)) +
+  geom_point(aes(y =Unemployment.Rate, color = 'Unemployment Rate')) +
+  geom_point(aes(y= Inflation.Rate, color = 'Inflation Rate')) +
+  labs(title = "Comparison of Unemployment and Inflation Rates to EFFR", x = "EFFR", y = "Rate") +
+  theme_linedraw()
+```
+
+As you can see, I have plotted three graphs with different information in each. The first graph is the raw data of the EFFR plotted against the year, which is why there are multiple points for certain years. As you can see the EFFR rose to a maximum during 1980, and then continued to drop from there until 2017. In the second graph, showing the mean of each year's EFFR, UR, and IR over the years, we can see a distinct correlation in between the points. A statistical analysis would have to be completed for all three variables to say for sure if EFFR does actually influence UR and IR, however.
+
+For the third graph, I plotted the raw data again of the IR and UR against the EFFR. This shows that  the higher the EFFR, the higher the rate of unemployment and inflation. Inflation seems to be more affected by EFFR than unemployment, which makes sense considering that EFFR is adjusted according to the money available, directly influencing inflation.

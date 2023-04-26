@@ -1,0 +1,95 @@
+---
+title: "Challenge 5"
+author: "Gauri Naik"
+date: "04/25/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(readr)
+```
+
+## Challenge 5
+
+### Dataset australian_marriage_tidy.csv
+
+Today we'll be looking at the Australian marriage dataset.
+
+```{r dataset, echo = FALSE}
+aum <- read.csv("_data/australian_marriage_tidy.csv")
+head(aum) %>%
+  knitr::kable()
+```
+
+```{r data descrip, echo = FALSE, include = FALSE}
+dim(aum)
+str(aum)
+```
+
+Here we have preview of the data available to us. The territory of the respondent is given, as well as the respondent's answer and the count of people who answered either yes or no. We're going to create two graphs, one uni-variate and one bivariate.
+
+```{r data manip, echo = FALSE, include = FALSE}
+
+aum1 <- aum %>%
+  rename(Territory = territory,
+         Response = resp,
+         Count = count,
+         Percent = percent)
+aum1
+
+#bar graph - bivariate
+#histogram of count
+#boxplot of percent
+
+aum_hist <- aum1 %>%
+  ggplot(aes(x = Count)) +
+  geom_histogram() +
+  labs(title = "Count of Respondents", x = "Count", y = "Frequency")
+aum_hist
+
+aum2 <- aum1 %>%
+  arrange(Response) %>%
+  select(Territory,
+         Response,
+         Percent) %>%
+  pivot_wider(names_from = "Response",
+              values_from = "Percent") %>%
+  rename(No = no,
+         Yes = yes)
+aum2
+
+aum_bar <- ggplot(aum1, aes(x=Territory, y=Percent, fill=factor(Response))) +
+  geom_bar(stat='identity', position = 'dodge2') +
+  labs(title = "No vs Yes Percent of Respondents in Each Territory", x = "Australian Territory", y = "Percent") +
+  scale_fill_discrete(name = "Response") +
+  scale_x_discrete(guide = guide_axis(n.dodge = 2))
+aum_bar  
+
+aum_boxplot <- aum1 %>%
+  ggplot(aes(x=Percent)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Percent", x = "Percent", y = "Value")
+aum_boxplot
+```
+
+As you can see here, I have generated three graphs of the available data by manipulating them carefully. The first table titled `aum1` is the original table. `aum2` is the table I pivoted with the data to more accurately compare percents of people's responses per territory.
+
+```{r show, echo = FALSE}
+aum1 %>%
+  knitr::kable()
+aum2 %>%
+  knitr::kable()
+```
+
+Using these tables I generated a histogram showing the number of respondents who particicpated, a bar graph comparing the respondent's answers based on territory, and a boxplot of the percent of people's responses. Overall, the boxplot shows that the mean percent of respondents for an answer from each territory is roughly 50%.
+
+```{r, echo = FALSE}
+aum_hist
+
+aum_bar
+
+aum_boxplot 
+```

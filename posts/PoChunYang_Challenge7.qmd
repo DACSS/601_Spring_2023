@@ -1,0 +1,93 @@
+---
+title: "Challenge 7"
+author: "PoChun Yang"
+description: "Visualizing Multiple Dimensions"
+date: "04/16/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+  - australian_marriage
+  - air_bnb
+  - eggs
+  - abc_poll
+  - faostat
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - abc_poll ⭐⭐
+  
+read the abc_poll_2021.csv
+
+```{r}
+df <- read.csv("_data/abc_poll_2021.csv")
+```
+
+### Briefly describe the data
+
+In this data, I want to look at the relationship between education and political party affiliation. Therefore, I table to show the value of my idea. In this table, the rows show 4 different education and the rows show 5 types of political here.  
+
+
+```{r}
+table(df$ppeducat,df$QPID)
+
+```
+
+Well, I don't want to show some of political party affiliation with A or A[n] so I used the "str_remove" to remove the words.
+
+Document your work here.
+
+```{r}
+df1 <- df %>%
+  mutate(partyid = str_remove(QPID, "A[n]* "),
+         partyid = na_if(partyid, "Skipped")) %>%
+  select(-QPID)
+```
+
+## Visualization with Multiple Dimensions
+
+In the Visualization, I used the bar chat to show the Education with 5 different political. Therefore, it is easy for us to understand those.
+
+```{r}
+partyvseducation<-table(df1$partyid,abc_poll_new$ppeducat)
+myFrame <- as.data.frame(table(partyvseducation))
+
+party_graphic<-ggplot(abc_poll_new, aes(abc_poll_new$ppeducat, ..count..)) + 
+  geom_bar(aes(fill = abc_poll_new$partyid), position = "dodge")
+  print(party_graphic + labs(fill = "Political", x = "Education"))
+```
+

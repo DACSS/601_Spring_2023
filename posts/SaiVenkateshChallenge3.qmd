@@ -1,0 +1,96 @@
+---
+title: "Challenge 3"
+author: "Sai Venkatesh"
+description: "Tidy Data: Pivoting"
+date: "04/25/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - eggs
+  - australian_marriage
+  - usa_households
+  - sce_labor
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+I will be using the animal_weights.csv dataset file.
+
+```{r}
+
+  animal_weights_data <- read_csv("_data/animal_weight.csv", show_col_types = FALSE)
+  animal_weights_data
+  
+```
+
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+
+
+```{r}
+  
+# The Dimensions 
+dim(animal_weights_data)
+
+# The Column Names 
+colnames(animal_weights_data)
+  
+```
+
+There are 9 X 17 dimensions. There are 9 regions and 16 animal varieties. Since for each region there are 16 varieties, we can use tidy to make sure that for each region and animal variety, we get a displayed value. 
+
+## Anticipate the End Result
+
+We will use pivot_longer where we will ensure that for each region and variety, there is a single value displayed. The name will be variety and the value will be the weight. Since each region is now seperated, there will be more rows as there will now be 16 rows against each region. This will bring it to a total of 9 * 16 = 144 rows and there will be 3 columns (IPCC, variety, weight ) .
+
+
+## Pivot the Data
+
+
+```{r}
+#| tbl-cap: Pivoted Example
+
+  animal_weight_longer<-pivot_longer(animal_weights_data, 
+                                    col = c(2:17),
+                                    names_to = "Variety",
+                                    values_to = "Weight")
+  animal_weight_longer
+```
+
+Yes, once it is pivoted long, our resulting data are $9 X 16$ = 144 rows and there are 3 columns which is exactly what we expected!
+
+

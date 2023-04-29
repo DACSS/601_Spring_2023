@@ -1,0 +1,207 @@
+---
+title: "Joining SNL Datasets"
+author: "Kris Smole"
+description: "Using Join Functions to Combine Two or More Datasets into One Dataset"
+date: "04/26/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+
+  - snl
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview {#challenge-overview}
+
+Today's challenge is to:
+
+
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data (see detailed instruction below)
+
+(be sure to only include the category tags for the data you use!)
+
+## Reading in the SNL files: Actors, Casts, Seasons
+
+### Brief description of the SNL data sets
+
+Three datasets of the NBC television program, Saturday Night Live (SNL), exist with three themes: Actors, Casts, and Seasons. Let's take a look at the content and features of each dataset, and determine if and how these three datasets might be combined on common features to provide the combined dataset we want for performing the analysis we'd like to do.
+
+### The actors data set format and data content:
+First let's look at the actors file, and consider what columns might be options to use for joining with the other two files: 
+```{r}
+#creating actors variable from file snl_actors.csv:
+snl_actors <- read_csv("_data/snl_actors.csv")
+#The dataset of the file snl_actors.csv has __________
+dim(snl_actors)
+head(snl_actors)
+#Remove url column from actors file
+snl_actors <- snl_actors %>% select(-c(url))
+#display head of snl_actors data set to confirm removal of url column
+head(snl_actors)
+```
+I removed the url column from the actors file, and I see in the changes took place, and the url is not included any longer.
+
+The actors file has 2306 rows and 4 columns after removing the url column.
+
+Let's take a look at the actors data set using summarytools function:
+```{r}
+print(summarytools::dfSummary(snl_actors,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+Summarytools provides more information than we may have needed, yet when we see all of this information about the data set, we may be inspired to consider additional analysis, or investigate aspects of the data set we weren't previously focusing upon.
+
+### The casts data set format and data content:
+
+Here's the basic file characteristics for the casts data set:
+```{r}
+#creating casts variable from file snl_casts.csv
+snl_casts <- read_csv("_data/snl_casts.csv")
+#The dataset of the file snl_casts.csv format and content
+dim(snl_casts)
+head(snl_casts)
+
+```
+The casts file has 614 rows and 8 columns.
+
+```{r}
+print(summarytools::dfSummary(snl_casts,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+```
+
+
+
+### The seasons data set format and data content:
+
+Here's the basic file characteristics for the seasons data set:
+```{r}
+#creating seasons variable from file snl_seasons.csv:
+snl_seasons <- read_csv("_data/snl_seasons.csv")
+#Showing the format and contents of the data set of the file snl_seasons.csv 
+dim(snl_seasons)
+head(snl_seasons)
+
+```
+Now, let's take a look at the seasons data set using summarytools function:
+
+```{r}
+print(summarytools::dfSummary(snl_seasons,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+
+
+
+### How the data sets will be joined:   
+From seeing the contents and format of the data sets, we see the column names of each dataset, and deduce that the three datasets do not have common columns among all three data sets. Casts and seasons data sets share common data in their columns entitled "sid". Casts and actors data sets shared common data in their columns entitled "aid". We'll join the three data sets in two steps within a piped function set:
+
+1.Join snl_casts to snl_seasons
+
+2.Join data set created in Step 1 to snl_actors.
+
+# Tidy Data steps needed?
+
+Although not every single column of the three data sets are needed - specifically one column in snl_actors, entitled "URL". When reviewing the individual data sets above, I removed the url column, and checked that the removal was successful. Retaining the rest of the columns within the data sets provides the possibilities of unanticipated analysis by keeping the columns and rows of the three data sets. Because the size of the data set files are not extraordinarily large, we can easily keep all of the data sets' contents without burdening our coding work or analysis.
+```{r}
+
+
+
+```
+## Joining the data sets
+
+
+### Joining all 3 data sets:
+
+
+
+```{r}
+
+#full join of joined casts and seasons to actors
+
+SNL_csa<-full_join(snl_casts, snl_seasons, by="sid")%>%
+  full_join(.,snl_actors, by="aid")
+
+head(SNL_csa)
+dim(SNL_csa)
+```
+The combined data set of the 3 files for SNL has 2764 rows with 14 columns. The actors file had 2764 rows, so this data set's count of rows is what we were expecting.
+
+## 
+We see the join of all three data sets was successful.  
+
+We can now see the full summarytools view of all three data sets now combined into one data set:
+
+```{r}
+print(summarytools::dfSummary(SNL_csa,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+
+```{r}
+
+
+
+```
+
+## Analysis of New, Combined SNL Dataset
+
+
+
+```{r}
+
+
+
+ggplot(SNL_csa, aes(x=`year`, y=`n_episodes.y`)) +
+    geom_point()+
+    labs(title = "Number of SNL Episodes by Year, 1975-2020")
+
+
+
+```
+We can quickly and easily conclude that most frequent count of episodes per year is 20.
+
+
+## CONCLUSION
+
+Combining data sets with the Join functions is a powerful and essential function. Finding common column content in the data sets is one of the first steps - after determining how you want your end result to appear. Some data sets do not share a common column, and must be joined with 3rd data set with which each of the two original data sets share different, while each share a different common column of the 3rd data set.
+

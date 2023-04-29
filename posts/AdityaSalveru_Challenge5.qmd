@@ -1,0 +1,113 @@
+---
+title: "Challenge 5"
+author: "Aditya Salveru"
+description: "Introduction to Visualization"
+date: "04/25/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - air_bnb
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐ 
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐ 
+-   USA Households ⭐⭐⭐⭐⭐
+
+```{r}
+ab_nyc <- read.csv("_data/AB_NYC_2019.csv")
+ab_nyc %>%  head()
+```
+
+### Briefly describe the data
+```{r}
+ab_nyc %>%  colnames()
+```
+This data represents the hotels and their prices in NYC. There are a total of 16 columns
+
+```{r}
+ab_nyc$neighbourhood_group %>% unique()
+ab_nyc$room_type %>% unique()
+ab_nyc$minimum_nights %>% unique()
+```
+
+There are three types of room - Private, Shared and Entire apartment. All the rooms are segregated into areas in NY. The minimum number of nights vary widely accross all the rentals.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+There are some missing values in some columns(For ex reviews_per_month). replace it with 0.
+
+```{r}
+ab_nyc <- ab_nyc %>%  replace_na(list(reviews_per_month = 0))
+
+ab_nyc <- ab_nyc %>%  filter(price>0)
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+```
+
+## Univariate Visualizations
+
+```{r}
+ggplot(ab_nyc,aes(neighbourhood_group))+geom_bar()+labs(title = "Count of rentals in different neighbourhood groups")
+```
+```{r}
+ggplot(ab_nyc,aes(room_type))+geom_bar()+labs(title = "Count of different type of rooms")
+```
+```{r}
+cheap_hotels <- ab_nyc %>% arrange(price) %>% filter(row_number()<1000)
+ggplot(cheap_hotels,aes(price))+geom_histogram()+labs(title = "Price distribution of cheapest 1000 rooms")
+```
+
+## Bivariate Visualization(s)
+
+```{r}
+ggplot(ab_nyc,aes(neighbourhood_group,price))+geom_point()+labs(title = "Distirbution of prices of hotels accross different neighbourhood_groups")
+```
+Any additional comments?

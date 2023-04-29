@@ -1,0 +1,125 @@
+---
+title: "Challenge 6"
+author: "Aditya Salveru"
+description: "Visualizing Time and Relationships"
+date: "04/29/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+  
+
+```{r}
+bookings <- read.csv("_data/hotel_bookings.csv")
+bookings %>%  head()
+```
+
+### Briefly describe the data
+```{r}
+bookings %>%  colnames()
+```
+This data represents the hotel bookings and their prices in NYC. There are a total of 32 columns
+
+``` {r}
+bookings$country %>% unique() %>% length()
+
+bookings$reservation_status %>% unique() 
+
+bookings$hotel %>% unique()
+
+
+str(bookings)
+```
+The hotel reservations span across 178 countries. The reservation statuses has three possible values i.e. check-out, cancelled, No-Show
+
+The entire data is only about two hotels - Resort Hotel and City Hotel.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+
+```{r}
+```
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Yes, I would like to plot the Reservations trend at every month. For this we need to have a new column 'arrival-year-month'.
+
+```{r}
+bookings <- bookings %>% 
+  mutate(date_year = paste0(arrival_date_month," ",arrival_date_day_of_month," ",arrival_date_year))
+bookings$date_year %>% head()
+```
+## Time Dependent Visualization
+```{r}
+resort_hotel_resrvations <- bookings %>% 
+  filter(reservation_status=="Check-Out",hotel=="Resort Hotel") %>% select(date_year)
+resort_hotel_resrvations <- resort_hotel_resrvations %>% mutate(reservation_count=1)
+resort_hotel_resrvations <- resort_hotel_resrvations %>% group_by(date_year) %>% summarise_all(sum)
+resort_hotel_resrvations <- resort_hotel_resrvations %>% mutate(full_date=as.Date(resort_hotel_resrvations$date_year,format="%B %d %Y"))
+
+p<-resort_hotel_resrvations %>% ggplot(aes(x=full_date,y=reservation_count)) + geom_line() + xlab("Date") + ylab("Count of reservations")+labs(title="Number of reservactions trend for Resort Hotel")
+p
+
+```
+
+## Visualizing Part-Whole Relationships
+
+I would like to analyze the relationships between month of the year and the mean days in waiting list.
+
+```{r}
+grouped <- bookings %>% 
+  select(arrival_date_month,days_in_waiting_list) %>% 
+  group_by(arrival_date_month) %>% 
+  summarise_all(max) %>% 
+  mutate(month=as.Date(paste(arrival_date_month,"-01-2021",sep=""),"%B-%d-%Y"))
+grouped %>% ggplot(aes(month,days_in_waiting_list))+geom_line() +scale_x_date(date_labels = "%B",date_breaks = "1 month")+ labs(title="max days in waiting list per month")
+```
+
+It can be seen that there are two peaks in waiting period one in siummer and one in Fall when many people travel.

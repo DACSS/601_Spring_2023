@@ -1,0 +1,157 @@
+---
+title: "Challenge 8"
+author: "Lauren Zichittella"
+description: "Joining Data"
+date: "04/25/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - debt
+  - fed_rates  
+  - laurenzichittella
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+I will import and combine the federate fund rate and debt datasets to evaluate the relationship between GDP and debt by type throughout calendar year 2003. 
+
+
+The FedFundRates data set provides different measures of economic conditions in the US between July 1, 1954 and March 16, 2017. After tidying, each observation will represent a measurement type, value, and date of collection. 
+
+The debts data set provides debt in trillions in the United States between Q1 2003 and Q2 2021. In this data set, a case will represent a single measure of debt by type and quarter/year of collection. 
+
+```{r}
+# Create raw dataframes
+
+   fedfundrate_raw <-read_csv("_data/FedFundsRate.csv"
+                    , skip =1
+                    , col_names = c("year",	"month", "day", "del_fedfunds_targetrate", "del_fedfunds_targetupper",  "del_fedfunds_targetlower","del_fedfunds_effectiverate", "del_realgdp_percentchange",	"unemployment_rate", 	"inflation_rate")) %>%
+       select(!contains("del")) 
+   
+   print(summarytools::dfSummary(fedfundrate_raw,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')   
+   
+   #debt 
+   debt_raw<- read_excel("_data/debt_in_trillions.xlsx")
+   
+   print(summarytools::dfSummary(debt_raw,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')   
+      
+
+```
+
+
+## Mutate variables and tidy data as needed 
+
+Since the plan is to join data sets by the measurement date variables will need to be created in both datasets. 
+
+Since I am only going to retain a single variable from the debt dataset, I will not tidy at this point in code 
+
+```{r}
+# Update and tidy fed funds
+   # Mutate to create new date variables
+   fedfundrate_mutate <- 
+     fedfundrate_raw %>% 
+        mutate('measure_date' = make_date(year = year, month = month, day = day),
+               'quarter'       = quarter(measure_date),
+               'quarter'       = as.double(quarter) ) %>%             
+            select( -day)
+
+   # Pivot to one row per measure per measure date
+   fedfundrate_tidy <- 
+     fedfundrate_mutate %>% 
+        pivot_longer(cols     = c("unemployment_rate", "inflation_rate"), 
+                     names_to = "measure_type"  )
+   
+   head(fedfundrate_tidy)
+   
+
+
+# Update and tidy debt
+   
+   # Mutate to create new date variables
+   debt_mutate <- 
+     debt_raw %>%
+         separate('Year and Quarter', c("year", "quarter"), sep = ":Q") %>%
+             mutate_at(c('year', 'quarter'), as.numeric)%>%
+                mutate(  year = year + 2000
+                       , month = quarter*3 
+                       ,'measure_date' = make_date(year = year, month = month, day =1)) 
+   head(debt_mutate)   
+
+```
+
+## Join Data
+
+I will utilize a left join, post filtering by year. I only want to retain records in debt or debt and federal funds 
+
+I'll generate a quick scatter plot to see if there's a correlation between debt and unemployment rating. Depending on these results, I'll make a decision on next steps for tidying and graphing.
+
+
+```{r}
+
+# Prep for merge, filtering to desired records and summarizing to get mean unemployment rate
+fedfundrate_qtr <-
+   fedfundrate_tidy %>%
+       filter(year>2002 & measure_type =="unemployment_rate")%>% 
+          group_by(year, quarter)%>%
+              summarise(mean_unemployment_rate= mean(value)) 
+          
+
+# Prep debt for merge, limiting to select variables and renaming to clearly represent value variable 
+ 
+debt_qtr <-
+   debt_mutate %>%
+       select(year, quarter, Total) %>%
+           rename(total_debt = Total)
+
+head(fedfundrate_qtr)
+
+
+#Left join fed fun to qtr - expect the rowname of resulting dataset to be same as table debt that is being left joined to 
+
+rate_debt <- left_join(   debt_qtr
+                        , fedfundrate_qtr
+                        , by = c("year", "quarter"))
+
+   # Sanity check 
+   nrow(debt_mutate)
+   nrow(rate_debt)
+
+   rate_debt
+
+# Scatter plot - noting lots of missing unemployment rate for select spans of time. Results will likely be weird
+ggplot(rate_debt, aes(x=total_debt, y=mean_unemployment_rate)) + 
+    geom_point()
+```
+## Conclusion
+
+In this exercise, I wanted to try a join by, rather than stacking datasets. However, if I were focused on interpretting the data sources better, I would likely stack tidy versions of these data and plot faceted line graphs by type of measure to look at trends over time and compare the two

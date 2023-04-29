@@ -1,0 +1,138 @@
+---
+title: "Challenge 3"
+author: "Pooja Shah"
+description: "Tidy Data: Pivoting"
+date: "04/27/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+#reading and printing unclean data
+eggs = read_excel("_data/organiceggpoultry.xls", sheet = "Data", range = "B5:F125", col_names = c("date", "xlarge_dozen",
+                               "xlarge_halfdozen", "large_dozen",
+                               "large_halfdozen"))
+eggs
+```
+
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+I am working here with the "Data" sheet of the "organiceggpoultry" excel file.
+The data is in the form of multiple columns for types of eggs. The rows are prices of these eggs for each month. 
+
+## Anticipate the End Result
+
+The first step in pivoting the data is to try to come up with a concrete vision of what the end product *should* look like - that way you will know whether or not your pivoting was successful.
+
+One easy way to do this is to think about the dimensions of your current data (tibble, dataframe, or matrix), and then calculate what the dimensions of the pivoted data should be.
+
+The tidy data should be of the form of columns for type of poultry, year and then the price for 12 months.
+
+### Find current and future data dimensions
+
+```{r}
+
+#existing rows
+nrow(eggs)
+
+#existing columns
+ncol(eggs)
+
+#expected rows
+row = ((nrow(eggs) - 1)/12) * (ncol(eggs) - 1)
+row
+# expected columns 
+col = 12 + 2
+col
+```
+
+### Challenge: Describe the final dimensions
+
+
+```{r}
+print(paste("The final dimensions should be ", row, "x", col))
+
+```
+
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+### Example
+
+```{r}
+eggs <- eggs %>% drop_na
+
+eggs%>%
+  count(date)
+
+eggs<-eggs%>%
+  mutate(date = str_remove(date, " /1"))
+
+eggs%>%
+  count(date)
+
+eggs<-eggs%>%
+  separate(date, into=c("month", "year"), sep=" ")%>%
+  fill(year)
+
+eggs
+```
+
+
+### Challenge: Pivot the Chosen Data
+
+Document your work here. What will a new "case" be once you have pivoted the data? How does it meet requirements for tidy data?
+The year is a seperate entity now. The data is divided into cols for the month. The row data is year and type of egg.
+
+```{r}
+eggs <- eggs %>%
+  pivot_longer(cols=contains("large"), 
+               names_to = "eggType",
+               values_to = "avgPrice")
+
+eggs <- eggs %>%
+  pivot_wider(names_from = month,
+               values_from = avgPrice)
+eggs
+
+```
+

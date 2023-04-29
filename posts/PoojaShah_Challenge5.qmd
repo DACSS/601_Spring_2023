@@ -1,0 +1,120 @@
+---
+title: "Challenge 5"
+author: "Pooja Shah"
+description: "Introduction to Visualization"
+date: "04/27/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - railroads
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐ 
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐ 
+-   USA Households ⭐⭐⭐⭐⭐
+
+```{r}
+employ <- read_excel("_data/StateCounty2012.xls", skip=4, col_names = c("State", "B1", "County", "B2", "Total"))
+
+
+```
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+employment <- employ %>%
+  select("State", "County", "Total")
+
+employment
+
+employment <- employment %>%
+  drop_na()
+
+employment
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+#State and its total employees
+total <- employment %>%
+  group_by(State) %>%
+  summarise(Employees = sum(Total)) %>%
+  select(State, Employees)
+total
+
+state_count <- employment %>%
+  count(State)
+
+state_count
+```
+
+## Univariate Visualizations
+```{r}
+ggplot(employment, aes(Total)) + geom_histogram()
+```
+## Bivariate Visualization(s)
+```{r}
+#Graph for County vs Employees
+ggplot(employment, aes(County, Total)) +
+  geom_boxplot() +
+  labs(title = "County vs Employess", y = "Employees", x = "County")
+#Graph for State vs Employees
+ggplot(total, aes(State, Employees)) + 
+  geom_boxplot() +
+  labs(title = "State vs Employess", y = "Employees", x = "State")
+#Graph for No. of Counties per State
+ggplot(state_count, aes(State, n)) + 
+  geom_boxplot() +
+  labs(title = "Counties per State", y = "Count", x = "State")
+```
+Any additional comments?

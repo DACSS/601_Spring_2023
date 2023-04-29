@@ -1,0 +1,174 @@
+---
+title: "Challenge 7"
+author: "Matthew Weiner"
+description: "Visualizing Multiple Dimensions"
+date: "04/20/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - Matthew_Weiner
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+
+## Introduction
+
+For this challenge I chose to use the `abc_poll` dataset. 
+```{r}
+library(readr)
+abc <- read_csv("_data/abc_poll_2021.csv")
+```
+
+### Briefly describe the data
+```{r}
+# num of rows of dataset
+nrow(abc)
+
+#num of cols of dataset
+ncol(abc)
+
+#name of all the columns
+colnames(abc)
+
+num_states <- n_distinct(abc$ppstaten)
+print(num_states)
+```
+
+These initial investigations have led me to believe that this dataset represents the data collected about participants in some poll, likely political, as part of the news network ABC. Additionally, we can see that this is a nation-wide poll as almost every state is included in the dataset
+
+The variables include personal information about the participants such as their education, their household size, their age, etc. There are also variables related to the questions asked to the partipants. 
+
+## Tidy Data (as needed)
+
+When tidying up this data, we first want to check if there are any missing entries in the dataset.
+
+```{r}
+#count number of missing entries 
+sum(is.na(abc))
+```
+
+The above codeblock shows us that there is no missing data in the typical form.
+
+However if we look at the results of the different questions asked to the participants we can see that there is a value called `Skipped`:
+```{r}
+table(abc$Q1_a)
+```
+
+In order to clean this data up, we want to instead replace all `Skipped` questions with `NA` instead as this will make any future actions on this dataset easier.
+
+```{r}
+abc <- abc %>% mutate(across(starts_with("Q"), ~ifelse(.=="Skipped", NA, .)))
+
+#sanity check
+table(abc$Q1_a)
+
+sum(is.na(abc))
+```
+
+Another thing we could fix with this dataset is the format for some of the variables. For instance, the values of the variable QPID are:
+```{r}
+unique(abc$QPID)
+```
+
+
+The articles at the start of each variable name are unnecessary and so we can mutate the dataset in order to remove those:
+```{r}
+abc <- abc %>%
+  mutate(QPID = gsub("^A\\s|^An\\s", "", QPID))
+
+#sanity check
+table(abc$QPID)
+
+```
+
+I am also interested in viewing visualizations about levels of income. However, currently the table of the income is ordered alphabetically instead of by the value of the variable. We want to instead re order this so that the graphs are more meaningful.
+
+```{r}
+new_levels <- c("Less than $10,000", "$10,000 to $24,999", "$25,000 to $49,999", 
+                "$50,000 to $74,999", "$75,000 to $99,999", "$100,000 to $149,999", 
+                "$150,000 or more")
+
+abc$ppinc7 <- factor(abc$ppinc7, levels = new_levels)
+
+table(abc$ppinc7)
+```
+
+
+
+
+
+```{r}
+
+```
+
+## Visualization with Multiple Dimensions
+
+The first visualization I chose to create is a scatterplot of the income of the responndent and their age, with their gender color coded. 
+
+```{r}
+ggplot(data = abc, aes(x = ppinc7, y = ABCAGE, color = ppgender)) +
+  geom_point() +
+  labs(title = "Age and Income by Gender",
+       x = "Income",
+       y = "Age")
+
+```
+
+This graph shows us that females typically will be making less moey regardless of age, while males often do not make a lot of money while young, but as they age they make significantly more.
+
+The second visualization I chose to create is a bar graph which displays the education level for each gender.
+
+```{r}
+ggplot(data = abc, aes(x = ppeducat, fill = ppgender)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Distribution of Education Level by Gender",
+       x = "Education Level",
+       y = "Count",
+       fill = "Gender")
+```
+
+As we can see, males are more likely to have a college level degree, while women are more likely to graduate hiigh school and less likely to stop before high school.
+
+

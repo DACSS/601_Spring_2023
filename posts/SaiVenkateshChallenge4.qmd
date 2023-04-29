@@ -1,0 +1,120 @@
+---
+title: "Challenge 4"
+author: "Sai Venkatesh"
+description: "More data wrangling: pivoting"
+date: "04/27/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - abc_poll
+  - eggs
+  - fed_rates
+  - hotel_bookings
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+library(summarytools)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+We will be reading the Fed Funds Rate data.
+```{r}
+
+  fed_funds_data <- read.csv('_data/FedFundsRate.csv')
+  head(fed_funds_data)
+  
+  # The Dimensions 
+  dim(fed_funds_data)
+  
+  # The Column Names 
+  colnames(fed_funds_data)
+
+```
+
+### Briefly describe the data
+
+The data consists of the Fed Funds Rate and it has 904 rows and 10 columns. The columns include Federal Funds Target rate, Upper and Lower Target, Real GDP, Unemployment and Inflation rate. There also seems to be a lot of NA values. This maybe since the data would not have been available during those years.
+
+## Tidy Data (as needed)
+
+```{r}
+  print("Lets see the NA counts by columns")
+
+  print("Year")
+  sum(is.na(fed_funds_data$Year))
+  print("Month")
+  sum(is.na(fed_funds_data$Month))
+  print("Day")
+  sum(is.na(fed_funds_data$Day))
+  print("Federal.Funds.Target.Rate")
+  sum(is.na(fed_funds_data$`Federal.Funds.Target.Rate`))
+  print("Federal.Funds.Upper.Target")
+  sum(is.na(fed_funds_data$`Federal.Funds.Upper.Target`))
+  print("Federal.Funds.Lower.Target")
+  sum(is.na(fed_funds_data$`Federal.Funds.Lower.Target`))
+  print("Effective.Federal.Funds.Rate")
+  sum(is.na(fed_funds_data$`Effective.Federal.Funds.Rate`))
+  print("Real.GDP..Percent.Change.")
+  sum(is.na(fed_funds_data$`Real.GDP..Percent.Change.`))
+  print("Unemployment.Rate")
+  sum(is.na(fed_funds_data$`Unemployment.Rate`))
+  print("Inflation.Rate")
+  sum(is.na(fed_funds_data$`Inflation.Rate`))
+```
+
+Seems like there are a lot of NA values for Real.GDP..Percent.Change. column.
+But since we are going to use date and those columns are 0, we can go ahead without tidying.
+
+## Identify variables that need to be mutated
+
+We can reduce the date variables of Year, Month and Day and combine them for date based analysis. This can then be reordered.
+
+We will then do analysis of the data and try to extract the date vise Unemployment vs Inflation Rate to see the correlation.
+
+```{r}
+  fed_funds_data$Date <- ymd(paste(fed_funds_data$Year, fed_funds_data$Month, fed_funds_data$Day,  sep = "-"))
+  summary(fed_funds_data$Date)
+
+  summarizedData <- fed_funds_data %>%
+  group_by(Year) %>%
+  summarize(MeanOfTargetRate = mean(`Federal.Funds.Target.Rate`, na.rm=TRUE), 
+            MeanOfUpperTarget = mean(`Federal.Funds.Upper.Target`, na.rm = TRUE),            
+            MeanOfLowerTarget = mean(`Federal.Funds.Lower.Target`, na.rm = TRUE))
+  print(summarizedData, n=100)
+  
+  dateVsUnemploymentRateInfaltionRate <- fed_funds_data  %>%
+    select(Date, Unemployment.Rate, Inflation.Rate)
+  dateVsUnemploymentRateInfaltionRate
+```

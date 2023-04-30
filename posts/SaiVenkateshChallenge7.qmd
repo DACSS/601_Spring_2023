@@ -1,0 +1,130 @@
+---
+title: "Challenge 7"
+author: "Sai Venkatesh"
+description: "Visualizing Multiple Dimensions"
+date: "04/28/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+  - australian_marriage
+  - air_bnb
+  - eggs
+  - abc_poll
+  - faostat
+  - us_hh
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+
+We will read the hotel bookings data.
+
+```{r}
+  hotel_bookings <- read.csv("_data/hotel_bookings.csv")
+  
+# The Dimensions 
+  dim(hotel_bookings)
+  
+  # The Column Names 
+  colnames(hotel_bookings)
+  
+  head(hotel_bookings)
+  tail(hotel_bookings)
+  
+  summary(hotel_bookings)
+  
+  unique(hotel_bookings$hotel)
+  unique(hotel_bookings$reservation_status)
+  unique(hotel_bookings$country)
+  max(hotel_bookings$stays_in_week_nights)
+  max(hotel_bookings$stays_in_weekend_nights)
+  max(hotel_bookings$adults)
+  max(hotel_bookings$children, na.rm = TRUE)
+  max(hotel_bookings$babies)
+
+```
+
+### Briefly describe the data
+
+This contains the hotel bookings data from 2015 to 2017 from across 178 countries for 2 hotels - "Resort Hotel", "City Hotel".
+There are a total of 32 columns.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+  hotel_bookings<- na.omit(hotel_bookings)
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+  hotel_bookings$date <- ymd(paste(hotel_bookings$arrival_date_year, hotel_bookings$arrival_date_month, hotel_bookings$arrival_date_day_of_month,  sep = "-"))
+```
+
+## Visualization with Multiple Dimensions
+
+Lets try to visualise the per hotel bookings across the months based on the assigned room type give to them.
+
+```{r}
+hotel_bookings <- hotel_bookings %>%
+  mutate(month=floor_date(date,unit="month"),
+         across(c(hotel, assigned_room_type),as.factor)) %>%
+  count(month, hotel, assigned_room_type,.drop=F) # ensures 0 is counted
+```
+
+
+```{r}
+ggplot(hotel_bookings, aes(month, n, col=assigned_room_type))+
+  geom_line()+
+  facet_wrap(vars(hotel))+
+  scale_x_date()+
+  theme(axis.text.x=element_text(angle=90))
+```
+
+We can notice here that there were a lot of 'A' rooms assigned to the customers whereas 'P' and 'L' are less.

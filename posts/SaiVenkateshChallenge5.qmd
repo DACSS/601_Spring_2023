@@ -1,0 +1,149 @@
+---
+title: "Challenge 5"
+author: "Sai Venkatesh"
+description: "Introduction to Visualization"
+date: "04/28/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - railroads
+  - cereal
+  - air_bnb
+  - pathogen_cost
+  - australian_marriage
+  - public_schools
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐ 
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐ 
+-   USA Households ⭐⭐⭐⭐⭐
+
+  We are reading the State County data.
+
+```{r}
+
+
+  state_county_data <- read_xls('_data/StateCounty2012.xls', skip=4,
+                col_names= c("STATE", "Removed",  "COUNTY",
+                          "Removed", "EMPLOYEES"))
+  
+  state_county_data <- state_county_data %>%
+    select(STATE, COUNTY, EMPLOYEES) %>%
+    filter(!str_detect(STATE, "Total"))
+  
+  state_county_data <- state_county_data %>%
+    filter(!str_detect(STATE, "Excludes"))
+  
+  state_county_data <- state_county_data %>%
+    filter(!str_detect(STATE, "designation"))  
+  
+  state_county_data <- state_county_data %>%
+    mutate(COUNTY = ifelse(STATE=="CANADA", "CANADA", COUNTY))
+  
+  # The Dimensions 
+  dim(state_county_data)
+  
+  # The Column Names 
+  colnames(state_county_data)
+  
+  head(state_county_data)
+  tail(state_county_data)
+  
+  summary(state_county_data)
+
+```
+
+### Briefly describe the data
+
+The data seems to be of the count of railroad employees split up across county and state in the United States.
+There are a total of 2931 counties with employee count numbers with the max county having 8207 employees.
+
+
+## Tidy Data (as needed)
+
+We have tidied up the data in the previous step.
+
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+We are going to aggregate state employees count. This will be used in graphics below.
+
+```{r}
+  grouped_by_state <- state_county_data %>%
+    group_by(STATE) %>%
+    summarize(state_total = sum(EMPLOYEES), 
+    state_counties = n_distinct(COUNTY)) %>%
+    select(STATE, state_total, state_counties) %>%
+    arrange(desc(state_total))
+  grouped_by_state
+```
+
+## Univariate Visualizations
+
+```{r}
+  ggplot(state_county_data, aes(EMPLOYEES)) +
+    geom_histogram(fill="red")  +
+    theme_minimal() +
+    labs(title = "Distribution of Employee Numbers of Counties", y = "Count", x = "County Employee Numbers")
+  
+  ggplot(grouped_by_state, aes(state_total)) +
+    geom_histogram(fill="blue")  +
+    theme_minimal() +
+    labs(title = "Distribution of Employee Numbers of States", y = "Count", x = "State Employee Numbers")
+
+```
+
+## Bivariate Visualization(s)
+
+```{r}
+  ggplot(grouped_by_state, aes(state_total, state_counties)) +
+    geom_point()  +
+    theme_minimal() +
+    labs(title = "State Counties vs Employee Numbers", y = "State Counties Number", x = "State Employees")
+  
+```

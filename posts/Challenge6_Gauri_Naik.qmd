@@ -1,0 +1,106 @@
+---
+title: "Challenge 6"
+author: "Gauri Naik"
+date: "04/26/2023"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+```{r data, echo = FALSE, message = FALSE}
+#tidy data and mutate var as needed
+library(tidyverse)
+library(summarytools)
+library(knitr)
+library(treemap)
+library(readxl)
+debt <- read_xlsx("_data/debt_in_trillions.xlsx")
+knitr::kable(head(debt))
+```
+
+Here is a preview of the data we will be using.
+
+```{r tidymanip, echo = FALSE}
+debt1 <- debt %>%
+  separate(`Year and Quarter`, c("Year", "Quarter"), sep = ":") %>%
+  arrange(`Year`, `Quarter`) %>%
+  group_by(`Year`)
+
+debt_means <- debt1 %>%
+  summarise(`Mortgage Mean` = mean(`Mortgage`),
+            `Auto Loan Mean` = mean(`Auto Loan`),
+            `Credit Card Mean` = mean(`Credit Card`),
+            `Student Loan Mean` = mean(`Student Loan`),
+            `Mean Miscellaneous` = mean(`Other`),
+            `Total Mean` = mean(`Total`))
+
+debt_no21 <- debt1 %>%
+  group_by(`Year`, `Quarter`) %>%
+  subset(`Year` != 21)
+  
+debt4 <- rowsum(debt_no21[3:9],rep(1:18,each=4))
+Year <- c("03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")
+debt_prop <- debt4/debt4$Total
+debt_prop <- cbind(debt_prop, Year) %>%
+  relocate(.before = Mortgage, Year) %>%
+  group_by(`Year`)
+
+ debt_yearascol <- data.frame(t(debt4))
+ colnames(debt_yearascol) <- c("03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")
+ 
+ debt_tree <- debt1
+ debt_tree %>%
+   group_by(`Year`) %>%
+   transform(Year = as.double(Year)) %>%
+ pivot_longer(cols = c(`Mortgage`, `HE.Revolving`, `Auto.Loan`, `Credit.Card`, `Student.Loan`, `Other`, `Total`),
+              names_to = "Type.of.Debt",
+              values_to = "Value")
+
+debt_tree2 <- debt_means
+invisible(debt_tree)
+```
+Above, I've printed one of the tables that I transformed, but eventually I ended up not using it to create any graphs.
+
+Below, I've created four graphs, one of which is evolution, one is part-whole, and two are scatterplots. The evolution one shows the total debt mean over over the years 2003 to 2021, while the part-whole gives a comparative look at the mortgage debt mean in each year, and how each year's debt compares to the other.
+```{r graphs, echo = FALSE, message = FALSE, results ='hide'}
+#create one graph including time (evolution)
+#create one graph depicting part-whole or flow relationships
+
+total_noavg <- ggplot(debt_no21, aes(x = Year, y = Total, color = `Quarter`)) +
+  geom_point() +
+  theme_minimal() +
+  labs(title = "Total Debt per Quarter per Year",
+       x = "Year",
+       y = "Total Debt per Quarter (in Trillions)") +
+  ylim(0, 15)
+total_noavg
+
+total_mean <- ggplot(debt_means, aes(x= Year, y = `Total Mean`)) +
+  geom_point() + 
+  labs(title = "Average of Quarters") +
+  ylim(0, 15) +
+  geom_curve(aes(x = 1, y = 7.558950, xend = 19, yend = 14.9), position = "identity", curvature = 0, arrow = NULL, ncp = 25)
+total_mean
+
+ggplot(debt_means, aes(x=`Year`)) +
+  geom_point(aes(y=`Credit Card Mean`, color = "Credit Card Mean")) +
+  geom_point(aes(y=`Auto Loan Mean`, color = "Auto Loan Mean")) +
+  labs(title = "Mean of Auto Loan Compared to Credit Card over 2003 to 2021",
+       caption = "Means were averaged given data for each quarter of each year.",
+       x = "Year",
+       y = "Mean Debt per Year (in Trillions)",
+       color = "Mean Debt") +
+  scale_color_manual(values = c("#2781d1", "#d13e27")) +
+  theme_minimal()
+ 
+debt_treemap <- treemap(debt_tree2,
+            index="Year",
+            vSize="Mortgage Mean",
+            type="index"
+            )
+debt_treemap
+
+
+```

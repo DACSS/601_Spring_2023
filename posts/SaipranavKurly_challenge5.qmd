@@ -1,0 +1,110 @@
+---
+title: "Challenge 5"
+author: "Sai Pranav Kurly"
+description: "Introduction to Visualization"
+date: "04/25/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - railroads
+  - cereal
+  - air_bnb
+  - pathogen_cost
+  - australian_marriage
+  - public_schools
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   AB_NYC_2019.csv ⭐⭐⭐
+
+```{r}
+data <- read_csv("_data/AB_NYC_2019.csv")
+data
+```
+
+### Briefly describe the data
+This dataset contains approximately 49000 and 16 columns of information about various AirBNB units advertised in New York City in 2019. It contains information about the host name, neighborhood and neighborhood group, property type, price, and location for each property.
+
+## Tidy Data (as needed)
+
+We can do some tidying because we can see that there are some N/A values in the reviews per month.Because there are no reviews yet, we can replace the N/A values with 0.
+
+```{r}
+replace_na(data, list(reviews_per_month = 0))
+```
+
+Apart from this, It appears that the data is suitable for the analysis I intend to conduct and does not require any modification. 
+
+## Univariate Visualizations
+1) We can look into a breakdown of where the listings are located by borough. We find that Manhattan would have the most since it attracts the most tourists. Brooklyn has the second highest. 
+
+```{r}
+ggplot(data, aes(neighbourhood_group, fill = room_type)) + geom_bar() +
+  theme_bw() +
+  labs(title = "Air BnB by Location ", y = "Number of Listins", x = "Borough")
+
+```
+
+2) We can also analyze the property price distribution to get a good idea of how expensive or cheap each property is. We see that most properties are lesser than 500$.
+
+```{r}
+  ggplot(data,aes(x=price)) + 
+  geom_histogram() + 
+  xlim(0, 1500) + 
+  xlab("Price ($)") + 
+  ylab("Number of properties") + 
+  ggtitle("Histogram of property price distribution in dataset")
+
+```
+
+
+## Bivariate Visualization(s)
+
+Below, we try to analyze the how price and minimum nights stayed relate:
+
+```{r}
+ggplot(data) + 
+  geom_point(mapping = aes(x = minimum_nights, y = price)) + 
+  labs(x = "Minimum Nights",
+       y = "Price ($)",
+       title = "Price vs Minimum Nights Stayed")
+```
+
+

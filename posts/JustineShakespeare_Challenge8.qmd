@@ -1,0 +1,170 @@
+---
+title: "Challenge 8: SNL"
+author: "Justine Shakespeare"
+description: "Joining Data"
+date: "04/26/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - snl
+  - Justine Shakespeare
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Load and tidy the data
+
+We'll use the SNL data for today's challenge. First we'll load each of the three csv files, casts, actors, and seasons. 
+
+```{r}
+# Load the datasets
+casts <- read_csv("_data/snl_casts.csv", skip = 1, col_names = c("aid", "sid", "featured", "cast_first_epid", "cast_last_epid", "update_anchor", "cast_n_epid", "season_fraction"))
+  
+actors <- read_csv("_data/snl_actors.csv")
+  
+seasons <- read_csv("_data/snl_seasons.csv", skip = 1, col_names = c("sid", "year", "seasons_first_epid", "seasons_last_epid", "seasons_n_epid"))
+```
+
+Let's take a closer look at the actors dataset and prepare it for joining.
+
+```{r}
+glimpse(actors)
+```
+This contains information about cast members and guests on SNL including the persons gender, whether they are a cast member or guest, and a URL. For the purpose of this analysis, we only need the variables `aid` and `gender`. We can use the `type` variable to filter for only cast members.
+
+```{r}
+cast_only <- actors %>% 
+  filter(type == "cast") %>% 
+  select(aid, gender)
+
+glimpse(cast_only)
+```
+
+Let's take a closer look at the gender values to ensure that we don't have any missing values. 
+
+```{r}
+table(cast_only$gender)
+
+cast_only %>% 
+  filter(gender == "unknown")
+```
+
+It looks like there are two cast members with "unknown" gender. I googled the two names to confirm their pronouns and gender. Now we can recode those values in the data. 
+
+```{r}
+cast_only$gender <- ifelse(cast_only$aid == "Ego Nwodim", replace(cast_only$gender, cast_only$gender == "unknown", "female"), cast_only$gender)
+cast_only$gender <- ifelse(cast_only$aid == "Punkie Johnson", replace(cast_only$gender, cast_only$gender == "unknown", "female"), cast_only$gender)
+```
+
+Since we want to keep all of the variables in the casts data, we can join that data to the casts_only dataset we've just created without removing any variables.
+
+```{r}
+# Join the datasets using left_join()
+cast_actors <- left_join(cast_only, casts, by = "aid")
+
+
+glimpse(cast_actors)
+```
+We'll join this with the seasons data and then continue cleaning the data. 
+
+```{r}
+sca <- left_join(cast_actors, seasons, by = "sid")
+```
+There are several date variables that are currently stores as numeric, we will changes those to dates.
+
+```{r}
+# clean up date data
+sca$cast_first_epid <- ymd(sca$cast_first_epid)
+sca$cast_last_epid <- ymd(sca$cast_last_epid)
+sca$seasons_first_epid <- ymd(sca$seasons_first_epid)
+sca$seasons_last_epid <- ymd(sca$seasons_last_epid)
+
+glimpse(sca)
+```
+## Briefly describe the data
+
+This data provides information on the casts of SNL from 1975 to 2020. Each row of this newly created dataframe represents a unique actor-season combination with information on the actor and the SNL seasons they have been on. Each row contains information about the actor's gender, whether they were featured in a particular season, the date of their first episode, the date of their last episode, the number of episodes they have been in, the fraction of each season they've been in, a URL for that actor, whether they were a member of the cast or a guest on the show, and whether they were an anchor on weekend update. Each row also contains information about the seasons they have been on, including the year of that season, the dates of the first and last episode of that seasonl, and the total number of episodes in that season. 
+
+## Data exploration
+
+Now let's explore the data a little. First we'll take a look at some summary statistics related to seasons, including the range of years covered in this data...
+
+```{r}
+# range of seasons
+range(sca$year, na.rm = TRUE)
+
+```
+
+...a time series graph that shows the number of episodes per season...
+
+```{r}
+# year with the most episodes in a season
+sca %>% 
+  group_by(year, seasons_n_epid) %>% 
+  ggplot(aes(x = year, y = seasons_n_epid)) + geom_line() +
+  labs(title = "Number of episodes per season on SNL", 
+       x = "Year", y = "Number of episodes per season")
+```
+
+And the minimum, maximum, and median length of seasons. 
+
+```{r}
+# min, median, and max length of seasons
+sca %>% 
+  summarize(min = min(seasons_n_epid, na.rm = TRUE), median = median(seasons_n_epid, na.rm = TRUE), max = max(seasons_n_epid, na.rm = TRUE))
+```
+
+The following visualization is a time series graph that shows the number of women and men on each SNL cast. It shows that there have always been more men than women on each season but in recent years it has come closer to reaching parity.
+
+```{r}
+season_gender <- sca %>% 
+  group_by(sid, year) %>% 
+  count(gender)
+
+season_gender %>%
+  ggplot(aes(x=year, y=n, group=gender, color=gender)) + 
+  geom_line() +
+  scale_color_manual(values = c("#E86C4A", "#70C1B3")) +
+  labs(title = "Number of women and men on each SNL cast", 
+       x = "Year", y = "Count of Cast Members", color = "Gender") +
+  theme_bw() + ylim(0,13)
+```
+
+The following table shows which cast members worked the most seasons.
+
+```{r}
+sca %>% 
+  group_by(aid) %>% 
+  count() %>% 
+  arrange(desc(n))
+```
+
+This graph shows the cast members who have anchored the Weekend Update on SNL, how many season they have anchored, and the gender of each cast member. Seth Meyers and Colin Jost have hosted the Weekend Update the most seasons.
+
+```{r}
+sca %>% 
+  filter(update_anchor == "TRUE") %>% 
+  group_by(aid, gender) %>% 
+  count() %>% 
+  ggplot(aes(x = aid, y = n, fill = gender)) + geom_col() +
+  scale_fill_manual(values = c("#E86C4A", "#70C1B3")) +
+  theme_bw() +
+  theme(axis.text.x = element_text(face = "bold", angle = 90), 
+        axis.text.y = element_text(face = "bold", angle = 90)) +
+  labs(title = "Weekend Update Anchors on SNL", 
+       x = " ", y = "Number of seasons", fill = "Gender")
+```

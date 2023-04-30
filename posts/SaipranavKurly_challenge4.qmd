@@ -1,0 +1,87 @@
+---
+title: "Challenge 4"
+author: "Sai Pranav Kurly"
+description: "More data wrangling: pivoting"
+date: "04/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - abc_poll
+  - eggs
+  - fed_rates
+  - hotel_bookings
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+-   hotel_bookings.csv⭐⭐⭐⭐
+
+```{r}
+hotels_booking <- read_csv("_data/hotel_bookings.csv", show_col_types = FALSE)
+hotels_booking
+
+```
+
+### Briefly describe the data
+
+This dataset, which comprises 120k records and 32 columns and dates from 2015 to 2017, summarizes numerous details about a hotel booking. This dataset contains two types of hotels: resort hotels and city hotels. Customers book these hotels from all over the world; roughly 160-170 nations. It can also be shown that on average, approximately 37% of appointments are cancelled and approximately 3% of guests are repeated. Customers may have to wait 2.3 days on average in the backlog to finalize a booking, and approximately 57% of these bookings involve certain special requirements. Customers can choose from four different sorts of meals at the hotels. 
+
+```{r}
+summarize(hotels_booking)
+```
+## Tidy Data (as needed)
+
+```{r}
+table(hotels_booking$country)
+```
+
+From the above we can observe that there is a NULL value in the country column and we can remove this value because this information will not help us in futher analysis.
+
+
+```{r}
+hotels_booking <- hotels_booking %>% 
+  filter(!(country == "NULL"))
+
+```
+
+## Identify variables that need to be mutated
+
+A few variables can be mutated and below is one such example
+
+```{r}
+#Mutating the arrival date into a single field and also mutate the adults, babies and children in order to get the total guests in the hotel.
+
+hotels_booking_mutate <- hotels_booking %>% 
+  mutate(arrival_date = str_c(arrival_date_day_of_month,
+                              arrival_date_month,
+                              arrival_date_year, sep="/"),
+         arrival_date = dmy(arrival_date),
+         total_guests = adults + children + babies) %>% 
+  select(-c(arrival_date_day_of_month,arrival_date_month,arrival_date_year))
+
+hotels_booking_mutate
+```
+
+After the mutation now lets find the range of the arrival date of the different bookings of the data
+
+```{r}
+summary(hotels_booking_mutate$arrival_date)
+```
+
+We can now observe that the arrival dates now lie between the July 2015 - August 2017.

@@ -1,0 +1,139 @@
+---
+title: "Challenge 3 Instructions"
+author: "Sai Pranav Kurly"
+description: "Tidy Data: Pivoting"
+date: "04/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - eggs
+  - australian_marriage
+  - usa_households
+  - sce_labor
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Read in data
+
+I have decided to use the eggs_tidy.csv dataset
+
+```{r}
+eggs_dataset <- read_csv("_data/eggs_tidy.csv")
+eggs_dataset
+
+```
+
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+
+```{r}
+summary(eggs_dataset)
+```
+
+
+```{r}
+head(eggs_dataset)
+```
+
+
+```{r}
+nrow(eggs_dataset)
+```
+
+
+```{r}
+ncol(eggs_dataset)
+```
+
+The 120 rows and 6 columns of the dataset, which contain data for each and every month of the year (there are 12 months in a year) from 2004 to 2013, are readily apparent from the dataset's summary. The month and year are given in the first two columns, and the average price for the given egg size and quantity is given in the remaining four columns. The column names, such as large_half_dozen, extra_large_half_dozen, large_dozen, and extra_large_dozen, combine the size with the quantity. I've seen that the typical pricing is between 12 and 290 cents.
+
+## Anticipate the End Result
+
+```{r}
+nrow(eggs_dataset) * (ncol(eggs_dataset)-2)
+```
+
+
+```{r}
+# expected columns in the eggs dataset after pivoting
+3 + 2
+```
+
+Thus, our resulting data is of the dimension 480*5.
+
+### Example: find current and future data dimensions
+
+Lets see if this works with a simple example.
+
+```{r}
+#| tbl-cap: Example
+
+df<-tibble(country = rep(c("Mexico", "USA", "France"),2),
+           year = rep(c(1980,1990), 3), 
+           trade = rep(c("NAFTA", "NAFTA", "EU"),2),
+           outgoing = rnorm(6, mean=1000, sd=500),
+           incoming = rlogis(6, location=1000, 
+                             scale = 400))
+df
+
+#existing rows/cases
+nrow(df)
+
+#existing columns/cases
+ncol(df)
+
+#expected rows/cases
+nrow(df) * (ncol(df)-3)
+
+# expected columns 
+3 + 2
+```
+
+Or simple example has $n = 6$ rows and $k - 3 = 2$ variables being pivoted, so we expect a new dataframe to have $n * 2 = 12$ rows x $3 + 2 = 5$ columns.
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+### Example
+
+```{r}
+
+eggs_pivot <- eggs_dataset%>%
+  pivot_longer(cols=contains("large"),
+               names_to = c("size", "quantity"),
+               names_sep="_",
+               values_to = "cost"
+  )
+
+eggs_pivot
+```
+
+```{r}
+nrow(eggs_pivot)
+```
+
+```{r}
+ncol(eggs_pivot)
+```
+
+It matches our previous calculation.
+
+

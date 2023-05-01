@@ -1,0 +1,155 @@
+---
+title: "Challenge 6"
+author: "Sai Venkatesh"
+description: "Visualizing Time and Relationships"
+date: "04/28/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+  
+We will read the hotel bookings data.
+
+```{r}
+  hotel_bookings <- read.csv("_data/hotel_bookings.csv")
+  
+# The Dimensions 
+  dim(hotel_bookings)
+  
+  # The Column Names 
+  colnames(hotel_bookings)
+  
+  head(hotel_bookings)
+  tail(hotel_bookings)
+  
+  summary(hotel_bookings)
+  
+  unique(hotel_bookings$hotel)
+  unique(hotel_bookings$reservation_status)
+  unique(hotel_bookings$country)
+  max(hotel_bookings$stays_in_week_nights)
+  max(hotel_bookings$stays_in_weekend_nights)
+  max(hotel_bookings$adults)
+  max(hotel_bookings$children, na.rm = TRUE)
+  max(hotel_bookings$babies)
+
+```
+
+### Briefly describe the data
+
+This contains the hotel bookings data from 2015 to 2017 from across 178 countries for 2 hotels - "Resort Hotel", "City Hotel".
+There are a total of 32 columns.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+  hotel_bookings<- na.omit(hotel_bookings)
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+
+  hotel_bookings$date <- ymd(paste(hotel_bookings$arrival_date_year, hotel_bookings$arrival_date_month, hotel_bookings$arrival_date_day_of_month,  sep = "-"))
+  
+  hotel_bookings <- hotel_bookings%>%
+  mutate(total_guests_number = rowSums(select(.,adults,children,babies),na.rm = TRUE))
+  
+```
+
+## Time Dependent Visualization
+
+Lets visualize the date vs total guest count to see how many guests came in that date.
+
+```{r}
+    hotel_bookings <- hotel_bookings%>%
+      group_by(date) %>%
+      mutate(month_total = sum(total_guests_number)) %>%
+      ungroup()
+    
+    ggplot(hotel_bookings, aes(x=date,y=month_total)) + 
+      geom_line() + 
+      xlab("Date") + 
+      ylab("Count of reservations") +
+      labs(title="Date vs Reservations")
+```
+
+## Visualizing Part-Whole Relationships
+
+Lets visualize the month vs number of reservations made in that month.
+
+```{r}
+
+    hotel_bookings <- hotel_bookings %>%
+      mutate(month = floor_date(date,unit="month")) %>%
+      group_by(month) %>%
+      summarise(n=n()) %>%
+      ungroup()
+
+
+    hotel_bookings %>%
+      ggplot(aes(month, n)) +
+      geom_line() +
+      scale_x_date("Date", breaks="3 months")+
+      scale_y_continuous() +
+      xlab("Month") + 
+      ylab("Number of reservations")
+
+```

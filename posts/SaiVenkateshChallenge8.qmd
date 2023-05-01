@@ -1,0 +1,131 @@
+---
+title: "Challenge 8"
+author: "Sai Venkatesh"
+description: "Joining Data"
+date: "04/29/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - activeduty
+  - snl
+  - faostat
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview {#challenge-overview}
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data (see detailed instruction below)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data {#read-in-data}
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   military marriages (ActiveDuty_MaritalStatus.xls)⭐⭐
+-   faostat (birds.csv,FAOSTAT_country_groups.csv, and other "FAOSTAT\_\*" files) ⭐⭐⭐⭐
+-   snl (snl_actors.csv, snl_casts.csv, snl_seasons.csv)⭐⭐⭐
+
+We are going to read the snl data.
+
+```{r}
+snl_actors <- read_csv("_data/snl_actors.csv")
+head(snl_actors)
+
+# The Dimensions 
+dim(snl_actors)
+# The Column Names 
+colnames(snl_actors)
+summary(snl_actors)
+
+snl_casts <- read_csv("_data/snl_casts.csv")
+head(snl_casts)
+
+# The Dimensions 
+dim(snl_casts)
+# The Column Names 
+colnames(snl_casts)
+summary(snl_casts)
+
+snl_seasons <- read_csv("_data/snl_seasons.csv")
+head(snl_seasons)
+
+# The Dimensions 
+dim(snl_seasons)
+# The Column Names 
+colnames(snl_seasons)
+summary(snl_seasons)
+
+```
+
+### Briefly describe the data {#briefly-describe-the-data}
+
+**SNL**
+
+These data came to my attention courtesy of Jeremy Singer-Vine's wonderful [Data is Plural](https://dacss.github.io/601_Winter_2022-2023/posts/data-is-plural.com) newsletter. [These datasets](https://github.com/hhllcks/snldb), archived by Joel Navaroli and scraped by Hendrik Hilleckes and Colin Morris, contain data about the actors, cast, seasons, etc. from every season of Saturday Night Live from its inception through 2020.
+
+With these three datasets, we can join them together to observe many different features, such as gender makeup and number of appearance, of the SNL casts and actors changed over time.
+
+SNL Actos consists of the actors with their ID, gender, type, url of around 2306 actors.
+
+SNL Casts consists of data for around 614 actors and their first, last episode, no of episodes, season id.
+
+SNL Seasons consists of data of the seasons which are in total 46 from 1975 - 2021
+
+## Tidy Data (as needed) {#tidy-data-as-needed}
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data is already tidied. 
+
+```{r}
+
+  non_matching_rows <- snl_actors %>%
+    anti_join(snl_casts, by = "aid")
+  non_matching_rows
+```
+
+This shows there are a lot of rows in actors that are not in casts.
+
+## Join Data {#join-data}
+
+We will join the necessary 3 datasets together first and then plot graphs based on them.
+```{r}
+
+snl_actors_casts <- snl_actors %>%
+  inner_join(snl_casts, by="aid")
+
+snl_actors_casts_seasons <- snl_actors_casts %>%
+  inner_join(snl_seasons, by="sid")
+snl_actors_casts_seasons
+
+snl_actors_casts_seasons %>%
+  ggplot(aes(sid, col=gender)) +
+  geom_histogram() + 
+  labs(title = "Gender Makeup")
+
+snl_actors_casts_seasons %>%
+  ggplot(aes(sid, featured)) +
+  geom_point() + 
+  labs(title = "Featured")
+
+```

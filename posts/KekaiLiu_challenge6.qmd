@@ -1,0 +1,220 @@
+---
+title: "Challenge 6"
+author: "Kekai Liu"
+description: "Visualizing Time and Relationships"
+date: "04/30/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+  
+The dataset contains mean income and median income data from 1967 to 2019 across different race categories: all races, white, white alone, white alone not hispanic, white not hispanic, black, black alone or in combination, black alone, asian alone or in combination, asian alone, asian alone or in combination, asian and pacific islander, hispanic (any race). The dataset also breaks each race category down into income range percents: under 15000, 15000 to 24999, 25000 to 34999, 35000 to 49999, 50000 to 74999, 75000 to 99999, 100000 to 149999, 150000 to 199999, over 200000. A case is a race category in a year.
+
+```{r}
+household <- readxl::read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", sheet="tableA2", range="A5:P357")
+
+household2 <- household %>%
+  mutate(index = 1:n(), #add index and race columns
+         race = case_when(between(index, 2, 56) ~ "all races",
+           between(index, 58, 77) ~ "white alone",
+           between(index, 79, 113) ~ "white",
+           between(index, 115, 134) ~ "white alone not hispanic",
+           between(index, 136, 165) ~ "white not hispanic",
+           between(index, 167, 186) ~ "black alone or in combination", 
+           between(index, 188, 207) ~ "black alone",
+           between(index, 209, 243) ~ "black",
+           between(index, 245, 264) ~ "asian alone or in combination",
+           between(index, 266, 285) ~ "asian alone",
+           between(index, 287, 301) ~ "asian and pacific islander",
+           between(index, 303, 352) ~ "hispanic (any race)"
+         ),
+         year = str_sub(`...1`, 1, 4), #remove superscripts from year, there are duplicates
+         number_in_thousands = `...2`) %>%
+  select(-c(`...1`,`...2`, index)) %>%
+  filter(!is.na(Total)) %>%
+  select(race, year, everything()) %>% #reorder columns %>%
+ distinct(race, year, .keep_all=TRUE) #keep the top duplicate since it is the most updated data
+```
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data is not tidy. Each income range has its own percent column. There are ten such percent columns, and they can be turned into two columns: one column denoting the range, and another column for the percent amount. There are seven columns used to identify a case, so the number of expected rows after this pivot is nrow(household2) * (ncol(household2)-7) = 3240 rows. The data has 17 variables before the pivot and 10 variables to be pivoted into 2 variables, so the number of expected columns is 9 columns. The summary output of household25, which is the resulting dataset after this pivot, has 3240 rows and 9 columns as expected.
+
+Each income estimate also has separate columns for mean, the corresponding margin of error, median, and the corresponding margin of error. These four columns can be turned into three columns: one denoting whether the estimate is a mean or median, another for the estimate value, and one for the margin of error. There are seven variables used to identify a case, so the number of expected rows after this pivot is nrow(household25) * (ncol(household25)-7) = 6480 rows. The data has 9 variables before the pivot and 4 variables to be pivoted into 3 variables, so the expected number of columns is 8 columns. The summary output of household 35, which is the resulting dataset after this pivot, has 6480 rows and 8 columns as expected.
+
+```{r}
+head(household2)
+str(household2)
+
+#existing rows/cases
+nrow(household2)
+
+#existing columns/cases
+ncol(household2)
+
+#expected rows/cases
+nrow(household2) * (ncol(household2)-7)
+
+# expected columns after first pivot
+17 - 10 + 2
+
+household25 <- household2 %>% 
+  pivot_longer(col = `Total`:`$200,000 and over`,
+                 names_to="income_range",
+                 values_to = "percent")
+
+print(summarytools::dfSummary(household25, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+
+#existing rows/cases
+nrow(household25)
+
+#existing columns/cases
+ncol(household25)
+
+#expected rows/cases
+nrow(household25) * (ncol(household25)-7)
+
+# expected columns after first pivot
+9 - 4 + 3
+
+household35 <- household25 %>%   
+  mutate(median1estimate = `Estimate...13`, median1margin_of_error = `Margin of error1 (±)...14`, mean1estimate = as.numeric(`Estimate...15`), mean1margin_of_error = as.numeric(`Margin of error1 (±)...16`)) %>%
+  select(-c(`Estimate...13`, `Margin of error1 (±)...14`, `Estimate...15`, `Margin of error1 (±)...16`)) %>%
+  pivot_longer(c('median1estimate', 'median1margin_of_error', 'mean1estimate', 'mean1margin_of_error'), names_to=c("est_type", ".value"), names_sep = "\\d")
+
+head(household35)
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+The pivot procedures did not translate the income ranges into clean strings. The income_range variable contains extraneous characters such as backslash r and backslash n which need to be removed; this can be fixed by using the mutate and case_when to clean the strings. Also the mean estimate and margin of error are of character types, because there is a cell which contains N as a value. It corresponds to Asian and Pacific Islander in 1987, and the footnote states that a new data processing system was being instituted that year. These mean and margin of error columns will need to be converted to numeric in order to plot.
+
+Document your work here.
+
+```{r}
+
+household3 <- household2 %>% 
+  pivot_longer(col = `Total`:`$200,000 and over`,
+                 names_to="income_range",
+                 values_to = "percent") %>%
+  mutate(number_in_thousands = as.numeric(case_when(number_in_thousands == "N" ~ "", TRUE ~ number_in_thousands)), median1estimate = `Estimate...13`, median1margin_of_error = `Margin of error1 (±)...14`, mean1estimate = as.numeric(`Estimate...15`), mean1margin_of_error = as.numeric(`Margin of error1 (±)...16`), income_range = case_when(income_range == "Total" ~ "Total", income_range == "Under $15,000" ~ "Under $15,000", income_range == "$15,000\r\nto\r\n$24,999" ~ "$15,000 to $24,999", income_range == "$25,000\r\nto\r\n$34,999" ~ "$25,000 to $34,999", income_range == "$35,000\r\nto\r\n$49,999" ~ "$35,000 to $49,999", income_range == "$50,000\r\nto\r\n$74,999" ~ "$50,000 to $74,999", income_range == "$75,000\r\nto\r\n$99,999" ~ "$75,000 to $99,999", income_range == "$100,000\r\nto\r\n$149,999" ~ "$100,000 to $149,999", income_range == "$150,000\r\nto\r\n$199,999" ~ "$150,000 to $199,999", income_range == "$200,000 and over" ~ "$200,000 and over")) %>%
+  select(-c(`Estimate...13`, `Margin of error1 (±)...14`, `Estimate...15`, `Margin of error1 (±)...16`)) %>%
+  pivot_longer(c('median1estimate', 'median1margin_of_error', 'mean1estimate', 'mean1margin_of_error'), names_to=c("est_type", ".value"), names_sep = "\\d")
+
+# categorize estimate and margin of error into mean, median
+#NA's introduced in 1987 for mean because it is is "N" - footnote says because no data due to implementation of new processing system
+
+head(household3)
+print(summarytools::dfSummary(household3, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+
+```
+
+## Time Dependent Visualization
+
+In order to plot a variable on the y-axis against time variable on the x-axis, the time variable needs to be a date variable. A date variable contains year, month, and day, so the variable year needs to be converted to a year-month-day format. By converting year to a date variable, it provides the flexibility of changing the number of years to show on the x-axis.
+
+A line plot is a good choice for a time dependent visualization, because it clearly displays how data is moving over time. This is especially true if a plot contains multiple groups. For example, if one were to use a scatterplot, even if the groups were color coded, the data evolution would not be as easy to follow as a line plot which connects the data points.
+
+```{r}
+
+#median household income of all races over time, x-axis time variable needs to be date in order to specify number of breaks, date variable requires year, month, and day
+
+household3 %>%
+  filter(race=="all races", est_type=="median", income_range=="Total") %>%
+  ggplot(aes(x=as.Date(ISOdate(year, 1, 1)), y=estimate)) +
+  geom_line(size=2, color='red') + #change thickness and color of line +
+  xlab("") +
+  ylab("median household income") +
+  labs(title = "Median U.S. Household Income (All Races)") +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, color="red"), axis.title.y = element_text(size = 10, color="red")) + # Center ggplot title and change size of title and y-axis title and color
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y")
+
+#percent of each race under $15,000 household income under time (white, black, asian, hispanic, all races)
+
+household3 %>%
+  filter(income_range != "Total", est_type=="median", income_range=="Under $15,000", race != "black alone") %>% #keep only one row out of median and mean (as the percent is the same)
+  mutate(race = case_when(grepl("white", race, ignore.case = TRUE) ~ "white",
+                          grepl("black", race, ignore.case = TRUE) ~ "black",
+                          grepl("asian", race, ignore.case = TRUE) ~"asian",
+                          TRUE ~ race)) %>% #recode races
+  ggplot(aes(x=as.Date(ISOdate(year, 1, 1)), y=percent, group=race, color=race)) +
+  geom_line(size=1) + 
+  xlab("") +
+  ylab("percent of households under $15,000") +
+  labs(title = "Percent of U.S. Households under $15,000 by Race") +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, color="blue"), axis.title.y = element_text(size = 10, color="blue")) + # Center ggplot title and change size of title and y-axis title and color
+  scale_x_date(date_breaks = "5 year", date_labels = "%Y")
+```
+## Visualizing Part-Whole Relationships
+
+A stacked bar graph is a good way to visualize part-whole relationships. You can split up a whole into its constituent parts and see how each part contributes to the whole. A stacked bar graph is also convenient for comparing multiple part-whole relationships, as you can place bars side-by-side. This enables one to compare distributions such as income distributions across race, gender, occupation, etc.
+
+```{r}
+
+#income distribution of U.S. households in 2019, by race
+
+household3 %>%
+  filter(income_range != "Total", est_type=="median", race != "black alone", race != "all races", year==2019) %>% #keep only one row out of median and mean (as the percent is the same)
+  mutate(race = case_when(grepl("white", race, ignore.case = TRUE) ~ "white",
+                          grepl("black", race, ignore.case = TRUE) ~ "black",
+                          grepl("asian", race, ignore.case = TRUE) ~"asian",
+                          TRUE ~ race)) %>% #recode races
+ggplot(aes(fill=factor(income_range, levels=c('$200,000 and over', '$150,000 to $199,999', '$100,000 to $149,999', '$75,000 to $99,999', '$50,000 to $74,999', '$35,000 to $49,999', '$25,000 to $34,999', '$15,000 to $24,999', 'Under $15,000')), y=percent, x=race, label=percent)) + 
+    geom_bar(position="fill", stat="identity") + 
+  ylab("percent") +
+  labs(title = "Income Distribution of U.S. Households in 2019, by Race") +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, color="blue"), axis.title.y = element_text(size = 10, color="blue")) + # Center ggplot title and change size of title and y-axis title and color 
+scale_fill_discrete(name = "Income Range", breaks=c('$200,000 and over', '$150,000 to $199,999', '$100,000 to $149,999', '$75,000 to $99,999', '$50,000 to $74,999', '$35,000 to $49,999', '$25,000 to $34,999', '$15,000 to $24,999', 'Under $15,000')) #change legend title and order for items in legend
+```

@@ -1,0 +1,116 @@
+---
+title: "Visualizing Multiple Dimensions"
+author: "Susmita Madineni"
+description: "Visualizing Multiple Dimensions"
+date: "08/24/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - australian_marriage
+  - readr
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+```{r}
+library(readr)
+aumg_data <- read_csv("_data/australian_marriage_tidy.csv")
+View(aumg_data)
+```
+
+```{r}
+# Preview the first few rows of the dataset
+head(aumg_data)
+
+# Understanding the dimensions of the dataset 
+dim(aumg_data)
+```
+
+```{r}
+# Identifying the column names of the dataset 
+colnames(aumg_data)
+
+# Identifying the data types of the columns
+sapply(aumg_data, class)
+table(sapply(aumg_data, function(x) typeof(x)))
+sapply(aumg_data, function(x) n_distinct(x))
+```
+
+### Briefly describe the data
+
+The dataset gives the information about marriages in different parts of Australia. There are 16 rows and 4 columns. Based on the above, we can infer that there are 2 characters and 2 double datatypes. All the columns are readable for the user. Each observation in the dataset provides information of territory, response(yes/no), count(number of people who responded whether they're married or not) and the respective percentage. 
+
+
+## Tidy Data (as needed)
+
+The data is tidy enough to work on. I would like to mutate the dataset to understand the count of people responded as yes in different territories and also no in different territories separately and understand how the rates of marriages varies across the territories. To plot this, I would want the total population in every territory and the respective percentage across the territories.
+
+```{r}
+married_no <- aggregate(count ~ territory, data = aumg_data, FUN = sum)
+married_no
+
+married_no['Resp_no%'] <- subset(aumg_data, resp =="no")['percent']
+married_no
+
+
+married_yes <- aggregate(count ~ territory, data = aumg_data, FUN = sum)
+married_yes
+married_yes['Resp_yes%'] <- subset(aumg_data, resp =="yes")['percent']
+married_yes
+```
+
+## Visualization with Multiple Dimensions
+
+```{r}
+
+ggplot(married_no, aes(x=`count`, y= `Resp_no%`, color = `territory`))+ 
+  geom_point()+
+  geom_line(color = "#69b3a2")+
+  theme_minimal() + 
+  labs(title = "Unmarried Vs Population across territories", y = "Unmarried percentage", x = "Population of the Territory")
+
+```
+```{r}
+ggplot(married_yes, aes(x=`count`, y= `Resp_yes%`, color = `territory`))+ 
+  geom_point()+
+  geom_line(color = "#69b3a2")+
+  theme_minimal() + labs(title = "Married Vs Population across territories", y = "Married percentage", x = "Population of the Territory")
+```
+Based on the above :
+In the first scenario(Unmarried Vs Population across territories), the percentage of people responded as no is varying from as low as around 7% to 65% and in second scenario(Married Vs Population across territories), the percentage of people responded as yes is varying from around 55% to 75%. In both cases above, Western Australia looks like an outlier at the lower ends and Australian Capital Territory looks like an outlier at the higher end among all the territories.

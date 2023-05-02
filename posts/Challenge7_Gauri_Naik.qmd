@@ -1,0 +1,247 @@
+---
+title: "Challenge 7"
+author: "Gauri Naik"
+date: 04/30/2023
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+We're going to look at the total income of households in the USA based on the census. Here we would like to split and compare the households.
+```{r library, echo = FALSE, message=FALSE}
+library(tidyverse)
+library(knitr)
+library(summarytools)
+library(ggplot2)
+library(readxl)
+library(lubridate)
+library(ggeasy)
+library(dplyr)
+library(patchwork)
+```
+
+```{r tidydata, echo = FALSE, message=FALSE}
+usa_allraces <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A6:P61")
+
+whitealone_newcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A62:P82")
+
+white_oldcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A83:P118")
+
+whitenh_newcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A119:P139")
+
+whitenh_oldcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A140:P170")
+
+blackhnh_newcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A171:P191")
+
+blackalone_newcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A192:P212")
+
+black_oldcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A213:P248")
+
+asianhnh_newcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A249:P269")
+
+asianalone_newcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A270:P290")
+
+asianpacific_oldcs <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A291:P306")
+
+usa_allhispanic <- read_excel("_data/USA Households by Total Money Income, Race, and Hispanic Origin of Householder 1967 to 2019.xlsx", range = "A307:P357")
+```
+I have split the data set into different dataframes based on the identifier given to the respondents, e.g. white, Black, Asian or Pacific Islander, etc. Below we have the table of income of all races from 1967 to 2019. The table is split into percents of respondents falling under a bracket, and total percent equals 100.
+
+```{r tableallraces, echo = FALSE, message = FALSE}
+options(warn = -1)
+
+usa_allraces1 <- usa_allraces %>%
+  `colnames<-`(c("Year", 
+                 "Number", 
+                 "Percent Total", 
+                 "<15000", 
+                 "15000-24999", 
+                 "25000-34999", 
+                 "35000-49999", 
+                 "50000-74999", 
+                 "75000-99999", 
+                 "100000-149999",
+                 "150000-199999",
+                 ">200000", 
+                 "Median Estimate",
+                 "Median Error",
+                 "Mean Estimate",
+                 "Mean Error")) %>%
+  separate(Year, c("Year", "Footnote"), sep = " ") %>%
+  select(-c(Footnote)) %>%
+  relocate(`Percent Total`, .after = `>200000`)
+
+usa_allraces1 <- usa_allraces1[-4,]
+usa_allraces1 <- usa_allraces1[-7,]
+
+usa_allraces1 <- usa_allraces1 %>%
+    pivot_longer(cols = c(`<15000`, `15000-24999`, `25000-34999`, `35000-49999`, `50000-74999`, `75000-99999`, `100000-149999`, `150000-199999`, `>200000`),
+               names_to = "Income Bracket",
+               values_to = "Percent") %>%
+  group_by(`Year`) %>%
+  relocate(`Income Bracket`, .before = `Median Estimate`) %>%
+  relocate(`Percent`, .before = `Median Estimate`) %>%
+  select(-c(`Percent Total`))
+
+usa_allraces2 <- usa_allraces1 %>%
+  knitr::kable() %>%
+  kableExtra::scroll_box(height = "500px", width = "101%") %>%
+  kableExtra::kable_classic()
+usa_allraces2
+
+blackhnh_newcs <- blackhnh_newcs %>%
+  `colnames<-`(c("Year", 
+                 "Number", 
+                 "Percent Total", 
+                 "<15000", 
+                 "15000-24999", 
+                 "25000-34999", 
+                 "35000-49999", 
+                 "50000-74999", 
+                 "75000-99999", 
+                 "100000-149999",
+                 "150000-199999",
+                 ">200000", 
+                 "Median Estimate",
+                 "Median Error",
+                 "Mean Estimate",
+                 "Mean Error")) %>%
+  separate(Year, c("Year", "Footnote"), sep = " ") %>%
+  select(-c(Footnote))
+blackhnh_newcs$Year = as.double(as.character(blackhnh_newcs$Year))
+
+black_oldcs <- black_oldcs %>%
+  `colnames<-`(c("Year", 
+                 "Number", 
+                 "Percent Total", 
+                 "<15000", 
+                 "15000-24999", 
+                 "25000-34999", 
+                 "35000-49999", 
+                 "50000-74999", 
+                 "75000-99999", 
+                 "100000-149999",
+                 "150000-199999",
+                 ">200000", 
+                 "Median Estimate",
+                 "Median Error",
+                 "Mean Estimate",
+                 "Mean Error")) %>%
+  separate(Year, c("Year", "Footnote"), sep = " ") %>%
+  select(-c(Footnote))
+black_oldcs$Year = as.double(as.character(black_oldcs$Year))
+
+whitenh_newcs <- whitenh_newcs %>%
+  `colnames<-`(c("Year", 
+                 "Number", 
+                 "Percent Total", 
+                 "<15000", 
+                 "15000-24999", 
+                 "25000-34999", 
+                 "35000-49999", 
+                 "50000-74999", 
+                 "75000-99999", 
+                 "100000-149999",
+                 "150000-199999",
+                 ">200000", 
+                 "Median Estimate",
+                 "Median Error",
+                 "Mean Estimate",
+                 "Mean Error")) %>%
+  separate(Year, c("Year", "Footnote"), sep = " ") %>%
+  select(-c(Footnote))
+whitenh_newcs$Year = as.double(as.character(whitenh_newcs$Year))
+
+whitenh_oldcs <- whitenh_oldcs %>%
+  `colnames<-`(c("Year", 
+                 "Number", 
+                 "Percent Total", 
+                 "<15000", 
+                 "15000-24999", 
+                 "25000-34999", 
+                 "35000-49999", 
+                 "50000-74999", 
+                 "75000-99999", 
+                 "100000-149999",
+                 "150000-199999",
+                 ">200000", 
+                 "Median Estimate",
+                 "Median Error",
+                 "Mean Estimate",
+                 "Mean Error")) %>%
+  separate(Year, c("Year", "Footnote"), sep = " ") %>%
+  select(-c(Footnote))
+whitenh_oldcs$Year = as.double(as.character(whitenh_oldcs$Year))
+```
+
+
+```{r graphallraces, echo = FALSE}
+usa_allracesplot <- ggplot(usa_allraces1, aes(x=`Year`,y=`Percent`,color=`Income Bracket`, fill=`Income Bracket`)) +
+  geom_bar(stat = 'identity') +
+  easy_rotate_x_labels(side = "right") +
+  labs(title = "Income of all Respondents over the Years 1967 to 2019", x = "Years", y = "Percent of Income Bracket")
+usa_allracesplot
+```
+Here, I have a graph of all respondents regardless of race and their income. Based on percent of respondents, we can see the progression. Since inflation does occur over the years, this graph must be adjusted for inflation before any real statistical inferences can be drawn from it. 
+```{r graphcompare, echo = FALSE, message = FALSE}
+blackplotnew <- ggplot(blackhnh_newcs, aes(x=`Year`, y=`<15000`)) +
+  geom_point() +
+  easy_rotate_x_labels(side = "right") +
+  geom_smooth(method = "loess", formula = y ~ x, color = "#930df0") +
+  theme_gray() +
+  xlim(2002,2019)
+
+blackplotold <- ggplot(black_oldcs, aes(x=`Year`, y=`<15000`)) + 
+  geom_point() +
+  easy_rotate_x_labels(side = "right") +
+  geom_smooth(method = "loess", formula = y ~ x, color = "#df0358") +
+  xlim(1967,2001)
+
+blackplotcompare <- blackplotold + blackplotnew + plot_annotation(title = "Percent of Respondents below Poverty Line in Black Households from 1967 to 2019", 
+subtitle = "Respondents were not allowed to or did not specify Hispanic origin.", 
+tag_levels = "i", 
+tag_suffix = ".", 
+caption = "Currently, the poverty line for USA for 2023 is less than $15,000. 
+Here we look at the amount of respondents whose income falls under 15,000 and self-identified as Black.")
+
+whiteplotnew <- ggplot(whitenh_newcs, aes(x=`Year`, y=`<15000`)) +
+  geom_point() +
+  easy_rotate_x_labels(side = "right") +
+  geom_smooth(method = "loess", formula = y ~ x, color = "#930df0") +
+  theme_gray() +
+  xlim(2002,2019)
+
+whiteplotold <- ggplot(whitenh_oldcs, aes(x=`Year`, y=`<15000`)) + 
+  geom_point() +
+  easy_rotate_x_labels(side = "right") +
+  geom_smooth(method = "loess", formula = y ~ x, color = "#df0358") +
+  xlim(1972,2001)
+
+whiteplotcompare <- whiteplotold + whiteplotnew + plot_annotation(title = "Percent of Respondents below Poverty Line in White Households from 1967 to 2019", 
+subtitle = "Non-Hispanic origin cannot be assumed for all respondents.", 
+tag_levels = "i", 
+tag_suffix = ".", 
+caption = "Currently, the poverty line for USA for 2023 is less than $15,000. 
+Here we look at the amount of respondents whose income falls under 15,000 and self-identified as white.")
+
+compare <- blackplotold + blackplotnew + whiteplotold + whiteplotnew + 
+  plot_annotation(title = "Comparison of Percent of Black and White Respondents Below USA Poverty Line",
+                                                               caption = "Data was unavailable for white respondents before 1972; otherwise, data available from 1967 to 2019.
+                                                               Graph i is of Black respondents from 1967 to 2001,
+                                                               graph ii is of Black respondents from 2002 to 2019, 
+                                                               graph iii is of white respondents from 1972 to 2001, 
+                                                               and graph iv is of white respondents from 2002 to 2019.",
+                                                               
+                  subtitle = "All respondents cannot be assumed to be of non-Hispanic origin.", 
+                  tag_levels = "i", tag_suffix = ".")
+
+compare
+```
+The above plots are comparing the plots generated to view side-by-side comparisons of white and Black respondents whose income falls below what is currently considered the poverty line. As inflation does affect the interpretation of these numbers, we must consider that in 1967, $15,000 is worth $152,957.43 in today's buying power. There was an average of inflation of 3.75% each year since 1960, leading to current prices and a total increase of 919.72%.
+
+
+
+
+

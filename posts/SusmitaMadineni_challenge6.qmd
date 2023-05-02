@@ -1,0 +1,149 @@
+---
+title: "Visualizing time and groups"
+author: "Susmita Madineni"
+description: "Visualizing Time and Relationships"
+date: "08/23/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - fed_rate
+  - readr
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+install.packages("treemap")
+library(tidyverse)
+library(lubridate)
+library(treemap)
+library(ggplot2)
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - fed_rate ⭐⭐
+
+
+```{r}
+library(readr)
+fed_data <- read_csv("_data/FedFundsRate.csv")
+View(fed_data)
+```
+```{r}
+# Preview the first few rows of the dataset
+head(fed_data)
+
+# Understanding the dimensions of the dataset 
+dim(fed_data)
+```
+```{r}
+# Identifying the column names of the dataset 
+colnames(fed_data)
+
+# Identifying the data types of the columns
+sapply(fed_data, class)
+table(sapply(fed_data, function(x) typeof(x)))
+sapply(fed_data, function(x) n_distinct(x))
+```
+
+### Briefly describe the data
+This dataset gives the information about federal funds rate from 1954 to 2017. The dataset has 904 rows and 10 columns. Based on the above, we can infer that there are 10 columns(variables) are of double datatype. All the columns are readable for the user. Each observation in the dataset provides information of Year, Month, Day, Federal Funds Target Rate, Federal Funds Upper and lower Target, Effective Federal Funds Rate, Real GDP (Percent Change),  Unemployment Rate, Inflation Rate. 
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data does not look tidy enough to use for various analyses and data visualizations. The columns-Year, Month, Day can be combined into one column-date and use it for visualizations. 
+
+```{r}
+fed_data_m <- fed_data %>%
+  mutate(date = str_c(Month,Day,Year, sep = "/"), 
+        date = mdy(date)) %>%
+        select(-c(Month, Day, Year))
+
+fed_data_m
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+
+## Time Dependent Visualization
+```{r}
+select(fed_data_m, c('date', 'Effective Federal Funds Rate'))
+select(fed_data_m, c('date', 'Unemployment Rate'))
+
+```
+
+```{r}
+ggplot(fed_data_m, aes(x=date, y=fed_data_m$`Effective Federal Funds Rate`))+
+  geom_line(color="#69b3a2")+
+  theme_minimal() + labs(title = "Date Vs Effective Federal Funds Rate", y = "Effective Federal Funds Rate", x = "Date")
+  
+```
+
+```{r}
+ggplot(fed_data_m, aes(x=date, y=fed_data_m$`Unemployment Rate`))+
+  geom_line(color="#69b3a2")+
+  theme_minimal() + labs(title = "Date Vs Unemployment Rate", y = "Unemployment Rate", x = "Date")
+```
+
+```{r}
+# Limiting the unemployment rate from the years 1965 to 2000
+ggplot(fed_data_m, aes(x=date, y=fed_data_m$`Unemployment Rate`))+
+  scale_x_date(limit=c(as.Date("1965-01-01"),as.Date("2000-01-12"))) +
+  geom_line(color="#69b3a2")+
+  theme_minimal() + labs(title = "Date Vs Unemployment Rate", y = "Unemployment Rate", x = "Date")
+```
+
+## Visualizing Part-Whole Relationships
+```{r}
+fed_filter_data <- fed_data_m %>% 
+  filter(date >= '2000-07-01', date <= '2004-07-01')
+
+fed_filter_data
+
+```
+
+
+```{r}
+
+treemap(fed_filter_data, 
+        index = c("date"), 
+        vSize = "Unemployment Rate",
+        type = "index", 
+        border.col=c("red","white"))
+        
+```
+

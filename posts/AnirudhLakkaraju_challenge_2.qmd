@@ -1,0 +1,145 @@
+---
+title: "Challenge 2"
+author: "Anirudh Lakkaraju"
+description: "Data wrangling: using group() and summarise()"
+date: "04/30/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Anirudh Lakkaraju
+  - birds.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+df <- read_csv("_data/birds.csv")
+df
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+tail(df)
+```
+
+```{r}
+nrow(df)
+```
+
+```{r}
+summary(df)
+```
+
+```{r}
+str(df)
+```
+
+### Cleaning the data
+
+We clean all variables with the word \"code\" in the name as these variables are only unique identifiers for other variables.
+
+```{r}
+df_cleaned<-df%>%select(-c(contains("Code")))
+head(df_cleaned)
+```
+
+## Describe the data
+
+We now try to describe the data and further filter the data if the necessary.
+
+We first find the number of unique values in each variable
+
+```{r}
+length(unique(df_cleaned$Domain))
+
+```
+
+```{r}
+length(unique(df_cleaned$Area))
+```
+
+```{r}
+length(unique(df_cleaned$Element))
+```
+
+```{r}
+length(unique(df_cleaned$Item))
+```
+
+```{r}
+length(unique(df_cleaned$Year))
+```
+
+```{r}
+length(unique(df_cleaned$Unit))
+```
+
+```{r}
+length(unique(df_cleaned$Value))
+```
+
+```{r}
+length(unique(df_cleaned$Flag))
+```
+
+```{r}
+length(unique(df_cleaned$`Flag Description`))
+```
+
+As we can see that Domain, Element and Unit have only 1 unique value, they can also be dropped
+
+```{r}
+df_cleaned<-df_cleaned%>%select(-c(Domain, Element, Unit))
+unique(df_cleaned$Item)
+```
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+df_cleaned %>%
+  group_by(Item)%>%
+  summarise(avg_stocks = mean(Value, na.rm = TRUE))
+```
+
+### Explain and Interpret
+
+We try to understand the sizes of the five livestock in the datset and which countries have how much poultry during the given time frame. By grouping in the following way, it can be seen that the countries have a lot more chicken as livestock compared to the other poultry.
+
+```{r}
+df_cleaned %>%
+  group_by(Area)%>%
+  summarize(avg_stocks = mean(Value, na.rm = TRUE))
+```

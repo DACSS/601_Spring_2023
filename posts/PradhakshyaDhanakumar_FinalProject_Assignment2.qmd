@@ -1,0 +1,159 @@
+---
+title: "Final Project Assignment#2 : Exploratory Analysis and Visualization: Project & Data Description"
+author: "Pradhakshya Dhanakumar"
+description: "Exploratory Analysis and Visualization"
+date: "05/01/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_2
+  - final_project_exploratory_analysis
+editor_options: 
+  chunk_output_type: console
+---
+```{r}
+install.packages("magrittr")
+
+```
+
+```{r}
+install.packages("plotly")
+             
+```
+```{r}
+install.packages("ggplot2")
+```
+
+```{r}
+library(magrittr)
+library(plotly)
+```
+
+
+## Understanding Data:
+
+```{r}
+spotify_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv', show_col_types = FALSE)
+View(spotify_songs)
+```
+```{r}
+dim(spotify_songs)
+```
+
+```{r}
+tail(spotify_songs,5)
+```
+
+```{r}
+summary(spotify_songs)
+```
+
+Checking Structure of Data
+```{r}
+str(spotify_songs)
+```
+## Data Cleaning:
+
+Checking for NULLs/Missing values
+```{r}
+colSums(is.na(spotify_songs))
+```
+Null Values: 
+We can observe that the variables track_name, track_album_name, and track_artist have 5 instances of missing data. Out of 32833 rows, we can remove 5 rows without any significant impact on our data.
+
+Duplicate Values:
+Upon examining the dataset, it became apparent that certain songs were included more than once. Specifically, out of the 32,833 songs in the dataset, only 28,352 songs are unique. These repeated songs are identified by the same 'track_id', but a different 'playlist_id'. Therefore, to remove these duplicates, we will delete the rows with repeated 'track_id' values. Since the 'track_id' serves as a unique identifier for each song, and the other numeric and categorical features associated with each song remain consistent across all instances of that song, this method of deduplication will be effective.
+
+Removing NULL from data
+```{r}
+spotify_songs <- na.omit(spotify_songs)
+```
+
+Changing datatype of some categorical columns from string to factor. 
+```{r}
+spotify_songs <-spotify_songs %>%
+  mutate(playlist_genre=as.factor(spotify_songs$playlist_genre),
+         playlist_subgenre=as.factor(spotify_songs$playlist_subgenre),
+         mode=as.factor(mode),
+         key=as.factor(key))
+```
+
+Removing Duplicate Data
+```{r}
+spotify_songs <- spotify_songs[!duplicated(spotify_songs$track_id),]
+dim(spotify_songs)
+```
+
+Dropping Redundant Columns
+```{r}
+spotify_songs <- spotify_songs %>% select(-c(track_id, track_album_id,
+                                             track_album_name, 
+                                             playlist_id, playlist_name,
+                                             playlist_subgenre))
+```
+
+
+Converting date to string and creating a new column 'year'
+```{r}
+spotify_songs$track_album_release_date <- as.character(spotify_songs$track_album_release_date, "%m/%d/%Y")
+spotify_songs$year <- substr(spotify_songs$track_album_release_date,1,4)
+```
+
+Changing data type of year column
+```{r}
+spotify_songs$year <- as.numeric(spotify_songs$year)
+```
+
+To view Cleaned Data
+```{r}
+output_data <- head(spotify_songs, n = 100)
+View(output_data)
+```
+
+
+## Exploratory Data Analysis:
+```{r}
+library(dplyr)
+```
+
+```{r}
+spotify_songs %>% group_by(Genre = playlist_genre) %>%
+  summarise(No_of_tracks = n()) %>% 
+  arrange(desc(No_of_tracks)) %>% knitr::kable()
+```
+
+ThE above code groups Spotify songs by genre and calculates the number of tracks for each genre, then arranges the genres by the number of tracks in descending order and displays them in a table using the 'knitr' package's 'kable' function.
+
+POPULARITY ACROSS GENRES
+```{r}
+popularity_vs_genre_plot<- ggplot(spotify_songs, aes(x = playlist_genre, y =
+                                                 track_popularity)) +
+        geom_boxplot() +
+        coord_flip() +
+        labs(title = "Popularity across genres", x = "Genres", y = "Popularity")
+
+ggplotly(popularity_vs_genre_plot)
+```
+
+The above code generates a box plot using the to display the distribution of track popularity across different genres of Spotify songs.
+
+ARTISTS WITH MOST TRACK RELEASES
+```{r}
+
+highest_tracks <- spotify_songs %>% group_by(Artist = track_artist) %>%
+  summarise(No_of_tracks = n()) %>%
+  arrange(desc(No_of_tracks)) %>%
+  top_n(15, wt = No_of_tracks) %>% 
+  ggplot(aes(x = Artist, y = No_of_tracks)) +
+        geom_bar(stat = "identity") +
+        coord_flip() + labs(title = "Artists With The Most Track Releases", x = "Artist", y = "# of Tracks")
+
+ggplotly(highest_tracks)
+```
+
+The above code groups Spotify songs by artist and calculates the number of tracks released by each artist. It then selects the top 15 artists with the most track releases, creates a bar chart using the 'ggplot2' package.

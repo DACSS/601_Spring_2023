@@ -1,0 +1,127 @@
+---
+title: "Challenge 8 Instructions"
+author: "Susmita Madineni"
+description: "Joining Data"
+date: "08/25/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - railroads
+  - snl
+  - faostat
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+
+```{r}
+library(readr)
+faostat_country_data <- read_csv("_data/FAOSTAT_country_groups.csv")
+faostat_cattle_data <- read_csv("_data/FAOSTAT_cattle_dairy.csv")
+View(faostat_country_data)
+View(faostat_cattle_data)
+```
+
+```{r}
+# Preview the first few rows of the dataset
+head(faostat_country_data)
+head(faostat_cattle_data)
+
+# Understanding the dimensions of the dataset 
+dim(faostat_country_data)
+dim(faostat_cattle_data)
+
+```
+```{r}
+# Identifying the column names of the dataset 
+colnames(faostat_country_data)
+colnames(faostat_cattle_data)
+
+# Identifying the data types of the columns
+sapply(faostat_country_data, class)
+table(sapply(faostat_country_data, function(x) typeof(x)))
+
+sapply(faostat_cattle_data, class)
+table(sapply(faostat_cattle_data, function(x) typeof(x)))
+
+```
+
+
+### Briefly describe the data
+
+I chose FAOSTAT_country_groups.csv and FAOSTAT_cattle_dairy.csv datasets. In the first dataset, the codes for each country is present. In second dataset, the livestock data in different countries, along with the values of different elements from 1961 to 2018 is present. First dataset has 1943 rows and 7 columns out of which there are 5 character types and 2 double datatypes. In the second dataset, there are 36449 rows and 14 columns out of which there are 8 characters and 6 double datatypes. I will use the country code in first dataset and area code in the second dataset to join the two datasets and perform analysis.
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+# renaming the column value area code in cattle_diary dataset
+
+faostat_cattle_data_new <- faostat_cattle_data %>%
+  rename("Country Code"= "Area Code")
+
+head(faostat_cattle_data_new)
+
+```
+
+## Join Data
+
+Like I have mentioned previously, I will use Country Code column to join both the datasets.
+
+```{r}
+
+df_join <- faostat_cattle_data_new %>% 
+  left_join(faostat_country_data, by = "Country Code")
+
+df_join
+```
+Now, using the above dataframe, we will be able to perform analysis like analyzing the value of milk in different years across different years(from 1981 to 2018) among different country groups.
+
+
+```{r}
+
+df_join %>% filter(Year >= 1981) %>%
+  filter(`Country Group` == "Asia") %>%
+  filter(Flag == "F") %>%
+  filter(Unit == "tonnes") %>%
+  ggplot(aes(x = `Area`, y = `Value`))+ geom_point()+ coord_flip(expand = FALSE)+ labs(title = "Official quantity of milk produced in Asia from 1981 to 2018", y = "Price of Milk", x = "Location")
+
+```
+
+```{r}
+df_join %>% filter(Year >= 2000) %>%
+  filter(`Country Group` == "Central Asia") %>%
+  filter(Flag == "F") %>%
+  filter(Unit == "tonnes") %>%
+  ggplot(aes(x = `Area`, y = `Value`))+ geom_point()+ labs(title = "Official quantity of milk produced in Central Asia from 2000 to 2018", y = "Price of Milk", x = "Location")
+```
+

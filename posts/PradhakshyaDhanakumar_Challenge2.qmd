@@ -1,0 +1,99 @@
+---
+title: "Challenge 2"
+author: "Pradhakshya Dhanakumar"
+desription: "Worked with Rail Roads Data"
+date: "03/02/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - Challenge 2
+  - Pradhakshya Dhanakumar
+  - RailRoads
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+options(readr.show_col_types = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reading Data
+Read the data from a .csv file
+```{r}
+data <- read_csv("_data/railroad_2012_clean_county.csv")
+print(data,show_col_types = FALSE)
+```
+
+
+## Dataset Information
+Dimensions of the dataset
+```{r}
+dim(data)
+```
+
+We can see that that dataset has 2930 rows and 3 columns. 
+
+
+Summary of data variables
+
+We can see. that the dataset has 119390 rows and 32 columns in total. Using the 'str' fucntion, we can get the type of data and other information like length, its contents etc for each column. The data has 3 different columns - State- Character type, County - Character typr, and Total Employee - Number typer information. We can see that this data is about the Rail Road employee belonging to different state and counties.
+```{r}
+str(data)
+```
+## Group Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as group_by(), select(), filter(), and summarise(). Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+Select
+
+```{r}
+df<-select(data,state, total_employees)
+View(df)
+```
+
+We can filter out the data for the AL country by using the filter() function
+```{r}
+df<- data %>% 
+  filter(county == "CHILTON")
+print(df)
+```
+
+Group By, Mean, Standard Deviation
+
+
+
+We can find the average and standard deviation of the employee count for each state by using the groupby(), mean() and sd() functions.
+
+Group by State:
+```{r}
+data %>% 
+  group_by(state) %>% 
+  summarise(MeanEmployees = mean(total_employees, na.rm=TRUE), StandardDeviation = sd(total_employees, na.rm = TRUE))
+```
+
+Group by County:
+```{r}
+data %>% 
+  group_by(county) %>% 
+  summarise(MeanEmployees = mean(total_employees, na.rm=TRUE), StandardDeviation = sd(total_employees, na.rm = TRUE))
+```
+
+We can count the number of counties for each county using the groupby() and count() function
+```{r}
+data %>% 
+  group_by(state) %>% 
+  summarise(CountOfCounty = n())
+```
+
+
+## Interpretation
+On analyzing the data using the above , we can see that not all states have multiple counties. There are states like AE, AP, DC and many more with just 1 county. Hence we see the value 'N/A' when we calculate the standard deviation for certain states and counties.
+
+

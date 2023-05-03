@@ -1,0 +1,124 @@
+---
+title: "Visualizing Cereal data"
+author: "Saksham Kumar"
+description: "Introduction to Visualization"
+date: "05/03/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+    df-print: paged
+categories:
+  - challenge_5
+  - cereal
+  - Saksham Kumar
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(ggrepel)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+
+```{r}
+cereal <- read_csv("_data/cereal.csv")
+
+cereal
+```
+
+### Briefly describe the data
+
+```{r}
+cereal %>% colnames()
+```
+
+The cereal data contains 4 variables: "Name", Amount of "Sodium", Amount of "Sugar" and the cereal "Type"
+
+```{r}
+cereal %>% summary()
+```
+The above results contain general statistics about the data.
+
+```{r}
+cereal$Type %>% unique()
+```
+
+There are only two types of cereal, A and C.
+
+## Tidy Data (as needed)
+
+The data is alreadt tidy. It just needs a few additional columns to help visualize outliers.
+
+To calculate outliers we will first create a new function that classfies the current value as an outlier
+
+```{r}
+outlier <- function(x) {
+  return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
+}
+```
+
+Next we mutate the data to include two new columns. One that specifies if the cereal is an outlier in Sodium quantities. Another that specifies if the cereal is an outlier in Sugar quantities.
+
+```{r}
+cereal <- cereal %>%
+  mutate(sodium_outlier = ifelse(outlier(cereal$Sodium), cereal$Cereal, NA)) %>%
+  mutate(sugar_outlier = ifelse(outlier(cereal$Sugar), cereal$Cereal, NA))
+
+cereal
+```
+
+## Univariate Visualizations
+
+First we plot two boxplots, one for sugar and one for sodium.
+
+```{r}
+ggplot(cereal, aes(x=NA, y=Sodium)) +
+  geom_boxplot() +
+  geom_text(aes(label=sodium_outlier), na.rm=TRUE, hjust=-.5)
+
+ggplot(cereal, aes(x=NA, y=Sugar)) +
+  geom_boxplot() +
+  geom_text(aes(label=sugar_outlier), na.rm=TRUE, hjust=-.5)
+```
+We can see that there are two Cereals that are categorized as outliers for Sodium levels: Raisin Bran and Frosted Mini Wheats. There are no outliers for Sugar levels.
+
+## Bivariate Visualization(s)
+
+```{r}
+ggplot(cereal, aes(Sugar, Sodium, col=Type)) + geom_point() + geom_text_repel(size=2, aes(label=Cereal))
+```
+
+From the graph we can see that there seems to be no general correlation between Sodium and Sugar levels. Type C Cereals still have a more linear relationship between Sodium and Sugar, when compared to Type A Cereals.
+
+Raisin Bran seems to have the highest Sugar and Sodium levels of all Cereals

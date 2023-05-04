@@ -1,0 +1,148 @@
+---
+title: "Final Project Assignment #2: Nanci Kopecky"
+author: "Nanci Kopecky"
+description: "Boston 311 Service Requests for 2023"
+date: "05/03/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+1.  Data set(s) Introduction:
+
+*311 Service Requests* is a data set on Analyze Boston data.boston.gov, an open-source data website run by the City of Boston. Residents and city employees can make service requests through various means, such as by phone, with an app, and online. In April 2023, there are 74,930 service requests at that point. Each row represents a service request. There are 29 columns. Each column contains detailed information on each service request including the description, time, date, location, and city department/domain. Service requests are about maintenance, repair, cleaning, and policy. Note: As of May 3, 2021, there are now 91,254 service requests.
+
+2.  What questions do you like to answer with this data set?
+
+Questions that could inform city officials could be the following:
+
+Which city department receives the most service requests? Do residents and city employees use or prefer making service requests by the phone, app, or some other format? Does certain time of the day, week, or month receive more requests? What type of service requests are made in each neighborhood? Are the proportions of *On Time* service requests the same for each neighborhood? For each city department?
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+1.  Read the data set.
+
+This data set is read in with a url.
+
+```{r}
+Boston311 <- read.csv(url("https://data.boston.gov/dataset/8048697b-ad64-4bfc-b090-ee00169f2323/resource/e6013a93-1321-4f2a-bf91-8d8a02f1e62f/download/tmpo8qm0oqd.csv"))
+Boston311
+Bos311 <- as.data.frame.matrix(Boston311)
+Bos311
+```
+
+2.  Descriptive information of the data set. As of May 3, 2023, there are 91,255 service requests. Each row represents a service request. There are 29 columns where each variable gives a detail of the service request. 28 of the variables are collected as categorical/character data. The only numerical variable is the case_enquiry_id, identifying each individual service request. The other variables provide information about the following: case status as open, target, close dates; descriptions the request with the title, subject, reason, and type; which department; location information including address, fire, city council and police districts, and latitude and longitude coordinates; and how the service request was reported.
+
+```{r}
+dim(Bos311)
+head(Bos311)
+```
+
+```{r}
+#Lists the structure of each variable. 
+str(Bos311)
+```
+
+3.  Summary statistics of the dataset(s).
+
+This data set does not have numerical data so frequencies and percentages will summarize the categorical variables. Below the counts and proportions of some of the variables.
+
+```{r}
+#Frequency and Proportions of Service Requests by Department
+prop.table(table(Bos311$subject))
+table(Bos311$subject)
+```
+
+```{r}
+#Counts and percentages of on-time and overdue service requests for each department.
+table(Bos311$subject,Bos311$ontime)
+prop.table(table(Bos311$subject,Bos311$ontime))
+```
+
+```{r}
+#Removing the row with missing values for neighborhood. 
+Bos311_Neighbor <- Bos311[!(is.na(Bos311$neighborhood) | Bos311$neighborhood==" "| Bos311$neighborhood==""), ]
+unique(Bos311_Neighbor$neighborhood)
+```
+
+```{r}
+#Counts and percentages of on-time and overdue service requests for each neighborhood.
+table(Bos311_Neighbor$neighborhood,Bos311_Neighbor$ontime)
+prop.table(table(Bos311_Neighbor$neighborhood,Bos311_Neighbor$ontime))
+```
+
+```{r}
+#Counts and percents of how residents and city employees make service for each neighborhood. 
+table(Bos311_Neighbor$neighborhood, Bos311_Neighbor$source)
+prop.table(table(Bos311_Neighbor$neighborhood, Bos311_Neighbor$source))
+```
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+1.  Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above.
+
+I would like to present bar graphs that can address the questions posed in part one.
+
+```{r}
+#Frequency chart of service requests by department. 
+ggplot(Bos311, aes(subject)) + 
+  geom_bar() +
+  coord_flip()
+```
+
+```{r}
+#Proportion of on time requests per neighborhood. 
+ggplot(Bos311_Neighbor, aes(neighborhood)) +
+  geom_bar(aes(fill = ontime), position = "fill") +
+  labs(title = "311 Service Requests for 2023", x = "Neighborhood", y = "Percent") + 
+  coord_flip()
+```
+
+```{r}
+#Proportions of the ways residents and city employees make the service request. 
+ggplot(Bos311_Neighbor, aes(neighborhood)) +
+  geom_bar(aes(fill = source), position = "fill") +
+  labs(title = "311 Service Requests for 2023", x = "Neighborhood", y = "Percent") + 
+  coord_flip()
+```
+
+```{r}
+#Counts of the ways residents and city employees make the service request. 
+ggplot(Bos311_Neighbor, aes(subject)) +
+  geom_bar(aes(fill = source), position = position_dodge())+
+  labs(title = "311 Service Requests for 2023", x = "Neighborhood", y = "Frequency") + 
+  coord_flip()
+```
+
+2.  Explain why you choose to conduct these specific data analyses and visualizations.
+
+The bar graphs and tables can show if any variable, such as a type of request, particular department or neighborhoods are unusually high. Understanding the where the demands are can help the city be more efficient in terms of assigning resources, management, and communication.
+
+3.  If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.
+
+## Special Note on the role of statistics {#special-note-on-the-role-of-statistics}
+
+After more in depth exploratory analysis, I may decide to conduct chi-square tests to see if there is an association between certain variables.

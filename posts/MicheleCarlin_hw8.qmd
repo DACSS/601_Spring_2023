@@ -1,0 +1,83 @@
+---
+title: "Challenge 8: Michele Carlin"
+author: "Michele Carlin"
+desription: "Joining data"
+date: "05/03/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - Michele Carlin
+  - snl
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(summarytools)
+library(dbplyr)
+library(readr)
+
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read in and view summary of SNL_actors dataset.
+
+```{r}
+snl_actors <- read_csv ("_data/snl_actors.csv")
+View(snl_actors)
+view(dfSummary(snl_actors))
+```
+
+Read in and view summary of SNL_casts dataset.
+
+```{r}
+snl_casts <- read_csv ("_data/snl_casts.csv")
+View(snl_casts)
+view(dfSummary(snl_casts))
+```
+
+Read in and view summary of SNL_seasons dataset.
+
+```{r}
+snl_seasons <- read_csv ("_data/snl_seasons.csv")
+View(snl_seasons)
+view(dfSummary(snl_seasons))
+```
+
+
+Summarize datasets...
+The SNL_actors dataset contains 2306 rows and 4 columns including the actor's name (aid), a url to more information about that actor, the type of actor (cast, crew, guest, or unknown) and their gender.
+
+The SNL_casts dataset contains 614 rows and 8 columns of data about cast members only (e.g., the cast member's name (aid), season ID (sid), the date of their first and last episodes, etc.). In this dataset, every cast member has a separate row for each season they were on, as well as the number of episodes they were in for each of those seasons.
+
+The SNL_seasons dataset contains 46 rows and 5 columns including season ID (sid), the year, dates of first and last episodes, and number of episodes in each season.
+
+I will start with the SNL_casts file and merge in the SNL_actors file matching on actor ID (aid). The casts file only contains information on cast members, therefore if a did a left join, only cast member data would be retained.  I am going to perform a full join so that I can retain data on both cast members and guests.  
+
+```{r}
+casts_actors <- snl_casts %>% full_join(snl_actors, 
+                              by=c('aid'))
+View(casts_actors)
+view(dfSummary(casts_actors))
+```
+
+This new casts_actors file now contains 2764 rows and 11 columns.
+
+I will now join the SNL_seasons file into my newly created casts_actors dataset; matching on season ID (sid).
+
+```{r}
+SNL <- casts_actors %>% left_join(snl_seasons, 
+                              by=c('sid'))
+View(SNL)
+view(dfSummary(SNL))
+```
+
+My new SNL dataset contains 2764 rows and 15 columns. 

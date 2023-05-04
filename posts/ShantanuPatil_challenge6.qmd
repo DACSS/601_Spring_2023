@@ -1,0 +1,135 @@
+---
+title: "Analysis of Mortage and Overall Debt trends "
+author: "Shantanu Patil"
+description: "Visualizing Time and Relationships with focus on mortages debt how it rose till 2008 and where it is heading "
+date: "05/03/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+
+  - fed_rate
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+```{r}
+debt_raw <- read_xlsx("_data/debt_in_trillions.xlsx")
+head(debt_raw, 5)
+
+
+```
+
+### Briefly describe the data
+
+This dataset provides a quarterly overview of various types of debt in the United States from Q1 2003 to Q2 2021. The columns represent the following:
+
+1. **Year and Quarter**: The time period in which the data was collected, formatted as year and quarter (e.g., '03:Q1' for the first quarter of 2003).
+2. **Mortgage**: The total outstanding mortgage debt in trillions of US dollars.
+3. **HE Revolving**: The total outstanding home equity revolving debt in trillions of US dollars.
+4. **Auto Loan**: The total outstanding auto loan debt in trillions of US dollars.
+5. **Credit Card**: The total outstanding credit card debt in trillions of US dollars.
+6. **Student Loan**: The total outstanding student loan debt in trillions of US dollars.
+7. **Other**: The total outstanding debt from other sources in trillions of US dollars.
+8. **Total**: The total outstanding debt, including all the above categories, in trillions of US dollars.
+
+The dataset provides valuable insights into the trends and composition of debt in the United States across different loan types and time periods.
+
+
+
+## Tidy Data (as needed)
+
+
+
+```{r}
+# Tidying the data
+debt_tidy <- debt_raw %>%
+  rename(year_quarter = `Year and Quarter`) %>%
+  separate(year_quarter, into = c("year", "quarter"), sep = ":") %>%
+  mutate(year = as.integer(year) + 2000,
+         quarter = as.integer(substr(quarter, 2, 2))) %>%
+  gather("debt_type", "amount", Mortgage:Total)
+
+head(debt_tidy, 5)
+
+
+
+```
+
+The data has been cleaned up. The "Year and Quarter" column has been divided into "year" and "quarter" columns, with the year transformed to four digits. 
+
+The debt types are now kept in a single column named "debt_type," and the amounts are stored in the "amount" column. 
+
+This format facilitates better data analysis and visualization.
+
+
+## Time Dependent Visualization
+
+```{r}
+# Filter the data to include only Mortgage debt
+debt_mortgage <- debt_tidy %>%
+    filter(debt_type == "Mortgage") %>%
+    select(year, quarter, amount)
+
+# Time Dependent Visualization for Mortgage debt
+ggplot(debt_mortgage, aes(x = year + (quarter - 1) / 4, y = amount)) +
+    geom_line(size = 1) +
+    scale_x_continuous(breaks = seq(2003, 2021, 2), limits = c(2003, 2021)) +
+    scale_y_continuous(labels = scales::comma) +
+    labs(title = "U.S. Mortgage Debt (2003 - 2021)",
+         x = "Year",
+         y = "Debt Amount (Trillions of US Dollars)") +
+    theme_minimal()
+
+
+
+```
+I have created a time-dependent visualization for mortgage debt.
+I wanted to analyze how has the mortage debt been evolving, as I remeber that the financial crisis of 2008, sent global shockwaves through out the world economy.
+I first filter the data to include only mortgage debt and select the relevant columns (year, quarter, and amount). Then ggplot2 is usedd to create a line chart that shows the trend of mortgage debt from 2003 to 2021. 
+
+The line chart is chosen because it effectively shows the trend of mortgage debt over time, making it easy to identify patterns or changes in the data.
+
+From my analysis we can clearly see that the mortgages reached a peak during 2008 and they started coming down till the first quarter of 2013. The debt surpased the earlier peak of 2008 around the last quarted of 2018 and has kept going up, which shows that the mortages have kept on increasing and is a bad sign for the overall economy.
+
+## Visualizing Part-Whole Relationships
+
+
+```{r}
+debt_tidy %>%
+  filter(debt_type != "Total") %>%
+  mutate(debt_type = fct_relevel(debt_type, "Mortgage", "Auto Loan", "Credit Card", "HE Revolving", "Other", "Student Loan")) %>%
+  ggplot(aes(x = year + (quarter - 1) / 4, y = amount, fill = debt_type)) +
+  geom_area(position = "stack", alpha = 0.8) +
+  theme_bw() +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Debt Type Breakdown by Quarter (Stacked Area Chart)",
+       x = "Year",
+       y = "Debt Amount (Trillions of US Dollars)",
+       fill = "Debt Type") 
+
+
+
+```
+
+I stacked area chart to visualize the part-whole relationship between different debt types over time. 
+
+First,the data is filtered to exclude the "Total" debt type and reorder the debt types according to their contribution to the total debt. 
+
+The stacked area chart was chosen because it is an effective approach to display the part-whole relationship between debt categories, allowing us to quickly visualize each debt type's contribution to the overall debt over time. This graphic also helps in spotting data trends and patterns, such as the growth or reduction of each debt kind over time. We can see that mortage loans are the biggest debt type, which is keeping on increasing.

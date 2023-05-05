@@ -1,0 +1,104 @@
+---
+title: "Challenge 6"
+author: "Sai Pranav Kurly"
+description: "Visualizing Time and Relationships"
+date: "05/20/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - fed_rate ⭐⭐
+
+  
+
+```{r}
+fed_data <- read_csv("_data/FedFundsRate.csv")
+fed_data
+```
+
+### Briefly describe the data
+
+```{r}
+summary(fed_data)
+```
+This dataset offers information on federal fund rates from 1954 to 2017. It covers the exact day, month, and year of these rates, as well as the funds' upper and lower targets, unemployment rate, GDP, and inflation rate.
+
+
+## Tidy Data (as needed)
+
+To clean up the data, I'm merging the day, month, and year into one and structuring it for simpler analysis.
+
+```{r}
+fed_data$Date <- as.Date(with(fed_data,paste(Day,Month,Year,sep="-")),"%d-%m-%Y")
+fed_data
+```
+
+
+## Time Dependent Visualization
+
+```{r}
+select(fed_data, c('Date','Unemployment Rate'))
+```
+
+```{r}
+ggplot(fed_data, aes(x=Date, y=fed_data$`Unemployment Rate`)) + 
+  geom_line() + 
+  xlab("Date") + 
+  ylab("Unemployment Rate") + 
+  ggtitle("Date vs Unemployment Rate")
+```
+
+
+```{r}
+data_filled <- fed_data %>% fill(`Unemployment Rate`, .direction = 'updown')
+ggplot(data_filled, aes(x=Date, y=data_filled$`Unemployment Rate`)) + 
+  geom_line() + 
+  xlab("Date") + 
+  ylab("Effective Federal Funds Rate") + 
+  ggtitle("Date vs Effective Federal Funds Rate")
+```
+
+## Visualizing Part-Whole Relationships
+
+I am visualizing the rate of unemployment over the years from 2000 to 2017 to get a clear idea of the recent trends.
+
+```{r}
+data_filled <- fed_data %>% fill(`Unemployment Rate`, .direction = 'updown')
+data_filled %>%
+  filter(Year > 1999) %>%
+  ggplot(aes(x = Date, y = `Unemployment Rate`)) +
+  geom_line() +
+  xlab("Date") + 
+  ylab("Unemployment Rate") + 
+  ggtitle("Unemployment Rate from 2000 to 2017")
+
+```
+
+

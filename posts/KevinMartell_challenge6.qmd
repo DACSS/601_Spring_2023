@@ -1,0 +1,117 @@
+---
+title: "Challenge 6 Instructions"
+author: "Kevin Martell Luya"
+description: "Visualizing Time and Relationships"
+date: "05/05/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(here)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+
+-   try to make them "publication" ready (optional)
+-   Explain why you choose the specific graph type
+
+5)  Create at least one graph depicting part-whole or flow relationships
+
+-   try to make them "publication" ready (optional)
+-   Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   debt ⭐
+-   fed_rate ⭐⭐
+-   abc_poll ⭐⭐⭐
+-   usa_hh ⭐⭐⭐
+-   hotel_bookings ⭐⭐⭐⭐
+-   AB_NYC ⭐⭐⭐⭐⭐
+
+```{r}
+airb <- here("posts","_data","AB_NYC_2019.csv") %>%
+  read_csv()
+# ordering the coloumns 
+ab_subset<-subset(airb, select = c(1:11)) 
+ab_subset<-ab_subset[,c(3,4, 9,10, 1:2, 5:8, 11)] 
+ab_subset
+
+```
+
+### Briefly describe the data
+
+AB_NYC_2019.csv dataset contains geolocations about houses to be rented in by Airbnb. To visualize this properties, let plot a map using the latitud and longitud, and other important properties such as the price property and room price.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+
+```{r}
+
+ggplot(ab_subset, aes(longitude, latitude, size = price, color = room_type), group = neighbourhood_group) +
+  geom_point() +
+  labs (size = "Price of Property",
+        title = "Map of Airbnb Properties in NYC by Price and Room Types",
+    subtitle = "the airbnb dataset (AB_NYC_2019.csv)")
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+It was necessary to reorder the columns to have a better understanding of the raw data, and check what plot 
+would be interesting to show.
+
+## Time Dependent Visualization
+Let’s draw a part-whole relationship by showing different neighbourhood_groups within the sum of bookings of a specific type of room
+
+## Visualizing Part-Whole Relationships
+```{r}
+## Bivariate Visualization(s)
+ggplot(ab_subset, aes(x=room_type, fill=neighbourhood_group)) +  # setting x-axis as the room_type variable; #filling each room type by a second variable, the neighbourdhood group the property locates in
+ 
+  geom_bar( ) + 
+  labs(
+    x = "Type of Rooms",
+    y = "Amount of Bookings",
+    colour = "Neighborhood Group",
+    title = "Bivariate Visualization: room_type + neighbourhood_group",
+    subtitle = "the airbnb dataset (AB_NYC_2019.csv)"
+  )
+```
+

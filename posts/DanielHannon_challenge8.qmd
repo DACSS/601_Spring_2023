@@ -1,0 +1,105 @@
+---
+title: "SNL Joining"
+author: "Daniel Hannon"
+desription: "Joined Multiple Dataframes about SNL cast data"
+date: "05/02/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - Daniel Hannon
+  - snl
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read in the data 
+
+```{r}
+actors <- read.csv("_data/snl_actors.csv")
+
+casts <- read.csv("_data/snl_casts.csv")
+
+seasons <- read.csv("_data/snl_seasons.csv")
+
+head(actors)  # (2,306 x 4)
+
+casts <- casts %>%  # (614 x 8)
+        mutate(first_epid = ymd(first_epid), last_epid = ymd(last_epid))
+
+seasons <- seasons %>% # (46 x 5)
+        mutate(first_epid = ymd(first_epid), last_epid = ymd(last_epid))
+
+```
+
+## Tidy the data
+
+The data in the data frames are all independently tidy. The actors Data Frame is a list of all the actors, guests, musical guests, and crew that have appeared on the show. Each observation is for one actor and tells what type of role they played and their gender. The casts data frame has each observation be an actor on the cast during a specific season, and has information about whether they were featured, the dates of their first and last episode, whether or not the were an anchor on weekend update and the number of episodes they were in during that season. The seasons data frame has each observation as a specific season, and contains data on what year it ran, the dates of the first and last episodes and the number of episodes. 
+
+## Join the data
+
+In order to join the data we have to look at the connecting keys. Casts and seasons are connected by the sid (season ID) column, while casts and actors are connected by the aid (actor ID) column. First we will join the extra information provided in the actors df into the casts df to gain information about the actor's genders. We can also filter out all of the guests, musical guests, and crew because we are only going to be looking at data on the main cast. 
+
+```{r}
+actors <-actors %>%
+       select(-url) %>%
+       filter(type == "cast")  ## 154 cast members here, missing David Spade and Gilbert Gottfried
+
+casts %>%
+      select(aid)%>%
+      n_distinct()             ##Sanity Check: 156 cast members here 
+
+casts <- full_join(actors, casts, by = "aid") %>%
+        select(c(aid, gender, sid, featured, update_anchor))
+
+```
+Now that we have joined this information, we can do analysis on gender throughout the different seasons, as well as the gender breakdown of the weekend update hosts. 
+
+```{r}
+head(casts) 
+
+casts %>%
+      filter(update_anchor == "True") %>%
+      select(gender)%>%
+      table() %>%
+      prop.table() # 74% of all weekend update hosts are male when looking at every season 
+
+casts %>%
+      filter(update_anchor == "True") %>%
+      group_by(aid) %>%
+      slice(1) %>%
+      ungroup()%>%
+      select(gender)%>%
+      table() %>%
+      prop.table()   #69.5% of actors who host weekend update are male 
+
+```
+Breaking down the gender of the weekend update hosts we can see that across all seasons 74% of the hosts are male, while looking at the percent of people that were hosts, 69.5% of them are male. In both cases we can see that the role of weekend update host is taken more by men than women. 
+
+```{r}
+seasons <- casts %>%     #Create a Gender Percent breakdown for each season
+        group_by(sid) %>%
+        add_count(name = "total") %>%
+        group_by(sid, gender)%>%
+        add_count(name = "gender_total") %>%
+        mutate(gender_percent = gender_total/total) %>%
+        select(sid, gender, gender_percent) %>%
+        slice(1) %>%
+        full_join(seasons, by= "sid")
+
+seasons
+        
+```
+We now we have added in to the seasons a percentage breakdown for the gender of the cast and we have successfully joined all the data.

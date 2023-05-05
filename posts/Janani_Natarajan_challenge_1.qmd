@@ -27,22 +27,12 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
 ```{r}
-
 library(readr)
-railroad <- read_csv("_data/railroad_2012_clean_county.csv")
-
- 
-view(railroad)
 ```
 
 ```{r}
-# first few rows
-head(railroad)
-```
+railroad <- read.csv('_data/railroad_2012_clean_county.csv')
 
-```{r}
-print("Total number of rows: ")
-nrow(railroad)
 ```
 
 ```{r}
@@ -50,17 +40,33 @@ dim(railroad)
 ```
 
 ```{r}
-#column names of the dataset 
 colnames(railroad)
-
 ```
 
 ```{r}
-#Filter state AE from the dataset 
-filter(railroad, state == "AE")
+print("Top rows of the data ")
+head(railroad)
 ```
 
 ```{r}
-#Filter between 10 and 100 inclusive
-filter(railroad, `total_employees` >= 10 & `total_employees` <= 100)
+print("Total number of employees in the states ordered by the count:")
+```
+
+```{r}
+railroad %>%
+  group_by(state) %>%
+  summarize(state_total = sum(total_employees))  %>%
+  select(state, state_total)  %>%
+  arrange(desc(state_total))
+```
+
+```{r}
+print("The counties with employees greater than 1000")
+```
+
+```{r}
+railroad %>%
+  filter(total_employees > 1000)  %>%
+  select(state, county, total_employees) %>%
+  arrange(desc(total_employees))
 ```

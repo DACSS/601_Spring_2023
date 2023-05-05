@@ -1,0 +1,176 @@
+---
+title: "Challenge 2"
+author: "Maanusri Balasubramanian"
+description: "Data wrangling: using group() and summarise()"
+date: "05/03/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - maanusri balasubramanian
+  - railroads
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+```{r}
+# reading the CSV file
+rr <- read_csv("_data/railroad_2012_clean_county.csv")
+```
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+#| label: summary
+# printing number of rows and columns in the dataset
+dim(rr)
+
+# description of the dataset
+str(rr)
+```
+
+From the above results, we know that the dataset has 2930 rows and 3 columns.
+
+```{r}
+colnames(rr)
+```
+
+The 3 columns in the dataset are: state, county and total_employees.
+
+```{r}
+head(rr)
+```
+We can infer that the dataset gives us the total number of railroad employees in a county in a state in 2012 from this.
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+# Count of unique states in the dataset
+states <- select(rr, `state`)
+
+# library("dplyr")
+count(distinct(states))
+```
+
+Total railroad employee information about 53 unique states is present in this dataset.
+
+```{r}
+# retrieving information of the county with the maximum number of railroad employees
+summarize(rr, employee_count = max(total_employees), maxCounty = county[which.max(total_employees)])
+```
+COOK is the county with the maximum number of railroad employees (8207).
+
+```{r}
+# retrieving information of the county with the maximum number of railroad employees
+reframe(rr, employee_count = min(total_employees), minCounty = county[which(total_employees == min(total_employees))])
+```
+From the above result, we know that there are 145 counties with only 1 railroad employee (which is the minimum employee count in any county).
+
+```{r}
+# Grouping in terms of state to summarise total_employees in each state and arranging accordingly
+grouped_rr_state <- rr%>%
+  group_by(state)%>%
+  summarize(state_employees = sum(total_employees))%>%
+  arrange(desc(`state_employees`))
+grouped_rr_state
+```
+From the above results we know that TX has the highest number of rail road employees (19839) and AP has the least number of railroad employees (1).
+
+```{r}
+# Grouping in terms of state to summarise mean total_employees in each state wrt number of counties and arranging accordingly 
+grouped_rr_state_mean <- rr%>%
+  group_by(state)%>%
+  summarize(mean_state_employees = mean(total_employees))%>%
+  arrange(desc(`mean_state_employees`))
+grouped_rr_state_mean
+```
+From the above results we know that DE has the highest mean number of rail road employees (498.33) and AP has the least mean number of railroad employees (1). That is in DE, the mean number of employees in each county is 498.33.
+
+```{r}
+# Grouping in terms of state to summarise median total_employees in each state wrt number of counties and arranging accordingly 
+grouped_rr_state_median <- rr%>%
+  group_by(state)%>%
+  summarize(median_state_employees = median(total_employees))%>%
+  arrange(desc(`median_state_employees`))
+grouped_rr_state_median
+```
+From the above results we can infer the median number of railroad employees in each state wrt the counties in the state with employees.
+
+```{r}
+# Mode of entries - statewise i.e the state with the maximum number of counties with railroad employees
+rr %>%
+  count(state, sort=TRUE)%>%
+  slice(1)
+
+```
+We are finding the mode of the number of counties in any state with the above command. We are counting the number of entries for a particular state, which gives us the number of counties in the state with railroad employees. We then find the state with the maximum number of entries (mode).
+
+We know that TX has the highest number of counties with railroad employees. There are 221 counties in TX with railroad employees.
+
+```{r}
+# Filtering the employee information of counties in TX
+texas_counties <- filter(rr, state == 'TX')
+count(texas_counties)
+```
+Verifying the number of counties in TX with the filter and count commands again. There are 221 counties as returned earlier.
+
+```{r}
+# Grouping in terms of state to summarise standard deviation of total_employees in each state wrt number of counties and arranging accordingly 
+grouped_rr_state_sd <- rr%>%
+  group_by(state)%>%
+  summarize(sd_state_employees = sd(total_employees))%>%
+  arrange(desc(`sd_state_employees`))
+grouped_rr_state_sd
+```
+From the above result, we rank the states according to the standard deviation of railroad employee count.
+
+```{r}
+# grouping dataset based on the state
+grouped_rr_state <- rr%>%
+  group_by(state)
+
+# summary of this subset gives us info like min, max, median, mean and quantiles
+summary(grouped_rr_state)
+```
+From the quartile distributions we can infer that lot of the states have less number of employees, i.e the distribution of employees state-wise is skewed.
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.
+
+I chose this specific group to understand the distribution of railroad employees statewise. We can infer that there are railroad employees in 53 unique states, 'COOK' in IL is the county with the highest number of railroad employees (8207) and there are 145 counties with only 1 railroad employee. 
+
+From this grouping analysis based on states, we got to know that TX has the highest number of rail road employees (19839) and AP has the least number of railroad employees (1). And DE has the highest mean number of rail road employees (498.33) and AP has the least mean number of railroad employees (1) in its counties. NJ is the state with the highest median of employees county-wise: 296. We also find that TX is the state with maximum number of entries (mode of number of entries), which is in-turn the number of counties. So TX is the state with the maximum number of counties, which is 221.   

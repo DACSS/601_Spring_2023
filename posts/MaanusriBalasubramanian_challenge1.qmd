@@ -1,0 +1,106 @@
+---
+title: "Challenge 1"
+author: "Maanusri Balasubramanian"
+description: "Reading in data and creating a post"
+date: "05/03/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - maanusri balasubramanian
+  - railroads
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, using the correct R package and command.
+
+-   railroad_2012_clean_county.csv ⭐
+-   birds.csv ⭐⭐
+-   FAOstat\*.csv ⭐⭐
+-   wild_bird_data.xlsx ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐⭐
+
+Find the `_data` folder, located inside the `posts` folder. Then you can read in the data, using either one of the `readr` standard tidy read commands, or a specialized package such as `readxl`.
+
+Add any comments or documentation as needed. More challenging data sets may require additional code chunks and documentation.
+
+```{r}
+# loading the data
+rr <- read_csv("_data/railroad_2012_clean_county.csv")
+
+# printing first 5 rows of the dataset
+head(rr)
+
+```
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+#| label: summary
+
+# description of the dataset
+str(rr)
+
+# number of rows and columns in the dataset
+dim(rr)
+
+# column names
+colnames(rr)
+```
+
+From the above commands we can see that "railroad_2012_clean_county.csv" gives us the count of employees working in various counties in each state for the railroad in 2012. There are a total of 2930 entries. Each row gives us information about the number of employees in a county in the state. There are 3 columns, namely: state, county and total_employees.
+
+```{r}
+# Summarizing the data with summary
+summary(rr)
+```
+
+
+
+```{r}
+# Arranging entries wrt total employees
+arrange(rr, `total_employees`)
+
+# Arranging entries wrt total employees in the descending order
+arrange(rr, desc(`total_employees`))
+```
+From the above result we know that the country 'COOK' in IL has the highest number of employees: 8207 and 1 is the minimum number of employees in any country (many counties have only 1 employee).
+
+```{r}
+# Grouping in terms of state to summarise
+grouped_rr_state <- rr%>%
+  group_by(state)%>%
+  summarize(state_employees = sum(total_employees))%>%
+  arrange(desc(`state_employees`))
+grouped_rr_state
+
+dim(grouped_rr_state)
+```
+From the above results we know that TX has the highest number of rail road employees: 19839 and AP has the least number of employees: 1.
+
+And from the dimensions of grouped_rr_state, we know that there are 53 unique states in which rail road employees work.

@@ -1,0 +1,151 @@
+---
+title: "Challenge 8"
+author: "Thrishul"
+desription: ""
+date: "05/05/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+---
+Before we read in the data, we’ll need to load the dplyr, tidyr, ggplot2, and readr packages.
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+# Read in data
+```{r}
+snl_actors <- read.csv("_data/snl_actors.csv")
+dim(snl_actors)
+```
+
+```{r}
+head(snl_actors)  
+```
+```{r}
+snl_casts <- read.csv("_data/snl_casts.csv")
+dim(snl_casts)
+```
+
+```{r}
+head(snl_casts)  
+```
+```{r}
+snl_seasons <-read.csv("_data/snl_seasons.csv")
+dim(snl_seasons)
+```
+
+```{r}
+head(snl_seasons)
+```
+The SNL dataset is comprised of three separate data sources: SNL actors, SNL casts, and SNL seasons.
+
+The SNL actors dataset consists of a list of all cast and guest members who have appeared on SNL (2306). Each actor is linked to additional information, such as their gender and whether they were a cast member or a guest. Each row in the dataset represents a single actor.
+
+The SNL casts dataset, on the other hand, is much more comprehensive in terms of variables. It includes information on the cast members (614) rather than guests, and provides details on the seasons in which they appeared, the number of episodes in each season, and the dates of the first and last episodes of each season. Most of the values for the first and last episodes are NA, only being included if they differ from the first or last episode of that season. We will deal with this issue later in our analysis.
+
+The SNL casts data has the desired format for our analysis, where each row represents an "actor-year." This is what we will use as our final data set.
+
+Lastly, the SNL seasons dataset contains information on the 46 seasons of SNL, including the year, dates of the first and last episodes, and the episode count per season. Each row in the dataset represents a single season.
+
+# Tidy & Mutate Data
+To join the data sets, I will perform some tidying operations. After the join, I will conduct additional mutations to clean the final data set.
+
+To start with, I will filter out the guest actors from the SNL actors data set, as we lack sufficient information about them, except for gender, to use in an analysis.
+```{r}
+#filtering out guests from actors data
+snl_actors <- snl_actors %>% 
+  filter(type == "cast") %>%
+  select(aid, gender)
+```
+As you can see, there are two columns in the SNL casts data set (whether the cast member was an update anchor, and whether they were featured) which are currently of character data type, but they should be of logical data type. I have updated these columns to logical data type below.
+```{r}
+#showing character class before mutation
+class(snl_casts$update_anchor)
+```
+```{r}
+#mutating to change to logical
+snl_casts <- snl_casts %>%
+  mutate(`update_anchor` = case_when(
+    `update_anchor` == "True" ~ TRUE,
+    `update_anchor` == "False" ~ FALSE)) %>%
+  mutate(`featured` = case_when(
+    `featured` == "True" ~ TRUE,
+    `featured` == "False" ~ FALSE))
+
+#showing logical class after mutation
+class(snl_casts$update_anchor)
+```
+
+```{r}
+class(snl_casts$featured)
+```
+# Joining Data
+As we join the three data sets, we will use the SNL casts data as the primary data set and add information from the other data sets into this. The final data set should have 614 cases, with each case representing an “actor-season”.
+
+To do this, we will first add the information about each season into the SNL casts data set. This includes the first and last date of the season, the number of episodes, and the year of the season.
+
+Next, we will use the SNL actors data set to add the gender of the cast member into our SNL casts data set.
+```{r}
+#combining seasons data INTO casts data
+snl_castsandseasons <- left_join(snl_casts, snl_seasons, by = "sid")
+
+#combining actors data INTO casts and seasons data
+snl_castsseasonsandactors <- left_join(snl_castsandseasons, snl_actors, "aid")
+
+head(snl_castsseasonsandactors)
+```
+
+```{r}
+dim(snl_castsseasonsandactors)
+```
+After joining the three data sets, I have a data set with all the relevant variables, but it still needs some tidying up.
+
+Currently, there are four date columns in the data, two for the first episode and two for the last episode. Since our cases are "actor-seasons," I will combine these in a way that reflects the first and last episode dates of the season, unless the actor was only present for part of the season. In those cases, the dates will reflect the first or last episode in which they were involved. This will reduce the column count to 11.
+
+Additionally, I have converted the numeric date columns into actual date format.
+
+Finally, there are two episode count columns: one for the number of episodes a cast member was involved in and one for the number of episodes in a season. To make these column names clearer, I have renamed them.
+```{r}
+#creating final combined dataset
+snl_all <- snl_castsseasonsandactors %>%
+  
+  #combining multiple first and last episode date columns to reflect dates participated by actors
+  mutate(first_episode = coalesce(first_epid.x, first_epid.y),
+         last_episode = coalesce(last_epid.x, last_epid.y)) %>%
+  
+  #changing numeric values to be dates
+  mutate(first_episode = ymd(first_episode),
+         last_episode = ymd(last_episode)) %>%
+  
+  #removing unused date columns
+  select(-c(first_epid.x, first_epid.y, last_epid.x, last_epid.y)) %>%
+  
+  #renaming for clarity
+  rename("actor_episodes" = n_episodes.x) %>%
+  rename("season_episodes" = n_episodes.y) 
+
+#printing dimensions and summary
+dim(snl_casts)
+```
+
+```{r}
+dim(snl_all)
+```
+
+```{r}
+head(snl_all)
+```
+
+```{r}
+print(summarytools::dfSummary(snl_all,
+                              valid.col=FALSE), 
+      method = 'render')
+```

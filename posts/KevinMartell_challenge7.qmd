@@ -1,0 +1,184 @@
+---
+title: "Challenge 7 Instructions"
+author: "Kevin Martell Luya"
+description: "Visualizing Multiple Dimensions"
+date: "05/05/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+  - australian_marriage
+  - air_bnb
+  - eggs
+  - abc_poll
+  - faostat
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(here)
+library(ggthemes)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+```{r}
+airb<-here("posts","_data","AB_NYC_2019.csv") %>%
+  read_csv()
+airb
+```
+
+### Briefly describe the data
+AB_NYC_2019.csv contains listing data about rental places in New York. It would be interesting
+analyzing this data which comes from the concept of share economy.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+ggplot(airb,aes(minimum_nights))+
+  geom_histogram()
+
+```
+For minimum_nights varible, the plotted histograms presents outliers, let's remove them.
+```{r}
+less_than_400 = airb%>%
+  filter(minimum_nights < 400)
+ggplot(less_than_400,aes(minimum_nights))+
+  geom_histogram()
+
+```
+For minimum_nights varible, the plotted histograms presents outliers, let's remove them.
+```{r}
+less_than_200 = airb%>%
+  filter(minimum_nights < 200)
+ggplot(less_than_200,aes(minimum_nights))+
+  geom_histogram()
+
+```
+
+Clearly we have more outliers, let's filter data even more.
+```{r}
+less_than_40 <- airb%>%
+  filter(minimum_nights < 40)
+ggplot(less_than_40,aes(minimum_nights))+
+  geom_histogram()
+
+```
+The shape has two humps. It is bimobal.
+
+## Visualization with Multiple Dimensions
+Now let's consider rooms types and how they relate to the  minimmum nights.
+
+```{r}
+less_than_40 %>%
+  ggplot(aes(room_type,minimum_nights))+
+  geom_boxplot(alpha=.6)+
+  scale_y_continuous(labels=scales::number_format())+
+  labs(x="Type of room",
+       y="number of nigths")+
+  ggthemes::theme_few()
+
+```
+
+Now, lets check the minimmum nights per neighbourhood group and check if follow the same bimodal 
+distribution.
+```{r}
+less_than_40 %>%
+  ggplot(aes(minimum_nights))+
+  geom_histogram()+
+  facet_wrap(vars(neighbourhood_group),scales="free")
+```
+We can observe that all the neighbourhoods follow the same distribution. This suggests they have the
+same behavior when in terms of minimum nights.
+
+Now, let's create a new column that shows 5-day intervals for minimum nights. Because there are outliers
+we take values below 200 minimum nights. We filtered this data in previous steps.
+```{r}
+nights_ranges_by_5_days <- less_than_200 %>%
+  mutate(nights_ranges = case_when(
+    minimum_nights <= 5  ~ "1_5",
+    minimum_nights > 5  & minimum_nights <= 10  ~ "5-10",
+    minimum_nights > 10  & minimum_nights <= 15  ~ "10-15",
+    minimum_nights > 15  & minimum_nights <= 20  ~ "15-20",
+    minimum_nights > 20  & minimum_nights <= 25  ~ "20-25",
+    minimum_nights > 25  & minimum_nights <= 30  ~ "25-30",
+    minimum_nights > 30  & minimum_nights <= 35  ~ "30-35",
+    minimum_nights > 35  & minimum_nights <= 40  ~ "35-40",
+    minimum_nights > 40  & minimum_nights <= 45  ~ "40-45",
+    minimum_nights > 45  & minimum_nights <= 50  ~ "45-50",
+    minimum_nights > 50  & minimum_nights <= 55  ~ "50-55",
+    minimum_nights > 55  & minimum_nights <= 100  ~ "55-100",
+    minimum_nights > 100 ~ "+100" ))%>%
+  fill(nights_ranges, .direction = "down")
+
+nights_ranges_by_5_days_factor <- nights_ranges_by_5_days %>%
+  mutate( nights_ranges = factor(nights_ranges))
+
+```
+
+
+Let's check the intervals were created.
+
+```{r}
+summary(nights_ranges_by_5_days_factor)
+```
+
+Now, let see the 5-day intervals for minimum nights and how they relate to the average price for each interval.
+```{r}
+
+nights_ranges_by_5_days_factor %>%
+
+  group_by(nights_ranges) %>%
+  summarise(mean_price=mean(price)) %>%
+  ggplot(aes(reorder(nights_ranges,-mean_price), mean_price))+
+  geom_col()+
+  labs(x="minimum_nights ranges in days")
+```
+After tailoring the outliers, minimum_nights less than 200, data suggests that for minimum nights between 35 and 40, 
+a host might charge around 365 dollars in average which is higer than minimum nights between 1 and 5, where the host 
+might charge 150 dollars dollars in average.
+
+However, if the 1-5-day hosts were able to rent the at least 4 consecutive times (4 _ 20 days), then the income would
+be higher in average compared to the 35-40-day hosts. 
+
+From the host perspective, data suggest that it is more profitable to rent a house for less number of days compared to 
+other minimum nights 5-day interval.

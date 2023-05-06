@@ -1,0 +1,159 @@
+---
+title: "Challenge 3"
+author: "Maanusri Balasubramanian"
+description: "Tidy Data: Pivoting"
+date: "05/04/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - maanusri balasubramanian
+  - eggs_tidy
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+# reading the CSV file
+eggs <- read_csv("_data/eggs_tidy.csv")
+
+# taking a peek into the data 
+head(eggs)
+
+# summary
+summary(eggs)
+
+# dimensions of the dataset
+dim(eggs)
+```
+
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+
+The dataset contains egg prices over all the years, from 2004 to 2013 month-wise. We can see that the dataset has 120 rows and 6 columns. Each row in the dataset contains the prices of different types(large/extra_large) and quantities(half_dozen/dozen) of eggs in a particular month of a particular year. This violates the "tidy" data guideline that each observation must have a separate row/entry. So pivoting the columns large_half_dozen, large_dozen, extra_large_half_dozen and extra_large_dozen would make the data "tidy". We can create two new columns "type" (which will take large and extra_large as values) and "quantity" (which will take dozen and half_dozen as values), pivoting the unnecessary columns and making the data "tidy".
+
+## Anticipate the End Result
+
+The first step in pivoting the data is to try to come up with a concrete vision of what the end product *should* look like - that way you will know whether or not your pivoting was successful.
+
+One easy way to do this is to think about the dimensions of your current data (tibble, dataframe, or matrix), and then calculate what the dimensions of the pivoted data should be.
+
+Suppose you have a dataset with $n$ rows and $k$ variables. In our example, 3 of the variables are used to identify a case, so you will be pivoting $k-3$ variables into a longer format where the $k-3$ variable names will move into the `names_to` variable and the current values in each of those columns will move into the `values_to` variable. Therefore, we would expect $n * (k-3)$ rows in the pivoted dataframe!
+
+### Example: find current and future data dimensions
+
+Lets see if this works with a simple example.
+
+```{r}
+#| tbl-cap: Example
+
+df<-tibble(country = rep(c("Mexico", "USA", "France"),2),
+           year = rep(c(1980,1990), 3), 
+           trade = rep(c("NAFTA", "NAFTA", "EU"),2),
+           outgoing = rnorm(6, mean=1000, sd=500),
+           incoming = rlogis(6, location=1000, 
+                             scale = 400))
+df
+
+#existing rows/cases
+nrow(df)
+
+#existing columns/cases
+ncol(df)
+
+#expected rows/cases
+nrow(df) * (ncol(df)-3)
+
+# expected columns 
+3 + 2
+```
+
+Or simple example has $n = 6$ rows and $k - 3 = 2$ variables being pivoted, so we expect a new dataframe to have $n * 2 = 12$ rows x $3 + 2 = 5$ columns.
+
+### Challenge: Describe the final dimensions
+
+Document your work here.
+
+```{r}
+# existing rows
+nrow(eggs)
+
+# existing columns
+ncol(eggs)
+
+# expected rows
+nrow(eggs) * (ncol(eggs)-2)
+
+# expected columns
+ncol(eggs) - 4 + 3
+```
+Any additional comments?
+
+The current dimension of the dataset is 120 x 6. As we'll be changing 4 of the columns into rows, the number of rows would be 120 * 4 = 480. And the expected number of columns would be 4.
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+### Example
+
+```{r}
+#| tbl-cap: Pivoted Example
+
+df<-pivot_longer(df, col = c(outgoing, incoming),
+                 names_to="trade_direction",
+                 values_to = "trade_value")
+df
+```
+
+Yes, once it is pivoted long, our resulting data are $12x5$ - exactly what we expected!
+
+### Challenge: Pivot the Chosen Data
+
+Document your work here. What will a new "case" be once you have pivoted the data? How does it meet requirements for tidy data?
+
+```{r}
+tidy_eggs <- eggs %>%
+  pivot_longer(cols = contains("dozen"),
+               names_to= c("type", "quantity"),
+               names_sep = '_',
+               values_to = "price")
+
+tidy_eggs
+```
+
+As expected the pivoted dataset has the dimensions 480 x 5. Yes, this new dataset meets all the requirements for tidy data, as each unique case has a separate entry/row in the dataset. 
+
+Any additional comments?

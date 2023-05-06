@@ -1,0 +1,59 @@
+---
+title: "Challenge 4 Instructions"
+author: "Meredith Rolfe"
+desription: "More data wrangling: pivoting"
+date: "08/18/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - abc_poll
+  - eggs
+  - fed_rates
+  - hotel_bookings
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+hotelBooking <- read_csv("_data/hotel_bookings.csv", show_col_types = FALSE)
+hotelBooking
+```
+
+```{r}
+summarize(hotelBooking)
+```
+
+```{r}
+table(hotelBooking$country)
+```
+
+```{r}
+hotelBooking <- hotelBooking %>% 
+  filter(!(country == "NULL"))
+```
+
+```{r}
+hotelBooking_mutate <- hotelBooking %>% 
+  mutate(arrival_date = str_c(arrival_date_day_of_month,
+                              arrival_date_month,
+                              arrival_date_year, sep="/"),
+         arrival_date = lubridate::dmy(arrival_date),
+         totalGuests = adults + children + babies) %>% 
+  select(-c(arrival_date_day_of_month,arrival_date_month,arrival_date_year))
+
+hotelBooking_mutate
+```

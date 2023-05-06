@@ -1,0 +1,152 @@
+---
+title: "Challenge 2 Instructions"
+author: "Abhinav Reddy Yadatha"
+description: "Data wrangling: using group() and summarise()"
+date: "05/03/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - Abhinav Reddy Yadatha
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+
+library(tidyverse)
+railroads <- read_csv('_data/railroad_2012_clean_county.csv', show_col_types = FALSE)
+railroads <- rename(railroads, counties = county)
+railroads
+
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+Description : The dataset involved gathering information on the total number of employees in each county by taking trains from specific states. The data revealed that the average number of employees per county was 87.2, with a standard deviation of 283.6. The lowest number of employees was 1, the middle value was 21, and the highest was 8207. Here's how I obtained and analyzed this data
+
+
+```{r}
+# Printing the first few rows of the dataset.
+head(railroads)
+```
+
+```{r}
+#| label: summary
+
+library(summarytools)
+dfSummary(railroads)
+
+```
+
+## Check dimensions of the dataset
+
+```{r}
+dim(railroads)
+```
+It can be observed that there are 2930 rows and 3 columns
+
+Printing the column names of the dataset :
+
+```{r}
+colnames(railroads)
+```
+
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+
+#IQR for railroads
+railroads %>%
+  summarize_all(IQR, na.rm = TRUE)
+
+#Mean for railroads
+railroads %>%
+  summarize_all(mean, na.rm = TRUE)
+
+
+#Median for railroads
+railroads %>%
+  summarize_all(median, na.rm = TRUE)
+
+
+```
+
+Total count of employees for each state:
+
+```{r}
+state_wise_ct = select(railroads, state, total_employees)
+state_wise_ct %>% 
+  group_by(state) %>%
+  summarize(totalEmployees=sum(total_employees))
+
+state_wise_ct
+```
+
+
+Median, Mean and standard deviation of employee counts in every state:
+```{r}
+state_wise_ct = select(railroads, state, total_employees)
+state_wise_ct %>% 
+  group_by(state) %>%
+  summarize(meanEmployees=mean(total_employees),medianEmployees=median(total_employees),standardDeviation = sd(total_employees))
+```
+
+State wise employees count arranged and displayed in descending order :
+```{r}
+
+state_wise_grouped_cts <- state_wise_ct %>% 
+  group_by(state) %>%
+  summarize(Sum = sum(total_employees))
+
+sorted_counts <- state_wise_grouped_cts %>%
+  arrange(desc(Sum))
+
+sorted_counts
+```
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.
+
+We have categorized the total number of employees according to the states, which means that we have calculated the average, middle value, and sum of all the counties for various states.
+
+There are some states that have only one county, which makes the standard deviation undefined or null.
+
+After sorting the data based on the overall number of employees, we observed that TX and IL have the greatest number of employees while AP has only one employee.

@@ -1,8 +1,8 @@
 ---
-title: "Final Project - Assignment 1"
+title: "Final Project - Assignment 2"
 author: "Thrishul"
 desription: "To acquire a better understanding of what sales could look like for the next two years."
-date: "05/18/2023"
+date: "05/08/2023"
 format:
   html:
     toc: true
@@ -10,9 +10,12 @@ format:
     code-copy: true
     code-tools: true
 categories:
-  - Final Project 1
+  - Final Project 2
+  - thrishul
 ---
+
 # Introduction
+
 This data science project aims to explore and analyze a comprehensive dataset of job titles, salaries, employment types, company sizes and locations within the field of data science. With a focus on understanding current trends and patterns, this project seeks to provide insights into the current state of the data science job market. Through analyzing the distribution of job titles, seniority levels, salaries, and employment types, we can gain an understanding of the most common roles, skillsets, and experience required in the field. Additionally, examining the location and size of companies can provide insights into which regions are leading in the data science industry and what size of companies are more likely to hire data scientists. This project aims to provide valuable insights to job seekers, employers, and researchers in the data science field.
 
 ## Dataset Description
@@ -39,11 +42,7 @@ company_location: This column indicates the country of the employer's main offic
 
 company_size: This column indicates the median number of people that worked for the company during the year. It allows us to analyze the size distribution of companies and identify common company sizes for different job titles and experience levels.
 
-
-
-
 ## Loading Necessary Packages
-
 
 ```{r}
 pacman :: p_load(pacman,stats, dplyr, knitr, ggplot2, plotly, psych, gridExtra,
@@ -52,6 +51,7 @@ pacman :: p_load(pacman,stats, dplyr, knitr, ggplot2, plotly, psych, gridExtra,
 
 options(warn=-1) # warnings will be suppressed and will not be displayed in the console or any output
 ```
+
 # Data Reading
 
 ```{r}
@@ -64,10 +64,6 @@ cat("Number of instances:", nrow(df))
 head(df, 10)
 
 ```
-
-
-
-
 
 ```{r}
 # Inspect data
@@ -92,51 +88,722 @@ check(df)
 ```
 
 # Inspecting the Data
+
 ```{r}
 str(df)
 describe(df)
 
 ```
 
+# EDA
+
+## Univariate Analysis
+
+## Analysis for Work Year
+
+```{r}
+# Analysis for work_year #
+
+wy_categ <- as.factor(ifelse(df$work_year  == 2020, '2020',
+                            ifelse(df$work_year == 2021, '2021', 
+                                   ifelse(df$work_year == 2022, '2022', 
+                                          ifelse(df$work_year== 2023, '2023', '2020')))))
+
+options(repr.plot.width=16, repr.plot.height=8)
+my_palette <- c("#F8EDED", "#F6DFEB", "#E4BAD4", "#CE97B0")
+
+wy_barchart <- ggplot(data.frame(wy_categ), aes(x = wy_categ)) +
+  geom_bar(aes(fill = wy_categ))  +
+  scale_fill_manual(values = my_palette) +
+  ggtitle("Bar Chart for Work Year") +
+  xlab("Year") +
+  ylab("Frequency") +
+  labs(fill = "Year") +
+  stat_count(geom = "text", aes(label = after_stat(count)), vjust = -0.5) +
+  theme_classic() 
+  theme(
+    plot.title = element_text(color = "black", size = 20, face = "bold"),
+    plot.subtitle = element_text(color = "#F6CD90",size = 12, face = "bold"),
+    plot.caption = element_text(face = "italic"))
+
+data <- data.frame(
+  category=c("2020", "2021", "2022", "2023"),
+  count=c(76, 230, 1664, 1785)
+)
+ 
+# Compute percentages
+data$fraction <- data$count / sum(data$count)
+
+# Compute the cumulative percentages (top of each rectangle)
+data$ymax <- cumsum(data$fraction)
+
+# Compute the bottom of each rectangle
+data$ymin <- c(0, head(data$ymax, n=-1))
+
+# Compute label position
+data$labelPosition <- (data$ymax + data$ymin) / 2
+
+# Compute a good label
+data$label <- paste0(round(data$fraction*100, 1), "%")
+
+wy_piechart <- ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  ggtitle("Pie Chart for Work Year") +
+  scale_fill_manual(values = my_palette)  +
+  coord_polar(theta="y") +
+  theme_void() +
+  labs(fill = "Year") +
+  theme(
+  plot.title = element_text(color = "#383335", size = 20, face = "bold"))
+
+wy_barchart 
+wy_piechart
+
+```
+
+### Findings:
+
+The dataset indicates that the majority of observations, around 47.54% (1785), are from the year 2023, followed by 44.31% (1664) from 2022. A smaller percentage, 6% (230), corresponds to the year 2021, while only 2% (76) corresponds to the year 2020.
+
+## Analysis for Experience Level
+
+```{r}
+# Analysis for experience_level #
+
+# table(df$experience_level)
+
+el_categ <- as.factor(ifelse(df$experience_level == 'EN', 'Entry-level',
+                            ifelse(df$experience_level == 'MI', 'Mid-level', 
+                                   ifelse(df$experience_level == 'SE', 'Senior-level', 
+                                          ifelse(df$experience_level == 'EX', 'Executive-level', '')))))
+
+options(repr.plot.width=16, repr.plot.height=8)
+my_palette <- c("#FFF2F2", "#E5E0FF", "#8EA7E9", "#7286D3")
+
+el_barchart <- ggplot(data.frame(el_categ), aes(x = el_categ)) +
+  geom_bar(aes(fill = el_categ))  +
+  scale_fill_manual(values = my_palette) +
+  ggtitle("Bar Chart for Experience Level") +
+  xlab("Level") +
+  ylab("Frequency") +
+  labs(fill = "Level") +
+  stat_count(geom = "text", aes(label = after_stat(count)), vjust = -0.5) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#383335", size = 20, face = "bold"),
+    plot.subtitle = element_text(color = "#F6CD90",size = 12, face = "bold"),
+    plot.caption = element_text(face = "italic"))
+
+data <- data.frame(
+  category=c("Entry-level", "Mid-level", "Senior-level", "Executive-level"),
+  count=c(320, 805, 2516, 114)
+)
+ 
+# Compute percentages
+data$fraction <- data$count / sum(data$count)
+
+# Compute the cumulative percentages (top of each rectangle)
+data$ymax <- cumsum(data$fraction)
+
+# Compute the bottom of each rectangle
+data$ymin <- c(0, head(data$ymax, n=-1))
+
+# Compute label position
+data$labelPosition <- (data$ymax + data$ymin) / 2
+
+# Compute a good label
+data$label <- paste0(round(data$fraction*100, 1), "%")
+
+el_piechart <- ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  ggtitle("Pie Chart for Experience Level") +
+  scale_fill_manual(values = my_palette)  +
+  coord_polar(theta="y") +
+  theme_void() +
+  labs(fill = "Level") +
+  theme(
+  plot.title = element_text(color = "black", size = 20, face = "bold"))
+
+el_barchart
+el_piechart
+
+```
+
+### Findings:
+
+The dataset includes four seniority levels, with the Senior-level category having the most representation, followed by the Mid-level category. The Entry-level category is the next in terms of representation, while the Executive-level category has the least representation.
+
+## Analysis for Job Title
+
+```{r}
+# Analysis for job_title #
+
+# table(df$job_title)
+cat("The dataset grasps", length(unique(df$job_title))," distinct job titles.")
+
+# Compute the top 20 job titles in descending order
+top20_job_titles <- head(sort(table(df$job_title), decreasing = T), 20)
+
+# Create a bar plot with plotly
+plot_ly(x = top20_job_titles, y = names(top20_job_titles), type = "bar",
+               text = top20_job_titles, orientation = 'h', 
+               marker = list(color = "#E1CCEC")) %>%
+               layout(title = "Top 20 Jobs in Data Science", xaxis = list(title = "Count"), 
+               yaxis = list(title = "Job Title"))
+
+```
+
+### Findings:
+
+There are a total of 93 job titles present in the dataset, with Data Engineer, Data Scientist, Data Analyst, and Machine Learning Engineer being the most commonly occurring ones.
+
+## Analysis for Salary
+
+```{r}
+# Analysis for salary_in_usd #
+
+options(scipen = 999)
+
+        # Central Tendencies
+# Mean
+cat("Mean:", mean(df$salary_in_usd))
+cat("\n")
+
+# Median
+cat("Median:", median(df$salary_in_usd))
+cat("\n")
+
+# Mode
+mode <- function(x){
+  ta <- table(x)
+  tam <- max(ta)
+  if(all(ta==tam))
+    mod <- NA
+  else
+    if(is.numeric(x))
+      mod <- as.numeric(names(ta)[ta==tam])
+  else
+    mod <- names(ta)[ta==tam]
+  return(mod)
+}
+
+cat("Mode:", mode(df$salary_in_usd))
+cat("\n")
+
+    # Measure of Variability
+
+# Std. Dev
+cat("Standard Deviation:", sd(df$salary_in_usd))
+cat("\n")
+
+# Variance
+cat("Variance:", var(df$salary_in_usd))
+cat("\n")
+
+# IQR
+cat("Interquartile Range:") 
+quantile(df$salary_in_usd)
+
+options(repr.plot.width=18, repr.plot.height=6) 
+require(gridExtra)
+
+salary_hist <- ggplot(df, aes(x = salary_in_usd)) +
+  geom_histogram(color = '#5c082c', fill ='#F5B0CB', bins=30) +
+  labs(title = "Histogram for Salary ($)",x = "Salary",y = "Count") +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#383335", size = 20, face = "bold"),
+    plot.subtitle = element_text(color = "#F5B0CB",size = 12, face = "bold"),
+    plot.caption = element_text(face = "italic"))
+
+salary_boxplot <- ggplot(df, aes_string(x = df$salary_in_usd)) +
+    geom_boxplot(outlier.colour = "#F5B0CB", outlier.shape = 11, outlier.size = 2, col = "#5c082c", notch = F) +
+    labs(title = "Box Plot for Salary ($)",x = "Salary") +
+    theme_classic() +
+    theme(
+    plot.title = element_text(color = "#383335", size = 20, face = "bold"))
+
+salary_hist
+salary_boxplot
+plot(density(df$salary_in_usd),
+     col="#F5B0CB",
+     main="Density Plot for Salary",
+     xlab="Salary",
+     ylab="Density")
+polygon(density(df$salary_in_usd),
+        col="#F5B0CB")
+
+```
+
+### Findings:
+
+The range of salaries in the Data Science domain is between 5,132 USD and 450,000 USD. Moreover, the average or mean salary in this field is around 137,570 USD. This information suggests that there is a wide range of salaries in the field of Data Science, with some individuals earning significantly more than others.
+
+## Analysis for Employment Type
+
+```{r}
+# Analysis for employment_type #
+
+
+# table(df$employment_type)
+
+et_categ <- as.factor(ifelse(df$employment_type == "CT", "Contract",
+                            ifelse(df$employment_type == "FL", "Freelance", 
+                                   ifelse(df$employment_type == "FT", "Full-Time", 
+                                          ifelse(df$employment_type == "PT", "Part-Time", "")))))
+
+options(repr.plot.width=16, repr.plot.height=8)
+my_palette <- c("#FEDEFF", "#93C6E7", "#AEE2FF", "#B9F3FC")
+
+et_barchart <- ggplot(data.frame(et_categ), aes(x = et_categ)) +
+  geom_bar(aes(fill = et_categ))  +
+  scale_fill_manual(values = my_palette) +
+  ggtitle("Bar Chart for Employment Type") +
+  xlab("Type") +
+  ylab("Frequency") +
+  labs(fill = "Level") +
+  stat_count(geom = "text", aes(label = after_stat(count)), vjust = -0.5) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#383335", size = 20, face = "bold"),
+    plot.subtitle = element_text(color = "#F6CD90",size = 12, face = "bold"),
+    plot.caption = element_text(face = "italic"))
+
+data <- data.frame(
+  category=c("Contract", "Freelance", "Full-Time", "Part-Time"),
+  count=c(10, 10, 3718, 17)
+)
+ 
+# Compute percentages
+data$fraction <- data$count / sum(data$count)
+
+# Compute the cumulative percentages (top of each rectangle)
+data$ymax <- cumsum(data$fraction)
+
+# Compute the bottom of each rectangle
+data$ymin <- c(0, head(data$ymax, n=-1))
+
+# Compute label position
+data$labelPosition <- (data$ymax + data$ymin) / 2
+
+# Compute a good label
+data$label <- paste0(round(data$fraction*100, 1), "%")
+
+et_piechart <- ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  ggtitle("Pie Chart for Employment Type") +
+  scale_fill_manual(values = my_palette)  +
+  coord_polar(theta="y") +
+  theme_void() +
+  labs(fill = "Type") +
+  theme(
+  plot.title = element_text(color = "#383335", size = 20, face = "bold"))
+
+et_barchart
+et_piechart
+
+```
+
+### Findings:
+
+The dataset includes data on four types of employment: Contract, Freelance, Full-Time, and Part-Time. Based on the graphs, it is clear that the majority of people who contributed to the dataset are employed on a Full-Time basis. This information indicates that Full-Time employment is the most common form of employment for those in the Data Science field.
+
+## Analysis for % Remote Work
+
+```{r}
+# Analysis for remote_ratio #
+# table(df$remote_ratio)
+
+rr_categ <- as.factor(ifelse(df$remote_ratio  == 0, "On-site",
+                            ifelse(df$remote_ratio == 50, "Hybrid", 
+                                ifelse(df$remote_ratio == 100, "Remote", ""))))
+
+options(repr.plot.width=16, repr.plot.height=8)
+my_palette <- c("#f0dfd1", "#f0c9a8", "#edb482")
+
+rr_barchart <- ggplot(data.frame(rr_categ ), aes(x = rr_categ)) +
+    geom_bar(aes(fill = rr_categ ))  +
+    scale_fill_manual(values = my_palette) +
+    labs(fill = "Type") +
+    stat_count(geom = "text", aes(label = after_stat(count)), vjust = -0.5) +
+    labs(title = "Bar Chart for  % Remote Work",x = "Type", y="Frequency") +
+    theme_classic() +
+    theme(
+    plot.title = element_text(color = "#383335", size = 20, face = "bold"),
+    plot.subtitle = element_text(color = "#F6CD90",size = 12, face = "bold"),
+    plot.caption = element_text(face = "italic"))
+
+data <- data.frame(
+  category=c("On-site", "Hybrid", "Remote"),
+  count=c(1923, 189, 1643)
+)
+ 
+# Compute percentages
+data$fraction <- data$count / sum(data$count)
+
+# Compute the cumulative percentages (top of each rectangle)
+data$ymax <- cumsum(data$fraction)
+
+# Compute the bottom of each rectangle
+data$ymin <- c(0, head(data$ymax, n=-1))
+
+# Compute label position
+data$labelPosition <- (data$ymax + data$ymin) / 2
+
+# Compute a good label
+data$label <- paste0(round(data$fraction*100, 1), "%")
+
+rr_piechart <- ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  ggtitle("Pie Chart for % Remote Work") +
+  scale_fill_manual(values = my_palette)  +
+  coord_polar(theta="y") +
+  theme_void() +
+  labs(fill = "Type") +
+  theme(
+  plot.title = element_text(color = "#383335", size = 20, face = "bold"))
+
+rr_barchart
+rr_piechart
+
+```
+
+### Findings:
+
+According to the dataset, approximately 51.2% (1923 observations) of individuals are working On-site, which means they are working at a physical location provided by their employer. Around 43.8% (1643 observations) of people are working in remote mode. Finally, 5% (189 observations) of individuals are working hybrid. This information suggests that a significant portion of the individuals in the Data Science field have some level of flexibility in their work arrangements.
+
+## Analysis for Companies Size
+
+```{r}
+# Analysis for company_size #
+# table(df$company_size)
+
+cs_categ <- as.factor(ifelse(df$company_size  == "L", "Large",
+                            ifelse(df$company_size == "M", "Medium", 
+                                ifelse(df$company_size == "S", 'Small', ''))))
+
+options(repr.plot.width=16, repr.plot.height=8)
+my_palette <- c("#C8E3D4", "#96C7C1", "#89B5AF")
+
+cs_barchart <- ggplot(data.frame(cs_categ ), aes(x = cs_categ)) +
+  geom_bar(aes(fill = cs_categ ))  +
+  scale_fill_manual(values = my_palette) +
+  ggtitle("Bar Chart for Companies Size") +
+  xlab("Size") +
+  ylab("Frequency") +
+  labs(fill = "Type") +
+  stat_count(geom = "text", aes(label = after_stat(count)), vjust = -0.5) +
+  theme_classic() +
+  theme(
+  plot.title = element_text(color = "#383335", size = 20, face = "bold"),
+  plot.subtitle = element_text(color = "#F6CD90",size = 12, face = "bold"),
+  plot.caption = element_text(face = "italic"))
+
+data <- data.frame(
+  category=c("Large", "Medium", "Small"),
+  count=c(454, 3153, 148)
+)
+ 
+# Compute percentages
+data$fraction <- data$count / sum(data$count)
+
+# Compute the cumulative percentages (top of each rectangle)
+data$ymax <- cumsum(data$fraction)
+
+# Compute the bottom of each rectangle
+data$ymin <- c(0, head(data$ymax, n=-1))
+
+# Compute label position
+data$labelPosition <- (data$ymax + data$ymin) / 2
+
+# Compute a good label
+data$label <- paste0(round(data$fraction*100, 1), "%")
+
+cs_piechart <- ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  ggtitle("Pie Chart for Companies Size") +
+  scale_fill_manual(values = my_palette)  +
+  coord_polar(theta="y") +
+  theme_void() +
+  labs(fill = "Size") +
+  theme(
+  plot.title = element_text(color = "#383335", size = 20, face = "bold"))
+
+cs_barchart
+cs_piechart
+```
+
+### Findings:
+
+A large portion of the companies, around 84% (3153 observations), are categorized as Medium size. Additionally, 12.1% (454 observations) of the companies are classified as Large size, while only 3.9% (148 observations) are considered Small size. This implies that the majority of the companies in the dataset have a medium-sized workforce.
+
+## Analysis for Company Location
+
+```{r}
+# Analysis for company_location #
+
+# table(df$company_location)
+
+cat("The dataset grasps", length(unique(df$company_location))," distinct company locations.")
+
+# Compute the top 20 company locations in descending order
+top20_company_location <- head(sort(table(df$company_location), decreasing = T), 20)
+
+# Create a bar plot with plotly
+plot_ly(x = top20_company_location, y = names(top20_company_location), type = "bar",
+               text = top20_job_titles, orientation = 'h', 
+               marker = list(color = "#0d1b2a
+                             ")) %>%
+               layout(title = "Top 20 Data Science Company Locations", xaxis = list(title = "Count"), 
+               yaxis = list(title = "Company Location"))
+
+```
+
+### Findings:
+
+The dataset contains information on 72 unique company locations. Upon analyzing the data, it was found that the majority of companies are based in the United States, with the highest number of observations. Great Britain, Canada, Spain, and India are the next most common locations where companies are based, respectively.
+
+## Analysis for Employees Residence
+
+```{r}
+# Analysis for employee_residence #
+
+# table(df$employee_residence)
+
+cat("The dataset grasps", length(unique(df$employee_residence))," distinct employees residence.")
+
+# Compute the top 20 employees residence in descending order
+top20_employee_residence <- head(sort(table(df$employee_residence), decreasing = T), 20)
+
+# Create a bar plot with plotly
+plot_ly(x = top20_employee_residence, y = names(top20_employee_residence), type = "bar",
+               text = top20_job_titles, orientation = 'h', 
+               marker = list(color = "#0d1b2a")) %>%
+               layout(title = "Top 20 Data Science Employees Residence", xaxis = list(title = "Count"), 
+               yaxis = list(title = "Employee Residence"))
+
+```
+
+### Findings:
+
+The dataset includes information on the primary country of residence for employees, with a total of 78 countries represented. The highest number of employees reside in the United States, followed by Great Britain, Canada, Spain, and India, indicating that these countries have a higher concentration of data science jobs or are preferred locations for employees in this field.
+
+# Multivariate Analysis
+
+## Analysis for Salary by Year
+
+```{r}
+options(scipen = 999)
+
+options(repr.plot.width=20, repr.plot.height=10) 
+require(gridExtra)
+
+my_palette <- c("#94d2bd", "#c8b6ff", "#ffb3c6", "#fb6f92")
+
+wy_sl_boxplot <- ggplot(df, aes(x=wy_categ, y=salary_in_usd)) + 
+geom_boxplot(fill=my_palette,
+             outlier.colour = "#001219", 
+             outlier.shape = 11, outlier.size = 2, 
+             col = my_palette, 
+             notch = F) +
+labs(
+title = "Distribution of Salaries by Year",
+x= "Year",
+y="Salary($)") 
+
+
+wy_sl_hist <- ggplot(df, aes(x=salary_in_usd, fill=wy_categ)) + 
+  geom_histogram(color="black", bins = 30) +
+  labs(
+      title = "Distribution of Salaries by Year",
+      x="Salary", 
+      y="Frequency",
+      fill="Year") +
+  scale_fill_manual(values = c("#ffe5ec", "#ffb3c6", "#ff8fab", "#fb6f92")) 
+
+
+wy_sl_boxplot
+wy_sl_hist
+
+```
+
+The dataset clearly indicates that the salaries in the Data Science domain have been increasing year on year, with a significant rise in 2022. This trend is expected to continue in 2023 as well.
+
+## Analysis for Salary by Experience Level
+
+```{r}
+options(scipen = 999)
+
+options(repr.plot.width=20, repr.plot.height=10) 
+require(gridExtra)
+
+my_palette <- c("#a8dadc", "#84a98c", "#52796f", "#2f3e46")
+
+el_sl_boxplot <- ggplot(df, aes(x=el_categ, y=salary_in_usd)) + 
+geom_boxplot(fill=my_palette,
+             outlier.colour = "#84a98c", 
+             outlier.shape = 11, outlier.size = 2, 
+             col = my_palette, 
+             notch = F) +
+labs(
+title = "Distribution of Salaries by Experience Level",
+x= "Level",
+y="Salary($)") 
+
+
+el_sl_hist <- ggplot(df, aes(x=salary_in_usd, fill=el_categ)) + 
+  geom_histogram(color="black", bins = 30) +
+  labs(
+      title = "Distribution of Salaries by Experience Level",
+      x="Salary", 
+      y="Frequency",
+      fill="Level") +
+  scale_fill_manual(values = c("#a8dadc", "#84a98c", "#52796f", "#2f3e46")) 
+
+
+el_sl_boxplot
+el_sl_hist
+
+```
+
+Dataset indicates that the average executive-level salaries are higher than those of entry-level, mid-level, and senior-level positions with an average of 140k to more than 200k per year, while senior level salaries are in between 120k to 180k.
+
+## Analysis for Salary by Employment Type
+
+```{r}
+options(scipen = 999)
+
+options(repr.plot.width=20, repr.plot.height=10) 
+require(gridExtra)
+
+my_palette <- c("#03045e", "#023e8a", "#0096c7", "#48cae4")
+
+et_sl_boxplot <- ggplot(df, aes(x=et_categ, y=salary_in_usd)) + 
+geom_boxplot(fill=my_palette,
+             outlier.colour = "#023e8a", 
+             outlier.shape = 11, outlier.size = 2, 
+             col = my_palette, 
+             notch = F) +
+labs(
+title = "Distribution of Salaries by Employment Type",
+x= "Type",
+y="Salary($)")
+
+et_sl_hist <- ggplot(df, aes(x=salary_in_usd, fill=et_categ)) + 
+  geom_histogram(color="black", bins = 30) +
+  labs(
+      title = "Distribution of Salaries by Employment Type",
+      x="Salary", 
+      y="Frequency",
+      fill="Type") +
+  scale_fill_manual(values = c("#03045e", "#023e8a", "#0096c7", "#48cae4")) 
+
+et_sl_boxplot
+et_sl_hist
+
+```
+
+The data reveals that full-time employees are paid higher salaries compared to other employment types such as contract, freelance and part-time. Freelancers have an average annual salary of around 50 to 60k USD, while most number of part-time employees receive less than 50k USD per year.
+
+## Analysis for Salary by Company Size
+
+```{r}
+options(scipen = 999)
+
+options(repr.plot.width=20, repr.plot.height=10) 
+require(gridExtra)
+
+my_palette <- c("#C8E3D4", "#96C7C1", "#89B5AF")
+
+cs_sl_boxplot <- ggplot(df, aes(x=cs_categ, y=salary_in_usd)) + 
+geom_boxplot(fill=my_palette,
+             outlier.colour = "#305F72", 
+             outlier.shape = 11, outlier.size = 2, 
+             col = my_palette, 
+             notch = F) +
+labs(
+title = "Distribution of Salaries by Company Size",
+x= "Size",
+y="Salary($)") 
+
+cs_sl_hist <- ggplot(df, aes(x=salary_in_usd, fill=cs_categ)) + 
+  geom_histogram(color="black", bins = 30) +
+  labs(
+      title = "Distribution of Salaries by Company Size",
+      x="Salary", 
+      y="Frequency",
+      fill="Size") +
+  scale_fill_manual(values = c("#C8E3D4", "#96C7C1", "#89B5AF")) 
+
+cs_sl_boxplot
+cs_sl_hist
+
+```
+
+Based on the dataset, it can be observed that medium-sized companies tend to pay higher salaries compared to large-sized companies. The average salary for medium-sized companies ranges from 100k to 180k per year, while larger companies pay an average of 60k to 150k per year. This suggests that the size of the company may not always be an accurate indicator of salary levels, and that other factors may come into play such as the industry, location, and job title.
+
+## Analysis for Salary by % Remote Work
+
+```{r}
+options(scipen = 999)
+
+options(repr.plot.width=20, repr.plot.height=10) 
+require(gridExtra)
+
+my_palette <- c("#f0dfd1", "#f0c9a8", "#edb482")
+
+rr_sl_boxplot <- ggplot(df, aes(x=rr_categ, y=salary_in_usd)) + 
+geom_boxplot(fill=my_palette,
+             outlier.colour = "#FFD966", 
+             outlier.shape = 11, outlier.size = 2, 
+             col = my_palette, 
+             notch = F) +
+labs(
+title = "Distribution of Salaries by % Remote Work",
+x= "Type",
+y="Salary($)")
+
+rr_sl_hist <- ggplot(df, aes(x=salary_in_usd, fill=rr_categ)) + 
+  geom_histogram(color="black", bins = 30) +
+  labs(
+      title = "Distribution of Salaries by % Remote Work",
+      x="Salary", 
+      y="Frequency",
+      fill="Type") +
+  scale_fill_manual(values = c("#f0dfd1", "#f0c9a8", "#edb482")) 
+
+rr_sl_boxplot
+rr_sl_hist
+
+```
+
+According to the dataset, the salaries of remote employees are comparable to those of on-site employees, with an average salary range of 90k to 180k USD per year. This suggests that working remotely does not necessarily have a negative impact on salary.
+
 # Conclusion
 
-The Data Science Job Salaries Dataset contains information on salaries paid to employees working in the data science field. The dataset contains 11 columns that provide information on the work year, experience level, employment type, job title, salary amount, salary currency, salary in USD, employee residence, remote work ratio, company location, and company size.
+The Data Science domain has a wide range of salaries, with some individuals earning significantly more than others.
 
-With this dataset, I can analyze and explore different aspects of data science job salaries such as:
+Full-time employment is the most common form of employment for those in the Data Science field.
 
-Trends in salaries over time by analyzing the work year column.
+A significant portion of individuals in the Data Science field have some level of flexibility in their work arrangements.
 
-The impact of experience level on salaries by analyzing the experience_level column.
+The majority of companies in the dataset have a medium-sized workforce.
 
-The prevalence of different types of employment in the data science field by analyzing the employment_type column.
+The United States has the highest concentration of data science jobs.
 
-The most common job titles in the data science field by analyzing the job_title column.
+Salaries in the Data Science domain have been increasing year on year, with a significant rise in 2022 and this trend is expected to continue in 2023.
 
-Salary ranges and outliers in the data science field by analyzing the salary column.
+Executive-level salaries are higher than those of entry-level, mid-level, and senior-level positions, while senior-level salaries are higher than those of entry-level and mid-level positions.
 
-The geographic distribution of employees and companies in the data science field by analyzing the employee_residence and company_location columns.
+Full-time employees are paid higher salaries compared to other employment types such as contract, freelance, and part-time.
 
-The impact of remote work on salaries and prevalence of remote work in the data science field by analyzing the remote_ratio column.
+Medium-sized companies tend to pay higher salaries compared to large-sized companies.
 
-The size distribution of companies in the data science field by analyzing the company_size column.
+The salaries of remote employees are comparable to those of on-site employees.
 
-Overall, this dataset allows me to gain insights into different aspects of data science job salaries and explore trends and patterns in the data.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Overall, these findings suggest that the Data Science field is a growing and lucrative industry, with potential for career growth and financial success. However, factors such as employment type, company size, and location may impact an individual's earning potential.

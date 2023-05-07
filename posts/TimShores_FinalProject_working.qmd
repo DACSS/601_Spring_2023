@@ -31,16 +31,72 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 Read 'em and weep
 
 ```{r}
-lev2018 <- pdf_data("../posts/TimShores_FinalProject_Data/02Leverett2018.pdf")
-lev2019 <- pdf_data("../posts/TimShores_FinalProject_Data/03Leverett2019.pdf")
-lev2020 <- pdf_data("../posts/TimShores_FinalProject_Data/04Leverett2020.pdf")
-lev2021 <- pdf_data("../posts/TimShores_FinalProject_Data/05Leverett2021.pdf")
-lev2022 <- pdf_data("../posts/TimShores_FinalProject_Data/06Leverett2022.pdf")
-wen2018 <- pdf_data("../posts/TimShores_FinalProject_Data/08Wendell2018.pdf")
-wen2019 <- pdf_data("../posts/TimShores_FinalProject_Data/09Wendell2019.pdf")
-wen2020 <- pdf_data("../posts/TimShores_FinalProject_Data/10Wendell2020.pdf")
-wen2021 <- pdf_data("../posts/TimShores_FinalProject_Data/11Wendell2021.pdf")
-wen2022 <- pdf_data("../posts/TimShores_FinalProject_Data/12Wendell2022.pdf")
+projectFiles <- c(
+  "../posts/TimShores_FinalProject_Data/Leverett2018.pdf",
+  "../posts/TimShores_FinalProject_Data/Leverett2019.pdf",
+  "../posts/TimShores_FinalProject_Data/Leverett2020.pdf",
+  "../posts/TimShores_FinalProject_Data/Leverett2021.pdf",
+  "../posts/TimShores_FinalProject_Data/Leverett2022.pdf",
+  "../posts/TimShores_FinalProject_Data/Wendell2018.pdf",
+  "../posts/TimShores_FinalProject_Data/Wendell2019.pdf",
+  "../posts/TimShores_FinalProject_Data/Wendell2020.pdf",
+  "../posts/TimShores_FinalProject_Data/Wendell2021.pdf",
+  "../posts/TimShores_FinalProject_Data/Wendell2022.pdf")
 
-lev2018
+
+
+lev2018 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2018.pdf")
+lev2019 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2019.pdf")
+lev2020 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2020.pdf")
+lev2021 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2021.pdf")
+lev2022 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2022.pdf")
+wen2018 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2018.pdf")
+wen2019 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2019.pdf")
+wen2020 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2020.pdf")
+wen2021 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2021.pdf")
+wen2022 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2022.pdf")
+
+str_replace_all(basename(projectFiles), "(\\d*)_.*(_wk\\d*)\\..*", "\\1\\2")
+
+lev2018[[1]]
+
+  # pivot wider... filter-in height 11 (that's the font size of the table data in the pdf); omit anything with y coordinate greater than 13 (that gets rid of the header), include the y column to be able to arrange by y coordinate on page
+lev2018_wide <- lev2018[[1]] %>% filter(height == 11 & y > 13 & text != "Action:") %>% pivot_wider(id_cols = y, names_from = x, values_from = text) # original filter gets rid of Action, consider this later: filter(height == 11 & y > 13 & text != "Action:")
+  # it will help to order columns by numeric order - they are the x coords from left to right
+numcols = sort(as.numeric(names(lev2018_wide)[!grepl("y", names(lev2018_wide))]))
+lev2018_wide <- select(lev2018_wide, y, match(numcols, names(lev2018_wide)))
+  # now we have a df that is simply x:y coordinates of the page
+  # time to smush cols together!
+lev2018_wide <- unite(lev2018_wide, "x5to52", c("5":"41"), sep = " ", na.rm = TRUE, remove = TRUE)
+lev2018_wide <- unite(lev2018_wide, "x53to197", c("53":"197"), sep = " ", na.rm = TRUE, remove = TRUE)
+lev2018_wide <- unite(lev2018_wide, "x198to238", c("198":"233"), sep = " ", na.rm = TRUE, remove = TRUE)
+# spacing may not be the same on each page?
+lev2018_wide <- unite(lev2018_wide, "x239to280", c("239":"251"), sep = " ", na.rm = TRUE, remove = TRUE)
+lev2018_wide <- unite(lev2018_wide, "x281to329", c("281":"282"), sep = " ", na.rm = TRUE, remove = TRUE)
+lev2018_wide <- unite(lev2018_wide, "x330to371", c("330":"347"), sep = " ", na.rm = TRUE, remove = TRUE)
+lev2018_wide <- unite(lev2018_wide, "x372to449", c("372":"431"), sep = " ", na.rm = TRUE, remove = TRUE)
+lev2018_wide <- unite(lev2018_wide, "x450toEnd", c("450":"527"), sep = " ", na.rm = TRUE, remove = TRUE)
+
+lev2018_wide <- mutate(lev2018_wide, 
+       x5to52 = ifelse(nchar(x5to52, type="chars") > 0 & nchar(x53to197, type="chars") > 0, paste0(x5to52," ",x53to197), paste0(x5to52)),
+       x53to197 = ifelse(nchar(x5to52, type="chars") > 0, paste0(""), paste0(x53to197)))
+
+lev2018_wide <- mutate(lev2018_wide, x5to52 = ifelse(x5to52 == "", paste0(""), paste0(x5to52)))
+lev2018_wide <- mutate(lev2018_wide, x53to197 = ifelse(x53to197 == "", paste0(""), paste0(x53to197, " ", x198to238, " ", x239to280, " ", x281to329, " ", x330to371, " ", x372to449, " ", x450toEnd)))
+lev2018_wide <- mutate(lev2018_wide, 
+                       x198to238 = ifelse(x53to197 == "", paste0(x198to238), paste0("")), 
+                       x239to280 = ifelse(x53to197 == "", paste0(x239to280), paste0("")), 
+                       x281to329 = ifelse(x53to197 == "", paste0(x281to329), paste0("")), 
+                       x330to371 = ifelse(x53to197 == "", paste0(x330to371), paste0("")), 
+                       x372to449 = ifelse(x53to197 == "", paste0(x372to449), paste0("")), 
+                       x450toEnd = ifelse(x53to197 == "", paste0(x450toEnd), paste0(""))) 
+lev2018_wide <- lev2018_wide %>% mutate_at(c(2,3), ~na_if(., '')) # replace blanks with NAs in the 2nd and 3rd cols. I tried this using paste in the previous mutate, but the result was a text string "NA".
+  # label each action with its call type
+lev2018_wide <- fill(lev2018_wide, x5to52, .direction = "down")
+lev2018_wide <- lev2018_wide %>% 
+    mutate(x53to197 = ifelse(row_number() == 1, "Action", x53to197))
+colnames(lev2018_wide) <- lev2018_wide[1, ]
+lev2018_wide <- mutate(lev2018_wide, town = , year = )
 ```
+
+

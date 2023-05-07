@@ -1,0 +1,143 @@
+---
+title: "Challenge 3"
+author: "Nisarg Shah"
+description: "Tidy Data: Pivoting"
+date: "08/17/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - eggs
+  - australian_marriage
+  - usa_households
+  - sce_labor
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+# reading the CSV file
+df <- read_csv("_data/animal_weight.csv")
+
+# taking a peek into the data
+head(df)
+
+```
+
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+
+The data given represent the number of livestock in different IPCC areas for various animal categories. Animal categories include dairy and non-dairy cattle, buffalo, market and breeding pigs, broiler and layer chickens, ducks, turkeys, sheep, goats, horses, donkeys, mules, camels and llamas.
+
+The large format makes it difficult to analyze, visualize or perform further data processing.
+
+To make the data "tidy", we plan to convert it to a long format. Returning the data will allow us to have three columns: 'IPCC Field', 'Animal Category' and 'Number'. The 'IPCC Area' column will represent different regions, the 'Animal Category' column will represent the different animal species and the 'Number' column will represent the count of the animal
+
+## Anticipate the End Result
+
+The first step in pivoting the data is to try to come up with a concrete vision of what the end product *should* look like - that way you will know whether or not your pivoting was successful.
+
+One easy way to do this is to think about the dimensions of your current data (tibble, dataframe, or matrix), and then calculate what the dimensions of the pivoted data should be.
+
+Suppose you have a dataset with $n$ rows and $k$ variables. In our example, 3 of the variables are used to identify a case, so you will be pivoting $k-3$ variables into a longer format where the $k-3$ variable names will move into the `names_to` variable and the current values in each of those columns will move into the `values_to` variable. Therefore, we would expect $n * (k-3)$ rows in the pivoted dataframe!
+
+### Example: find current and future data dimensions
+
+Lets see if this works with a simple example.
+
+Or simple example has $n = 6$ rows and $k - 3 = 2$ variables being pivoted, so we expect a new dataframe to have $n * 2 = 12$ rows x $3 + 2 = 5$ columns.
+
+### Challenge: Describe the final dimensions
+
+Document your work here.
+
+```{r}
+# existing rows
+nrow(df)
+
+
+```
+
+```{r}
+# existing column
+ncol(df)
+
+
+```
+
+In our dataset, there are 16 unique animal categories and 9 rows. Using the formula, we can calculate the new number of rows:
+
+```{r}
+row <- 9 * 16
+row
+```
+
+As for the number of columns, there is only one identifier column ('IPCC Area'), one for the animals and one additional column for the count:
+
+```{r}
+col <- 1 + 1 + 1
+col
+```
+
+Any additional comments?
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+Yes, once it is pivoted long, our resulting data are $12x5$ - exactly what we expected!
+
+### Challenge: Pivot the Chosen Data
+
+Document your work here. What will a new "case" be once you have pivoted the data? How does it meet requirements for tidy data?
+
+```{r}
+colnames(df)
+
+```
+
+```{r}
+# Use pivot_longer to pivot the data
+df_long <- df %>%
+    pivot_longer(
+        cols = -"IPCC Area", # Exclude the 'ipcc_area' column from being pivoted
+        names_to = "animal_category", # Column to store the animal category names
+        values_to = "count" # Column to store the animal count values
+    )
+df_long
+```
+
+Any additional comments?

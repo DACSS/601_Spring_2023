@@ -1,0 +1,123 @@
+---
+title: "Challenge 5"
+author: "Prachiti Parkar"
+description: "Introduction to Visualization"
+date: "05/07/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - railroads
+  - cereal
+  - air_bnb
+  - pathogen_cost
+  - australian_marriage
+  - public_schools
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐ 
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐ 
+-   USA Households ⭐⭐⭐⭐⭐
+
+```{r}
+
+ab_nyc <- read.csv("_data/AB_NYC_2019.csv")
+head(ab_nyc)
+summary(ab_nyc)
+unique(ab_nyc$room_type)
+```
+
+### Briefly describe the data
+The data has 16 columns. It represents housing prices depending on mainly neighborhood groups and room type. The prices range from 0 to 10000. 
+
+## Tidy Data (as needed)
+There are three types of room - Private room, Shared room and Entire home/apartment.
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+
+sum(is.na(ab_nyc$reviews_per_month))
+
+ab_nyc <- ab_nyc %>%  replace_na(list(reviews_per_month = 0))
+```
+ 
+I saw that 10052 rows had NA in reviews_per_month, I thought its better to replace it by 0 so that people buying have a fair idea about reviews of the place. 
+
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+
+
+
+
+
+## Univariate Visualizations
+Let's see how the prices are scattered over the whole data
+```{r}
+ggplot(ab_nyc,aes(price))+
+  geom_histogram()
+
+airb_filtered <- ab_nyc %>%
+  filter(price>0 & price<2000)
+
+ggplot(airb_filtered,aes(price))+
+  geom_histogram()
+```
+
+Lets check the count of room types 
+```{r}
+
+
+ggplot(ab_nyc,aes(room_type))+geom_bar()+labs(title = "Count of different type of rooms")
+
+```
+## Bivariate Visualization(s)
+
+Let's see how room_type relate to prices
+```{r}
+ggplot(ab_nyc,aes(room_type,price))+geom_boxplot()+labs(title = "Distirbution of prices of air bnb accross different prices")
+```
+Any additional comments?

@@ -1,0 +1,193 @@
+---
+title: "Visualizing Time and Relationships for Hotel Booking Data"
+author: "Saksham Kumar"
+description: "Visualizing Time and Relationships"
+date: "05/03/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - Saksham Kumar
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+  
+
+```{r}
+hotel_data <- read.csv("_data/hotel_bookings.csv")
+hotel_data
+```
+
+### Briefly describe the data
+
+```{r}
+hotel_data %>% colnames()
+```
+We see that there are 32 variables in the dataset. Lets have a look at the summary for each variable of the dataset below.
+
+```{r}
+hotel_data %>% summary()
+```
+Lets see the number of unique hotels and countries
+
+```{r}
+hotel_data$hotel %>% unique()
+```
+
+There are two unique types of hotels
+
+```{r}
+hotel_data$country %>% unique()
+```
+And the data describes values from 178 countries
+
+It would be interesting to see the how number of bookings varies with date and month. It will also be interesting to see booking corresponding to which dates were cancelled.
+
+## Tidy Data (as needed)
+
+We start by combining all start date related fields to create a singular date field. We will leave arrival_month as is however so to visualize monthly trend
+
+```{r}
+hotel_mutated<-hotel_data%>%
+  mutate(date_arrival = str_c(arrival_date_day_of_month,
+                              arrival_date_month,
+                              arrival_date_year, sep="/"),
+         date_arrival = dmy(date_arrival))%>%
+  select(-c("arrival_date_day_of_month", "arrival_date_year", "arrival_date_week_number"))
+
+hotel_mutated
+```
+
+## Time Dependent Visualization
+
+```{r}
+hotels_totalbookings_bydate <- hotel_mutated %>% 
+                                  group_by(date_arrival) %>%
+                                  summarise(count = n())
+
+hotels_totalbookings_bydate
+```
+
+```{r}
+ggplot(hotels_totalbookings_bydate, aes(date_arrival, count)) + geom_line()
+```
+This doesn't give us a lot of information. So lets try plotting a graph between cumulative bookings and date.
+
+```{r}
+hotels_cumulbookings_bydate <- hotels_totalbookings_bydate %>% 
+                                  mutate(cumulative=cumsum(count))
+
+hotels_cumulbookings_bydate
+```
+
+```{r}
+ggplot(hotels_cumulbookings_bydate, aes(date_arrival, cumulative)) + geom_line()
+```
+
+Now lets see which bookings by month
+
+```{r}
+hotels_totalbookings_bymonth_pre <- hotel_mutated %>% 
+                                  group_by(arrival_date_month) %>%
+                                  summarise(count = n())
+
+hotels_totalbookings_bymonth <- hotels_totalbookings_bymonth_pre %>% mutate(
+                                                  arrival_date_month = factor(arrival_date_month, levels = month.name)
+                                                  ) %>%
+                                                  arrange(arrival_date_month)
+```
+
+```{r}
+ggplot(hotels_totalbookings_bymonth, aes(arrival_date_month, count, group=1)) + geom_line() + geom_point()
+```
+
+Now we also try and visualize which months bookings end up being cancelled the most. For this we will visualize the fraction of bookings that were cancelled for that month.
+
+```{r}
+hotels_cancel_bymonth_pre <- hotel_mutated %>% 
+                                  group_by(arrival_date_month) %>%
+                                  summarise(count = n(), cancelled=sum(is_canceled))
+
+hotels_cancel_bymonth_pre <- hotels_cancel_bymonth_pre %>% mutate(fraction_cancelled = cancelled/count)
+
+
+hotels_cancel_bymonth <- hotels_cancel_bymonth_pre %>% mutate(
+                                                  arrival_date_month = factor(arrival_date_month, levels = month.name)
+                                                  ) %>%
+                                                  arrange(arrival_date_month)
+
+hotels_cancel_bymonth
+```
+
+```{r}
+ggplot(hotels_cancel_bymonth, aes(arrival_date_month, fraction_cancelled, group=1)) + geom_line() + geom_point()
+```
+
+These graphs help hotels prepare for seasonal increase in bookings. There is a peak in bookings in August and hotels would want to scale up and down their resources accordingly. This would include staff, amenities etc. And since January sees the least number of visitors, it would make sense to do renovations during this time of the year. 
+
+Similarly we see that more than 40% bookings in April and June are cancelled, which means that the hotels can expect, the actual number of guests to be lower than the number of bookings made.
+
+## Visualizing Part-Whole Relationships
+
+To visualize part-whole relationships we will try to visualise monthly sales for different types of hotels
+
+```{r}
+hotels_totalbookings_bymonth_pre <- hotel_mutated %>% 
+                                  group_by(arrival_date_month, hotel) %>%
+                                  summarise(count = n())
+
+hotels_totalbookings_bymonth <- hotels_totalbookings_bymonth_pre %>% mutate(
+                                                  arrival_date_month = factor(arrival_date_month, levels = month.name)
+                                                  ) %>%
+                                                  arrange(arrival_date_month)
+```
+
+```{r}
+ggplot(hotels_totalbookings_bymonth, aes(arrival_date_month, count, col=hotel, group=hotel)) + geom_line() + geom_point()
+```
+
+We can see that City hotels have more bookings than resort hotels. We also see that both hotel types follow similar trends. They have peaks during the same month. 

@@ -1,0 +1,124 @@
+---
+title: "Challenge 4"
+author: "Maanusri Balasubramanian"
+description: "More data wrangling: pivoting"
+date: "05/05/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - maanusri balasubramanian
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+# reading the dataset from csv
+bookings <- read_csv("_data/hotel_bookings.csv")
+
+# number of rows
+nrow(bookings)
+
+# number of columns
+ncol(bookings)
+
+# taking a peak into the dataset
+head(bookings)
+
+# printing column names
+colnames(bookings)
+```
+
+```{r}
+str(bookings)
+unique(bookings$hotel)
+unique(bookings$arrival_date_year)
+unique(bookings$customer_type)
+```
+
+### Briefly describe the data
+
+The dataset contains information about hotel bookings made in Resort Hotel and City Hotel during the years 2015, 2016 and 2017. The dataset contains 119390 rows and 32 columns. Each entry in the dataset contains information about a particular booking like guest information, date of arrival, room information, payment information, show/no-show information, etc. 
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data is not tidy and work needs to be done:
+1. The date information is split in multiple columns, combining these would make is easier for analysis. Creating a new column "arrival_date" by getting the date from "arrival_date_day_of_month", "arrival_date_month","arrival_date_year" columns and dropping these 3 columns.
+2. previous_bookings_not_canceled - this information is redundant and can be calculated from the columns "stays_in_weekend_nights" and "stays_in_week_nights". So we can drop this column.
+3. is_repeated_guest - again, this is redundant information. If atleast one of "stays_in_weekend_nights" and "stays_in_week_nights" is non-zero, then is_repeated_guest would be 1, else 0. So we can remove this column too.
+
+We'll be dropping 3 + 1 + 1 columns and adding 1 column. So we'll have 28 columns after tidying. 
+
+```{r}
+# checking out the values in columns to better understand the data
+unique(bookings$is_repeated_guest)
+select(bookings, previous_bookings_not_canceled)
+
+# combining arrival date information into 1 column
+tidy_bookings <- bookings %>%
+  mutate(arrival_date = (str_c(arrival_date_day_of_month, arrival_date_month, arrival_date_year, sep = "/")), arrival_date = dmy(arrival_date), .after = lead_time)
+
+# removing all the above mentioned redundant data
+tidy_bookings <- tidy_bookings[,-c(5, 6, 8, 14, 16)]
+tidy_bookings
+
+```
+
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+The column "agent" is stored as string. Looking at it, the codes range from 1 to 535. So we can convert these to numeric type, for easier analysis/filtering.
+
+```{r}
+# checking out the values in the column "agent"
+unique(bookings$agent)
+
+# selecting and converting type to numeric (in case of "null" values, it gets set to NA)
+agent <- select(bookings, agent)
+bookings$agent <- as.numeric(as.character(bookings$agent))
+
+# sanity check
+agent_nums <- unique(bookings$agent)
+agent_nums[order(agent_nums)]
+```
+
+Any additional comments?

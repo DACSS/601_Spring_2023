@@ -1,0 +1,103 @@
+---
+title: "Challenge 4"
+author: "Abhinav Reddy Yadatha"
+description: "More data wrangling: pivoting"
+date: "05/06/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - poultry_tidy
+  - Abhinav Reddy Yadatha
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Reading poultry_tidy.xlsx dataset.
+
+-   poultry_tidy.xlsx⭐⭐
+
+```{r}
+# Reading the poultry dataset
+poultry_data <-readxl::read_excel("_data/poultry_tidy.xlsx")
+poultry_data
+
+# Display the summary of the dataset
+summary(poultry_data)
+
+# Check for any empty/missing data
+na_data <- filter(poultry_data, is.na(Price_Dollar))
+
+na_data
+
+# Displaying all the unique poultry product names.
+unique(poultry_data$Product)
+
+
+```
+
+### Briefly describe the data
+
+The dataset contains 600 rows and four columns that span from 2004 to 2013. The columns represent various poultry products, including Whole, B/S Breast, Bone-in Breast, Whole Legs, and Thighs, and the corresponding prices range from 1.935 to 7.037 dollars. Upon reviewing the summary, it's evident that some of the prices are missing, particularly for product 7. Further analysis revealed that most of the missing values belong to the Bone-in Breast and Thighs products.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data is already tidy. Although we have the option to remove the NA data, I believe it's essential to retain the rows with missing values as they contain other important column information
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+
+I believe that two mutations would be beneficial foe the analysis of the dataset. First, it can be observed that the prices are discrete values and it would be helpful if there were ranges so that the price can be categorized as high, low and medium.
+Second, i believe that the variables year and month can be joined so that we can use it for analysis directly.
+
+```{r}
+
+# Creating ranges for the prices to be categorized in ranges.
+poultry_data_mutated <- poultry_data %>%
+  mutate(Price_type = case_when(Price_Dollar < 3 ~ 'low',Price_Dollar < 5 ~ 'medium', Price_Dollar > 5 ~ 'high'))
+
+# Combining the year and the month.
+poultry_data_mutated <- poultry_data_mutated %>%
+        mutate(Date = ym(paste(Year, Month)))
+
+poultry_data_mutated
+
+# Displaying the unique values of Price_type column after the mutation.
+unique(poultry_data_mutated$Price_type)
+
+```
+
+Any additional comments?

@@ -41,7 +41,7 @@ Read in one (or more) of the following datasets, using the correct R package and
 ```{r}
 debt_t <- readxl::read_excel("_data/debt_in_trillions.xlsx", sheet="Sheet1")
 table(select(debt_t, `Year and Quarter`))
-
+      
 ```
 
 ### Briefly describe the data
@@ -66,9 +66,10 @@ debt_t2 <- debt_t %>%
 
 ## Identify variables that need to be mutated
 
-The \'Year and Quarter\' variable has to be mutated to make analysys more efficient. Since \'Year and Quarter\' denotes a date or time, this is not right and needs to be converted to Date object.
+The Year and Quarter variable has to be mutated to make analysis more efficient. Since Year and Quarter denotes a date or time, this is not right and needs to be converted to Date object.
 
 ```{r}
+library(lubridate)
 debt_t3 <- debt_t2 %>%
   mutate(year = str_c("20", str_sub(`Year and Quarter`, 1, 2)),quarter = str_sub(`Year and Quarter`, 5, 5), year_and_quarter = quarter(as_date(str_c(year, quarter), format="%Y%q"), with_year=TRUE)) %>% 
   select(-c(`Year and Quarter`, `year`, `quarter`)) %>%

@@ -1,0 +1,138 @@
+---
+title: "Challenge 6"
+author: "Prachiti Parkar"
+description: "Visualizing Time and Relationships"
+date: "05/07/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(tidyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+  
+
+```{r}
+
+debt_data_og <- read_xlsx("_data/debt_in_trillions.xlsx")
+debt_data <- debt_data_og
+head(debt_data)
+summary(debt_data)
+
+dim(debt_data)
+
+```
+
+### Briefly describe the data
+
+There are 8 columns and 74 rows. The data shows the debt over period of year and quarters. The debt has various types - mortgage, HE Revolving, Auto Loan, Credit Card, Student Loan, Other accumulated to total debt in the last column.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+I believe it would be easier to perform visualizations if we divide the year and quarter into 2 separate columns. 
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+debt_data <- debt_data %>%
+  rename(year_quarter = `Year and Quarter`)
+
+debt_data <- debt_data %>%
+  separate(year_quarter, into = c("Year", "Quarter"), sep = ":Q")
+
+head(debt_data)
+
+
+
+```
+
+## Time Dependent Visualization
+
+```{r}
+
+avg_debt <- debt_data %>%
+  group_by(Year) %>%
+  summarise(AvgTotal = mean(Total))
+
+head(avg_debt)
+
+ggplot(avg_debt,aes(x=Year, y=AvgTotal)) + geom_point() + ggtitle("Evolution of Average Debt over Years")
+```
+
+## Visualizing Part-Whole Relationships
+
+
+```{r}
+
+debt_data<-debt_data%>%
+  mutate(Year = as.integer(Year)+2000,Quarter = as.integer(Quarter))%>%
+  gather("debt_type", "amount", Mortgage:Total)
+
+head(debt_data)
+
+debt_data %>%
+  filter(debt_type != "Total") %>%
+  mutate(debt_type = fct_relevel(debt_type, "Mortgage", "Auto Loan", "Credit Card", "HE Revolving", "Other", "Student Loan")) %>%
+  ggplot(aes(x = Year + (Quarter-1) / 4, y = amount, fill = debt_type)) +
+  geom_area() +
+  labs(title = "Debt Type Breakdown by Quarter (Stacked Area Chart)",
+       x = "Year",
+       y = "Debt Amount (Trillions of US Dollars)",
+       fill = "Debt Type") 
+
+
+```

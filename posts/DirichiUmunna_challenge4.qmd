@@ -1,0 +1,92 @@
+---
+title: "Challenge 4: Hotel Data"
+author: "Dirichi Umunna"
+description: "Making Hotel Data useable"
+date: "04/18/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(stringr)
+library(summarytools)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Introduction
+
+Using the hotel dataset this blog post will be exploring a dataset with the aim of transforming it into a tidy format. Our tasks for today include; describing the dataset using both words and supporting information, tidying the data and performing sanity checks, identifying variables that require mutation, mutating the variables, and then performing a final sanity check to ensure that all the mutations have been performed accurately. By the end of this exercise, we should have a clean and well-organized dataset, ready for further analysis and interpretation.
+
+```{r}
+
+#read in data
+newhotel <- read_csv("_data/hotel_bookings.csv")
+head(newhotel)
+dim(newhotel)
+```
+
+## Description
+
+The hotel dataset is a collection of records containing information about hotel bookings. It includes information about the hotel, such as its name, location, and the type of meal provided. It also includes information about the booking itself, such as the lead time, the number of guests, and whether the booking was cancelled or not. This is potentially a valuable resource for exploring patterns in hotel bookings and understanding customer behavior.
+
+## The Problem
+
+Suppose we want to analyze the average daily rate of hotel customers over a certain period of time. To achieve this, we first need to clean the dataset and extract the specific variables of interest. One of the challenges we encounter is the messy date data, which is spread across multiple columns. However, we can easily fix this issue to make the data more manageable and informative for our analysis.
+
+```{r}
+
+#let us make a dataframe for the arrival columns
+
+arrival_cols <- grep("^arrival", colnames(newhotel), value = TRUE)
+arrival_cols
+
+##we begin here by concatenating the three distinct columns for dates together, then converting them to dates.
+newhotel<- newhotel%>%
+  mutate(dateofarrival = str_c(arrival_date_day_of_month,
+                              arrival_date_month,
+                              arrival_date_year, sep="/"),
+         dateofarrival = dmy(dateofarrival))%>%
+  select(-starts_with("arrival"))
+                 
+
+head(newhotel)
+
+```
+
+## Tidy Data
+
+Let's shift our focus to the ADR column now that we have made the dates easier to manipulate. Our next step is to tidy the data by selecting the ADR variable and checking if it requires any modifications.
+
+```{r}
+# Check for missing values in adr column using is.na()
+sum(is.na(newhotel$adr))
+
+#thankfully there is no missing data here.
+
+#let us perform a sanity check on our dimensions
+dim(newhotel)
+
+#let us rearrange this for further emphasis on our variables
+
+newhotelfinal <- newhotel %>% 
+  select(dateofarrival, adr, everything())
+```
+
+## Conclusion
+
+With the new date column and properly formatted adr rates, our dataset is now primed for deeper analysis and exploration of trends over time. By combining and tidying these key variables, we have set the stage for uncovering valuable insights and patterns within our data.

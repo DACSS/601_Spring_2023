@@ -1,0 +1,107 @@
+---
+title: "Tidying and Pivoting: Challenge 3 "
+author: "Dirichi Umunna"
+description: "Tidy Data: Pivoting"
+date: "03/17/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - eggs
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readxl)
+library(magrittr)
+library(tidyr)
+library(dplyr)
+library(stringr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+In this blog post, we will explore how to work with a given data set, starting from reading the data to tidying it using pivot_longer. The data set contains information on organic egg and poultry costs in the United States, with data points representing a range of values. We will describe the data set using words and provide additional supporting information as needed, such as tables, to provide insight into the contents of the data.
+
+```{r}
+#read in the dataset. we will be excluding unnecessary columns
+
+cleanpoultry <- read_excel("_data/organiceggpoultry.xls", sheet = "Data", skip = 5, col_names = c("Date", "Xtral_12", "Xtral_6", "Large_12", "Large_6", "Delete", "Whole", "Bsbreast", "Boneinbreast", "Wholelegs", "Thighs")) %>%
+select(-c(Delete))%>%
+  drop_na()
+
+#view data set
+head(cleanpoultry)
+```
+
+## Briefly describe the data
+
+The data set is focused on the monthly prices paid for USDA certified organic eggs and poultry, specifically chicken, between the years 2004 and 2013. It contains information on four different types of eggs and five different types of chicken, including their prices per carton and price cents per pound. The prices were set at the delivery to first receivers. The data set is sourced from the U.S. Department of Agriculture. Pivoting this data set to make it "tidy" is often required to make it easier to analyze and visualize the data.
+
+## Anticipate the End Result
+
+We will attempt to visualize the end result of our pivoting activity by anticipating our expected number of columns and rows. First we will further clean dataset in anticipation.
+
+```{r}
+#separate the date into month and year
+cleanpoultry <- separate (cleanpoultry, Date, into = c("Month", "Year", sep = " "))
+
+#convert year to integer
+cleanpoultry$Year <- as.integer(cleanpoultry$Year)
+
+# fill in missing values in Year column
+cleanpoultry <- fill(cleanpoultry, Year)
+
+#remove unnecessary column
+cleanpoultry <- cleanpoultry[, -which(names(cleanpoultry) == " ")]
+
+## make all datatypes the same
+cleanpoultry <- cleanpoultry %>%
+  mutate(Boneinbreast = as.numeric(Boneinbreast),
+         Thighs = as.numeric(Thighs))
+
+cleanpoultry
+
+# view data
+colnames(cleanpoultry)
+str(cleanpoultry)
+
+#existing rows/cases
+nrow(cleanpoultry)
+
+#existing columns/cases
+ncol(cleanpoultry)
+
+#expected rows/cases
+nrow(cleanpoultry) * (ncol(cleanpoultry)-2)
+
+# expected columns 
+ncol(cleanpoultry) - 9 + 2
+
+cleanpoultry
+```
+
+## Pivot the Data
+
+```{r}
+#now we pivot the data
+
+cleanpoultry <-pivot_longer(cleanpoultry, col = c("Xtral_12", "Xtral_6", "Large_12", "Large_6", "Whole", "Bsbreast", "Boneinbreast", "Wholelegs", "Thighs"),
+                 names_to="Eggs & Poultry Type",
+                 values_to = "Cost")
+cleanpoultry
+```
+
+## Conclusion
+
+In this current exercise, we successfully cleaned a data set and transformed it into a tidy format using pivot longer function. The resulting data set now has 1080 cases and 4 columns, like we anticipated. This makes it easy to analyze and manipulate the data. The process of cleaning and tidying the data set has made it more organized and readily usable for further analysis.

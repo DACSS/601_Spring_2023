@@ -1,0 +1,117 @@
+---
+title: "Challenge 7"
+author: "Pradhakshya Dhanakumar"
+desription: "Worked with Air Bnb Data "
+date: "05/05/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - Challenge 7
+  - Pradhakshya Dhanakumar
+  - AIR_BNB
+  - ggplot2
+---
+
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Reading Data
+```{r}
+df <- read.csv("_data/AB_NYC_2019.csv")
+head(df)
+```
+
+## Describe Data
+
+This dataset contains information on almost 49,000 Airbnb rental units in New York City during the year 2019. Each observation represents a single rental unit and includes 16 variables providing details about the unit, such as its id, name, location, host id and name, room type, price, minimum number of nights required for a reservation, number of reviews, date of the last review, average reviews per month, a calculated count of host listings with Airbnb, and availability.
+
+```{r}
+dim(df)
+```
+```{r}
+str(df)
+```
+
+
+```{r}
+#summary of data set statistics
+print(summarytools::dfSummary(df,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+## Tidy Data & Mutate Data
+```{r}
+df <- na.omit(df)
+```
+
+```{r}
+df <- df %>% mutate(high_price = ifelse(price > 500, "High", "Low"))
+```
+
+
+## Visualization with Multiple Dimensions
+
+Univariate Visulization:
+
+Histogram of price:
+
+```{r}
+library(ggplot2)
+ggplot(df, aes(x=price)) + 
+  geom_histogram(binwidth=25, color="black", fill="blue") +
+  labs(title="Distribution of Price", x="Price", y="Frequency")
+```
+Bivariate Visualization:
+
+1. The first scatterplot is of price vs reviews_per_month for the entire dataset. The ggplot function is used to initialize the plot and aes is used to specify the variables for the x and y axis. geom_point is used to add points to the plot and labs is used to specify the title and axis labels.
+
+The second code visualization is similar to the first, but with the addition of facetting. facet_wrap is used to create a separate scatterplot for each neighbourhood_group, with the scales="free" argument ensuring that the y-axis scales are independent for each plot. This allows us to see how the relationship between price and reviews_per_month varies across different neighbourhood_group in the dataset.
+
+```{r}
+ggplot(df, aes(x=price, y=reviews_per_month)) +
+  geom_point(alpha=0.5, color="blue") +
+  labs(title="Price vs Reviews per Month", x="Price", y="Reviews per Month")
+
+```
+```{r}
+ggplot(df, aes(x=price, y=reviews_per_month)) +
+  geom_point(alpha=0.5, color="blue") +
+  labs(title="Price vs Reviews per Month by City", x="Price", y="Reviews per Month") +
+  facet_wrap(~ neighbourhood_group, scales="free")
+
+```
+2. We first convert the "neighbourhood_group" column to a factor variable using the "as.factor()" function. Then, we create a box plot of "price" by "neighbourhood_group", with the fill color indicating whether the price is high or low. This allows us to compare the distribution of high and low prices across different neighbourhood groups. The resulting plot shows the median, quartiles, and any outliers for each neighbourhood group, making it easy to identify any differences in price distribution.
+
+```{r}
+df$neighbourhood_group <- as.factor(df$neighbourhood_group)
+```
+
+```{r}
+ggplot(df, aes(x=neighbourhood_group, y=price, fill=high_price)) +
+  geom_boxplot() +
+  labs(title="Distribution of High/Low Price by Neighbourhood Group", x="Neighbourhood Group", y="Price")
+
+```
+Q) Explain why you choose the specific graph type
+
+I chose a box plot to visualize the distribution of high and low prices by neighbourhood group because it effectively displays the median, quartiles, and any outliers in the data, making it easy to compare the price distribution across different neighbourhood groups. It also allows us to see any differences in the distribution of high and low prices for each neighbourhood group.
+
+I chose a scatter plot to visualize the relationship between price and reviews per month by city because it shows the individual data points and the overall trend in the data. It allows us to see if there is any relationship between price and reviews per month and if there are any outliers or patterns in the data. The use of different colors to indicate different cities helps to distinguish between the data points for each city.

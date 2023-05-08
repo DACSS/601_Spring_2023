@@ -1,0 +1,152 @@
+---
+title: "Challenge 8"
+author: "Pradhakshya Dhanakumar"
+desription: "Worked with SNL Data "
+date: "05/06/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - Challenge 8
+  - Pradhakshya Dhanakumar
+  - SNL
+  - ggplot2
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reading Data
+
+Actors Data
+```{r}
+df_actors <- read_csv("_data/snl_actors.csv")
+head(df_actors)
+```
+Casts Data
+```{r}
+df_casts <- read_csv("_data/snl_casts.csv")
+head(df_casts)
+```
+
+Seasons Data
+```{r}
+df_seasons <- read_csv("_data/snl_seasons.csv")
+head(df_seasons)
+```
+
+## Describe the Data
+
+```{r}
+dim(df_actors)
+dim(df_casts)
+dim(df_seasons)
+```
+
+There are three sets of data in the SNL dataset. 
+
+The first set, called SNL actors, lists all 2306 cast and guest members who have appeared on SNL. Each row corresponds to an individual actor and includes a link to more information about their gender and whether they were a cast member or guest.
+
+The second set, SNL casts, is more extensive than SNL actors in terms of variables and includes information on 614 cast members, but not guests. It provides details about the seasons each cast member was on the show, the number of episodes in each season, and the dates of the first and last episodes for each season the cast member appeared. First and last episode information is only included if they differ from the first or last episode of that season, so most values are missing.
+
+The third set, SNL seasons, contains data on the 46 seasons of SNL, such as the year, dates of the first and last episodes, and episode count per season. Each row corresponds to a season.
+
+## Tidy and Mutate Data
+
+
+```{r}
+df_actors<- na.omit(df_actors)
+df_casts<- na.omit(df_casts)
+df_seasons<- na.omit(df_seasons)
+```
+```{r}
+colnames(df_casts)
+colnames(df_actors)
+```
+
+```{r}
+df_actors <- df_actors %>%
+  mutate(appearances = rowSums(select(., starts_with("ep_")), na.rm = TRUE))
+```
+
+
+## Join Data
+
+The first block of code creates a new dataframe df_casts_actors by joining two dataframes df_casts and df_actors on the aid column. The select() function is then used to keep only the columns sid, type, gender, featured, and appearances in the resulting dataframe. This code creates a new dataframe with additional information about the actors who appeared in each season of a TV show.
+
+The second block of code creates another new dataframe df_data by joining the df_seasons dataframe with the df_casts_actors dataframe on the sid column. This code creates a new dataframe with combined information about the seasons and the actors who appeared in each season. The resulting dataframe df_data can be used to explore relationships between various variables such as the number of episodes in a season, the gender of the actors, and the number of appearances, etc.
+
+```{r}
+df_casts_actors <- df_casts %>%
+  left_join(df_actors, by = "aid") %>%
+  select(sid, type, gender, featured, appearances)
+```
+
+```{r}
+df_data <- df_seasons %>%
+  left_join(df_casts_actors, by = "sid")
+```
+
+```{r}
+colnames(df_data)
+colnames(df_casts_actors)
+```
+
+
+```{r}
+joined_data <- df_casts %>%
+  select(-update_anchor, -season_fraction, -n_episodes) %>%
+  left_join(df_seasons, by="sid")
+
+joined_data
+```
+```{r}
+colnames(joined_data)
+```
+
+## Visualizations
+
+Visual 1: 
+The chart shows the number of episodes by year using the n_episodes and year columns from the joined_data dataframe.
+```{r}
+library(ggplot2)
+
+# Create a bar chart of number of episodes by year
+ggplot(data = joined_data, aes(x = year, y = n_episodes)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Year", y = "Number of Episodes") +
+  labs(title="Number of Episodes by Year") +
+  theme_minimal()
+```
+Visual 2: 
+First create a new dataframe with information about actors in each season and then a bar chart to show the number of actors by season.
+
+```{r}
+
+df_casts_actors <- df_casts %>%
+  left_join(df_actors, by = "aid") %>%
+  group_by(sid) %>%
+  count() %>%
+  select(sid, n) %>%
+  rename(appearances = n)
+ggplot(data = df_casts_actors, aes(x = sid, y = appearances)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Season ID", y = "Number of Actors") +
+  ggtitle("Number of Actors by Season") +
+  theme_bw()
+
+
+```
+

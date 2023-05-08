@@ -1,0 +1,92 @@
+---
+title: "Challenge 6"
+author: "Pradhakshya Dhanakumar"
+desription: "Worked with Hotel Bookings Data "
+date: "05/05/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - Challenge 6
+  - Pradhakshya Dhanakumar
+  - Hotel Bookings
+  - ggplot2
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reading Data
+```{r}
+df <- read.csv("_data/hotel_bookings.csv")
+```
+
+```{r}
+head(df)
+```
+
+## Describe Data
+```{r}
+colnames(df)
+```
+
+```{r}
+dim(df)
+```
+
+
+## Tidying the data
+
+```{r}
+df<- na.omit(df)
+```
+
+
+## Time dependent Visualization
+```{r}
+library(ggplot2)
+```
+
+The resulting plot shows the total number of bookings for each month and hotel combination in the year 2016 using the filter, group by, ggplot fucntions. The bars are color-coded by hotel - City or Resort Hotel.
+
+```{r}
+df %>%
+  filter(arrival_date_year == 2015) %>%
+  group_by(arrival_date_month, hotel) %>%
+  summarise(total_bookings = n()) %>%
+  ggplot(aes(x = arrival_date_month, y = total_bookings, fill = hotel)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Month", y = "Total Bookings", title = "Monthly bookings by hotel") +
+  scale_fill_manual(values = c("#4e79a7", "#f28e2c"), 
+                    name = "Hotel", 
+                    labels = c("City Hotel", "Resort Hotel"))
+```
+
+## Visualizing Part-Whole Relationships
+
+This will create a stacked bar chart showing the total number of bookings for each month, with the cancelled bookings shown in red and the non-cancelled bookings shown in green. The legend will show the range of cancelled bookings, with more cancelled bookings being represented by darker shades of red.
+
+```{r}
+df %>% 
+  group_by(arrival_date_month) %>% 
+  summarize(
+    total_bookings = n(),
+    cancelled_bookings = sum(is_canceled)
+  ) %>% 
+  ggplot(aes(x = arrival_date_month, y = total_bookings, fill = cancelled_bookings)) + 
+  geom_col() + 
+  scale_fill_gradient(low = "green", high = "red") +
+  labs(title = "Total Bookings and Cancelled Bookings by Month", 
+       x = "Month of Arrival", y = "Total Bookings") +
+  theme_minimal()
+```
+

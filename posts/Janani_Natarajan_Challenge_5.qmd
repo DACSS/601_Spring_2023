@@ -1,0 +1,139 @@
+---
+title: "Challenge 5"
+author: "Janani Natarajan"
+description: "Introduction to Visualization"
+date: "05/08/23"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - railroads
+  - cereal
+  - air_bnb
+  - pathogen_cost
+  - australian_marriage
+  - public_schools
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐
+-   USA Households ⭐⭐⭐⭐⭐
+
+```{r}
+#simply read in the data (untouched)
+library(readr)
+NYCHousing <- read_csv("_data/AB_NYC_2019.csv")
+NYCHousing
+```
+
+### Briefly describe the data
+
+The listing activities of Airbnb homes in New York City's five boroughs in 2019 are described in this data collection. Geographical coordinates, rental type (whole home/apartment, private room, or shared room), pricing breakdowns, reviews (most recent review, total number of reviews, and reviews per month), and the number of days available in 2019 are all included in the property information. There are 48,895 observations in total (each one representing a listing). I won't need to change any variables in this situation because the data is already organized.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+I don't believe there are any variables we'll want to add or update because the data already appears to be very organized. We could want to investigate some variables with outliers that we need to take out. Later on in the analysis, we'll discuss this again.
+
+## Univariate Visualizations
+
+```{r}
+ggplot(Airbnb_NYC, aes(neighbourhood_group)) + geom_bar(fill = "blue") + labs(title = "Number of Airbnb Units in each NYC Borough", x = "BOROUGH", y = "NUMBER OF UNITS") + 
+  theme_bw()
+```
+
+```{r}
+ggplot(Airbnb_NYC, aes(x = room_type)) + geom_bar(fill = "yellow") + labs(title = "Number of Airbnb Units by Room Type", x = "ROOM TYPE", y = "NUMBER OF UNITS") + 
+  theme_bw()
+```
+
+## Bivariate Visualization(s)
+
+```{r}
+ggplot(Airbnb_NYC, aes(neighbourhood_group, fill = room_type)) + 
+  geom_bar(stat = "count") + 
+  labs(title = "Number of Airbnb Units in each NYC Borough", x = "Borough", y = "Number of Units") +
+  scale_fill_discrete(name = "Room Type") + 
+  theme_bw()
+```
+
+```{r}
+listingperprice_NYCHousing <- NYCHousing %>%
+  filter(price>0 & price<2500)
+listingperprice_NYCHousing %>%
+  ggplot(aes(neighbourhood_group,price))+
+  geom_boxplot()
+```
+
+```{r}
+Airbnb_NYC %>% 
+  summarize("mean" = mean(price, na.rm = TRUE), 
+            "standard_deviation" = sd(price, na.rm = TRUE),
+            "lowest" = min(price, na.rm = TRUE),
+            "25th quantile" = quantile(price, probs = .25), 
+            "median" = median(price, na.rm = TRUE), 
+            "75th quantile" = quantile(price, probs = .75),
+            "99 quantile" = quantile(price, .99),
+            "highest" = max(price, na.rm = TRUE))
+```
+
+```{r}
+Airbnb_NYC %>% 
+  filter(room_type == "Entire home/apt") %>% 
+  group_by(neighbourhood_group) %>% 
+  summarise(mean = mean(price)) %>% 
+  ggplot(aes(neighbourhood_group,mean,)) +
+  geom_col(fill = "purple") +
+  labs(title = "Average Price of Airbnb Units in NYC Borough", x = "Borough", y = "Average Price") + 
+  theme_bw()
+```
+
+```{r}
+Airbnb_NYC <- filter(Airbnb_NYC, price < 1000)
+
+ggplot(Airbnb_NYC, aes(x = price)) + geom_histogram(fill = "pink") +
+  labs(title = "Price of Airbnb Units in NYC", x = "Price of Unit", y = "Number") + 
+  theme_bw()
+```
+
+```{r}
+Airbnb_NYC_rm %>% filter(room_type == "Entire home/apt") %>% 
+ggplot(aes(x = price)) + geom_histogram(fill = "green") +
+  labs(title = "Price of Entire Apartment type Airbnb Units in NYC", x = "Price of Unit", y = "Count") + 
+  theme_bw()
+```
+
+```{r}
+Airbnb_NYC_rm %>% 
+  filter(neighbourhood_group == "Brooklyn") %>% 
+  ggplot(aes(x = price, y = number_of_reviews, color = room_type)) +
+  geom_point() +
+  labs(title = "Price of Airbnb Units in Brooklyn", 
+       x = "Price of Unit", y = "Number of Reviews") +
+  scale_colour_discrete("Room Type") +
+  theme_bw()
+```

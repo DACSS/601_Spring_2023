@@ -1,0 +1,102 @@
+---
+title: "Challenge 7"
+author: "KhadijatAdeleye"
+description: "Visualizing Multiple Dimensions"
+date: "05/07/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+  - australian_marriage
+  - air_bnb
+  - eggs
+  - abc_poll
+  - faostat
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(summarytools)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+```{r}
+data <- read_csv('./_data/hotel_bookings.csv')
+data
+```
+```{r}
+dfSummary(data)
+
+```
+
+### Briefly describe the data
+The hotel data set has 119390 observations and 32 different fields. This is basically the data from two hotels - City Hotel & Resort Hotel. Each entry corresponds to a booking made by a customer. There are various information that are recorded with each booking. It includes the arrival date, number of days of stay, meal, type of room reserved, customer type, reservation status, number of adult/children and many more. The data consists of entries from countries all over the world.
+
+# Tidy Data (as needed)
+```{r}
+data$dateval <- paste(data$arrival_date_year,data$arrival_date_month)
+data$dateval
+```
+
+```{r}
+hotel <- data %>% unite(arrival_date_year, arrival_date_month, arrival_date_day_of_month,
+        col = arrival_date, sep = "-")
+# view new hotel data
+hotel
+```
+
+
+```{r}
+plot1_data <- data %>% select(hotel,stays_in_weekend_nights, arrival_date_month) %>%
+  group_by(hotel, arrival_date_month) %>%
+  summarise(stays_in_weekend_nights = sum(stays_in_weekend_nights, na.rm=TRUE))
+
+plot1_data
+```
+
+```{r}
+summary(plot1_data$arrival_date_month)
+```
+
+Document your work here.
+## Visualization with Multiple Dimensions
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Most basic bubble plot
+ggplot(data = data, aes(x = paste(arrival_date_year,arrival_date_month), y = stays_in_weekend_nights)) +
+      geom_point(aes(color = as.factor(market_segment))) +
+      labs(title = "Stay in weekend nights based on month and year ",
+           x = "Month/Year", y = "Stays in weekend",angle = 45,width = 1000, height=1000)
+```
+From the above visualization, we can see the stays over the weekended according to market segmentation.
+
+

@@ -1,0 +1,103 @@
+---
+title: "Challenge 3"
+author: "Janani Natarajan"
+desription: "Tidy Data: Pivoting"
+date: "05/08/23"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - eggs
+  - australian_marriage
+  - usa_households
+  - sce_labor
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+animals <- read.csv("_data/animal_weight.csv")
+
+```
+
+### Briefly describe the data
+
+```{r}
+head(animals)
+```
+
+```{r}
+summarize(animals)
+```
+
+```{r}
+view(animals)
+ncol(animals)
+```
+
+```{r}
+nrow(animal_weight)
+```
+
+## Anticipate the End Result
+
+The first step in pivoting the data is to try to come up with a concrete vision of what the end product *should* look like - that way you will know whether or not your pivoting was successful.
+
+One easy way to do this is to think about the dimensions of your current data (tibble, dataframe, or matrix), and then calculate what the dimensions of the pivoted data should be.
+
+Suppose you have a dataset with $n$ rows and $k$ variables. In our example, 3 of the variables are used to identify a case, so you will be pivoting $k-3$ variables into a longer format where the $k-3$ variable names will move into the `names_to` variable and the current values in each of those columns will move into the `values_to` variable. Therefore, we would expect $n * (k-3)$ rows in the pivoted dataframe!
+
+### Finding current and future data dimensions
+
+```{r}
+nrow(animals)
+```
+
+```{r}
+ncol(animals)
+```
+
+```{r}
+nrow(animals) * (ncol(animals)-1)
+```
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+```{r}
+animals2 <- pivot_longer(animals, `Cattle...dairy`:`Llamas`, names_to = "type", values_to = "weights")
+```
+
+### Describe the final dimensions
+
+```{r}
+nrow(animals2)
+```
+
+```{r}
+ncol(animals2)
+```

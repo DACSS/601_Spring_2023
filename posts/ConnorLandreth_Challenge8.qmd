@@ -1,0 +1,175 @@
+---
+title: "Challenge 8"
+author: "Connor Landreth"
+description: "Joining Data"
+date: "2023-04-29"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - FAO & Bird Remake
+
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(knitr)
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(lubridate)
+library(here)
+library(ggthemes)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+getwd()
+setwd("C:/Github Projects/601_Spring_2023/posts/_data")
+```
+
+
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - FAO
+  - bird
+
+```{r}
+library(readxl)
+setwd("C:/Github Projects/601_Spring_2023/posts/_data")
+#milmar <- read_excel("ActiveDuty_MaritalStatus.xls")
+#Amar <- read.csv("australian_marriage_tidy.csv")
+birds <- read.csv("birds.csv")
+fao <- read.csv("FAOSTAT_country_groups.csv")
+```
+Going to work through the fao and bird joining example. First, rename variables 
+
+```{r}
+fao <- fao %>% 
+  select(Country.Group, Country)%>%
+  rename(country_group = "Country.Group")%>%
+  distinct()
+
+fao %>% 
+  filter(country_group == "Southern Europe")
+```
+Knit table with country groups and associated country groups
+```{r}
+temp<-fao%>%
+  group_by(country_group)%>%
+  summarize(n=n())%>%
+  arrange(desc(n))
+half <-c(1:round(nrow(temp)/2))
+knitr::kable(list(temp[half,],  
+           matrix(numeric(), nrow=0, ncol=1),
+           temp[-half,]), 
+           caption = "# Coutnries by Country Groups")%>%
+  kableExtra::kable_styling(font_size=15)
+```
+
+```{r}
+fao%>%
+  summarise(n=n())/277
+```
+Nested sub regions within regions:
+```{r}
+fao%>%
+  filter(str_detect(country_group, "[aA]nnex"))%>%
+  group_by(country_group)%>%
+  summarise(n=n())
+```
+
+
+
+```{r}
+fao%>%
+  filter(str_detect(country_group, "[aA]nnex"))%>%
+  summarise(n=n())
+```
+
+## Join Data - Combine data sets (marriage & debt)
+
+```{r}
+fao%>%
+  filter(str_detect(country_group, "[iI]ncome"))%>%
+  group_by(country_group)%>%
+  summarise(n=n())
+```
+```{r}
+fao%>%
+  filter(str_detect(country_group, "[iI]ncome"))%>%
+  summarise(n=n())
+```
+```{r}
+fao%>%
+  filter(str_detect(country_group, "[Dd]evelop|OECD"))%>%
+  group_by(country_group)%>%
+  summarise(n=n())
+```
+```{r}
+fao%>%
+  filter(str_detect(country_group, "[Dd]evelop|OECD"))%>%
+  summarise(n=n())
+```
+```{r}
+major_regions<-c("Africa", "Asia", "Europe", "Americas", 
+                 "Oceania", "Antarctic Region")
+
+fao%>%
+  filter(country_group %in% major_regions)%>%
+  summarise(n=n())
+```
+Create new categorical variables for the country groups for data set.
+```{r}
+fao_regions_wide<-fao%>%
+  filter(country_group!="World")%>%
+  pivot_wider(names_from=country_group, values_from = 1)%>%
+  unite("gp_annex", contains("Annex"), 
+        sep="", na.rm=TRUE, remove=TRUE)%>%
+  unite("gp_major_region", any_of(major_regions), 
+        sep="", na.rm=TRUE, remove=TRUE)%>%
+  unite("gp_income", contains("Income")|contains("income"),
+        sep="", na.rm=TRUE, remove=TRUE)%>%
+  unite("gp_develop", contains("Develop")|contains("OECD"),
+        sep="", na.rm=TRUE, remove=TRUE)%>%
+  select(Country, starts_with("gp"))
+```
+
+```{r}
+nrow(birds)
+```
+```{r}
+birds <- left_join(birds, fao_regions_wide,
+                   by = c("Area" = "Country"))
+```
+
+Then we can summarize the data across the countries 
+```{r}
+eggs_chicken <- here("posts","_data","FAOSTAT_egg_chicken.csv") %>%
+  read_csv()
+cattle <- here("posts","_data","FAOSTAT_egg_chicken.csv") %>%
+  read_csv()
+dat <- left_join(eggs_chicken, cattle, by="Area")
+```
+
+
+
+
+
+
+
+
+##tapply(pseo$p50_earnings,pseo$deglevl,mean, na.rm = TRUE)
+
+##cor(pseo$p50_earnings,pseo$year_postgrad, use="pairwise.complete.obs")
+
+
+

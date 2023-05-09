@@ -31,111 +31,126 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 Read 'em and weep
 
 ```{r}
-projectFiles <- dir_ls('posts/TimShores_FinalProject_Data') 
+projectFiles <- dir_ls('posts/TimShores_FinalProject_Data') # creates fs_path vector of each file in that directory
 
-allYearsDF <- projectFiles %>%
-  map(pdf_data) %>%
-  bind_rows(.id = 'filename') %>%
-  mutate(filename = projectFiles[as.integer(filename)]) %>%
-  mutate(filename = str_match(filename, 'posts/TimShores_FinalProject_Data/(.*)\\.pdf')[,2])
+projectFiles_list <- projectFiles %>%
+  map(pdf_data) # purrr function that applies pdf_data reading function to each file element of fs_path vector
+  # map creates a list of lists of tibbles (a tibble for each page of each pdf)
 
-# projectFiles <- c(
-#   "../posts/TimShores_FinalProject_Data/Leverett2018.pdf",
-#   "../posts/TimShores_FinalProject_Data/Leverett2019.pdf",
-#   "../posts/TimShores_FinalProject_Data/Leverett2020.pdf",
-#   "../posts/TimShores_FinalProject_Data/Leverett2021.pdf",
-#   "../posts/TimShores_FinalProject_Data/Leverett2022.pdf",
-#   "../posts/TimShores_FinalProject_Data/Wendell2018.pdf",
-#   "../posts/TimShores_FinalProject_Data/Wendell2019.pdf",
-#   "../posts/TimShores_FinalProject_Data/Wendell2020.pdf",
-#   "../posts/TimShores_FinalProject_Data/Wendell2021.pdf",
-#   "../posts/TimShores_FinalProject_Data/Wendell2022.pdf"
-#   )
-# lev2018 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2018.pdf")
-# lev2019 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2019.pdf")
-# lev2020 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2020.pdf")
-# lev2021 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2021.pdf")
-# lev2022 <- pdf_data("../posts/TimShores_FinalProject_Data/Leverett2022.pdf")
-# wen2018 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2018.pdf")
-# wen2019 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2019.pdf")
-# wen2020 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2020.pdf")
-# wen2021 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2021.pdf")
-# wen2022 <- pdf_data("../posts/TimShores_FinalProject_Data/Wendell2022.pdf")
+  # now that I've consumed my files I can trim down to the basic info stored in each filename
+  # for use in the final data frame
+projectFiles <- projectFiles %>% 
+  str_replace('posts/TimShores_FinalProject_Data/', '') %>%
+  str_replace('.pdf', '') 
+names(projectFiles_list) <- projectFiles
 
+  # This next part took a couple days of searching for a tidy solution. Then I just decided to use a good old fashioned
+  # nested for loop.
+  # The structure of the original documents is that each of 10 files has a variable number of pages.
+  # Therefore, the projectFiles_list structure is a nested: list[[list]][[dataframe]]. 
+  # I want to mutate each df with its page number -- this corresponds to its nested list element index (j in list[[i]][[j]]) which 
+  # is information that gets destroyed as soon as I map to an unnested list. I couldn't find a tidy solution to capturing that nested
+  # "sub" page id before the map, so I used a nested for loop to assign value to sub_page_id before appending my mapped/mutated df to
+  # a new single-layer list.
+allYearsList <- list()
+for (i in seq_along(projectFiles_list)) { # seq_along(projectFiles_list) creates vector with a number value for each list element
+  for (j in seq_along(projectFiles_list[[i]])) {
+    projectFiles_list[[i]][[j]] <- mutate(projectFiles_list[[i]][[j]], sub_page_id = j)
+  }
+  allYearsList <- append(allYearsList, map2(projectFiles_list[[i]], 
+                                            names(projectFiles_list[i]), 
+                                            ~.x %>% 
+                                              mutate(filename = .y)
+                                            )
+                         )
+  }
 
-lev2018[[1]]
-
-lev2018 <- projectFiles %>%
-  map(pdf_data) %>%
-  bind_rows(.id = 'filename') %>%
-  mutate(filename = projectFiles[as.integer(filename)]) %>%
-  mutate(filename = str_match(filename, 'posts/TimShores_FinalProject_Data/(.*)\\.pdf')[,2])
-
-  # pivot wider... filter-in height 11 (that's the font size of the table data in the pdf); omit anything with y coordinate greater than 13 (that gets rid of the header), include the y column to be able to arrange by y coordinate on page
-
-  # old: lev2018_wide <- lev2018[2] %>% filter(height == 11 & y > 13 & text != "Action:") %>% pivot_wider(id_cols = y, names_from = x, values_from = text) 
-
-lev2018_wide <- lev2018 %>% 
-  filter(height == 11 & y > 13 & text != "Action:") 
-
-lev2018_wide <- lev2018_wide %>% 
-  #group_by(x) %>%
-  mutate(row = row_number()) 
+  # this bind_rows takes all of the df observations from many list elements and binds them together in a single df.
+  # abs_page_id is the 'page' number in an absolute sequence (1 to 78 in this case) rather than segmented by file (1 to 9, 1 to 7 etc.)
+allYearsDF <- allYearsList %>%
+  bind_rows(.id = 'abs_page_id') %>% 
+  relocate(c(filename, sub_page_id), .after = abs_page_id) %>%
+  filter(height == 11 & y > 13 & text != "Action:")
+  
     # the above group_by and mutate, and the select(-row) below, are to resolve
     # the warning message "Values from `text` are not uniquely identified; 
     # output will contain list-cols" ... those list-cols are not easy to
     # deal with !
 
-############### how do i fix the next line?
-############### the problem is that it's creating too many obs.
-###############
+  # this creates a problem of staggered lines
+allYearsDF_wide <- allYearsDF %>% 
+  pivot_wider(id_cols = c(abs_page_id, filename, sub_page_id, y), names_from = x, values_from = text)
 
-lev2018_wide <- lev2018_wide %>% 
-  pivot_wider(id_cols = c(row, filename, y), names_from = x, values_from = text)
-#  select(-row)
+# solution from https://stackoverflow.com/questions/45515218/combine-rows-in-data-frame-containing-na-to-make-complete-row
+# Supply lists by splicing them into dots:
+coalesce_by_column <- function(df) {
+  return(dplyr::coalesce(!!! as.list(df)))
+}
 
-# This doesn't work but it might be a good lead...
-lev2018_wide <- lev2018_wide %>% 
-  group_by(filename, y) %>%
-  summarise(vlist = paste0(where(is.character(.)), collapse = ",")) %>%
+allYearsDF_wide <- allYearsDF_wide %>%
+  mutate(abs_page_id = as.integer(abs_page_id))
+
+allYearsDF_wide <- allYearsDF_wide %>%
+  group_by(abs_page_id, filename, sub_page_id, y) %>% # I think abs_page_id and filename together are redundant
+  summarise_all(coalesce_by_column) %>%
   ungroup()
+# do I need to ungroup() ?
 
   # it will help to order columns by numeric order - they are the x coords from left to right. This looks for all non-alpha column names.
-numcols = sort(as.numeric(names(lev2018_wide)[!grepl("[a-z]", names(lev2018_wide))]))
-lev2018_wide <- select(lev2018_wide, filename, y, match(numcols, names(lev2018_wide))) # note the omission of 'rows'
+numcols = sort(as.numeric(names(allYearsDF_wide)[!grepl("[a-z]", names(allYearsDF_wide))]))
+allYearsDF_wide <- select(allYearsDF_wide, abs_page_id, filename, sub_page_id, y, match(numcols, names(allYearsDF_wide))) 
   # now we have a df that is simply x:y coordinates of the page
-
   # time to smush cols together!
-lev2018_wide <- unite(lev2018_wide, "x5to52", c("5":"47"), sep = " ", na.rm = TRUE, remove = TRUE)
-lev2018_wide <- unite(lev2018_wide, "x53to197", c("53":"197"), sep = " ", na.rm = TRUE, remove = TRUE)
-lev2018_wide <- unite(lev2018_wide, "x198to238", c("198":"233"), sep = " ", na.rm = TRUE, remove = TRUE)
-# spacing may not be the same on each page?
-lev2018_wide <- unite(lev2018_wide, "x239to280", c("239":"251"), sep = " ", na.rm = TRUE, remove = TRUE)
-lev2018_wide <- unite(lev2018_wide, "x281to329", c("281":"282"), sep = " ", na.rm = TRUE, remove = TRUE)
-lev2018_wide <- unite(lev2018_wide, "x330to371", c("330":"347"), sep = " ", na.rm = TRUE, remove = TRUE)
-lev2018_wide <- unite(lev2018_wide, "x372to449", c("372":"431"), sep = " ", na.rm = TRUE, remove = TRUE)
-lev2018_wide <- unite(lev2018_wide, "x450toEnd", c("450":"527"), sep = " ", na.rm = TRUE, remove = TRUE)
+allYearsDF_wide <- unite(allYearsDF_wide, "x5to52", c("5":"47"), sep = " ", na.rm = TRUE, remove = TRUE)
+allYearsDF_wide <- unite(allYearsDF_wide, "x53to197", c("53":"197"), sep = " ", na.rm = TRUE, remove = TRUE)
+allYearsDF_wide <- unite(allYearsDF_wide, "x198to238", c("198":"233"), sep = " ", na.rm = TRUE, remove = TRUE)
+allYearsDF_wide <- unite(allYearsDF_wide, "x239to280", c("239":"270"), sep = " ", na.rm = TRUE, remove = TRUE)
+allYearsDF_wide <- unite(allYearsDF_wide, "x281to329", c("281":"329"), sep = " ", na.rm = TRUE, remove = TRUE)
+allYearsDF_wide <- unite(allYearsDF_wide, "x330to371", c("330":"371"), sep = " ", na.rm = TRUE, remove = TRUE)
+allYearsDF_wide <- unite(allYearsDF_wide, "x372to449", c("372":"431"), sep = " ", na.rm = TRUE, remove = TRUE)
+allYearsDF_wide <- unite(allYearsDF_wide, "x450toEnd", c("450":"545"), sep = " ", na.rm = TRUE, remove = TRUE)
+  # note that spacing does differ on each page (as indicated by the colnames), but the boundaries are stable
+  # (as indicated by the united colnames -- I manually confirmed pixel widths on the pdf report)
 
-lev2018_wide <- mutate(lev2018_wide, 
-       x5to52 = ifelse(nchar(x5to52, type="chars") > 0 & nchar(x53to197, type="chars") > 0, paste0(x5to52," ",x53to197), paste0(x5to52)),
-       x53to197 = ifelse(nchar(x5to52, type="chars") > 0, paste0(""), paste0(x53to197)))
+  # final tidying of Call_Reason text separated into different columns
+allYearsDF_wide <- mutate(allYearsDF_wide, 
+                          x5to52 = ifelse(nchar(x5to52, type="chars") > 0 & nchar(x53to197, type="chars") > 0, 
+                                          paste0(x5to52," ",x53to197), 
+                                          paste0(x5to52)),
+                          x53to197 = ifelse(nchar(x5to52, type="chars") > 0, 
+                                            paste0(""), 
+                                            paste0(x53to197))) # delete from additional columns
 
-lev2018_wide <- mutate(lev2018_wide, x5to52 = ifelse(x5to52 == "", paste0(""), paste0(x5to52)))
-lev2018_wide <- mutate(lev2018_wide, x53to197 = ifelse(x53to197 == "", paste0(""), paste0(x53to197, " ", x198to238, " ", x239to280, " ", x281to329, " ", x330to371, " ", x372to449, " ", x450toEnd)))
-lev2018_wide <- mutate(lev2018_wide, 
-                       x198to238 = ifelse(x53to197 == "", paste0(x198to238), paste0("")), 
-                       x239to280 = ifelse(x53to197 == "", paste0(x239to280), paste0("")), 
-                       x281to329 = ifelse(x53to197 == "", paste0(x281to329), paste0("")), 
-                       x330to371 = ifelse(x53to197 == "", paste0(x330to371), paste0("")), 
-                       x372to449 = ifelse(x53to197 == "", paste0(x372to449), paste0("")), 
-                       x450toEnd = ifelse(x53to197 == "", paste0(x450toEnd), paste0(""))) 
-lev2018_wide <- lev2018_wide %>% mutate_at(c(2,3), ~na_if(., '')) # replace blanks with NAs in the 2nd and 3rd cols. I tried this using paste in the previous mutate, but the result was a text string "NA".
+allYearsDF_wide <- mutate(allYearsDF_wide, 
+                          x53to197 = ifelse(x53to197 == "", paste0(""), paste0(x53to197, " ", x198to238, " ", x239to280, " ", x281to329, " ", x330to371, " ", x372to449, " ", x450toEnd)),
+                          x198to238 = ifelse(nchar(x53to197, type="chars") > 0, paste0(""), paste0(x198to238)), # delete from add'l cols
+                          x239to280 = ifelse(nchar(x53to197, type="chars") > 0, paste0(""), paste0(x239to280)), # delete from add'l cols
+                          x281to329 = ifelse(nchar(x53to197, type="chars") > 0, paste0(""), paste0(x281to329)), # delete from add'l cols
+                          x330to371 = ifelse(nchar(x53to197, type="chars") > 0, paste0(""), paste0(x330to371)), # delete from add'l cols
+                          x372to449 = ifelse(nchar(x53to197, type="chars") > 0, paste0(""), paste0(x372to449)), # delete from add'l cols
+                          x450toEnd = ifelse(nchar(x53to197, type="chars") > 0, paste0(""), paste0(x450toEnd)) # delete from add'l cols
+                          )
+
+allYearsDF_wide <- allYearsDF_wide %>% mutate_at(c(5,6), ~na_if(., '')) # replace blanks with NAs in the 2nd and 3rd cols. I tried this using paste in the previous mutate, but the result was a text string "NA".
   # label each action with its call type
-lev2018_wide <- fill(lev2018_wide, x5to52, .direction = "down")
-lev2018_wide <- lev2018_wide %>% 
+allYearsDF_wide <- fill(allYearsDF_wide, x5to52, .direction = "down")
+allYearsDF_wide <- allYearsDF_wide %>% 
     mutate(x53to197 = ifelse(row_number() == 1, "Action", x53to197))
-colnames(lev2018_wide) <- lev2018_wide[1, ]
-lev2018_wide <- mutate(lev2018_wide, town = , year = )
+colnames(allYearsDF_wide)[-c(1:4)] <- allYearsDF_wide[1,-c(1:4)]
+
+allYearsDF_wide <- filter(allYearsDF_wide, sub_page_id != 1 | y != 69 | Call_Reason != "Call_Reason")
+  # sep filename into town and year
+allYearsDF_wide <- allYearsDF_wide %>%
+  separate_wider_regex(filename, c(town = "^[A-Za-z]+", year = "[0-9]{4}$")) %>%
+  mutate(town = factor(town),
+         year = make_date(year = as.integer(year), month = 1, day = 1))
+
+#########
+######### Boundary issue, see BUILDING/LOCATION CHECK Leverett2019
+######### Need to remove summary pages
+######### Need to select out junk columns
+
+
 ```
 
 

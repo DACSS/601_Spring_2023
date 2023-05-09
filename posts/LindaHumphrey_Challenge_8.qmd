@@ -1,0 +1,143 @@
+---
+title: "Challenge 8 Instructions"
+author: "Linda Humphrey"
+description: "Joining Data"
+date: "04/27/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8: snl
+  - data: snl_actors.csv, snl_seasons.csv, snl_casts.csv
+  - name: Linda Humphrey
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(viridis)
+library(patchwork)
+library(hrbrthemes)
+library(fmsb)
+library(colormap)
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Overview of SNL Dataset
+
+## Read in data
+Reading 3 differnt datasets of snl csv files
+```{R}
+#Load dataset
+
+snl_seasons = read_csv("~/Desktop/601_Spring_2023/posts/_data/snl_seasons.csv", show_col_types = FALSE)
+
+snl_casts = read_csv("~/Desktop/601_Spring_2023/posts/_data/snl_casts.csv", show_col_types = FALSE)
+
+snl_actors = read_csv("~/Desktop/601_Spring_2023/posts/_data/snl_actors.csv", show_col_types = FALSE)
+
+head(snl_seasons)
+head(snl_casts)
+head(snl_actors)
+```
+
+## Briefly Describe the data
+The dataset snl_seasons contains 46 observations about the different seasons of "Saturday Night Live". The three datasets consist of actors, casts, and seasons, which contain details about each actor, type, and gender.
+
+```{r}
+library(summarytools)
+
+print(summarytools::dfSummary(snl_seasons,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+print(summarytools::dfSummary(snl_casts,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+print(summarytools::dfSummary(snl_actors,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+
+## Tidy Data (as needed)
+To tidy the dataset I rename all columns in each data set.
+```{r}
+# Renaming columns in seasons
+snl_seasons <- snl_seasons %>%
+  rename(
+    Season = sid,
+    Year = year,
+    FirstEpisode = first_epid,
+    LastEpisode = last_epid,
+    TotEpisodes = n_episodes,
+  )
+
+# Renaming columns in casts
+snl_casts <- snl_casts %>%
+  rename(
+    Actor = aid,
+    Season = sid,
+    Featured = featured,
+    Anchor = update_anchor,
+    Episodes = n_episodes,
+    EpisodesProp = season_fraction
+  )
+# Renaming columns in actors
+snl_actors <- snl_actors %>% 
+  rename(
+    Actor = aid,
+    Type = type,
+    Gender = gender
+    )
+
+# Mutate fields
+snl_actors <- snl_actors %>%
+  mutate(Gender = str_replace(Gender, "andy", "unknown"), Type = str_replace(Type, "unknown", "celebrity")
+  )
+```
+
+
+## Join Data
+
+Be sure to include a sanity check, and double-check that case count is correct!
+```{R}
+library(dplyr)
+snl_joined = merge(x=snl_casts, y=snl_actors, by.y = "aid", by.x = "aid")
+
+print(summarytools::dfSummary(snl_joined,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+```
+

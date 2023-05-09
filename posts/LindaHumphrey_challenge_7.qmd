@@ -1,0 +1,193 @@
+---
+title: "Challenge 7 Instructions"
+author: "Linda Humphrey"
+description: "Visualizing Multiple Dimensions"
+date: "04/17/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7: faostat
+  - Name: Linda Humphrey
+  - data: FAOSTAT_livestock.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+   FAOSTAT_livestock
+
+### Briefly describe the data
+
+The FAOSTAT_livestock.csv dataset is a comprehensive source of information on livestock production and trade, sourced from the FAO. The dataset includes data on various types of livestock, including cattle, sheep, goats, pigs, poultry, and other animals. For each type of livestock, the data includes information on production quantities, trade volumes, and population sizes, as well as related indicators such as feed consumption and meat yield.
+
+The data is organized by country and year, with information spanning several decades in some cases. The dataset also includes aggregate data for regions and the world as a whole.
+
+## Read data
+```{R}
+#Load data 
+FAOSTAT_livestock <- read.csv("~/Desktop/601_Spring_2023/posts/_data/FAOSTAT_livestock.csv")
+head(FAOSTAT_livestock)
+```
+
+## Tidy Data (as needed)
+
+
+```{r}
+# Load the necessary library
+library(tidyverse)
+
+# Read in the original dataset
+df <- read_csv("~/Desktop/601_Spring_2023/posts/_data/FAOSTAT_livestock.csv")
+
+# Remove rows with missing values
+df <- drop_na(df)
+
+# Convert the Value column to numeric
+df$Value <- as.numeric(df$Value)
+
+# Remove duplicates
+df <- distinct(df)
+
+head(df)
+tail(df)
+str(df)
+summary(df)
+
+```
+
+## Summary per Area and year reflecting Min,Meadian,Mean & Max of all the areas.
+```{R}
+summary(FAOSTAT_livestock)
+```
+
+## checking the missing values
+```{R}
+sum(is.na(FAOSTAT_livestock))
+```
+
+#Checking for duplicate values
+```{R}
+sum(duplicated(FAOSTAT_livestock))
+```
+# Analyzing data set with filter option
+```{R}
+library(lubridate)
+FAOSTAT_livestock <- FAOSTAT_livestock %>%
+  filter(Year == 2015)
+```
+
+# This code reads in the cleaned FAOSTAT_livestock.csv dataset and reorders the data by year, value per capita, country, and item using the arrange() function. The resulting dataset is then saved as a new CSV file named 'FAOSTAT_livestock_reordered.csv'.
+
+```{R}
+# Load the necessary library
+library(tidyverse)
+
+# Read in the cleaned dataset
+df <- read_csv("~/Desktop/601_Spring_2023/posts/_data/FAOSTAT_livestock.csv")
+
+# Reorder the data by year, value per capita, country, and item
+df_reordered <- df %>%
+  arrange(Year, Value, Area, Item)
+head(df)
+tail(df)
+str(df)
+# Save the reordered dataset
+write_csv(df_reordered, "~/Desktop/601_Spring_2023/posts/Tidy_CSV_files/FAOSTAT_livestock_reordered.csv")
+
+
+            
+```
+
+
+# This code reads in the cleaned and grouped FAOSTAT_livestock.csv dataset and creates two new variables using the mutate() function. The first variable, Total_production, calculates the total production quantity by country and year using the sum() function. The second variable, Percentage_of_average, calculates the percentage of production quantity per capita compared to the country's average using the mean() function and rounding to two decimal places with the round() function.
+
+```{r}
+# Create a new variable for the total production quantity by country and year
+FAOSTAT_livestock <- FAOSTAT_livestock %>%
+  group_by(Area, Year) %>%
+  mutate(Total_production = sum(Value))
+
+# Create a new variable for the percentage of production quantity per capita compared to the country's average
+FAOSTAT_livestock <- FAOSTAT_livestock %>%
+  group_by(Area, Year) %>%
+  mutate(Percentage_of_average = round(Value / mean(Value) * 100, 2))
+
+
+```
+
+# This code reads in the cleaned and grouped FAOSTAT_livestock.csv dataset and converts the Country and Item variables to factors using the factor() function. The fct_reorder() function from the forcats package is then used to reorder the levels of the Item factor based on the Value_per_capita variable. This ensures that the levels are ordered by value, which can make it easier to create visualizations.
+```{R}
+
+# Convert the Country and Item variables to factors
+FAOSTAT_livestock$Area <- factor(FAOSTAT_livestock$Area)
+FAOSTAT_livestock$Item <- factor(FAOSTAT_livestock$Item)
+
+# Reorder the factor levels of the Item variable
+FAOSTAT_livestock$Item <- fct_reorder(FAOSTAT_livestock$Item, FAOSTAT_livestock$Value, .na_rm = TRUE)
+
+write.csv(FAOSTAT_livestock, "~/Desktop/601_Spring_2023/posts/Tidy_CSV_files/FAOSTAT_livestock_modified.csv")
+
+
+```
+
+
+## Visualization with Multiple Dimensions
+
+This code reads in the cleaned and grouped FAOSTAT_livestock.csv dataset and creates a stacked bar chart of the production quantity per capita by country, year, and animal type using ggplot2. The geom_bar() function creates the stacked bars, and facet_wrap() splits the chart into multiple panels based on the Country variable. The labs() function is used to add labels to the axes, legend, and title, and theme_minimal() adjusts the chart's appearance.
+
+```{R}
+# Load the necessary libraries
+library(tidyverse)
+library(ggplot2)
+
+# Create a stacked bar chart of the production quantity per capita by country, year, and animal type
+ggplot(FAOSTAT_livestock, aes(x = Year, y = Value, fill = Item)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~Area, ncol = 3) +
+  labs(x = "Year", y = "Production quantity per capita",
+       fill = "Animal type", title = "Livestock production per capita by country and animal type") +
+  theme_minimal()
+
+```
+
+# Distribution number of Items, using filters and line graph.
+
+```{R}
+
+# Load the necessary libraries
+library(ggplot2)
+library(tidyverse)
+library(hrbrthemes)
+library(plotly)
+library(patchwork)
+library(viridis)
+
+# Read in the cleaned and grouped dataset
+FAOSTAT_livestock <- read.csv("~/Desktop/601_Spring_2023/posts/_data/FAOSTAT_livestock.csv", header = T)
+
+# Create a line graph of the selected filtered Items per year variable
+FAOSTAT_livestock %>%
+  filter(Area %in% c("Algeria", "Italy", "Jamaica", "Pakistan")) %>%
+  ggplot(aes(x=Year, y=Value / sum(1301), group=Item, color=Item))+
+  geom_point() +
+    scale_color_viridis(discrete = TRUE) +
+    ggtitle("Value of Item per year") +
+    ylab("Value") +
+    theme_ipsum()
+
+```
+

@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.340">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Linda Humphrey">
+<meta name="dcterms.date" content="2022-04-27">
+<meta name="description" content="Joining Data">
+
+<title>Challenge 8 Instructions</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../images/DACSS_Round_Network.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+<meta name="twitter:title" content="Challenge 8 Instructions">
+<meta name="twitter:description" content="Joining Data">
+<meta name="twitter:image" content="https://dacss.github.io/601_Spring_2023/posts/data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAAvklEQVR42u3bXQpAQBRAYaPZoz2wHvZglbxeJlKKzu18b8ZPTo2aB1O2Lqv+7xcwzbSoxoMF9uFN5TwSA+rx1HC6dG1Gno59cee9xBPSNCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiBKn1feP+M/c7ksIf/6j09odAlHiCWkakWlEphGZRmQaUeK0EhfPtB2+rTGs/Au+5lLiCWka0Q40UBQ28F7wdAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMDXZqcsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDBEhBF3AAAAPXRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCAyMDA3IEFwcGxlIEluYy4sIGFsbCByaWdodHMgcmVzZXJ2ZWQunmbcKQAAACN0RVh0aWNjOmRlc2NyaXB0aW9uAEdlbmVyaWMgUkdCIFByb2ZpbGUapziOAAAAAElFTkSuQmCC">
+<meta name="twitter:creator" content="@UMassDACSS">
+<meta name="twitter:site" content="@UMassDACSS">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../images/UMass White Wordmark Horiz.png" alt="" class="navbar-logo">
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="true"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/DACSS" rel="" target="">
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html" rel="" target="">
+ <span class="menu-text">Contributors</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://umass.edu/sbs/dacss" rel="" target="">
+ <span class="menu-text">DACSS</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/DACSS" rel="" target=""><i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#challenge-overview" id="toc-challenge-overview" class="nav-link active" data-scroll-target="#challenge-overview">Challenge Overview</a></li>
+  <li><a href="#read-in-data" id="toc-read-in-data" class="nav-link" data-scroll-target="#read-in-data">Read in data</a></li>
+  <li><a href="#briefly-describe-the-data" id="toc-briefly-describe-the-data" class="nav-link" data-scroll-target="#briefly-describe-the-data">Briefly Describe the data</a></li>
+  <li><a href="#tidy-data-as-needed" id="toc-tidy-data-as-needed" class="nav-link" data-scroll-target="#tidy-data-as-needed">Tidy Data (as needed)</a></li>
+  <li><a href="#join-data" id="toc-join-data" class="nav-link" data-scroll-target="#join-data">Join Data</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Challenge 8 Instructions</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">true</div>
+    <div class="quarto-category">true</div>
+    <div class="quarto-category">true</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Joining Data
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Linda Humphrey </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 27, 2022</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(viridis)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(hrbrthemes)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fmsb)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(colormap)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="challenge-overview" class="level2">
+<h2 class="anchored" data-anchor-id="challenge-overview">Challenge Overview</h2>
+<p>Overview of SNL Dataset</p>
+</section>
+<section id="read-in-data" class="level2">
+<h2 class="anchored" data-anchor-id="read-in-data">Read in data</h2>
+<p>Reading 3 differnt datasets of snl csv files</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Load dataset</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>snl_seasons <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"~/Desktop/601_Spring_2023/posts/_data/snl_seasons.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>snl_casts <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"~/Desktop/601_Spring_2023/posts/_data/snl_casts.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>snl_actors <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"~/Desktop/601_Spring_2023/posts/_data/snl_actors.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(snl_seasons)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+    sid  year first_epid last_epid n_episodes
+  &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;
+1     1  1975   19751011  19760731         24
+2     2  1976   19760918  19770521         22
+3     3  1977   19770924  19780520         20
+4     4  1978   19781007  19790526         20
+5     5  1979   19791013  19800524         20
+6     6  1980   19801115  19810411         13</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(snl_casts)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 8
+  aid                sid featured first_epid last_epid update_anchor n_episodes
+  &lt;chr&gt;            &lt;dbl&gt; &lt;lgl&gt;         &lt;dbl&gt;     &lt;dbl&gt; &lt;lgl&gt;              &lt;dbl&gt;
+1 A. Whitney Brown    11 TRUE       19860222        NA FALSE                  8
+2 A. Whitney Brown    12 TRUE             NA        NA FALSE                 20
+3 A. Whitney Brown    13 TRUE             NA        NA FALSE                 13
+4 A. Whitney Brown    14 TRUE             NA        NA FALSE                 20
+5 A. Whitney Brown    15 TRUE             NA        NA FALSE                 20
+6 A. Whitney Brown    16 TRUE             NA        NA FALSE                 20
+# ℹ 1 more variable: season_fraction &lt;dbl&gt;</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(snl_actors)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 4
+  aid            url           type  gender 
+  &lt;chr&gt;          &lt;chr&gt;         &lt;chr&gt; &lt;chr&gt;  
+1 Kate McKinnon  /Cast/?KaMc   cast  female 
+2 Alex Moffat    /Cast/?AlMo   cast  male   
+3 Ego Nwodim     /Cast/?EgNw   cast  unknown
+4 Chris Redd     /Cast/?ChRe   cast  male   
+5 Kenan Thompson /Cast/?KeTh   cast  male   
+6 Carey Mulligan /Guests/?3677 guest andy   </code></pre>
+</div>
+</div>
+</section>
+<section id="briefly-describe-the-data" class="level2">
+<h2 class="anchored" data-anchor-id="briefly-describe-the-data">Briefly Describe the data</h2>
+<p>The dataset snl_seasons contains 46 observations about the different seasons of “Saturday Night Live”. The three datasets consist of actors, casts, and seasons, which contain details about each actor, type, and gender.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(summarytools)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(snl_seasons,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="container st-container">
+<h3 class="anchored">Data Frame Summary</h3>
+<h4 class="anchored">snl_seasons</h4>
+<strong>Dimensions</strong>: 46 x 5
+  <br><strong>Duplicates</strong>: 0
+<br>
+
+<table class="table table-striped table-bordered st-table st-table-striped st-table-bordered st-multiline table-condensed table-sm small" data-quarto-postprocess="true">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Variable</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Stats / Values</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Freqs (% of Valid)</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Graph</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Missing</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">sid [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 23.5 (13.4)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1 ≤ 23.5 ≤ 46</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 22.5 (0.6)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle;">46 distinct values</td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAAvklEQVR42u3bXQpAQBRAYaPZoz2wHvZglbxeJlKKzu18b8ZPTo2aB1O2Lqv+7xcwzbSoxoMF9uFN5TwSA+rx1HC6dG1Gno59cee9xBPSNCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiBKn1feP+M/c7ksIf/6j09odAlHiCWkakWlEphGZRmQaUeK0EhfPtB2+rTGs/Au+5lLiCWka0Q40UBQ28F7wdAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMDXZqcsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDBEhBF3AAAAPXRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCAyMDA3IEFwcGxlIEluYy4sIGFsbCByaWdodHMgcmVzZXJ2ZWQunmbcKQAAACN0RVh0aWNjOmRlc2NyaXB0aW9uAEdlbmVyaWMgUkdCIFByb2ZpbGUapziOAAAAAElFTkSuQmCC" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">year [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 1997.5 (13.4)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1975 ≤ 1997.5 ≤ 2020</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 22.5 (0)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle;">46 distinct values</td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAAxklEQVR42u3bQQqDMBQA0abkjt7BnsfcwVO22y9NaKiLMJ95OzVKBiLoIuX9yOq5egKmmRbVeNC6L96rrJ7kvBhQr5e2r8Hn6tn+LfGCNI3INCLTiEwjSpxWfw85SL904Xt3Im3rnDtvnr17/+ipUeIFaRqRaUSmEZlGZBqRaUSmEZlGZBqRaUSmEZlGZBqRaUSmEZlGZBqRaUSmEZlGZBqRaUSmEZlGZBqRaUSmESVOK3HrRSPtw+jaw+6Mgq8ZSrwgTSP6AHDmEzZnBOdFAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIzLTA1LTA1VDE5OjU2OjQxKzAwOjAwNdmpywAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMESEEXcAAAA9dEVYdGljYzpjb3B5cmlnaHQAQ29weXJpZ2h0IDIwMDcgQXBwbGUgSW5jLiwgYWxsIHJpZ2h0cyByZXNlcnZlZC6eZtwpAAAAI3RFWHRpY2M6ZGVzY3JpcHRpb24AR2VuZXJpYyBSR0IgUHJvZmlsZRqnOI4AAAAASUVORK5CYII=" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">first_epid [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 19975965 (134209.3)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">19751011 ≤ 19975926 ≤ 20201003</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 224910.2 (0)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle;">46 distinct values</td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAAvklEQVR42u3bXQpAQBRAYaPZoz2wHvZglbxeJlKKzu18b8ZPTo2aB1O2Lqv+7xcwzbSoxoMF9uFN5TwSA+rx1HC6dG1Gno59cee9xBPSNCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiEwjMo3INCLTiBKn1feP+M/c7ksIf/6j09odAlHiCWkakWlEphGZRmQaUeK0EhfPtB2+rTGs/Au+5lLiCWka0Q40UBQ28F7wdAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMDXZqcsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDBEhBF3AAAAPXRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCAyMDA3IEFwcGxlIEluYy4sIGFsbCByaWdodHMgcmVzZXJ2ZWQunmbcKQAAACN0RVh0aWNjOmRlc2NyaXB0aW9uAEdlbmVyaWMgUkdCIFByb2ZpbGUapziOAAAAAElFTkSuQmCC" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">last_epid [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 19985509 (134223.9)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">19760731 ≤ 19985512 ≤ 20210410</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 225066.2 (0)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle;">46 distinct values</td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAAzklEQVR42u3aywmFMBQAUSP2aA9az7MHq9TtlfhUcGHmMrPzBzkQIWjK1mWt/3oA0qTFhnhQqsu/pl/FuRpwHO5w9/hYnVkfnXt217snr0s8IaURk0ZMGjFpxKQRS0w7LI/bXue/onUnq3BuiSekNGLSiEkjJo2YNGLSiEkjJo2YNGLSiEkjJo1YYtrtlpiWO/lHEfb/oGnXfygST0hpxKQRk0ZMGjFpxKQRk0ZMGjFpxKQRk0ZMGrHEtBI/my/4ff5T+OZf8Jq/JZ6Q0ojtU/sVzp8UQw4AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDA12anLAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTA1LTA1VDE5OjU2OjQxKzAwOjAwRIQRdwAAAD10RVh0aWNjOmNvcHlyaWdodABDb3B5cmlnaHQgMjAwNyBBcHBsZSBJbmMuLCBhbGwgcmlnaHRzIHJlc2VydmVkLp5m3CkAAAAjdEVYdGljYzpkZXNjcmlwdGlvbgBHZW5lcmljIFJHQiBQcm9maWxlGqc4jgAAAABJRU5ErkJggg==" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">n_episodes [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 19.7 (2.3)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">12 ≤ 20 ≤ 24</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 1 (0.1)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; padding: 0; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 2px 0 7px; margin: 0; border: 0;">12</td>
+<td style="text-align: left; padding: 0 2px; border: 0;">:</td>
+<td style="text-align: right; padding: 0 4px 0 6px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0 2px; margin: 0; border: 0;">2.2%</td>
+<td style="text-align: left; padding: 0 4px 0 0; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 2px 0 7px; margin: 0; border: 0;">13</td>
+<td style="text-align: left; padding: 0 2px; border: 0;">:</td>
+<td style="text-align: right; padding: 0 4px 0 6px; margin: 0; border: 0;">2</td>
+<td style="text-align: left; padding: 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0 2px; margin: 0; border: 0;">4.3%</td>
+<td style="text-align: left; padding: 0 4px 0 0; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 2px 0 7px; margin: 0; border: 0;">17</td>
+<td style="text-align: left; padding: 0 2px; border: 0;">:</td>
+<td style="text-align: right; padding: 0 4px 0 6px; margin: 0; border: 0;">2</td>
+<td style="text-align: left; padding: 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0 2px; margin: 0; border: 0;">4.3%</td>
+<td style="text-align: left; padding: 0 4px 0 0; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 2px 0 7px; margin: 0; border: 0;">18</td>
+<td style="text-align: left; padding: 0 2px; border: 0;">:</td>
+<td style="text-align: right; padding: 0 4px 0 6px; margin: 0; border: 0;">2</td>
+<td style="text-align: left; padding: 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0 2px; margin: 0; border: 0;">4.3%</td>
+<td style="text-align: left; padding: 0 4px 0 0; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 2px 0 7px; margin: 0; border: 0;">19</td>
+<td style="text-align: left; padding: 0 2px; border: 0;">:</td>
+<td style="text-align: right; padding: 0 4px 0 6px; margin: 0; border: 0;">3</td>
+<td style="text-align: left; padding: 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0 2px; margin: 0; border: 0;">6.5%</td>
+<td style="text-align: left; padding: 0 4px 0 0; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 2px 0 7px; margin: 0; border: 0;">20</td>
+<td style="text-align: left; padding: 0 2px; border: 0;">:</td>
+<td style="text-align: right; padding: 0 4px 0 6px; margin: 0; border: 0;">23</td>
+<td style="text-align: left; padding: 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0 2px; margin: 0; border: 0;">50.0%</td>
+<td style="text-align: left; padding: 0 4px 0 0; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 2px 0 7px; margin: 0; border: 0;">21</td>
+<td style="text-align: left; padding: 0 2px; border: 0;">:</td>
+<td style="text-align: right; padding: 0 4px 0 6px; margin: 0; border: 0;">7</td>
+<td style="text-align: left; padding: 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0 2px; margin: 0; border: 0;">15.2%</td>
+<td style="text-align: left; padding: 0 4px 0 0; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 2px 0 7px; margin: 0; border: 0;">22</td>
+<td style="text-align: left; padding: 0 2px; border: 0;">:</td>
+<td style="text-align: right; padding: 0 4px 0 6px; margin: 0; border: 0;">5</td>
+<td style="text-align: left; padding: 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0 2px; margin: 0; border: 0;">10.9%</td>
+<td style="text-align: left; padding: 0 4px 0 0; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 2px 0 7px; margin: 0; border: 0;">24</td>
+<td style="text-align: left; padding: 0 2px; border: 0;">:</td>
+<td style="text-align: right; padding: 0 4px 0 6px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0 2px; margin: 0; border: 0;">2.2%</td>
+<td style="text-align: left; padding: 0 4px 0 0; border: 0;">)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAEEAAACcCAQAAACKXg4/AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAABIElEQVR42u3cwQ3CMBBE0TGiR4qgHtMDVYZDADmWCeHg3UH6e+PEk2cljyBKWZQ9p2wAhHXO7YfbIknXMv9r2w3sTuGScAoGQUCAAAEChAOEewKhtHdWwBX5nJ2bMmM2faG+cRGdYUh49YXYjTAIAgIECBAgmBK6a4rKkjVUFskiCAgQIECAYEqgskh+QVBZ8gYCBAgQIIyGviD5BVG7x3tiWsOwL6wTtRcGQUCAAAECBFMClUXyC6LGPZHcHPhOZZk3240zCAICBAgQIJgSqCySXxDfK8uM311+qixzNsUgCAgQIECAMBr6guQXxKe+MPffmQN9YfZ+GAQBAQIECBBMCVQWyS+IGvY6kHZ4HQgECBAgQPgfQnplsTgFCFnzAA5pM4cE8gHyAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIzLTA1LTA1VDE5OjU2OjQxKzAwOjAwNdmpywAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMESEEXcAAAA9dEVYdGljYzpjb3B5cmlnaHQAQ29weXJpZ2h0IDIwMDcgQXBwbGUgSW5jLiwgYWxsIHJpZ2h0cyByZXNlcnZlZC6eZtwpAAAAI3RFWHRpY2M6ZGVzY3JpcHRpb24AR2VuZXJpYyBSR0IgUHJvZmlsZRqnOI4AAAAASUVORK5CYII=" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+</tbody>
+</table>
+
+<p>Generated by <a href="https://github.com/dcomtois/summarytools">summarytools</a> 1.0.1 (<a href="https://www.r-project.org/">R</a> version 4.2.2)<br>2023-05-05</p>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(snl_casts,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="container st-container">
+<h3 class="anchored">Data Frame Summary</h3>
+<h4 class="anchored">snl_casts</h4>
+<strong>Dimensions</strong>: 614 x 8
+  <br><strong>Duplicates</strong>: 0
+<br>
+
+<table class="table table-striped table-bordered st-table st-table-striped st-table-bordered st-multiline table-condensed table-sm small" data-quarto-postprocess="true">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Variable</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Stats / Values</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Freqs (% of Valid)</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Graph</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Missing</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">aid [character]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1. Kenan Thompson</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">2. Darrell Hammond</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">3. Seth Meyers</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">4. Al Franken</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">5. Fred Armisen</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">6. Kate McKinnon</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">7. Tim Meadows</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">8. Aidy Bryant</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">9. Bobby Moynihan</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">10. Cecily Strong</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">[ 146 others ]</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; padding: 0; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">18</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">2.9%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">14</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">2.3%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">13</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">2.1%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">11</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">1.8%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">11</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">1.8%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">10</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">1.6%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">10</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">1.6%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">9</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">1.5%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">9</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">1.5%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">9</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">1.5%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">500</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">81.4%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAGIAAAC9CAQAAADixGB/AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAABbklEQVR42u3dQU4CQRRF0cawRxfhenAPrhInxtBoNGFA3/o5Z8asbyiSfpPidN3W93L0A4iYFHG+/fD+9QN5Ox39WP+7/S3ffROv2+vRT/eAEcdJRIWIChEVIipEVIyIOO8/fhz9PA853b7SLvAG/u2PV/E17Y7T5bpta0yivR+jaEUjjpOIChEVIipEVIiomBhhFD2VUVRkFFWIqBBRIaJCRIWICnviSPZEkT1RIaJCRIWIChEVIiomRhhFT2UUFRlFFSIqRFSIqBBRIaJiYoRR9FTjRtEu4nK9LHmNx7xvYlUiKkRUiKgQUSGiYkSEPVFhT1SIqBBRIaJCRIWIChEVIyKMogqjqEJEhYgKERUiKkRUiKiwJyrsiQoRFSIqRFSIqBBRIaJiRIRRVGEUVYioEFEhokJEhYgKERUjIoyiil/uPFvEzbG5+wfaVe4821/NMeI4iagQUSGiQkSFiIq7d6cB14WtasRxElHxCcLsOtL6736BAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIzLTA1LTA1VDE5OjU2OjQxKzAwOjAwNdmpywAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMESEEXcAAAA9dEVYdGljYzpjb3B5cmlnaHQAQ29weXJpZ2h0IDIwMDcgQXBwbGUgSW5jLiwgYWxsIHJpZ2h0cyByZXNlcnZlZC6eZtwpAAAAI3RFWHRpY2M6ZGVzY3JpcHRpb24AR2VuZXJpYyBSR0IgUHJvZmlsZRqnOI4AAAAASUVORK5CYII=" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">sid [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 25.5 (13.1)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1 ≤ 26 ≤ 46</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 22 (0.5)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle;">46 distinct values</td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAABE0lEQVR42u2aQQ6CMBBFreGO3EHPg3fwlLqtOCKZtND389+uLJo+8qdDScvrosr17AVYzWo1Uz0o6WmWoGTv+enS1MuY0rOsmFfjZ9MlL+Fut/3ymqn1Zv568u/lCdeasNqAgVwafUUMqJapqwjhQAqrHRrITHeCqLWqon0IB9JqRAboa61a9IFqe5fc68zQUe3I3TBCuNasRsRqRITVEpt/rxY7gNr5HWsfwoEUVvsIJKWKEmrRpyqjriKEA2k1IlYjYjUiViNiNSJWI2I1IlYjYjUiViNiNSLCagNcrsgT/O2u7nuh1bavZQgH0mpErEbEakSsRsRqRKxGxGpESn2ae+AvMt2qo2jB2/xEOJBWI/IGki0gMi2FOB4AAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDA12anLAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTA1LTA1VDE5OjU2OjQxKzAwOjAwRIQRdwAAAD10RVh0aWNjOmNvcHlyaWdodABDb3B5cmlnaHQgMjAwNyBBcHBsZSBJbmMuLCBhbGwgcmlnaHRzIHJlc2VydmVkLp5m3CkAAAAjdEVYdGljYzpkZXNjcmlwdGlvbgBHZW5lcmljIFJHQiBQcm9maWxlGqc4jgAAAABJRU5ErkJggg==" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">featured [logical]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1. FALSE</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">2. TRUE</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; padding: 0; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">451</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">73.5%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">163</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">26.5%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAFkAAAAoCAQAAAA/fJ5AAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAAgklEQVRYw+3WwQmAMAxG4Ubc0R10Ht2hU+q1SrwUTfPDe7deygdNIXYWtabRAMg5m9vDkXawV3shl7KMtrnV20lwMCBDhgwZcq4gQ3Z7rEW175bQrN03rfuav2uV6oOxd6/4W+ADfbLix/4AwcGADBkyZMi5ggzZTX3F10hwMCBHdAGkfQuprNQRTAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMDXZqcsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDBEhBF3AAAAPXRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCAyMDA3IEFwcGxlIEluYy4sIGFsbCByaWdodHMgcmVzZXJ2ZWQunmbcKQAAACN0RVh0aWNjOmRlc2NyaXB0aW9uAEdlbmVyaWMgUkdCIFByb2ZpbGUapziOAAAAAElFTkSuQmCC" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">first_epid [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 19909634 (111264.8)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">19770115 ≤ 19901110 ≤ 20141025</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 156624.2 (0)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle;">35 distinct values</td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAA90lEQVR42u2bQQ7CIBAAxfSP/kHfU//gK/WKphgI2dDZzNzalMIkW7J0obwvWbmuHoBqqtVs9UVpPLQ3P8hHq8ki6oFufU1uh3dfq03+kjggVSOiGhHViKhGRDUiqhHpzPzHOMciKETtHIugxAGpGhHViKhGRDUiqhFRjYhqRFQjohoR1YioRkQ1IqoRSaz2Vc7Yw/d9tno4ruDMVXx+KjXRFZbR98+MJ3FAqkZksioaP/EM9ltNL5Nqqwq7Pf0mDkjViKhGRDUiidWC9miNEpHVnEQtIqtJHJCqEVGNiGpEEquVOg144o/W36t/IwVv0yRxQKpG5ANxTRz+AHP3/wAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMDXZqcsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDBEhBF3AAAAPXRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCAyMDA3IEFwcGxlIEluYy4sIGFsbCByaWdodHMgcmVzZXJ2ZWQunmbcKQAAACN0RVh0aWNjOmRlc2NyaXB0aW9uAEdlbmVyaWMgUkdCIFByb2ZpbGUapziOAAAAAElFTkSuQmCC" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">564 (91.9%)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">last_epid [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 19944038 (126122.2)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">19751011 ≤ 19950225 ≤ 20140201</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 190005 (0)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle;">17 distinct values</td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAA5UlEQVR42u3awQ3CMBAAQYzSIz1APaEHqoTvIWEpjm2SPe38yCPHSuZxMuV9yep69BcwzbRoiR/K5GFr9Yf9GDQ6Dlh2v2WX28+nrymzEh9I04hMIzKNyDQi04hMIzKN6Gtfm78qHpb231VxtsQH0jQi04hMIzKNyDQi04hMI0qc1nUrOm4rX0f9xyPM7bzwHbWV197T+jxKfCBNIzKNyDQi04hMIzKNyDSixGkbV9HWLXjY1jw/rXWbPsOdeOIDaRqRaUSmEZlGZBqRaUSmEZW4Mz5PsED2uYcL34KvqUp8IE0j+gCQWRlmMB+CWAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMDXZqcsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDBEhBF3AAAAPXRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCAyMDA3IEFwcGxlIEluYy4sIGFsbCByaWdodHMgcmVzZXJ2ZWQunmbcKQAAACN0RVh0aWNjOmRlc2NyaXB0aW9uAEdlbmVyaWMgUkdCIFByb2ZpbGUapziOAAAAAElFTkSuQmCC" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">597 (97.2%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">update_anchor [logical]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1. FALSE</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">2. TRUE</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; padding: 0; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">541</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">88.1%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">73</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">11.9%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAGkAAAAoCAQAAABXjxx4AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAAi0lEQVRo3u2XQQqAMAwEG/GP/kHfo3/oK/VahYL0EmfdueUSMjSBbpxFjSl7ACv9U2luiwN7WGt0lEpZsmcbot4qwcWzEgErEbASASsRsBIBQaXHt7WOdfkU0eaJGG6TTWuhvnh7NwJuoAd8FQFZFya4eFYiYCUCViJgJQJWIiCopB4BNRBcPCsRuADEmwupHej2EAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wNS0wNVQxOTo1Njo0MSswMDowMDXZqcsAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDBEhBF3AAAAPXRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCAyMDA3IEFwcGxlIEluYy4sIGFsbCByaWdodHMgcmVzZXJ2ZWQunmbcKQAAACN0RVh0aWNjOmRlc2NyaXB0aW9uAEdlbmVyaWMgUkdCIFByb2ZpbGUapziOAAAAAElFTkSuQmCC" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">n_episodes [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 18.7 (4)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1 ≤ 20 ≤ 24</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 2 (0.2)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle;">22 distinct values</td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAA8klEQVR42u3bQQ6CMBQAUTDc0TvoefAOnlK3tY00P0Do/MzsiCH2SWOJlfkzZe129QCkSStbyoP56tFUrc0XwbMzxPKEZRq6+8/RO3Ru4gkpjZg0YtKISSMmjZg0YtKISSMmjZg0YtKISSMmjZg0Yolpg29C1dU7blv7bTBaZL8t8YSURkwaMWnEpBGTRkwaMWnEpBGTRkwascS0oX6sWw99wGco2r7/9dclnpDSiEkjJo3Yqeta/NE6DK1dgiO7moPTetQzC9F6Eyx+D3jsXeMGrf9GvQkWvSp7r2Iz4uKjnsvXXvhH6x//aLlKvK5JI/YFJekiKMI7qMYAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDA12anLAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTA1LTA1VDE5OjU2OjQxKzAwOjAwRIQRdwAAAD10RVh0aWNjOmNvcHlyaWdodABDb3B5cmlnaHQgMjAwNyBBcHBsZSBJbmMuLCBhbGwgcmlnaHRzIHJlc2VydmVkLp5m3CkAAAAjdEVYdGljYzpkZXNjcmlwdGlvbgBHZW5lcmljIFJHQiBQcm9maWxlGqc4jgAAAABJRU5ErkJggg==" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">season_fraction [numeric]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">Mean (sd) : 0.9 (0.2)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">min ≤ med ≤ max:</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">0 ≤ 1 ≤ 1</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">IQR (CV) : 0 (0.2)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle;">36 distinct values</td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAG0AAABPCAQAAABLlYPgAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOClz5sdmAAAAv0lEQVR42u3bsQ2DMBgFYYy8Y3aAecwOmZK0v8FIRingrPs6N8BJQPfSPo1qfvoBTDMtyvGQnn6aW0rjN7GEhNx/qff5HM7f6jTwC2kakWlEphGZRmQakWlEphGZRmQakWlEphGZRmQakWlEphGZRmQakWlEphGZRmQakWlEphGZRmQakWlEphGZRmQakWlEphGZRmQaUbUVbQ1L19M2tjRX6mvHhrb8sW/vuX4txbtt+Gl9XPgmfM2lgb8104h+7FsOn420pZIAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDUtMDVUMTk6NTY6NDErMDA6MDA12anLAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTA1LTA1VDE5OjU2OjQxKzAwOjAwRIQRdwAAAD10RVh0aWNjOmNvcHlyaWdodABDb3B5cmlnaHQgMjAwNyBBcHBsZSBJbmMuLCBhbGwgcmlnaHRzIHJlc2VydmVkLp5m3CkAAAAjdEVYdGljYzpkZXNjcmlwdGlvbgBHZW5lcmljIFJHQiBQcm9maWxlGqc4jgAAAABJRU5ErkJggg==" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+</tbody>
+</table>
+
+<p>Generated by <a href="https://github.com/dcomtois/summarytools">summarytools</a> 1.0.1 (<a href="https://www.r-project.org/">R</a> version 4.2.2)<br>2023-05-05</p>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(snl_actors,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="container st-container">
+<h3 class="anchored">Data Frame Summary</h3>
+<h4 class="anchored">snl_actors</h4>
+<strong>Dimensions</strong>: 2306 x 4
+  <br><strong>Duplicates</strong>: 0
+<br>
+
+<table class="table table-striped table-bordered st-table st-table-striped st-table-bordered st-multiline table-condensed table-sm small" data-quarto-postprocess="true">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Variable</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Stats / Values</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Freqs (% of Valid)</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Graph</strong></th>
+<th class="st-protect-top-border" style="text-align: center;" data-quarto-table-cell-role="th"><strong>Missing</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">aid [character]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1. 'N Sync</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">2. 070 Shake</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">3. 10,000 Maniacs</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">4. 14 Karat Soul</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">5. 2 Chainz</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">6. 3-D</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">7. 3RDEYEGIRL</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">8. 50 Cent</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">9. A Tribe Called Quest</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">10. A. Whitney Brown</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">[ 2296 others ]</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; padding: 0; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">2296</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">99.6%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAHUAAAC9CAQAAAAntvruAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOCrq75bcAAABP0lEQVR42u3XQQrCQBQFQSPe0ZN5CE+p24ngRoVg/S5XISBpMoJve5ymOB/9AKWW+pXH8rlxP9y1btBbLVVUqqhUUamiUkWligalbutu245+mp9b6wa91V2qN83fptpKFZUqKlVUqqhUUamiQalNc1HTXFSqqFRRqaJSRaWKShW1V0XtVVGpolJFpYpKFZUqKlU0KLVpLmqai0oVlSoqVVSqqFRRqaJBqU1zUdNcVKqoVFGpolJFpYpKFbVXRe1VUamiUkWlikoVlSoqVTQotWkuapqLShWVKipVVKqoVFGpovaqqL0qKlVUqqhUUamiUkWligalNs1FTXNRqaJSRaWKShWVKipVNCi1aS66rBfgNF8O6mV/53r0o/3UfXc16ACXKipVVKqoVFGpopf/wPfPvuUvbN6YeWfQAS5V9AQ/lDZhDrIF9wAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wNS0wNVQxOTo1Njo0MiswMDowMAQxs1YAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDUtMDVUMTk6NTY6NDIrMDA6MDB1bAvqAAAAPXRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCAyMDA3IEFwcGxlIEluYy4sIGFsbCByaWdodHMgcmVzZXJ2ZWQunmbcKQAAACN0RVh0aWNjOmRlc2NyaXB0aW9uAEdlbmVyaWMgUkdCIFByb2ZpbGUapziOAAAAAElFTkSuQmCC" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">url [character]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1. /Cast/?AbEl</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">2. /Cast/?AdSa</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">3. /Cast/?AiBr</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">4. /Cast/?AlFr</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">5. /Cast/?AlMo</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">6. /Cast/?AlZw</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">7. /Cast/?AmPo</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">8. /Cast/?AnDi</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">9. /Cast/?AnGa</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">10. /Cast/?AnMH</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">[ 2239 others ]</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; padding: 0; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.0%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">2239</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">99.6%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAHUAAAC9CAQAAAAntvruAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOCrq75bcAAABP0lEQVR42u3XQQrCQBQFQSPe0ZN5CE+p24ngRoVg/S5XISBpMoJve5ymOB/9AKWW+pXH8rlxP9y1btBbLVVUqqhUUamiUkWligalbutu245+mp9b6wa91V2qN83fptpKFZUqKlVUqqhUUamiQalNc1HTXFSqqFRRqaJSRaWKShW1V0XtVVGpolJFpYpKFZUqKlU0KLVpLmqai0oVlSoqVVSqqFRRqaJBqU1zUdNcVKqoVFGpolJFpYpKFbVXRe1VUamiUkWlikoVlSoqVTQotWkuapqLShWVKipVVKqoVFGpovaqqL0qKlVUqqhUUamiUkWligalNs1FTXNRqaJSRaWKShWVKipVNCi1aS66rBfgNF8O6mV/53r0o/3UfXc16ACXKipVVKqoVFGpopf/wPfPvuUvbN6YeWfQAS5V9AQ/lDZhDrIF9wAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMy0wNS0wNVQxOTo1Njo0MiswMDowMAQxs1YAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjMtMDUtMDVUMTk6NTY6NDIrMDA6MDB1bAvqAAAAPXRFWHRpY2M6Y29weXJpZ2h0AENvcHlyaWdodCAyMDA3IEFwcGxlIEluYy4sIGFsbCByaWdodHMgcmVzZXJ2ZWQunmbcKQAAACN0RVh0aWNjOmRlc2NyaXB0aW9uAEdlbmVyaWMgUkdCIFByb2ZpbGUapziOAAAAAElFTkSuQmCC" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">57 (2.5%)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">type [character]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1. cast</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">2. crew</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">3. guest</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">4. unknown</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; padding: 0; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">154</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">6.7%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">170</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">7.4%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1926</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">83.5%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">56</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">2.4%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAGQAAABJCAQAAABh2Us3AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOCrq75bcAAAAy0lEQVRo3u3ZsQ3CQBAFUQ65R4qgHuiBKiFkfRaWiDz7PS8COdkRZ+lWjPclw/XoAQxJDVnql+f0wtzH0ePtq+Mu60e38vl19Jx/iTlahtAYQmMIjSE0htBMd61e96tq1Bsk/LK7UWfPPFqPZvvIzxD3EQBDaAyhMYTGEBpDaGJCXKwIzrdY4ZUjtLNY0a3f55ijZQiNITSG0BhCYwhNTIiLFcFZFqtO/1N9Tb9Ip8VqN6QvQ2gMoTGExhAaQ2hSQ0IWq85Sj1ZfMSEfyHMXLQ4zwacAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjMtMDUtMDVUMTk6NTY6NDIrMDA6MDAEMbNWAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDIzLTA1LTA1VDE5OjU2OjQyKzAwOjAwdWwL6gAAAD10RVh0aWNjOmNvcHlyaWdodABDb3B5cmlnaHQgMjAwNyBBcHBsZSBJbmMuLCBhbGwgcmlnaHRzIHJlc2VydmVkLp5m3CkAAAAjdEVYdGljYzpkZXNjcmlwdGlvbgBHZW5lcmljIFJHQiBQcm9maWxlGqc4jgAAAABJRU5ErkJggg==" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">gender [character]</td>
+<td style="text-align: left; padding: 8; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">1. andy</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">2. female</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">3. male</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: left; padding: 0; margin: 0; border: 0;">4. unknown</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; padding: 0; vertical-align: middle;"><table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<tbody>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">21</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">0.9%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">671</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">29.1%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="odd" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">1226</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">53.2%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+<tr class="even" style="background-color:transparent">
+<td style="text-align: right; padding: 0 5px 0 7px; margin: 0; border: 0;">388</td>
+<td style="text-align: left; padding: 0 2px 0 0; border: 0;">(</td>
+<td style="text-align: right; padding: 0; border: 0;">16.8%</td>
+<td style="text-align: left; padding: 0 4px 0 2px; border: 0;">)</td>
+</tr>
+</tbody>
+</table></td>
+<td style="text-align: left; vertical-align: middle; padding: 0; background-color: transparent;"><img src="data:image/png;base64,%20iVBORw0KGgoAAAANSUhEUgAAAEQAAABJCAQAAAAuhEjnAAAAAmJLR0QA/4ePzL8AAAAHdElNRQfnBQUTOCrq75bcAAAArklEQVRo3u3ZSw6AIAxF0WLYo4twPboHV4nTQuIAyqch982Y6Ikl6UsMSXzkWA0A8peoD08SucK8l+v76eaLAAECBAgQIKMT9AacuHhFxOn2zfrIbSqwtiYT8+PZ/KDX+EXcjAYIECBAgGwLKZaedXW1h2JUpmMxaogaQbdiVJ/8ProZDRAgQIAA2RZCMRLZpRiN+sNVWYzG3SE3owECBAgQINtCfBajlXEzGiBlPuuHFi3ZlefKAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDIzLTA1LTA1VDE5OjU2OjQyKzAwOjAwBDGzVgAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyMy0wNS0wNVQxOTo1Njo0MiswMDowMHVsC+oAAAA9dEVYdGljYzpjb3B5cmlnaHQAQ29weXJpZ2h0IDIwMDcgQXBwbGUgSW5jLiwgYWxsIHJpZ2h0cyByZXNlcnZlZC6eZtwpAAAAI3RFWHRpY2M6ZGVzY3JpcHRpb24AR2VuZXJpYyBSR0IgUHJvZmlsZRqnOI4AAAAASUVORK5CYII=" class="img-fluid" style="border:none;background-color:transparent;padding:0;max-width:max-content;"></td>
+<td style="text-align: center;">0 (0.0%)</td>
+</tr>
+</tbody>
+</table>
+
+<p>Generated by <a href="https://github.com/dcomtois/summarytools">summarytools</a> 1.0.1 (<a href="https://www.r-project.org/">R</a> version 4.2.2)<br>2023-05-05</p>
+</div>
+</div>
+</div>
+</section>
+<section id="tidy-data-as-needed" class="level2">
+<h2 class="anchored" data-anchor-id="tidy-data-as-needed">Tidy Data (as needed)</h2>
+<p>To tidy the dataset I rename all columns in each data set.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Renaming columns in seasons</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>snl_seasons <span class="ot">&lt;-</span> snl_seasons <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">Season =</span> sid,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">Year =</span> year,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">FirstEpisode =</span> first_epid,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">LastEpisode =</span> last_epid,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">TotEpisodes =</span> n_episodes,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Renaming columns in casts</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>snl_casts <span class="ot">&lt;-</span> snl_casts <span class="sc">%&gt;%</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">Actor =</span> aid,</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">Season =</span> sid,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">Featured =</span> featured,</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">Anchor =</span> update_anchor,</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">Episodes =</span> n_episodes,</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">EpisodesProp =</span> season_fraction</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Renaming columns in actors</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>snl_actors <span class="ot">&lt;-</span> snl_actors <span class="sc">%&gt;%</span> </span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">Actor =</span> aid,</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">Type =</span> type,</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">Gender =</span> gender</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Mutate fields</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>snl_actors <span class="ot">&lt;-</span> snl_actors <span class="sc">%&gt;%</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Gender =</span> <span class="fu">str_replace</span>(Gender, <span class="st">"andy"</span>, <span class="st">"unknown"</span>), <span class="at">Type =</span> <span class="fu">str_replace</span>(Type, <span class="st">"unknown"</span>, <span class="st">"celebrity"</span>)</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="join-data" class="level2">
+<h2 class="anchored" data-anchor-id="join-data">Join Data</h2>
+<p>Be sure to include a sanity check, and double-check that case count is correct!</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>snl_joined <span class="ot">=</span> <span class="fu">merge</span>(<span class="at">x=</span>snl_casts, <span class="at">y=</span>snl_actors, <span class="at">by.y =</span> <span class="st">"aid"</span>, <span class="at">by.x =</span> <span class="st">"aid"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in fix.by(by.x, x): 'by' must specify a uniquely valid column</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(snl_joined,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-error">
+<pre><code>Error in summarytools::dfSummary(snl_joined, varnumbers = FALSE, plain.ascii = FALSE, : object 'snl_joined' not found</code></pre>
+</div>
+</div>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="DACSS/601_Spring_2023" data-repo-id="R_kgDOI4JcJA" data-category="Announcements" data-category-id="" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb16" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Challenge 8 Instructions"</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Linda Humphrey"</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Joining Data"</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "04/27/2022"</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="co">  - challenge_8: snl</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="co">  - data: snl_actors.csv, snl_seasons.csv, snl_casts.csv</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co">  - name: Linda Humphrey</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(viridis)</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(hrbrthemes)</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fmsb)</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(colormap)</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a><span class="fu">## Challenge Overview</span></span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>Overview of SNL Dataset</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a><span class="fu">## Read in data</span></span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>Reading 3 differnt datasets of snl csv files</span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a><span class="in">```{R}</span></span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a><span class="co">#Load dataset</span></span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>snl_seasons <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"~/Desktop/601_Spring_2023/posts/_data/snl_seasons.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a>snl_casts <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"~/Desktop/601_Spring_2023/posts/_data/snl_casts.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a>snl_actors <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"~/Desktop/601_Spring_2023/posts/_data/snl_actors.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(snl_seasons)</span>
+<span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(snl_casts)</span>
+<span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(snl_actors)</span>
+<span id="cb16-55"><a href="#cb16-55" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-56"><a href="#cb16-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-57"><a href="#cb16-57" aria-hidden="true" tabindex="-1"></a><span class="fu">## Briefly Describe the data</span></span>
+<span id="cb16-58"><a href="#cb16-58" aria-hidden="true" tabindex="-1"></a>The dataset snl_seasons contains 46 observations about the different seasons of "Saturday Night Live". The three datasets consist of actors, casts, and seasons, which contain details about each actor, type, and gender.</span>
+<span id="cb16-59"><a href="#cb16-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-62"><a href="#cb16-62" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-63"><a href="#cb16-63" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(summarytools)</span>
+<span id="cb16-64"><a href="#cb16-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-65"><a href="#cb16-65" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(snl_seasons,</span>
+<span id="cb16-66"><a href="#cb16-66" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb16-67"><a href="#cb16-67" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb16-68"><a href="#cb16-68" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb16-69"><a href="#cb16-69" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb16-70"><a href="#cb16-70" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb16-71"><a href="#cb16-71" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb16-72"><a href="#cb16-72" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span>
+<span id="cb16-73"><a href="#cb16-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-74"><a href="#cb16-74" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(snl_casts,</span>
+<span id="cb16-75"><a href="#cb16-75" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb16-76"><a href="#cb16-76" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb16-77"><a href="#cb16-77" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb16-78"><a href="#cb16-78" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb16-79"><a href="#cb16-79" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb16-80"><a href="#cb16-80" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb16-81"><a href="#cb16-81" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span>
+<span id="cb16-82"><a href="#cb16-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-83"><a href="#cb16-83" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(snl_actors,</span>
+<span id="cb16-84"><a href="#cb16-84" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb16-85"><a href="#cb16-85" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb16-86"><a href="#cb16-86" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb16-87"><a href="#cb16-87" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb16-88"><a href="#cb16-88" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb16-89"><a href="#cb16-89" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb16-90"><a href="#cb16-90" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span>
+<span id="cb16-91"><a href="#cb16-91" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-92"><a href="#cb16-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-93"><a href="#cb16-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-94"><a href="#cb16-94" aria-hidden="true" tabindex="-1"></a><span class="fu">## Tidy Data (as needed)</span></span>
+<span id="cb16-95"><a href="#cb16-95" aria-hidden="true" tabindex="-1"></a>To tidy the dataset I rename all columns in each data set.</span>
+<span id="cb16-98"><a href="#cb16-98" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb16-99"><a href="#cb16-99" aria-hidden="true" tabindex="-1"></a><span class="co"># Renaming columns in seasons</span></span>
+<span id="cb16-100"><a href="#cb16-100" aria-hidden="true" tabindex="-1"></a>snl_seasons <span class="ot">&lt;-</span> snl_seasons <span class="sc">%&gt;%</span></span>
+<span id="cb16-101"><a href="#cb16-101" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb16-102"><a href="#cb16-102" aria-hidden="true" tabindex="-1"></a>    <span class="at">Season =</span> sid,</span>
+<span id="cb16-103"><a href="#cb16-103" aria-hidden="true" tabindex="-1"></a>    <span class="at">Year =</span> year,</span>
+<span id="cb16-104"><a href="#cb16-104" aria-hidden="true" tabindex="-1"></a>    <span class="at">FirstEpisode =</span> first_epid,</span>
+<span id="cb16-105"><a href="#cb16-105" aria-hidden="true" tabindex="-1"></a>    <span class="at">LastEpisode =</span> last_epid,</span>
+<span id="cb16-106"><a href="#cb16-106" aria-hidden="true" tabindex="-1"></a>    <span class="at">TotEpisodes =</span> n_episodes,</span>
+<span id="cb16-107"><a href="#cb16-107" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-108"><a href="#cb16-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-109"><a href="#cb16-109" aria-hidden="true" tabindex="-1"></a><span class="co"># Renaming columns in casts</span></span>
+<span id="cb16-110"><a href="#cb16-110" aria-hidden="true" tabindex="-1"></a>snl_casts <span class="ot">&lt;-</span> snl_casts <span class="sc">%&gt;%</span></span>
+<span id="cb16-111"><a href="#cb16-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb16-112"><a href="#cb16-112" aria-hidden="true" tabindex="-1"></a>    <span class="at">Actor =</span> aid,</span>
+<span id="cb16-113"><a href="#cb16-113" aria-hidden="true" tabindex="-1"></a>    <span class="at">Season =</span> sid,</span>
+<span id="cb16-114"><a href="#cb16-114" aria-hidden="true" tabindex="-1"></a>    <span class="at">Featured =</span> featured,</span>
+<span id="cb16-115"><a href="#cb16-115" aria-hidden="true" tabindex="-1"></a>    <span class="at">Anchor =</span> update_anchor,</span>
+<span id="cb16-116"><a href="#cb16-116" aria-hidden="true" tabindex="-1"></a>    <span class="at">Episodes =</span> n_episodes,</span>
+<span id="cb16-117"><a href="#cb16-117" aria-hidden="true" tabindex="-1"></a>    <span class="at">EpisodesProp =</span> season_fraction</span>
+<span id="cb16-118"><a href="#cb16-118" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-119"><a href="#cb16-119" aria-hidden="true" tabindex="-1"></a><span class="co"># Renaming columns in actors</span></span>
+<span id="cb16-120"><a href="#cb16-120" aria-hidden="true" tabindex="-1"></a>snl_actors <span class="ot">&lt;-</span> snl_actors <span class="sc">%&gt;%</span> </span>
+<span id="cb16-121"><a href="#cb16-121" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb16-122"><a href="#cb16-122" aria-hidden="true" tabindex="-1"></a>    <span class="at">Actor =</span> aid,</span>
+<span id="cb16-123"><a href="#cb16-123" aria-hidden="true" tabindex="-1"></a>    <span class="at">Type =</span> type,</span>
+<span id="cb16-124"><a href="#cb16-124" aria-hidden="true" tabindex="-1"></a>    <span class="at">Gender =</span> gender</span>
+<span id="cb16-125"><a href="#cb16-125" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb16-126"><a href="#cb16-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-127"><a href="#cb16-127" aria-hidden="true" tabindex="-1"></a><span class="co"># Mutate fields</span></span>
+<span id="cb16-128"><a href="#cb16-128" aria-hidden="true" tabindex="-1"></a>snl_actors <span class="ot">&lt;-</span> snl_actors <span class="sc">%&gt;%</span></span>
+<span id="cb16-129"><a href="#cb16-129" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Gender =</span> <span class="fu">str_replace</span>(Gender, <span class="st">"andy"</span>, <span class="st">"unknown"</span>), <span class="at">Type =</span> <span class="fu">str_replace</span>(Type, <span class="st">"unknown"</span>, <span class="st">"celebrity"</span>)</span>
+<span id="cb16-130"><a href="#cb16-130" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-131"><a href="#cb16-131" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb16-132"><a href="#cb16-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-133"><a href="#cb16-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-134"><a href="#cb16-134" aria-hidden="true" tabindex="-1"></a><span class="fu">## Join Data</span></span>
+<span id="cb16-135"><a href="#cb16-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-136"><a href="#cb16-136" aria-hidden="true" tabindex="-1"></a>Be sure to include a sanity check, and double-check that case count is correct!</span>
+<span id="cb16-139"><a href="#cb16-139" aria-hidden="true" tabindex="-1"></a><span class="in">```{R}</span></span>
+<span id="cb16-140"><a href="#cb16-140" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb16-141"><a href="#cb16-141" aria-hidden="true" tabindex="-1"></a>snl_joined <span class="ot">=</span> <span class="fu">merge</span>(<span class="at">x=</span>snl_casts, <span class="at">y=</span>snl_actors, <span class="at">by.y =</span> <span class="st">"aid"</span>, <span class="at">by.x =</span> <span class="st">"aid"</span>)</span>
+<span id="cb16-142"><a href="#cb16-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-143"><a href="#cb16-143" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summarytools<span class="sc">::</span><span class="fu">dfSummary</span>(snl_joined,</span>
+<span id="cb16-144"><a href="#cb16-144" aria-hidden="true" tabindex="-1"></a>                        <span class="at">varnumbers =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb16-145"><a href="#cb16-145" aria-hidden="true" tabindex="-1"></a>                        <span class="at">plain.ascii  =</span> <span class="cn">FALSE</span>, </span>
+<span id="cb16-146"><a href="#cb16-146" aria-hidden="true" tabindex="-1"></a>                        <span class="at">style        =</span> <span class="st">"grid"</span>, </span>
+<span id="cb16-147"><a href="#cb16-147" aria-hidden="true" tabindex="-1"></a>                        <span class="at">graph.magnif =</span> <span class="fl">0.70</span>, </span>
+<span id="cb16-148"><a href="#cb16-148" aria-hidden="true" tabindex="-1"></a>                        <span class="at">valid.col    =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb16-149"><a href="#cb16-149" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="st">'render'</span>,</span>
+<span id="cb16-150"><a href="#cb16-150" aria-hidden="true" tabindex="-1"></a>      <span class="at">table.classes =</span> <span class="st">'table-condensed'</span>)</span>
+<span id="cb16-151"><a href="#cb16-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-152"><a href="#cb16-152" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+</body></html>

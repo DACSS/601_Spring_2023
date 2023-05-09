@@ -1,0 +1,127 @@
+---
+title: "Challenge 1 Instructions"
+author: "Jaswanth Reddy Kommuru"
+description: "Reading in data and creating a post"
+date: "05/08/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - Jaswanth Reddy Kommuru
+  - birds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, using the correct R package and command.
+
+-   railroad_2012_clean_county.csv ⭐
+-   birds.csv ⭐⭐
+-   FAOstat\*.csv ⭐⭐
+-   wild_bird_data.xlsx ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐⭐
+
+Find the `_data` folder, located inside the `posts` folder. Then you can read in the data, using either one of the `readr` standard tidy read commands, or a specialized package such as `readxl`.
+
+```{r}
+ library(readxl)
+ birds<-read_csv("~/Documents/601/601_Spring_2023/posts/_data/birds.csv")
+ 
+ birds_skip <- read_csv("~/Documents/601/601_Spring_2023/posts/_data/birds.csv",skip=4)
+```
+I read the data from the csv file twice in the first step I read the whole csv file and in the second read I skipped the first 4 rows of the dataset.
+
+Add any comments or documentation as needed. More challenging data sets may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+#| label: summary
+ head(birds)
+```
+
+Having a look at the first 6 rows of the dataset to have an idea of what kind of data is available.
+
+```{r}
+ dim(birds)
+```
+
+getting to know the dimensions of the dataset.
+
+```{r}
+ colnames(birds)
+```
+
+We can get to know the column names of the dataset.
+
+```{r}
+ filter(birds, `Year`==1968 & `Area`=="Africa")
+```
+
+We got to know the birds which have the year as 1968 and the country as Africa.
+
+
+```{r}
+ birds%>%
+  select("Area") %>%
+  distinct(.)
+```
+
+We will get to know the distinct area names of the birds.
+
+```{r}
+ birds%>%
+  select("Area") %>%
+  n_distinct(.)
+```
+
+We will get to know the count of the distinct area names of the birds.
+
+```{r}
+ birds.sm<-birds%>%
+  select(-contains("Code"))
+ birds.sm
+```
+
+We will get to know the columns which doesn't have the word "Code" in their column name.
+
+```{r}
+ column_with_na<-birds %>%
+  select_if(~ any(is.na(.))) %>%
+  names()
+column_with_na
+```
+
+Getting to know which columns are having atleast one NA value in them.
+
+```{r}
+ summary(birds)
+```
+
+
+
+

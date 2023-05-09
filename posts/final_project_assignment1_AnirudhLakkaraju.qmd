@@ -1,0 +1,185 @@
+---
+title: "Final Project Assignment#1: Anirudh Lakkaraju"
+author: "Anirudh Lakkaraju"
+description: "Project & Data Description"
+date: "05/02/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Important Formatting & Submission Notes: {#important-formatting-submission-notes}
+
+1.  **Use this file as the template to work on: start your own writing from Section "Part.1"**
+
+2.  **Please make the following changes to the above YAML header:**
+
+    -   Change the "title" to "Final Project Assignment#1: First Name Last Name";
+
+    -   Change the "author" to your name;
+
+    -   Change the "date" to the current date in the "MM-DD-YYYY" format;
+
+3.  **Submission:**
+
+    -   Delete the unnecessary sections ("Overview", "Tasks", "Special Note", and "Evaluation").
+    -   **In the posts folder of your local 601_Spring_2023 project, create a folder named "FirstNameLastName_FinalProjectData", and save your final project dataset(s) in this folder. DO NOT save the dataset(s) to the \_data folder which stores the dataset(s) for challenges.**
+    -   Render and submit the file to the blog post like a regular challenge.
+
+## Overview of the Final Project {#overview-of-the-final-project}
+
+The goal is to tell a coherent and focused story with your data, which answers a question (or questions) that a researcher, or current or future employer, might want to have answered. The goal might be to understand a source of covariance, make a recommendation, or understand change over time. We don't expect you to reach a definitive conclusion in this analysis. Still, you are expected to tell a data-driven story using evidence to support the claims you are making on the basis of the exploratory analysis conducted over the past term.
+
+In this final project, statistical analyses **are not required**, but any students who wish to include these may do so. However, **your primary analysis should center around visualization rather than inferential statistics.** Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. **Do not run a multiple regression with numerous predictors and report which predictors are significant!!**
+
+## Tasks of Assignment#1 {#Tasks-of-assignment1}
+
+This assignment is the first component of your final project. Together with the later assignments, it make up a short paper/report. In this assignment, you should introduce a dataset(s) and how you plan to present this dataset(s). This assignment should include the following components:
+
+1.  **A clear description of the dataset(s) that you are using.**
+
+2.  **What "story" do you want to present to the audience? In other words, what "question(s)" do you like to answer with this dataset(s)?**
+
+3.  **The Plan for Further Analysis and Visualization.**
+
+We will have a special class meeting on April 12 to review and discuss students' proposed datasets for the final project. **If you want your project being discussed in the class, please submit this assignment before April 12.**
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+In this part, you should introduce the dataset(s) and your research questions.
+
+1.  Dataset(s) Introduction:
+
+    The datset "pokemon.csv" is obtained from the Serebii website and hosted on Kaggle. As a long-time fan of Pokemon and someone who has played all the games, I am interested in exploring the idea of building the "best" team of six Pokemon. With over 800 Pokemon across seven generations, selecting the optimal team is a daunting task.
+
+    My project aims to understand how the moves, types, and stats of each of the 801 Pokemon determine their value in a playthrough. Specifically, I will investigate how a Pokemon's base stats and types affect its strength. Each Pokemon type has its strengths and weaknesses against other types, so I plan to explore the idea of creating a "best" team with the least amount of weaknesses.
+
+    Furthermore, I will understand how a Pokemon's base stats and types impact its strength, and whether its physical attributes, such as size and features, are consistent with its base stats. For instance, in the real world, a tiger's bulk makes it stronger than a cheetah, which is more agile and lithe. I want to determine if a similar relationship exists in the Pokemon world.
+
+    In addition, I will explore the concept of Legendary Pokemon, which are rare and have the highest base stats in the game. I am interested in determining if it is possible to categorize a Pokemon as legendary based on its base stats and if there is a type that is most likely to be legendary.
+
+2.  What questions do you like to answer with this dataset(s)?
+
+    -   Which type is the strongest overall, and which is the weakest?
+
+    -   Can a Pokemon dream team be built? A team of six Pokemon that inflicts the most damage while remaining relatively impervious to any other team of six Pokemon.
+
+    -   How does a Pokemon's height and weight correlate with its various base stats?
+
+    -   Which type is most likely to be a legendary Pokemon?
+
+    -   Is it feasible to construct a classifier that can identify legendary Pokemon?
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+```{r}
+data <- read_csv("AnirudhLakkaraju_FinalProjectData/pokemon.csv")
+view(data)
+```
+
+```{r}
+dim(data)
+```
+
+```{r}
+head(data)
+```
+
+```{r}
+summary(data)
+```
+
+This dataset contains information on all 802 Pokemon from all Seven Generations of Pokemon. The information contained in this dataset include Base Stats, Performance against Other Types, Height, Weight, Classification, Egg Steps, Experience Points, Abilities, etc. The information was scraped from <http://serebii.net/>.
+
+Each row contains the complete information of one Pokemon and the following are the meanings of each column -
+
+-   **name:** The English name of the Pokemon
+
+-   **japanese_name:** The Original Japanese name of the Pokemon
+
+-   **pokedex_number:** The entry number of the Pokemon in the National Pokedex
+
+-   **percentage_male:** The percentage of the species that are male. Blank if the Pokemon is genderless.
+
+-   **type1:** The Primary Type of the Pokemon
+
+-   **type2:** The Secondary Type of the Pokemon
+
+-   **classification:** The Classification of the Pokemon as described by the Sun and Moon Pokedex
+
+-   **height_m:** Height of the Pokemon in metres
+
+-   **weight_kg:** The Weight of the Pokemon in kilograms
+
+-   **capture_rate:** Capture Rate of the Pokemon
+
+-   **base_egg_steps:** The number of steps required to hatch an egg of the Pokemon
+
+-   **abilities:** A stringified list of abilities that the Pokemon is capable of having
+
+-   **experience_growth:** The Experience Growth of the Pokemon
+
+-   **base_happiness:** Base Happiness of the Pokemon
+
+-   **against\_?:** Eighteen features that denote the amount of damage taken against an attack of a particular type
+
+-   **hp:** The Base HP of the Pokemon
+
+-   **attack:** The Base Attack of the Pokemon
+
+-   **defense:** The Base Defense of the Pokemon
+
+-   **sp_attack:** The Base Special Attack of the Pokemon
+
+-   **sp_defense:** The Base Special Defense of the Pokemon
+
+-   **speed:** The Base Speed of the Pokemon
+
+-   **generation:** The numbered generation which the Pokemon was first introduced
+
+-   **is_legendary:** Denotes if the Pokemon is legendary.\
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+1.  Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above.
+
+    -   I will be plotting different histograms, box plots, scatter plots and linear graphs to understand the correlation between select variables that are relevant to the research questions I have posed. For example - I can plot a histogram of legendary status vs primary and secondary types to understand which type has the most likeliness of being legendary.
+
+    -   I will also be conducting correlation analysis to identify the strength of the relationships between variables such as height, weight, type match ups, etc.
+
+2.  Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?
+
+    -   Histogram: Histograms can be used to visualize the distributions of numerical variables. For this dataset, we can use it to identify which type is most likely to be a legendary Pokemon.
+
+    -   Scatter Plots: Scatter plots are useful in understanding and visualizing the relationship between two numerical values. We can use these plots to figure out how to create the best dream team of six Pokemon that are strongest and have the least amount of type weaknesses. This can be done by plotting a scatter plot using the type matchups data and the base stat data. We can also make teams that include legendary Pokemon and teams that don't.
+
+    -   Box Plots: These are useful for visualizing distributions of a numerical variable across different attributes. In the case of Pokemon data, we can see which type is the strongest and understand the factors that affect the strength of a type.
+
+3.  If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.
+
+    -   Drop some irrelevant columns like Japanese name, Pokedex id, base_happiness, etc as they are not that relevant to out study.
+
+    -   Create a new variable that determines the probability of a pokemon being legendary status as a factor of it's base stats.
+
+    -   Introduce new columns like how many types the pokemon is weak/strong against.
+
+    -   Regarding missing data or NAs, we need to first identify the variables with missing values and the extent of the missingness. We can use functions like is.na() or summary() to identify the missing data.

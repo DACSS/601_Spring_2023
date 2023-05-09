@@ -135,22 +135,50 @@ allYearsDF_wide <- allYearsDF_wide %>% mutate_at(c(5,6), ~na_if(., '')) # replac
   # label each action with its call type
 allYearsDF_wide <- fill(allYearsDF_wide, x5to52, .direction = "down")
 allYearsDF_wide <- allYearsDF_wide %>% 
-    mutate(x53to197 = ifelse(row_number() == 1, "Action", x53to197))
+  mutate(x53to197 = ifelse(row_number() == 1, "Action", x53to197))
 colnames(allYearsDF_wide)[-c(1:4)] <- allYearsDF_wide[1,-c(1:4)]
+allYearsDF_wide <- allYearsDF_wide %>% 
+  rename_with(tolower) %>%
+  rename_with(~ gsub("._", "_", .x, fixed = TRUE)) %>%
+  rename_with(~ gsub("@", "at", .x, fixed = TRUE))
 
-allYearsDF_wide <- filter(allYearsDF_wide, sub_page_id != 1 | y != 69 | Call_Reason != "Call_Reason")
-  # sep filename into town and year
 allYearsDF_wide <- allYearsDF_wide %>%
+  filter(sub_page_id != 1 | y != 69 | call_reason != "Call_Reason") %>%
+  filter(self != "Self_Init") %>%
+  # sep filename into town and year
   separate_wider_regex(filename, c(town = "^[A-Za-z]+", year = "[0-9]{4}$")) %>%
   mutate(town = factor(town),
-         year = make_date(year = as.integer(year), month = 1, day = 1))
+         year = make_date(year = as.integer(year), month = 1, day = 1)) %>%
+  select(-c(total, "___%")) %>%
+  mutate(across(call_reason:avg_time_at_scene, ~na_if(., "")))
 
-#########
-######### Boundary issue, see BUILDING/LOCATION CHECK Leverett2019
-######### Need to remove summary pages
-######### Need to select out junk columns
+#  mutate_at(c('self':'avg_time_at_scene'), funs(str_replace(., "", '0')))
+  # this doesn't work but I think I might not need it
 
+callTypesDF <- allYearsDF_wide %>% # I think this completes the first df
+  filter(is.na(action)) %>% 
+  filter(!grepl("total", call_reason, ignore.case = TRUE)) %>%
+  filter(!is.na(self)) %>%
+  select(-action) %>%
+  mutate(call_reason = factor(call_reason)) %>%
+  mutate_at(c("self", "disp", "avg_arrive", "avg_time_at_scene"), as.numeric) %>%
+  mutate(avg_arrive = ifelse(is.na(avg_arrive), 0, avg_arrive)) 
 
+# sanity check ... pass!
+callTypesDF %>%
+  group_by(town) %>%
+  summarise(selfSum = sum(as.numeric(self)), dispSum = sum(as.numeric(disp)), arriveSum = sum(as.numeric(avg_arrive)), sceneSum = sum(as.numeric(avg_time_at_scene)), .groups = 'drop')
+
+######### all good up to this point.
+######### To do:
+######### May need to trim
+
+callActionsDF <- allYearsDF_wide
+operatorSummaryDF <- allYearsDF_wide
+
+## testers
+allYearsDF_wideACTION <- arrange(allYearsDF_wide, Action)
+allYearsDF_wideSELF <- arrange(allYearsDF_wide, desc(Self)) # checks out 
 ```
 
 

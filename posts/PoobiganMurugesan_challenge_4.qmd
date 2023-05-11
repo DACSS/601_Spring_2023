@@ -1,0 +1,91 @@
+---
+title: "Challenge 4"
+author: "Poobigan Murugesan"
+description: "More data wrangling: pivoting"
+date: "05/10/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - poultry_tidy
+  - poobigan murugesan
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(dplyr)
+library(readxl)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+Reading in poultry_tidy dataset
+```{r}
+df <- read_excel("_data/poultry_tidy.xlsx")
+df
+```
+Dimensions of the dataset
+```{r}
+dim(df)
+```
+Summary of dataset
+```{r}
+summary(df)
+```
+We can see that there are NaN values present so we further filter the data.
+```{r}
+filter(df,is.na(Price_Dollar))
+```
+Unique poultry product categories
+```{r}
+distinct(select(df, Product))
+```
+### Briefly describe the data
+This dataset of 600 rows and 4 columns, contains information about the prices of 5 different types of poultry cuts, namely  Bone-in Breast, B/S Breast, Thighs, Whole Legs, and Whole, on a monthly basis from January 2004 to December 2013. However from the summary it is evident that there are NaN values present in the dataset indicating that some of the prices from 2004 are not available.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? 
+
+The data is already tidy with each row containing the price during a specific month, year of a specific cut of meat.
+
+## Identify variables that need to be mutated
+
+
+The data currently has separate columns for months and years. To sort the data chronologically, we need to add a date column. 
+
+```{r}
+df1<-df %>%
+  mutate(date = str_c(Month, Year, sep=" "),
+         date = my(date))
+df1<-select(df1, date, Product, Price_Dollar)
+df1
+```
+
+The first operation uses the mutate() function to create a new column called date. The str_c() function from the stringr package is used to concatenate the Month and Year columns, separated by a space. The my() function is then used to convert this concatenated string into a date object. Although the day of the month is set to the first for all observations, this will not affect the order of the data because it is consistent throughout the dataset. Therefore, we can use this new date column to sort the data chronologically.

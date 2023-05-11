@@ -1,0 +1,108 @@
+---
+title: "Challenge 1 - Rail roads"
+author: "Shaunak Padhye"
+desription: "Data Reading and Data Cleaning"
+date: "05/11/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - Shaunak Padhye
+  - railroads
+---
+
+## Setup
+
+We will load the required packages.
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(readxl)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reading in data files
+
+The "StateCounty2012.xls" dataset will be used for this challenge. The dataset will be loaded using the read_excel() function from the readxl package. When the data was first loaded, it was observed that the first two rows did not contain useful information and hence those two rows were skipped.
+
+```{r}
+#| label: data import
+#| warning: false
+
+state_county <- read_excel("_data/StateCounty2012.xls", skip=2)
+state_county <- data.frame(state_county)
+head(state_county)
+```
+
+We can also observe that the second and the fourth columns contain null values and those columns can be dropped.
+
+```{r}
+#| label: drop columns
+#| warning: false
+
+state_county <- state_county[, -c(2,4)]
+head(state_county)
+```
+## Data Description
+
+This dataset provides information on the number of railroad employees in each county and state for the year 2012. Each row represents a county, and the columns display the state, county, and number of employees. There is no information about the origin of the data.
+
+## Data Cleaning
+
+Now our dataset is ready for further inspection. We can start by creating an initial summary of the data by using the summary() and str() functions. These functions provide some basic statistics for the dataset.
+
+```{r}
+summary(state_county)
+str(state_county)
+```
+
+We can observe that the STATE column has 2990 values. However, the number of states in the United States is much less. We can print out the unique values for this column to check.
+
+```{r}
+unique(state_county$STATE)
+```
+
+To understand this dataset in more detail lets isolate the state "MA" and check the dataset.
+```{r}
+subset(state_county, STATE == "MA", select = c(COUNTY,TOTAL))
+```
+As we can see above, the dataset contains the total for each county in "MA".
+
+We can also see the total number of emoloyees in "MA" by checking the "MA Total" state.
+
+```{r}
+subset(state_county, STATE == "MA Total", select = c(COUNTY,TOTAL))
+```
+Based on this we understand that this dataset contains the total number of employees for each county in each state as well as the total number of employees for each state. We can split the dataset into two. One dataframe will contain the values for the states and their counties, while one dataframe will contain values for the entire states.
+
+```{r}
+match_pattern <- grepl("Total",state_county$STATE)
+
+state_total <- state_county[match_pattern, ]
+state_total
+```
+```{r}
+state_county <- state_county[!match_pattern, ]
+head(state_county)
+```
+
+Finally, we remove all the null values from both the datasets.
+
+```{r}
+state_total <- na.omit(state_total)
+state_county <- na.omit(state_county)
+```
+
+## Summary
+
+We end up with two datasets:
+1) One dataset contains the total number of employees for each county in each state
+2) One dataset contains the total number of employees for each state

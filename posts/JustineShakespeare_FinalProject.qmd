@@ -1,18 +1,17 @@
 ---
-title: "Final Project Assignment #1: Justine Shakespeare"
+title: "Final Project Assignment: Checkin #2"
 author: "Justine Shakespeare"
-description: "Project & Data Description"
-date: "04/12/2023"
+description: "Exploratory Analysis and Visualization"
+date: "05/08/2023"
 format:
   html:
     df-print: paged
     toc: true
     code-copy: true
     code-tools: true
-    css: styles.css
 categories:
-  - final_Project_assignment_1
-  - final_project_data_description
+  - final_project_assignment_2
+  - final_project_data_visualization
   - Justine Shakespeare
   - Baby Names
 editor_options: 
@@ -25,13 +24,23 @@ editor_options:
 #| message: false
 
 library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(purrr)
+library(forcats)
+library(ggthemes)
+library(plotly)
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
-## Part 1. Introduction {#describe-the-data-sets}
+## Introduction
 
-Compared to decisions around sleep, breastfeeding, schools and more, naming your baby may seem like one of more arbitrary and inconsequential choices a parent makes. But it is a deeply personal decision, laden with expectations, hopes, and even whimsy. Baby names may seem like an innocuous, fluffy data point, but they provide a fascinating window into the cultural trends and societal values of the United States at different points in time.
+This analysis will use the data on names given to babies born in the United States from 1880 to 2021 provided by the Social Security Administration to explore the primary research question: What are the major trends in baby name popularity and how have they changed over time?  These data contain information on baby names, sex, year of birth, and number of occurrences of each baby name in a given year. This research will explore the most popular baby names in the dataset by year and generation, how the proportion of babies with the most popular names has changed over the time, and whether baby name popularity is cyclical in nature. Finally, this research will consider whether and how the answers to these questions differ by sex.
+
+## Background
+
+Compared to decisions around sleep, breastfeeding, schools and more, naming your baby may seem like one of the more arbitrary and inconsequential choices a parent makes. But it is a deeply personal decision, laden with expectations, hopes, and even whimsy. Baby names may seem like an innocuous, fluffy data point, but they provide a fascinating window into the cultural trends and societal values of the United States at different points in time.
 
 My interest in baby names and naming trends in the United States is personally motivated. The day we found out I was pregnant back in spring 2020 my husband suggested the name Oliver if we had a boy. I loved it, but found out soon enough that we weren't the only ones. In 2020, Oliver was the third most popular name given to baby boys in the United States.
 
@@ -39,9 +48,9 @@ I thought back to my childhood in rural Vermont where four out of the 16 kids in
 
 In addition to answering this burning question, I will explore other patterns around name popularity, including which names have been the most popular during different time periods, and whether there is a cyclical nature to popularity for some names.
 
-#### The Data
+## Dataset Introduction
 
-The data I'll be analyzing was downloaded from the [Social Security Administration (SSA) website](https://www.ssa.gov/oact/babynames/limits.html). Much of this data is featured on the website, but is limited to just the top 1,000 names for each year and sex. The data I'll be working with here includes all of the names in their database, which are drawn from Social Security card applications. This data contains names of babies born in the United States from 1910 until 2021.
+The data I'll be analyzing was downloaded from the [Social Security Administration (SSA) website](https://www.ssa.gov/oact/babynames/limits.html). It is all of the names in the SSA database, which are drawn from Social Security card applications for babies born in the United States from 1880 until 2021. Much of this data is featured on the SSA website, but there it is limited to just the top 1,000 names for each year and sex. The data that will be used in this analysis include all names between 1880 and 2021 that were given to at least five babies.
 
 Some additional notes about this data:
 
@@ -57,53 +66,26 @@ Some additional notes about this data:
 
 -   The SSA did not combine similar names with different spelling. So names Caitlin, Caitlyn, Kaitlin, Kaitlyn, and other version are all listed separately. This should be considered a limitation since it may obscure the true popularity of names that can be spelling in different ways, such as Caitlin.
 
-#### Research Questions
+### Load the data
 
-1.  What are the most popular names in a given state and year? What are the most popular names in a year (across all states)? What are the most popular names in the entire dataset (across all states and all years, 1910 to 2021)? Finally, what have been the most popular names for each generation?
-
-2.  Has there been a change over time in the proportion of babies who are named the most popular names? More specifically, is the name Oliver as popular now in the 2020s as Chris was in the 1980s?
-
-3.  Is there a cyclical nature to the popularity of some names? Are there some names that were popular in the early part of the 20th century that have regained popularity?
-
-4.  Are there certain states that could be considered trendsetters - did popular names become popular in certain states first?
-
-*I may not have time to explore the last two research questions (3 and 4) in full, but I'd like to do at least one of them.*
-
-## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
-
-First, we'll read in the dataset and take a look at the data. This data was stored in 51 text files (one for each state, with an additional file for Washington D.C.), which I read into R using the `read_delim()` function. Since the column names were missing from these files, I added them in when reading in the data.
+This data was stored in 142 text files (one for each year the data was collected), which is read into R by following several steps. First I created an list object with all of the text files, then a function that read in the data, provided column names, and added a new variable that tracked the year. Finally, the `map_dfr()` function was used to apply the new function to the file list object that and to bind everything together into one dataset.
 
 ```{r}
-BabyNames <- read_delim(
-  c("~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/AK.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/AL.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/AR.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/AZ.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/CA.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/CO.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/DC.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/DE.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/FL.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/GA.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/HI.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/IA.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/ID.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/IL.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/IN.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/KS.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/KY.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/CT.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/LA.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/NC.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/MA.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/ND.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/MD.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/NE.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/ME.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/NH.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/MI.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/NJ.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/MN.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/NM.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/MO.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/NV.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/MS.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/NY.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/MT.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/OH.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/OR.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/OK.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/PA.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/RI.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/SC.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/VA.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/SD.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/VT.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/TN.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/WA.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/TX.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/WI.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/UT.txt", "~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/WV.txt",
-"~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/WY.txt"),
-                        delim = ",", col_names = c("State", "Sex", "Year", "Name", "Occurrences"))
+# Create filenames object with all babynames text files
+filenames <- list.files("~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/names", pattern="*.txt")
 
+# create function to read in the files and create Year variable with year pulled from filename
+read_babynames<-function(path="~/601_Spring_2023/601_Spring_2023/posts/JustineShakespeare_FinalProjectData/names", fn){
+  read_csv(paste(path, fn, sep="/"), 
+           col_names = c("Name", "Sex", "Occurrences"))%>%
+    mutate(Year = parse_number(fn))
+}
+
+# bind all together while reading it in by passing list of files through the function
+BabyNames<- map_dfr(filenames, ~read_babynames(fn=.x))
 ```
+
+### Data Description
 
 Now that the data is loaded, let's take a closer look.
 
@@ -111,9 +93,9 @@ Now that the data is loaded, let's take a closer look.
 glimpse(BabyNames)
 ```
 
-Each case in this data represents a name given to a baby and the number of babies with that name in a given state, year, and sex. As noted above, this data includes all of the data reported to the Social Security Administration (except for baby names with less than 5 occurrences), and so it includes well over 6 million observations.
+Each case in this data represents a name given to a baby and the number of babies with that name in a given year and sex. As noted above, this data includes all of the data reported to the Social Security Administration (except for baby names with less than 5 occurrences), and so it includes well over 2 million observations.
 
-We will use all of the variables in this data frame, which are: Name, Year, State, Sex, and Occurrences. While the data is already pretty tidy, there are a few small changes we can make to make this data easier to use. Let's recode the values of the Sex variable so that "F" and "M" are spelled out. As noted in the introduction, there are some cases of "Baby" and "Unknown" in this data that are not actual baby names. We will remove those.
+We will use all of the variables in this data frame, which are: Name, Year, Sex, and Occurrences. There are no NAs in this data so we do not have to decide how to handle them. While the data is already pretty tidy, there are a few small changes we can make to make this data easier to use. First we'll recode the values of the Sex variable so that "F" and "M" are spelled out. As noted in the introduction, there are some cases of "Baby" and "Unknown" in this data that are not actual baby names. We will remove those.
 
 ```{r}
 BabyNames <- BabyNames %>% 
@@ -121,25 +103,11 @@ BabyNames <- BabyNames %>%
 
 BabyNames <- BabyNames %>% 
   filter(Name != "Baby" & Name != "Unknown")
-
-glimpse(BabyNames)
 ```
 
-This brings our total observations from 6,311,504 to 6,310,153.
+This brings our total observations from 2,052,781 to 2,052,337.
 
-Now let's take a closer look at the data. We'll use the `n_distinct()` functions to inspect the values in some of these variable, both to get a sense of our data and to double check that it doesn't need any additional cleaning. We can use `range()` to learn the years included in this data.
-
-```{r}
-n_distinct(BabyNames$State)
-
-n_distinct(BabyNames$Sex)
-
-range(BabyNames$Year)
-```
-
-The number of distinct values in the State and Sex column are what we'd expect (51 and 2, respectively), and the range function tells us that our data ranges from 1910 to 2021.
-
-Let's look at how many unique names there are in the data, by Sex.
+Now let's take a closer look at the data. We can use the `filter()` and `n_distinct()` functions to see how many unique names there are in the data, by Sex.
 
 ```{r}
 FemaleNames <- filter(BabyNames, Sex == "Female")
@@ -149,9 +117,9 @@ MaleNames <- filter(BabyNames, Sex == "Male")
 n_distinct(MaleNames$Name)
 ```
 
-There are significantly fewer unique names for males than there are for females in this data. Note this is not counting occurrences, but unique names.
+There are much fewer unique names for males than there are for females in this data. Note this is not counting *occurrences*, but unique names.
 
-Let's take a closer look at the *occurrences* of baby names.
+Let's take a closer look at the *occurrences* of baby names, which are the number of times a baby is given a specific name in a single year.
 
 ```{r}
 BabyNames %>%
@@ -161,304 +129,283 @@ BabyNames %>%
             Max = max(Occurrences))
 ```
 
-As a reminder, this is looking at the occurrences listed in the data without any transformation - so this reflects the total occurrences for a single name, either female or male, in a given state, in a given year. So the max here represents a name that was named 10,026 in one state in one year for either male or female babies. We'll dig into this more when we get to the analysis.
+These descriptive statistics show how many times a name was given by sex in a single year, so the max here represents a name that was given to 99,693 babies in a single year for either male or female babies. We'll dig into this more when we get to the analysis.
 
-The mean and median are quite low, especially when considered with the max number of occurrences. This indicates that there are many less popular names in the data.
+The mean and median here are quite low, especially when considered alongside the maximum number of occurrences. This indicates that despite the fact that some popular names are given to many babies, there are many names in the data that were given to only a few babies in a given year.
 
-***ARE THERE OTHER DESCRIPTIVE STATISTICS I COULD INCLUDE FOR THIS DATA?***
+## Analysis Plan
 
-## Part 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+#### Research Questions
+
+1.  What are the most popular names in a given year? What are the most popular names in the entire dataset across all years? Finally, what have been the most popular names for each generation?
+
+2.  Has there been a change over time in the proportion of babies who are named the most popular names? More specifically, is the name Oliver as popular now in the 2020s as Christopher was in the 1980s?
+
+3.  Is there a cyclical nature to the popularity of some names? Are there some names that were popular in earlier generations that have regained popularity recently?
+
+#### Plan for Analysis
 
 The analysis and visualization that I will do for this project will be driven by my research questions. I'll need to create several additional variables in order to answer the research questions, including:
 
--   **Sum_Occurrences** - this variable will be created in several different scenarios and will constitute different sums depending on the goal of the analysis at hand. This will enable summing occurrences across states, years in some cases, and even generations. It will be used for analysis with all of the research questions here.
+-   **Sum_Occurrences** - this variable will be created in several different scenarios and will constitute different sums depending on the goal of the analysis at hand and will enable summing occurrences across years and generations. It will be used for analysis with all of the research questions here.
+
+-   **Total_Year_Occurrences** - this variable will sum the total occurrences of all names across a single year. It will be used to create the proportion variable by dividing the total occurrences of a single name insingle year (Sum_Occurrences) by the total occurrences of all names in that same year (Total_Year_Occurrences) (research question #2) 
 
 -   **Generation** - this variable will indicate the generation to which each year belongs. It will be used to perform analysis exploring the most popular names in a generation (research question #1).
 
 -   **Generation_Rank** - this variable will rank names based on the number of occurrences within a generation. This will be used in the analysis exploring the most popular names in a generation (research question #1).
 
--   **Year_Rank** - this variable will rank names based on the number of occurrences within a year (across all states). It will be used in both the analysis exploring the change in proportion of popular names and the cyclical nature of popular names (research questions #2 and #3).
+-   **Year_Rank** - this variable will rank names based on the number of occurrences within a year. It will be used in both the analysis exploring the change in proportion of popular names and the cyclical nature of popular names (research questions #2 and #3).
 
--   **StateYear_Rank** - similar to the Year_Rank variable, this variable will rank names based on the number of occurrences within a year and within a state. It will be used for the analysis exploring whether certain states set naming trends (research question #4).
-
--   **Proportion** - this variable is is created by dividing the sum of occurrences for one name across all states in a given year by the total occurrences of all names across all states in the same year. This will be used for analysis exploring how the proportion of popular names has changed over time (research question #2)
+-   **Proportion** - this variable is is created by dividing the sum of occurrences for one name in a given year by the total occurrences of all names in the same year. This will be used for analysis exploring how the proportion of popular names has changed over time (research question #2).
 
 ### Visualizations
 
-Each research question will include a set of data visualizations:
+Each research question will include a set of data visualizations that illustrate the patterns discovered by this analysis.
 
-##### Research Question 1: What are the most popular names across a variety of categories (state and year, year, all time, generation)?
+##### Research Question 1: What are the most popular names across a variety of categories (year, all time, generation)?
 
-For this question I will use piping, `group_by()`, `summarize()` and other functions to pull the top 10 names in a given state in a given year by sex; in a given year across all states; in the entire dataset (so in all of 1910 until 2021); and finally in each generation. I am still brainstorming the best way to visualize this information (would be great to not just have a series of `head()` output lists), but I'm not totally sure yet. For the final part of this research question (most popular names in a generation) I will graph the popularity of each of the top names across the whold time period captured in the dataset, to give a visual sense of how those names have fluctuated in their popularity.
+For this question I will use piping, `group_by()`, `summarize()` and other functions to pull the top names in a given year by sex; across all years (from 1880 to 2021) by sex; and in each generation by sex. For the top 10 names across all years I will show the names in a wordcloud and then in two bar graphs, one for each sex, that show each name and their total occurrences throughout the entire dataset. For the analysis of the most popular names in a generation I will create two new variables identifying which `Generation` a year falls into and the rank of each name within each generation (`Generation_Rank`). For this analysis I will create a table that with the top five names for each sex in each generation.
 
 ##### Research Question 2: Has there been a change over time in the proportion of babies who are named the top ranking names?
 
-For this question I will use piping, `group_by()`, `summarize()`, `pivot_wider()`, `full_join()` and other functions to create several new variables, including the Year_Rank and Proportion variable mentioned above. I will create two data frames (one for female names and one for male) that have variables that capture the ranking of each name in each year and the proportion of babies that have that name in given year. I will create a data visualization that charts the top 3 ranked names across time by proportion so that we can see whether the proportion of babies with the top ranked names changes over time.
+For this question I will use piping, `group_by()`, `summarize()`, `mutate()` and other functions to create several new variables, including the `Year_Rank` and `Proportion` variable mentioned above. These new variables will capture the ranking of each name in each year and the proportion of babies that have each name in given year. I will create a data visualization that charts the top 3 ranked names across time by proportion so that we can see whether the proportion of babies with the top ranked names changes over time. Finally, to answer the specific question about Christopher vs Oliver, I'll create a series of time series graphs that show the the change in popularity of both names according to occurrences, ranking, and proportion over time.
 
 ##### Research Question 3: Is there a cyclical nature to the popularity of some names?
 
-For this question I will choose some names that were fairly popular early on (before 1950) and create graphs that show how their popularity has changed over time. I will aim to showcase only names that have had interesting changes in their popularity.
+For this question I will select an individual year in the data and use `filter()`, `full_join()` and other functions to compare the top 100 baby names of that year with the top 100 baby names from a year exactly 100 years earlier to determine if there are names that are a part of both lists. Then I will graph the names that appear on both lists to examine the popularity ranking of those names throughout the intervening years. I'll perform this analysis with two sets of years in order to determine whether the same trend is observed in two different time periods.
 
-##### Research Question 4: Are there certain states that could be considered trendsetters for baby names?
-
-Because name trends began to shift more quickly after the Baby Boom Generation (see the Generation analysis in Research Question 1), the data for this question will be limited to just names from Generation X until the present. To explore this question I will first create the Year_Rank variable but for each individual state, so the popularity within states will be reflected in a new variables called StateYear_Rank. Then I will explore for a set of specific names when they were first ranked highly in the StateYear_Rank variable. I would like to showcase this in a visual but am not sure which would be best for this...
-
-
-*Below I have begun the analysis and visualization for research questions 1 and 2. This is still a work in progress...*
-
+## Analysis and Visualizations
 
 ::: panel-tabset
 ## Research Question 1
 
-This question has four parts:
+This question has three parts:
 
-*a. What are the most popular names in a given state and year, by sex?*
+*a. What are the most popular names in a given year, by sex?*
 
-*b. What are the most popular names in a given year, across all states, by sex?*
+*b. What are the most popular names across the entire timeframe covered in the data (1880-2021), by sex?*
 
-*c. What are the most popular names across the entire data - so in the United States from 1910 to 2021, by sex?*
+*c. What are the most popular names for each generation in the data (as defined by several external sources)*
 
-*d. What are the most popular names for each generation in the data (as defined by Pew Research Center)*
+These questions will allow us to get an overview of baby name popularity in the United States and from there we can investigate specific patterns explored in Research Questions 2 and 3. 
 
-First let's explore the most popular names in a given state and year, by sex (question 1.a).
-
-```{r}
-# Name given to the most babies in one year and in one state, female and male
-PopF_State <- BabyNames %>% 
-  filter(Sex == "Female") %>%
-  arrange(desc(Occurrences))
-head(PopF_State, n = 10)
-
-PopM_State <- BabyNames %>% 
-  filter(Sex == "Male") %>%
-  arrange(desc(Occurrences))
-head(PopM_State, n = 10)
-```
-
-The name given to the most baby girls in one state is **Mary**. 8,184 babies were named Mary in Pennsylvania in 1918. It is interesting to note that almost all of the highest occurrences of female names in this data were the name Mary in Pennsylvania. Only Linda broke this trend in New York in 1947, where 7,542 babies were named Linda. These rest of the occurrences in the top ten were all Mary and all happened between 1915 and 1924, suggesting that this name held a particularly strong appeal during this time period in Pennsylvania. It's interesting to consider what kind of cultural forces were influencing parents in Pennsylvania in the 1910s and 1920s that led them to name their daughters such a traditional and biblical name.
-
-The name given to the most baby boys in one state is Robert in New York in 1947, where 10,026 boys were named Robert. All of the highest occurrences of male names were in New York and were dominated by Robert and Michael. Only John broke through this list in the same year as the top Robert occurrence - in 1947 9,639 boys were named John in New York. The highest occurrences of male names all happened between 1946 and 1963. It's interesting to consider how the post-war culture would have brought about a consolidation of more traditional male names.
-
-Let's explore the names with the most occurrences across all states in a given year (question 1.b)
+First let's explore the most popular names in a given year and sex (question 1.a).
 
 ```{r}
-# Most popular name across all states in a year, female and male
+# Most popular name in a year, female
 PopF_Year <- BabyNames %>% 
   filter(Sex == "Female") %>%
   group_by(Year, Name) %>% 
   summarize("Sum_Occurrences" = sum(Occurrences)) %>% 
-  arrange(desc(Sum_Occurrences))
-head(PopF_Year, n = 10)
+  arrange(desc(Sum_Occurrences)) %>% 
+  rename("Total Occurrences" = Sum_Occurrences) %>% 
+  head(n = 10)
 
+# format kable table
+kable(PopF_Year, format = "html") %>%
+  kable_styling() %>%
+  column_spec(2, bold = TRUE) %>% 
+  row_spec(1:10, color = "#6564DB") %>%
+  row_spec(0, bold = TRUE, color = "#FF3C38", 
+           background = "#FFD166") %>%
+  row_spec(1:10, background = "#FFFCF9")
+```
+
+The most popular name given to female babies in a given year was Linda in the late 1940s. The year with the most occurrences was 1947, when 99,693 female babies were named Linda. After several years of Linda in the late 1940s, Mary makes up most of the second half of the list, primarily in the 1920s. The years here, including the fact that 1947 shows up twice on this short list, likely reflect the high number of babies born during the Baby Boomer Generation. Given that there were fewer babies in the 1920s, seeing Mary on this list during that times reflects the huge popularity of that name. This data also reflects the trend of popular names remaining popular for at least a few years in a row.
+
+```{r}
+# Most popular name in a year, male
 PopM_Year <- BabyNames %>% 
   filter(Sex == "Male") %>%
   group_by(Year, Name) %>% 
   summarize("Sum_Occurrences" = sum(Occurrences)) %>% 
-  arrange(desc(Sum_Occurrences))
-head(PopM_Year, n = 10)
+  arrange(desc(Sum_Occurrences)) %>% 
+  rename("Total Occurrences" = Sum_Occurrences) %>% 
+  head(n = 10)
+
+# format kable table
+kable(PopM_Year, format = "html") %>%
+  kable_styling() %>%
+  column_spec(2, bold = TRUE) %>% 
+  row_spec(1:10, color = "#4357AD") %>%
+  row_spec(0, bold = TRUE, color = "#FF3C38", 
+           background = "#FFD166") %>%
+  row_spec(1:10, background = "#FFFCF9")
 ```
 
-Unsurprisingly, we see some of the same names populating these lists. For female names, the year with the most occurrences of the same named was Linda in 1947, with 99,693 occurrences. In the three years that followed Linda remained the highest occurring name. This undoubtedly is related to the baby boom, a time when people were having unprecedented numbers of babies and, apparently, naming conventions were not particularly diverse. After Linda, Mary populated half of the names with the most occurrences, primarily from the 1920s.
+Among the male names, James had the highest number of occurrences in 1947. The male list is dominated by the names James, Michael, Robert, and John, primarily from the late 1940s and 1950s. Again, this data reflects the high number of babies during the Baby Boomer Generation and the pattern of popular names remaining popular for several years in a row.
 
-Among the male names, James had the highest number of occurrences in 1947. The male list is dominated by names James, Michael, Robert, and John, primarily from the late 1940s and 1950s. Again this data reflects the trend of baby boomers and the lack of diversity in their naming choices.
-
-Finally, let's look at the names that have been the most popular in the United States across all states and all time recorded here (question 1.c).
+Let's look at the names that have been the most popular in the United States across all years in the data (question 1.b). Starting with female names, we'll use a lollipop graph that allows us to compare the total occurrences of each name.
 
 ```{r}
-PopF <- BabyNames %>% 
+# lollipop graph of the most popular female names in the dataset
+BabyNames %>% 
   filter(Sex == "Female") %>%
   group_by(Name) %>% 
   summarize("Sum_Occurrences" = sum(Occurrences)) %>% 
-  arrange(desc(Sum_Occurrences))
-head(PopF, n = 10)
+  arrange(desc(Sum_Occurrences)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = fct_rev(fct_reorder(Name, Sum_Occurrences)), y = Sum_Occurrences)) +
+  geom_point(size = 4, color = "#F27059", 
+             fill=alpha("#F4845F", 0.7), 
+             alpha = 0.9, shape = 21, stroke=2) +
+  geom_segment(aes(x=fct_rev(fct_reorder(Name, Sum_Occurrences)), xend=fct_rev(fct_reorder(Name, Sum_Occurrences)), y=0, yend=Sum_Occurrences), 
+               linewidth=2.5, color="#F4845F", linetype="solid")  +
+  labs(title = "Top Ten Female Names in the United States 1880-2021",
+       x = "Name", y = "Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.55)) +
+  scale_y_continuous(labels = function(x) { paste0(x / 1000, "k")})
+```
 
-PopM <- BabyNames %>% 
+Mary is the most popular female name, with 4,132,497 baby girls with that name between 1880 and 2021. There are well over more than twice as many female babies with the name Mary than any other female name. The next most popular names are Elizabeth, Patricia, and Jennifer. Even though Linda was in our top ten lists of most occurrences in a year, Linda is only the 5th most popular name of all female baby names. This indicates that while Linda was the most popular during specific moments in time, this name did not have the same long-lasting, enduring popularity of the names higher on the list.
+
+```{r}
+# lollipop graph of the most popular male names in the dataset
+BabyNames %>% 
   filter(Sex == "Male") %>%
   group_by(Name) %>% 
   summarize("Sum_Occurrences" = sum(Occurrences)) %>% 
-  arrange(desc(Sum_Occurrences))
-head(PopM, n = 10)
+  arrange(desc(Sum_Occurrences)) %>% 
+  slice(1:10) %>% 
+  ggplot(aes(x = fct_rev(fct_reorder(Name, Sum_Occurrences)), y = Sum_Occurrences)) +
+  geom_point(size = 4, color = "#519E8A", 
+             fill=alpha("#7EB09B", 0.7), 
+             alpha = 0.9, shape = 21, stroke=2) +
+  geom_segment(aes(x=fct_rev(fct_reorder(Name, Sum_Occurrences)), xend=fct_rev(fct_reorder(Name, Sum_Occurrences)), y=0, yend=Sum_Occurrences), 
+               linewidth=2.5, color="#519E8A", linetype="solid")  +
+  labs(title = "Top Ten Male Names in the United States 1880-2021",
+       x = "Name", y = "Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.55)) +
+  scale_y_continuous(labels = function(x) { paste0(x / 1000, "k")})
 ```
 
-This shows us the most popular names in the United States across all years and states. Mary is the most popular female name, with 3,747,982 baby girls from 1910 until 2021 named Mary. This is followed by Patricia, Elizabeth, and Jennifer. Surprisingly, even though Linda was in our top ten lists of most occurrences in a year and in a year in a particular state, Linda is only the 5th most popular name of all female baby names. This indicates that While Linda was the most popular during specific times, it did not have the same long-lasting, enduring popularity of the names higher on the list.
+James is the most popular male name, with 5,202,714 baby boys named James from 1880 to 2021. Unlike the list of female names, the top male names all have fairly similar levels of total occurrences. James is followed closely by John, Robert, and Michael.
 
-James is the most popular male name, with 5,035,762 baby boys named James from 1910 to 2021. This is followed by John, Robert, and Michael. Given the popularity of these names in the previous two lists, it's unsurprising to see these male names high on this list again.
+#### Generations
 
-Finally, let's turn to the last part of our first research question and look at the most popular names of each generation.
+Let's turn to the last part of our first research question and look at the most popular names of each generation.
 
-First let's create a new `Generations` variable where we will indicate which generation a particular case is from based on the year. We'll use the years specified by the [Pew Research Center](https://www.pewresearch.org/politics/2015/09/03/the-whys-and-hows-of-generations-research/) to define each generation. See [here](https://www.pewresearch.org/fact-tank/2019/01/17/where-millennials-end-and-generation-z-begins/) for the definitions of Generation Z and Generation Alpha.
+First we'll create a new `Generations` variable that indicates which generation a year falls. We'll use the years specified by the [Pew Research Center](https://www.pewresearch.org/politics/2015/09/03/the-whys-and-hows-of-generations-research/) to define each generation. See [here](https://www.pewresearch.org/fact-tank/2019/01/17/where-millennials-end-and-generation-z-begins/) for the definitions of Generation Z and Generation Alpha. For the earliest generation not covered by Pew, we'll use [this source](https://www.lifecourse.com/about/method/timelines/generations.html). According to this last source the Lost Generation was defined as starting in 1883 but for the purposes of this analysis since we don't want to leave any years out, we will also include babies named in 1880 through 1882 in the Lost Generation.
 
 ```{r}
+# define the generation variable
 BabyNames_gen <- BabyNames %>% 
   mutate("Generation" = case_when(
-    Year <= 1927 ~ "Greatest Generation",
-    Year >= 1928 & Year <= 1945 ~ "Silent Generation",
-    Year >= 1946 & Year <= 1964 ~ "Baby Boom Generation", 
-    Year >= 1965 & Year <= 1980 ~ "Generation X", 
-    Year >= 1981 & Year <= 1996 ~ "Millennial Generation", 
-    Year >= 1997 & Year <= 2012 ~ "Generation Z", 
-    Year >= 2013 ~ "Generation Alpha"))
+    Year <= 1900 ~ "1. Lost Generation",
+    Year >= 1901 & Year <= 1927 ~ "2. Greatest Generation",
+    Year >= 1928 & Year <= 1945 ~ "3. Silent Generation",
+    Year >= 1946 & Year <= 1964 ~ "4. Baby Boom Generation", 
+    Year >= 1965 & Year <= 1980 ~ "5. Generation X", 
+    Year >= 1981 & Year <= 1996 ~ "6. Millennial Generation", 
+    Year >= 1997 & Year <= 2012 ~ "7. Generation Z", 
+    Year >= 2013 ~ "8. Generation Alpha"))
+```
 
-# Then let's find the total number of occurrences for each generation
+Now that we have created our Generation variable, let's take a look at the top five names (of each sex) for each generation.
+
+```{r, results='asis'}
+# find the total number of occurrences for each generation
 BabyNames_gen %>% 
   group_by(Generation) %>% 
   summarize(sum_by_gen = sum(Occurrences)) %>% 
   arrange(sum_by_gen)
-```
 
-Now that we have our variable all set, let's take a look at the top five names (of each sex) for each generation.
-
-```{r}
-# Greatest generation
-GreatestGenF <- BabyNames_gen %>% 
-  filter(Generation == "Greatest Generation" & Sex == "Female") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(GreatestGenF, n = 5)
-
-GreatestGenM <- BabyNames_gen %>% 
-  filter(Generation == "Greatest Generation" & Sex == "Male") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(GreatestGenM, n = 5)
-
-# Silent generation
-SilentGenF <- BabyNames_gen %>% 
-  filter(Generation == "Silent Generation" & Sex == "Female") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(SilentGenF, n = 5)
-
-SilentGenM <- BabyNames_gen %>% 
-  filter(Generation == "Silent Generation" & Sex == "Male") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(SilentGenM, n = 5)
-
-# Baby Boomers
-BoomerGenF <- BabyNames_gen %>% 
-  filter(Generation == "Baby Boom Generation" & Sex == "Female") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(BoomerGenF, n = 5)
-
-BoomerGenM <- BabyNames_gen %>% 
-  filter(Generation == "Baby Boom Generation" & Sex == "Male") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(BoomerGenM, n = 5)
-
-# Generation X
-GenXF <- BabyNames_gen %>% 
-  filter(Generation == "Generation X" & Sex == "Female") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(GenXF, n = 5)
-
-GenXM <- BabyNames_gen %>% 
-  filter(Generation == "Generation X" & Sex == "Male") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(GenXM, n = 5)
-
-# Millennial generation
-MilGenF <- BabyNames_gen %>% 
-  filter(Generation == "Millennial Generation" & Sex == "Female") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(MilGenF, n = 5)
-
-MilGenM <- BabyNames_gen %>% 
-  filter(Generation == "Millennial Generation" & Sex == "Male") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(MilGenM, n = 5)
-
-# Generation Z
-GenZF <- BabyNames_gen %>% 
-  filter(Generation == "Generation Z" & Sex == "Female") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(GenZF, n = 5)
-
-GenZM <- BabyNames_gen %>% 
-  filter(Generation == "Generation Z" & Sex == "Male") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(GenZM, n = 5)
-
-# Generation alpha
-GenALPHAF <- BabyNames_gen %>% 
-  filter(Generation == "Generation Alpha" & Sex == "Female") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(GenALPHAF, n = 5)
-
-GenALPHAM <- BabyNames_gen %>% 
-  filter(Generation == "Generation Alpha" & Sex == "Male") %>% 
-  group_by(Name) %>% 
-  summarize(Total_Occurrences = sum(Occurrences)) %>% 
-  arrange(desc(Total_Occurrences))
-head(GenALPHAM, n = 5)
-```
-
-It's interesting to note that you see variation within female names earlier and more than in the male names. Mary is the most popular name for the first three generations here - the Greatest, Silent, and Baby Boomer generation. It's not until Generation X that Mary drops off, and then it's not even in the top five at all. In fact, none of the top five female names of the Baby Boomer generation show up in the top five female names for Generation X, but the top five male names of the Baby Boomer generation are all again in the top five for Generation X, they are just in a different order. The male names in general do not vary as widely or as early as the female names. Even Generation Alpha, where we see some significant variation among the top names, includes James, the most popular male name of all time in this dataset.
-
-#### Data visualization of the top ranked names in each generation
-
-Let's take a look at the top 5 names for each generation and then graph them to see how they have fared over the years.
-
-```{r}
-# First we'll create a new data frame with a variable that ranks names by the generation (as opposed to year, which is how we will be using the min_rank() function for research question #2)
+# creating a ranking per generation
 Generation_rank <- BabyNames_gen %>% 
   group_by(Generation, Sex, Name) %>% 
   summarize(SumGen_Occurrences = sum(Occurrences)) %>% 
   mutate(Gen_Rank = min_rank(desc(SumGen_Occurrences)))
 
-Top5_Gen <- filter(Generation_rank, Gen_Rank <= 5) # filter to just the top five names for each generation.
+# Separating out the female names and pulling the top five per generation
+BigTable_F <- Generation_rank %>%
+  filter(Sex == "Female") %>% 
+  group_by(Sex, Generation) %>%
+  arrange(Gen_Rank, Generation) %>%
+  slice(1:5) %>% 
+  mutate(JoinKey = paste(Generation, Gen_Rank))
 
-unique(Top5_Gen$Name) # see which names are the top 5 of their generation. We'll pull from this list to create the vector that we will graph below.
+# Separating out the male names and pulling the top five per generation
+BigTable_M <- Generation_rank %>%
+  filter(Sex == "Male") %>% 
+  group_by(Sex, Generation) %>%
+  arrange(Gen_Rank, Generation) %>%
+  slice(1:5) %>% 
+  mutate(JoinKey = paste(Generation, Gen_Rank))
 
-Top5_Gen_graphF <- BabyNames %>%
-  filter(Name %in% c("Barbara", "Linda", "Mary", "Patricia", "Susan", "Ava", 
-                     "Emma", "Isabella", "Olivia", "Sophia", "Jennifer", 
-                     "Kimberly", "Lisa", "Melissa", "Michelle", "Emily", 
-                     "Hannah", "Madison", "Dorothy", "Helen",  "Margaret", 
-                     "Ruth", "Amanda", "Ashley", "Jessica", "Sarah", "Betty", 
-                     "Shirley")) %>%
-  group_by(Year, Name) %>% 
-  summarize("sum" = sum(Occurrences)) %>% 
-  ggplot(aes(Year, sum, group = Name, color = Name)) + geom_line() +
-  labs(title = "Top 5 Female Names of Each Generation", x = "Year", y = "Total Occurrences")
-Top5_Gen_graphF
+# joining the female and male top five names per generation tables
+BigTable <- full_join(BigTable_F, BigTable_M, by = "JoinKey")
 
-Top5_Gen_graphM <- BabyNames %>%
-  filter(Name %in% c("David", "James", "John", "Michael", "Robert", "Liam", 
-                     "Mason", "Noah", "William", "Christopher", "Jacob", 
-                     "Joshua", "Matthew", "Charles", "Richard")) %>%
-  group_by(Year, Name) %>% 
-  summarize("sum" = sum(Occurrences)) %>% 
-  ggplot(aes(Year, sum, group = Name, color = Name)) + geom_line() +
-  labs(title = "Top 5 Male Names of Each Generation", x = "Year", y = "Total Occurrences")
-Top5_Gen_graphM
+# rename variables and select variables to show on final table
+BigTable <- BigTable %>% 
+  rename("Generation" = Generation.x, "Female Names" = Name.x, 
+         "Female Occurences" = SumGen_Occurrences.x,
+         "Male Names" = Name.y, "Male Occurences" = SumGen_Occurrences.y,
+         "Generation Ranking" = Gen_Rank.x) %>% 
+  select("Generation", "Generation Ranking", "Female Names", 
+         "Female Occurences", "Male Names", "Male Occurences")
+
+# final table with design 
+kable(BigTable, format = "html") %>%
+  kable_styling() %>%
+  column_spec(1:2, color = "#48A9A6") %>% 
+  column_spec(3:4, color = "#6564DB") %>% 
+  column_spec(5:6, color = "#4357AD") %>%
+  column_spec(1, bold = TRUE) %>% 
+  column_spec(3, bold = TRUE) %>% 
+  column_spec(5, bold = TRUE) %>% 
+  row_spec(0, bold = TRUE, color = "#FF3C38", 
+           background = "#FFD166") %>%
+  row_spec(1:5, background = "#FFFCF9") %>% 
+  row_spec(6:10, background = "#EFEFF0") %>% 
+  row_spec(11:15, background = "#FFFCF9") %>% 
+  row_spec(16:20, background = "#EFEFF0") %>% 
+  row_spec(21:25, background = "#FFFCF9") %>% 
+  row_spec(26:30, background = "#EFEFF0") %>% 
+  row_spec(31:35, background = "#FFFCF9") %>% 
+  row_spec(36:40, background = "#EFEFF0")
+
 ```
 
-Because there are names that are in the top five of several different generations, each line here represents a distinct name and I did not group them by generation. You can see the pattern noted above in the graphs here: There are more total female names than male names and female names generally tend to rise and fall in popularity faster than male names, which remain steadily popular for long periods of time.
+This table highlights some interest patterns among popular names over the past 142 years. It shows that males names are much more concentrated. James and Jon dominate the top five names for boys for the first five generations - a span of 100 years. William is in the top five for the first three generations (only to reappear in the most recent generation Alpha), and Robert appears in five consecutive generations, from the Silent Generation to Generation X. Even when things begin to shift with the Millennial Generation (the first generation without John, James, Robert, or William in the top five) there is still overlap with the previous generation (Michael and David appear in both). Almost all generations have at least two male names on their list that overlap with the top five names of the previous generation. Only Generation Alpha bucks this trend with a totally new list of top five names where none overlap with the previous generation. Except even in that case, where all of the top five names of generation Alpha are different from Generation Z, we see the re-emergence of James and William, which both dominated the top five names in earlier generations.
 
-Another interesting thing to note in these graphs is that for both female and male names, the names that are highly ranked in more recent years have much shorter peaks. This will be explored further in research question #2.
+This trend of the concentration of popular names is not as prominent among the names given to female babies. Of the 30 female names that appear in the top 5 for each generation, only Mary and Emma appear in more than two generations (Mary appears four times, Emma three times). Only five additional names, Barbara, Patricia, Jennifer, Margaret, and Olivia, appear in even two generations. The rest of the names only show up in the top 5 names of just one generation. In fact, for both Generation X and Generation Z, the top five names are entirely different from the generation preceding them.
+
+The trends that we see here - the concentration of male names, the the recurring popularity of male names and the variability within female names, will be further explored in research questions 2 and 3.
+
+This trend, the difference in name concentration, can be seen in a time series graph that plots the top names listed in the table above by their occurrence over time.
+
+#### Data visualization of the top ranked names in each generation
+
+The following bar graphs show the top 5 names for each sex of each generation. The height of the columns represents the sum of occurrences of all five names, the shades of color show the distinction between each name.
+
+```{r}
+# visualization with top names in each generation, comparing occurrences by sex
+Generation_rank %>%
+  group_by(Generation, Sex) %>%
+  arrange(Gen_Rank, Generation) %>%
+  slice(1:5) %>% 
+  ggplot(aes(x = Sex, y = SumGen_Occurrences, fill = Gen_Rank, position="dodge")) + 
+  geom_col() + facet_wrap(~ Generation, scales="free") +
+  scale_y_continuous(labels = function(x) { paste0(x / 1000000, " mil")}) + 
+  scale_fill_gradientn(colors = c("#F25C54", "#F27059", "#F4845F", "#F79D65", "#F7B267")) +
+  geom_text(aes(label = Name), size = 3, color = "#25283D", position = position_stack(vjust = 0.5)) +
+  labs(title = "Top 5 Names of Each Generation by Sex", 
+       x = "", y = "Total Occurrences", 
+       fill = "Generation Rank") +
+  theme_bw()
+
+```
+
+This visual provides a graphic representation of the most popular names of each generation and the number of babies with those names. While we should be careful about drawing conclusions from this visual, since generations are not standard in their length or in the population size they represent, these bar graphs hint at some of the trends we will explore in the next two research questions in more depth and with a more systematic approach. 
+
+Despite the fact that the population of the United States has grown throughout the years in this data, the number of babies with the most popular names has decreased over time. This suggests that popular names in earlier generations were given to more babies than in more recent generations, where fewer babies had the most popular names. Research Question 2 will investigate this trend in the data.
+
+This visualization also hints at the question of whether name popularity follows a consistent or cyclical pattern. As noted above, there are many names here, especially among the male names, that remain in the top five most popular names across several generations, reflecting a consistent and steadfast popularity. We can see as well that there are some names that drop out of the top five (such as Emma for female names and William for male names) and reappear in the top five in much later generations. To what degree the popularity of names is cyclical will be explored further in Research Question 3. 
+
+Finally, a noticeable pattern in this visualization is the difference between sexes. In almost all generations there are more occurrences of the most popular male names, suggesting that there is a higher concentration of males with the same popular name when compared with females. The way in which trends manifest differently by sex will be discussed in both Research Questions 2 and 3. 
 
 ## Research Question 2
 
@@ -468,15 +415,11 @@ This question has two parts.
 
 *b. Specifically, is the name Oliver as popular now in the 2020s, as Chris was in the 1980s?*
 
-In order to explore our research question, let's create two additional variables.
+In an article in the Atlantic, Philip Cohen notes the decline of the popularity of the name Mary and other traditional names in recent years.[^1] He explains "the modernization theory of name trends", which essentially states that individualism plays an increasingly large role in name preferences. I suspect that one way that this individualism has manifested is that fewer babies are named the same name - in other words, the proportion of babies with popular names has decreased. Let's see if the data supports this hypothesis.
 
-The first will represent the rank of a name in a given year (separated by sex). We'll call that new variable "Year_Rank".
+In order to explore this research question, I will create two additional variables. The first will represent the rank of a name in a given year and sex and will be called `Year_Rank`. The second variable will represent the proportion of babies that have each name in a given year and sex and will be called `Proportion`.
 
-The second variable will represent the proportion of babies that have each name in a given year (separated by sex). We'll call that variable "Proportion".
-
-##### Creating the Year_Rank variable
-
-Creating these variables will involve several steps. We'll start by creating the Year_Rank variable by creating a new dataframe with a new variable "Sum_Occurrences" the sums the total occurrences for a name in a given year by sex.
+The `Year_Rank` variable is created by using the `group_by()`, `summarize()`, `mutate()`, and `min_rank()` functions.
 
 ```{r}
 # Creates two new variables, Sum_Occurrences and Year_Rank. 
@@ -484,84 +427,67 @@ BabyNames_rank <- BabyNames %>%
   group_by(Year, Sex, Name) %>% 
   summarize("Sum_Occurrences" = sum(Occurrences)) %>% 
   mutate(Year_Rank = min_rank(desc(Sum_Occurrences)))
-
-head(BabyNames_rank)
-## WHAT KIND OF SANITY CHECK COULD I DO FOR THIS ?
 ```
 
-##### Creating the Proportion variable
-
-In order to come up with the Proportion variable, we'll need to do some additional transformation of the data. The Proportion variable is essentially the total occurrences of a name in a given year divided by the total occurrences of all names in that year. In order to get the total occurrences in a given year, we'll use the summarize function to create a new data frame and join it back to the original dataset.
+The `Proportion` variable is created using the `group_by()`, `mutate()` and `sum()` functions and dividing the total occurrences of a name in a given year by the total occurrences of all names in that year.
 
 ```{r}
-# This gives you the total occurrences of names in a given year. This data frame 
-# is 224 observations because there are 112 years in this dataset and there are 
-# two sexes for each year. 
-BabyNames_year <- BabyNames %>% 
+# create the Proportion variable
+BabyNames_prop <- BabyNames_rank %>% 
   group_by(Year, Sex) %>% 
-  summarize("Total_names_p_year" = sum(Occurrences))
-
-glimpse(BabyNames_year)
-```
-
-Next we'll use `pivot_wider()` to make it so that the values in the Sex variable are now variables themselves (Female and Male) with the total occurrences as the value.
-
-```{r}
-BabyNames_pw <- BabyNames_year %>% 
-  pivot_wider(names_from = Sex, values_from = Total_names_p_year)
-
-head(BabyNames_pw)
-glimpse(BabyNames_pw)
-```
-
-Next we'll make a Proportion variable by dividing the total occurrences of a name in a given year by the total occurrences of *all* names in that year. We'll need to start by splitting both of the new data frames we just created by sex and then joining those data frames so that we have two data frames - one for male names and one for female names - that have the rank variable and the total names in a year variable.
-
-```{r}
-# first we need to separate the BabyNames_year data (which includes a new variable with the total occurrences of all names in a given year) by sex
-females_year <- select(BabyNames_pw, Year, "Female_Total" = Female)
-head(females_year)
-
-males_year <- select(BabyNames_pw, Year, "Male_Total" = Male)
-head(males_year)
-
-# then we need to separate the BabyNames_rank (which includes a new variable that ranks each name in a given year by occurrences) by sex
-females_rank <- BabyNames_rank %>% 
-  filter(Sex == "Female")
-head(females_rank)
-
-males_rank <- BabyNames_rank %>% 
-  filter(Sex == "Male")
-head(males_rank)
-
-# Then we join the datasets so that we have total occurences by year and sex for each name
-BabyNames_joinf <- full_join(females_rank, females_year, by = "Year")
-head(BabyNames_joinf)
-
-BabyNames_joinm <- full_join(males_rank, males_year, by = "Year")
-head(BabyNames_joinm)
-
-# Create the proportion variables for the female and male data frames by dividing the sum of occurrences for each name by the total occurrences for that year
-BabyNames_F <- BabyNames_joinf %>% 
-  select(Year, Name, Sum_Occurrences, Year_Rank, Female_Total) %>% 
-  mutate("Proportion" = Sum_Occurrences/Female_Total)
-head(BabyNames_F)
-
-BabyNames_M <- BabyNames_joinm %>% 
-  select(Year, Name, Sum_Occurrences, Year_Rank, Male_Total) %>% 
-  mutate("Proportion" = Sum_Occurrences/Male_Total)
-head(BabyNames_M)
+  mutate(Year_Total_Occurrences = sum(Sum_Occurrences)) %>% 
+  mutate(Proportion = Sum_Occurrences/Year_Total_Occurrences)
 ```
 
 #### Data visualization of the top ranked names
 
-I expect to iterate on this, but this is the first visualization that should get at research question #2: Has there been a change over time in the proportion of babies who are named the top ranking names?
-
-This graph shows the top three ranked names and the proportion of babies with that name. Note that each line does not represent a specific name, but rather one of the top 3 ranked names for the given year.
+This graph shows the top three ranked names and the proportion of babies with that name. Note that each line does not represent a specific name, but rather one of the top three ranked names for the given year.
 
 ```{r}
-color_m_prop <- c("cyan4", "blue2", "deepskyblue")
+color_m_prop <- c("cyan4", "#AA4586", "deepskyblue", "cornflowerblue", "coral")
 
-BabyNames_M %>% 
+BabyNames_prop %>% 
+  filter(Sex == "Male") %>% 
+  filter(Year_Rank <= 3) %>% 
+  # mutate(Spot_name = case_when(
+  #   Year == "2019" & Year_Rank == 3 ~ "Oliver, 2021",
+  #   Year == "1985" & Year_Rank == 2 ~ "Christopher, 1985",
+  #   Year == "1920" & Year_Rank == 1 ~ "John, 1920", 
+  #   Year == "1947" & Year_Rank == 1 ~ "James, 1947", 
+  #   Year == "1963" & Year_Rank == 3 ~ "David, 1963",
+  #   Year == "2000" & Year_Rank == 2 ~ "Michael, 2000")) %>% 
+  ggplot(aes(Year, Proportion, group = as.factor(Year_Rank), 
+             colour = as.factor(Year_Rank))) +  
+  geom_line() +
+  scale_color_manual(values = color_m_prop) +
+  labs(title = "Proportion of top three names each year", 
+       subtitle = "In recent years, most popular names are a much smaller 
+       proportion than the most popular names earlier in the 20th century", 
+       color = "Name rank")
+ # geom_text(aes(label = Spot_name), nudge_x = -3.5, nudge_y = 0.015)
+
+```
+
+This graph clearly depicts a major decrease in the proportion of babies with the most popular male names. Whereas in the late 19th century more than 8% of boys were named the most popular name of the time, in the early 21st century closer to 1% of boys are named the highest ranked name. 
+
+Note that over the 142 years covered by this data, there have been 16 boys names that have been in the top three names in any year.
+
+```{r}
+# BabyNames_prop %>% 
+#   filter(Sex == "Male") %>% 
+#   filter(Year_Rank <= 3) %>% 
+#   group_by(Name) %>% 
+#   count() %>% 
+#   arrange(desc(n))
+```
+
+Let's take a look at how the proportion of female babies with popular names has changed over time.
+
+```{r}
+color_m_prop <- c("coral", "goldenrod1", "deepskyblue", "darkorchid", "brown1")
+
+BabyNames_prop %>% 
+  filter(Sex == "Female") %>% 
   filter(Year_Rank <= 3) %>% 
   ggplot(aes(Year, Proportion, group = as.factor(Year_Rank), 
              colour = as.factor(Year_Rank))) +  
@@ -571,50 +497,390 @@ BabyNames_M %>%
        subtitle = "In recent years, most popular names are a much smaller 
        proportion than the most popular names earlier in the 20th century", 
        color = "Name rank")
+
 ```
 
-Is there a way to label some of the names on this graph? Is that possible even though the lines are from the variable "Year_Rank" and not "Name"? Ideally I'd like to display the Name value in some key spots on the graph.
+This graph shows that while the proportion of female babies with popular names has also decreased over time, the change is more gradual for all but the most popular name. This graphs shows that this is because the starting point for female baby names is a lower proportion than it was for male baby names. This is in keeping with the visual at the end of Research Question 1, which showed that popular female baby names are given to fewer babies than popular male names in most generations.
 
-## Data Discrepancy
-
-After separating the data by sex and calculating the total occurrences of all names in a year, I noticed that there seems to be an especially large difference between the number of female and male baby names for each year. Since the occurrences count the total number of *babies* named and *not* the total number of distinct names, it seems odd that there would be such a large gap between the sexes.
-
-To get a sense of the magnitude of this discrepancy I made a new variable that calculated the difference between the number of male baby names and female baby names each year and graphed it.
+These graphs indicate that in more recent years, fewer babies are given the most popular names. Since by definition the most popular names are the names given to the most babies, this indicates that fewer babies share the same name. This would suggest that there are more unique names in recent years as well. We can confirm this hypothesis with the data. 
 
 ```{r}
-# create the new variable, difference, which calculates the difference between 
-# the female and male total occurrences per year 
-difference <- BabyNames_pw %>% 
-  mutate("Difference" = Female - Male) %>% 
-  mutate("Sex_Count_Comparison" = case_when(
-    Difference > 0 ~ "More female",
-    Difference < 0 ~ "More male"))
-
-head(difference)
-
-colors <- c("darkturquoise", "darkorchid2")  
-
-# graph it
-difference %>% 
-  ggplot(aes(Year, Difference, fill=Sex_Count_Comparison)) + 
-  geom_col() + 
-  scale_fill_manual(name = "Count comparison", values = colors) +
-  scale_y_continuous(labels = function(x) { paste0(x / 1000, "k")}) + 
-  labs(title = "Difference in female and male baby name occurences by year", 
-       subtitle = "Note this is a count of occurences of names, not number of distinct 
-       names. So this should reflect the population of babies born...??", )
-
+# Bar graph of number of distinct names by generation
+BabyNames_gen %>% 
+  group_by(Generation, Sex) %>% 
+  summarize("Unique_Names" = n_distinct(Name)) %>% 
+  ggplot(aes(x = Generation, y = Unique_Names, fill = Sex)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = c("#F4845F", "#7EB09B")) +
+  theme_minimal() +
+  labs(title = "Number of Unique Names in Each Generation, by Sex", 
+      y = "Number of Unique Names") +
+  theme(axis.text.x = element_text(angle = 60, vjust = 0.55)) +
+  scale_y_continuous(labels = function(x) { paste0(x / 1000, "k")})
 ```
 
-This is very strange - it seems unlikely that there were around 250,000 more boys born in the early 2000s and no one talked about it! Is this discrepancy related to some kind of limitations of the data? Could it possibly be evidence of an error I've made in my analysis and transformation so far?
+This graph shows that the number of distinct, unique names has increased with each generation. While Generation Alpha has slightly fewer unique names than the preceding generation, it is also an "incomplete" generation in that the dataset does not include all years included in this generation, which include babies born today. 
+
+These graphs all show a trend of increasing name diversity and variety with decreasing proportions of babies with the most popular names. 
+
+### Oliver vs Christopher: How has the relationship between popularity and proportion changed in recent years?
+
+In order to answer the second part of my research question, let's look specifically at the popularity of the male names Christopher and Oliver. We'll explore how the number of occurrences, proportion, and ranking change over time. Note that Chris and Christopher are tracked separately in the baby names data, but for ease of analysis, we'll just look at Christopher. Consider that if we combined the occurrences of the two names over time the popularity of Chris/Christopher would be even more extreme.
+
+First let's compare how Oliver and Christopher have changed in popularity, according to ranking, over time.
+
+```{r}
+OliChri_Rank <- BabyNames_prop %>% 
+  filter(Sex == "Male") %>% 
+  filter(Name %in% c("Oliver", "Christopher")) %>% 
+  ggplot(aes(Year, Year_Rank, group = as.factor(Name), 
+             colour = as.factor(Name))) +  
+  geom_line() +
+  scale_y_reverse() +
+  scale_color_manual(values = c("#DB272A", "#5887FF", "#00A8E8")) +
+  labs(title = "Oliver vs Christopher: Ranking", 
+       subtitle = "How these names have ranked in the United States in a given year. Note lower indicates more popular.",  
+       color = "Name", 
+       y = "Ranking")
+OliChri_Rank
+```
+
+We can see here in this graph that Christopher enjoyed a long streak of popularity from around the 1960s until just recently dropping in rank. During that time, Christopher ranked an average of 2.8 of all baby male names in the data. In 1986 when most of the kids in my class were born, Christopher was the second most popular male name.
+
+```{r}
+BabyNames_prop %>% 
+  filter(Sex == "Male") %>% 
+  group_by(Name) %>% 
+  filter(Year >1970 & Year < 2001) %>% 
+  filter(Name == "Christopher") %>% 
+  summarize(Avg_Rank = mean(Year_Rank))
+
+BabyNames_prop %>% 
+  filter(Sex == "Male") %>% 
+  group_by(Name) %>% 
+  filter(Year == 1986) %>% 
+  filter(Name == "Christopher")
+```
+
+The arc of Oliver's popularity looks quite different. Before the 2000s, Oliver's peak popularity was actually when the data was first collected in 1910. In this way, Oliver's trajectory actually mirrors the cyclical nature of popularity that we'll explore further in research question #3. It's not until we're well into the 2000s that Oliver breaks the top 100 and climbs the ranks to be the third most popular male name in 2021.
+
+So while Oliver's popularity is recent, his ranking is close to the same as Christopher's in the 1980s. But we've established that the proportion and occurrences of popular names has decreased in recent years. Does this hold up when comparing Oliver and Christopher?
+
+Let's compare the *proportion* of babies that were given the name Oliver and Chris over time.
+
+```{r}
+OliChri_Prop <- BabyNames_prop %>%
+  filter(Sex == "Male") %>% 
+  filter(Name %in% c("Oliver", "Christopher")) %>% 
+  ggplot(aes(Year, Proportion, group = as.factor(Name), 
+             colour = as.factor(Name))) +  
+  geom_line() +
+  scale_color_manual(values = c("#DB272A", "#5887FF", "#00A8E8")) +
+  labs(title = "Oliver vs Christopher: Proportion", 
+       subtitle = "The proportion of babies given this name in a given year.",  
+       color = "Name", 
+       y = "Proportion")
+OliChri_Prop
+```
+
+This graph supports our hypothesis: it looks as though at its peak in the early 1980s over 3.5% of baby boys were given the name Christopher, while in 2021 just under 1% of boys were named Oliver. But is this related to the increase in population? Does this obscure the true magnitude of babies named Oliver in 2021?
+
+To answer this question, let's compare the total occurrences of each name over time.
+
+```{r}
+OliChri_Occur <- BabyNames_prop %>% 
+  filter(Sex == "Male") %>% 
+  filter(Name %in% c("Oliver", "Christopher")) %>% 
+  ggplot(aes(Year, Sum_Occurrences, group = as.factor(Name), 
+             colour = as.factor(Name))) +  
+  geom_line() +
+  scale_color_manual(values = c("#DB272A", "#5887FF", "#00A8E8")) +
+  labs(title = "Oliver vs Christopher: Occurrences", 
+       subtitle = "The total number of babies in the United States given this name in a given year.",  
+       color = "Name", 
+       y = "Occurrences")
+OliChri_Occur
+```
+
+This graph looks very similar to the proportions graph and indicates that at peak popularity in 1984 there were just over 60,000 baby boys named Chris. In the peak of Oliver's popularity in 2021 under 15,000 boys were named Oliver. That is less than a quarter of the boys named Chris in 1984. Of course it's possible that Oliver's popularity will continue to climb, but even if it was the ranked the most popular boys name in the United States, the number one name for that year, Liam, was given to approximately 20,500 boys, still roughly one third of the number of boys with the name Chris during its peak.
+
+These graphs show that even though Oliver and Christopher rank the same in terms of popularity for male names in the United States, there are significantly fewer baby boys named Oliver now than there were named Christopher in the 1980s. This reflects the growing trend we've seen throughout this data of less concentration and more variation of baby names in general, but with a larger change among male names. 
+
+This is also good news, because my baby was born over two years ago now, and we did in fact name him Oliver.
 
 ## Research Question 3
 
 *Is there a cyclical nature to the popularity of some names? Are there some names that were popular in the early part of the 20th century that have regained popularity?*
 
-## Research Question 4
+According to the baby name website, [Nameberry](https://nameberry.com/blog/the-80-year-rule-which-1930s-names-will-comeback-first), the "100 Year Rule" states that baby names cycle in and out of popularity roughly every 100 years or so. Anecdotally I have witnessed this trend of "vintage baby names" - I know several tiny "Roses", "Lillians", and "Margarets". But is this theory supported by the data?
 
-*Are there certain states that could be considered trendsetters - did popular names become popular in certain states first?*
+To explore this question with a systematic approach, I isolated the data to just two sets of two years 100 years apart.[^2] I compared the top 100 names in each of the two years and filtered the data to keep only names that appeared on both lists. I then graphed those names on a time series chart to see what their popularity journey has been throughout the intervening years.
 
+The first set will examine the top names in both 1920 and 2020, and the second set will compare top names in 1885 and 1985.
 
+### Female baby names
+
+```{r}
+# 1885 - 1985
+# Use the Year_Rank variable created earlier to limit the data to just the top 100 names in each year. 
+Top1885 <- BabyNames_prop %>% 
+  filter(Year == 1885) %>% 
+  filter(Year_Rank <=100) 
+
+Top1985 <- BabyNames_prop %>% 
+  filter(Year == 1985) %>% 
+  filter(Year_Rank <=100) 
+
+# Join two datasets
+BabyNames_Cyclical85 <- full_join(Top1885, Top1985, by = "Name")
+
+# Filter only names appearing in top 100 of both years
+PopCyclical85 <- BabyNames_Cyclical85 %>% 
+  filter(Year.x == 1885 & Year.y == 1985) %>% 
+  mutate(CombinedRank = Year_Rank.x + Year_Rank.y) %>% 
+  arrange(CombinedRank) %>% 
+  group_by(Sex.x) %>% 
+  slice(1:30)
+
+# Clean up this table and rename some of the variables so it's nicer to look at
+PopCyclical85_Table <- PopCyclical85 %>% 
+  select(-Sex.y, -Year.x, -Year.y) %>% 
+  setNames(c("Sex", "Name", "1885 Occurrences", 
+             "1885 Rank", "1985 Occurrences", "1985 Rank", 
+             "Combined Rank"))
+
+#head(PopCyclical85_Table, n = 20)
+
+# create a color palette for all visualizations for this research question
+color_v2 <- c("#DB272A", "#44AF69", "#8390FA", "#669BBC", 
+              "lightsalmon", "#00A8E8", "#F26419", "#5887FF", 
+              "#E9C46A", "darkorchid", "darkslateblue", 
+              "cadetblue", "#F58F00", "cadetblue1", "#F694C1",
+              "darkblue", "#813405", "#1DD3B0", "indianred1", 
+              "darkolivegreen1")
+
+## plot female name popularity change over time for names popular in 1885 and 1985.
+F_85_Plotly <- BabyNames_prop %>%
+  filter(Sex == "Female") %>% 
+  filter(Name %in% c("Elizabeth", "Anna", "Sarah", "Mary", "Laura", 
+                     "Katherine", "Emily", "Catherine", "Julia", "Katie",
+                     "Kathryn", "Amanda", "Margaret", "Carrie", "Rebecca")) %>% 
+  ggplot(aes(Year, Year_Rank, group = as.factor(Name), 
+             colour = as.factor(Name))) +  
+  geom_line() +
+  scale_y_reverse(limits=c(1350,0)) +
+  scale_color_manual(values = color_v2) +
+  labs(title = "Cyclical Popularity: 1885 and 1985", 
+       subtitle = "These names were popular for female babies born in 1885 and 1985.",
+       color = "Name", 
+       y = "Ranking", 
+       caption = "Source: https://www.ssa.gov/oact/babynames/") +
+  theme_bw()
+
+ggplotly(F_85_Plotly) %>% 
+  layout(title = list(text = paste0("Cyclical Popularity: 1885 and 1985",
+                                    '<br>',
+                                    '<sup>',
+                                    'These names were popular for female babies born in 1885 and 1985. (Hover over lines to see names)','</sup>')))
+
+```
+
+This graph shows the 15 female names that were popular (defined as being within the top 100 names given to babies born that year) in 1885 and in 1985. It shows the ranking for these names for each year in the data, reflecting their changing popularity over time.
+
+While there is a clear pattern of the names clustering at the bottom of the graph in the top 100 rankings in the 1880s and 90s and again in the 1980s and 90s, many of the names maintain a high ranking in the years in between. Only Emily, Amanda, and Katie drop out of the top 250 rankings in the intervening years, and no names drop out of the top 500 names. Most of the names remain in the top 150 names, reflecting a pattern of consistent popularity, rather than a pattern of cyclical popularity.
+
+Interestingly, after 1985 many of the names look to be dropping more quickly out of the high rankings, led by the precipitous drop of the name Carrie (perhaps influenced by the 1976 horror film of the same name).
+
+Let's take a look at the most popular names that were given to female babies in both 1920 and 2020.
+
+```{r}
+# 1920 - 2020
+# Use the Year_Rank variable I created earlier to limit the data to just the top 100 names in each year. 
+Top1920 <- BabyNames_prop %>% 
+  filter(Year == 1920) %>% 
+  filter(Year_Rank <=100) 
+
+Top2020 <- BabyNames_prop %>% 
+  filter(Year == 2020) %>% 
+  filter(Year_Rank <=100) 
+
+# Join two datasets
+BabyNames_Cyclical20 <- full_join(Top1920, Top2020, by = "Name")
+
+# Filter only names appearing in top 100 of both years
+PopCyclical20 <- BabyNames_Cyclical20 %>% 
+  filter(Year.x == 1920 & Year.y == 2020) %>% 
+  mutate(CombinedRank = Year_Rank.x + Year_Rank.y) %>% 
+  arrange(CombinedRank) %>% 
+  group_by(Sex.x) %>% 
+  slice(1:30)
+
+# Clean up this table and rename some of the variables so it's nicer to look at
+PopCyclical20_Table <- PopCyclical20 %>% 
+  select(-Sex.y, -Year.x, -Year.y) %>% 
+  setNames(c("Sex", "Name", "1920 Occurrences", 
+             "1920 Rank", "2020 Occurrences", "2020 Rank", 
+             "Combined Rank"))
+
+#head(PopCyclical20_Table, n = 20)
+
+## plot female name popularity change over time for names popular in 1920 and 2020
+F_20_Plotly <- BabyNames_prop %>%
+  filter(Sex == "Female") %>% 
+  filter(Name %in% c("Elizabeth", "Anna", "Sarah", "Evelyn", "Charlotte", 
+                     "Eleanor", "Emma", "Lillian", "Alice", "Hazel",
+                     "Grace", "Ruby", "Ella", "Stella", "Violet", 
+                     "Eva", "Lucy", "Josephine")) %>% 
+  ggplot(aes(Year, Year_Rank, group = as.factor(Name), 
+             colour = as.factor(Name))) +  
+  geom_line() +
+  scale_y_reverse(limits=c(1350,0)) +
+  scale_color_manual(values = color_v2) +
+  labs(title = "Cyclical Popularity: 1920 and 2020", 
+       subtitle = "These names were popular for female babies born in 1920 and 2020.",
+       color = "Name", 
+       y = "Ranking", 
+       caption = "Source: https://www.ssa.gov/oact/babynames/")
+
+ggplotly(F_20_Plotly) %>% 
+  layout(title = list(text = paste0("Cyclical Popularity: 1920 and 2020",
+                                    '<br>',
+                                    '<sup>',
+                                    'These names were popular for female babies born in 1920 and 2020. (Hover over lines to see names)','</sup>')))
+```
+
+This graph looks markedly different than the graph with data from names 35 years earlier. There are slightly more names that were popular in both years, 18 female names as opposed to 15 female names in the 1885-1985 set. Similar to the previous graph, there is a clear clustering of each name in the early 1900s up to 1920 and the few years surrounding 2020. But there is a much more dramatic drop in popularity among most of the names captured in this graph. It looks as if most of the names here, except for Elizabeth, Sarah, and Anna dropped below the top 250 names at some point in the years between 1920 and 2020. Four names, Hazel, Ella, Stella, and Violet, all look to have dropped out of the top 1,000 names at some point in the intervening years. This demonstrates a much stronger trend of names actually cycling in and out of popularity. This data supports the hypothesis that there is some sort of cyclical nature of popularity of names, at least for female names.
+
+Finally, let's take a look at the same years for male baby names.
+
+### Male baby names
+
+```{r}
+# larger color vector for 1885/1985 male names graph
+color_v3 <- c("#DB272A", "#44AF69", "#8390FA", "#669BBC", 
+              "lightsalmon", "#00A8E8", "#F26419", "#5887FF", 
+              "#E9C46A", "darkorchid", "darkslateblue", 
+              "cadetblue", "#F58F00", "cadetblue1", "#F694C1",
+              "darkblue", "#813405", "#1DD3B0", "indianred1", 
+              "darkolivegreen1", "salmon", "cornflowerblue", 
+              "orange", "red", "black", "blue", "green", "purple",
+              "yellow", "maroon")
+
+## 1885 - 1985
+# filter for male names
+# PopCyclical85_Table %>% 
+#   filter(Sex == "Male") %>% 
+#   head(n = 30)
+
+## plot male name popularity change over time for names popular in 1885 and 1985
+M_85_Plotly <- BabyNames_prop %>%
+  filter(Sex == "Male") %>% 
+  filter(Name %in% c("James", "John", "Joseph", "Robert", "William", 
+                     "David", "Thomas", "Daniel", "Charles", "Andrew",
+                     "Michael", "Richard", "Benjamin", "Edward", "Samuel",
+                     "George", "Jesse", "Paul", "Jacob", "Peter",
+                     "Frank", "Patrick", "Anthony", "Alexander", "Stephen",
+                     "Raymond", "Alex", "Philip", "Victor")) %>% 
+  ggplot(aes(Year, Year_Rank, group = as.factor(Name), 
+             colour = as.factor(Name))) +  
+  geom_line() +
+  scale_y_reverse(limits=c(675,0)) +
+  scale_color_manual(values = color_v3) +
+  labs(title = "Cyclical Popularity: 1885 and 1985", 
+       subtitle = "These names were popular for male babies born in 1885 and 1985.",
+       color = "Name", 
+       y = "Ranking", 
+       caption = "Source: https://www.ssa.gov/oact/babynames/")
+
+ggplotly(M_85_Plotly) %>% 
+  layout(title = list(text = paste0("Cyclical Popularity: 1885 and 1985",
+                                    '<br>',
+                                    '<sup>',
+                                    'These names were popular for male babies born in 1885 and 1985. (Hover over lines to see names)','</sup>')))
+
+# 1920 - 2020
+# filter for male names
+# PopCyclical20_Table %>% 
+#   filter(Sex == "Male") %>% 
+#   head(n = 20)
+
+## plot male name popularity change over time for names popular in 1920 and 2020
+M_20_Plotly <- BabyNames_prop %>%
+  filter(Sex == "Male") %>% 
+  filter(Name %in% c("William", "James", "Henry", "John", "Joseph", "Jack", 
+                     "Charles", "David", "Thomas", "Michael", "Daniel", "Samuel", 
+                     "Robert", "Anthony", "Leo", "Theodore", "Benjamin", "Andrew", 
+                     "Everett")) %>% 
+  ggplot(aes(Year, Year_Rank, group = as.factor(Name), 
+             colour = as.factor(Name))) +  
+  geom_line() +
+  scale_y_reverse(limits=c(675,0)) +
+  scale_color_manual(values = color_v2) +
+  labs(title = "Cyclical Popularity: 1920 and 2020", 
+       subtitle = "These names were popular for males babies born in 1920 and 2020.",
+       color = "Name", 
+       y = "Ranking", 
+       caption = "Source: https://www.ssa.gov/oact/babynames/")
+
+ggplotly(M_20_Plotly) %>% 
+  layout(title = list(text = paste0("Cyclical Popularity: 1920 and 2020",
+                                    '<br>',
+                                    '<sup>',
+                                    'These names were popular for male babies born in 1920 and 2020. (Hover over lines to see names)','</sup>')))
+```
+
+Compared to the female names, both of these graphs are strikingly flat, or they would be if the y axis was the same as on the female graphs. Instead the y-axes are half what they are on the graphs with female names, reflecting the fact that none of the male names that were popular in both 1885 and 1985 and in 1920 and 2020 dropped very far in popularity in the intervening period. In the 1920/2020 set only a few names (Everett, Leo, Theodore) drop out of the top 200 names, and in the 1885/1985 set only Jacob, Alex, and Alexander drop out of the top 200 ranking in the intervening years.
+
+It is also worth noting that in both sets of years examined here (1885/1985 and 1920/2020) there are more male names that were popular in both years than there were female names. There were 29 male names popular in both 1885 and 1985, as opposed to 15 female names, and 19 male names popular in both 1920 and 2020, as opposed to 18 female names.
+
+While comparing these two sets of years has revealed some interesting patterns, it should be noted that this has not been an exhaustive exploration of cyclical patterns. We found in research question 2 that the name Oliver showed a pattern of cyclical popularity, but because it did not conform to the years featured in this analysis it was not included. In further research a much more exhaustive approach could be taken to analyze cyclical popularity at different length intervals between years. 
+
+This analysis shows that for male names, with some exceptions, we see more of a steady, consistent popularity throughout the time period in this data, rather than the cyclical pattern we see evident among more of the female names. This trend is in keeping with other patterns explored in this analysis where there is a higher concentration of male babies given the same popular names, although there is evidence this is decreasing over time. Among female names the pattern of cyclical popularity is much more prevalent in the second, more recent set of years examined in this analysis. 
 :::
+
+[^1]: Cohen, P. (2012, December 4). Why Don't Parents Name Their Daughters Mary Anymore. \*The Atlantic.\* https://www.theatlantic.com/sexes/archive/2012/12/why-dont-parents-name-their-daughters-mary-anymore/265881/
+
+[^2]: When I first tried to answer this research question I used the \`Generation\` variable from Research Question 1 to investigate whether generations roughly 100 years apart have any of the same names appearing in their top 100 most popular names. But the variation in the length of generations and the distance between generations made it difficult to evaluate this trend in a systematic way, which is why I instead used two sets of years 100 years apart. When I ran this analysis with the \`Generation\` variable I looked at six different combinations of generations and found an interesting pattern. Earlier generation pairs (such as the Lost Generation and Generation X or the Greatest Generation and the Millennial Generation) had a set of names that were popular in both, but they didn't show a strong pattern of \*cyclical\* popularity. When I graphed the rankings of those names over time it showed that most of the names popular in both generations had stayed fairly popular (defined as being within the top 100 or 150 names in a year) throughout the years between the two generations in question - so their popularity was steady and consistent, not cyclical. More recent generation pairings (such as the Greatest Generation and Generation Alpha), however, did show a strong pattern of cyclical popularity. Many of the names that were popular in both generations had cycled out of popularity in the intervening years, with some names, such as Hazel, Ella, Stella, and Violet, even dropping below the 1000 most popular names before rising back up to the top 100. This analysis showed that the popularity of some names is cyclical, but moreso for names in recent years. Since the length of generations and the distance between generations is not standardized I was curious to see if this pattern of the cyclical nature of popularity being more predominant in recent years would hold true if I took a more systematic approach to evaluating the 100 year rule.
+
+## Discussion and Limitations
+
+#### Incomplete Data: A boy named sue
+
+Many of the limitations of the data were described in the notes provided by the Social Security Administration and detailed in the Data Introduction section above. These notes stated that before 1937 many people did not appl y for a Social Security card and so their data would be missing. Any records that were not complete are also not included in this data. It was also noted that this data is not edited and so there may be some mistakes. While the mistakes described, including names recorded as "Baby" and "Unknown" were removed from this data as part of the data cleaning process, there are undoubtedly more mistakes that we cannot know and so cannot correct. For instance, I noted that there are likely many instances of names being recorded the wrong sex. While it's quite possible that some parents were creative with their name choice and certainly gender neutral names have increased in recent years, it's unlikely that those reasons account for all 15,172 cases of boys named Mary, or the 519 boys in this dataset named Sue. On a related note, because the data did not track gender neutral names, it was not possible to explore changes in gendered names in this analysis. 
+
+The Social Security Administration also specifies that names had to be at least two characters long and that there needed to be at least five occurrences of a name in a state in order to make it on the list, meaning it's likely that many names were not included. Given all of these issues, the dataset should be understood to not be entirely complete, and so any understanding of the analysis must be considered in this context.
+
+Another limitation of the data that may have affected the analysis is the fact that names with different spellings were recorded as separate names, so the popularity of a name with a variety of spellings may have been obscured. This was particularly notable in Research Question 3 when this analysis showed that out of the 15 female names that were popular in both 1885 and 1985, three of them were variations on Katherine (or Catherine, or Kathryn) and one was Katie. The prominence of those names suggests that if there was a singular spelling this name would have emerged as the most popular name during that time, but we saw in Research Question 1 analysis that Katherine (or any variation) never topped the five top names of a generation. Further research could seek to combine the occurrences of the names with spelling variations so that their popularity was more accurately captured.
+
+#### Sex Ratio Discrepancy
+
+The final limitation of this data was observed during the process of analysis. When separating the data by sex and calculating the total occurrences of all names in a year, I noticed that there was an especially large difference between the number of female and male baby names for each year. Since the occurrences count the total number of *babies* named and *not* the total number of distinct names, any difference between the sexes should reflect the real life sex ratio of babies born in the United States. I calculated the sex ratio per generation to get a sense of the overall discrepancy between the sexes in the data.
+
+```{r}
+BabyNames_gen %>% 
+  group_by(Year, Sex, Generation) %>% 
+  summarize(Sum_Occurrences = sum(Occurrences)) %>% 
+  pivot_wider(names_from = Sex, values_from = Sum_Occurrences) %>% 
+  mutate(Sex_Ratio = Male/Female) %>% 
+  group_by(Generation) %>% 
+  summarize("Average Sex Ratio" = mean(Sex_Ratio))
+```
+
+This shows that for the first three generations (from 1880 to 1945) there are more occurrences of female babies. The last five generations (from 1946 to 2021) there are more male babies. According to several online sources there is in fact a sex discrepancy at birth with around 105 male births occurring for every 100 female births.[^3] This suggests that the sex ratio in this data is actually fairly close to the truth - there are more boys born every year than girls. It's possible that other limitations of the data affect one sex more than the other, which could account for the remaining discrepancy between the real sex ratio and the sex ratio found in the data. For instance, since this analysis found that there are more unique female names and they are given to fewer female babies (compared to male babies, where fewer unique names are given to more babies), it's possible that the policy of leaving out names where there were fewer than five in a state disproportionately excluded more female names. Incomplete data is also likely the reason that the sex ratio for early generations is so far off from reality. Since the Social Security Administration specifically stated that data before 1937 was incomplete, it is likely that this plays a significant role in the uneven sex ratio during those years. 
+
+
+[^3]: Ritchie, H. (2019, August 6). How does the sex ratio at birth vary across the world?. *Our World in Data.* https://ourworldindata.org/sex-ratio-at-birth#:\~:text=We%20might%20expect%20that%20naturally,105%20boys%20per%20100%20girls.
+
+    *Centers for Disease Control and Prevention.* (2005, June 14). More Boys Born Than Girls. https://www.cdc.gov/nchs/pressroom/05facts/moreboys.htm#:\~:text=Since%201940%2C%20an%20average%20of,over%20that%2063%2Dyear%20period.
+
+## Conclusion
+
+The research questions explored in this analysis provide a compelling portrait of the most popular baby names in the United States, the trends that have shaped the baby name choices made by American parents, and how this has evolved from the late 19th to the early 21st century.
+
+Three prevailing trends were explored and established in the data:
+
+1. As parents have increasingly named their babies more unique and varied names the proportion of babies with the most popular names has decreased (see research question 2). This means that naming your child one of the most popular names of 2021 does not mean they are doomed to a life of being one of five kids with the same name in small classes, summer camps, and other group activities (or at least it's statistcially unlikely). In other words, the data shows that baby names started out with fewer unique names given to more babies and over the year shifted to more unique names given to fewer babies.
+
+2. Some names, primarily female names, are cyclical in popularity and follow what is known as the 100 year rule, where names cycle in and out of popularity roughly every 100 years. Other names, primarily male names, are consistently popular over time and rarely drop considerably out of the most popular names (research question 3). 
+
+3. Naming trends vary by sex. Male names tend to be concentrated among more babies, although that trend is decreasing considerably in recent years with much more unique names being given to fewer baby boys. Male names also tend to be consistently popular and do not cycle in and out of popularity as some female names do. Female names tended to be more diverse from the start - there are many more unique female names throughout each generation. Since female names have started out with more variation the trend was not as steep, but as with male names, the most popular female names are given to fewer baby girls now than in previous generations. There are many female names that have cycled in and out of popularity quite dramatically, with several names moving from the top 100 names, to below the top 1000 names, and back into the top 100 names again within a 100 year span (all research questions). 

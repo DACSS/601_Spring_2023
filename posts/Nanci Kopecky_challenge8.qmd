@@ -1,0 +1,98 @@
+---
+title: "Challenge 8 Instructions"
+author: "Nanci Kopecky"
+description: "Joining Data"
+date: "5/10/23"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - railroads
+  - snl
+  - faostat
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+## Read in data
+
+-   snl ⭐⭐⭐⭐⭐
+
+```{r}
+library(readr)
+snlactors <- read.csv(file = "_data/snl_actors.csv",
+                header=TRUE,
+                sep = ","
+                )
+snlcasts <- read.csv(file = "_data/snl_casts.csv",
+                header=TRUE,
+                sep = ","
+                )
+
+snlseasons <- read.csv(file = "_data/snl_seasons.csv",
+                header=TRUE,
+                sep = ","
+                )
+```
+
+### Briefly describe the data
+
+The dimensions of the snl actor data are 2306 rows and four columns. Each row represents an actor and with detailed informaiton, column 1 is the actor's name, column 2 is a url associated with the actor, column 3 states whether they are a cast member or a guest, and column 4 is the gender. The variables are all character/categorical data.
+
+The dimensions of the snl cast data are 614 rows and 8 columns. This data set includes cast members, but not guests for 46 seasons from 1975-2020, the cast members' first and last episode dates, if they were an Update Anchor, the number of episodes for each season and proportion of the episodes that the cast member was in.
+
+The dimensions of the snl seasons data is 46 rows and 5 columns. This data set includes cast members, but not guests for 46 seasons from 1975-2020. This data set includes the season id (1-46), the year, dates of the first and last episodes, and the number of shows in each season.
+
+```{r}
+dim(snlactors)
+head(snlactors)
+dim(snlcasts)
+head(snlcasts)
+dim(snlseasons)
+head(snlseasons)
+```
+
+## Join Data
+
+The snlactors and snlcasts data sets were joined with the Actor ID (aid) being the key variable. I tried the merge and innerjoin functions to combine the tables and then did a count of the gender and a bar graph of the gender. The bar graph of the gender also shows which actors were featured which can mean a newer cast member.
+
+```{r}
+#Using merge and counting the gender of the actors
+snl_gendercount <- merge(x=snlactors, y=snlcasts,
+      by = "aid")%>%
+  count(gender)
+snl_gendercount
+```
+
+```{r}
+#Using innerjoin and creating bar graph.
+dfjoin <- snlactors %>%
+  inner_join(snlcasts, by = "aid")
+dfjoin
+
+ggplot(dfjoin, aes(gender)) +
+  geom_bar(aes(fill = featured))
+
+```

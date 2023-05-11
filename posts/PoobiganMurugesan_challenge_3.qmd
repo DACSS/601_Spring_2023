@@ -1,0 +1,87 @@
+---
+title: "Challenge 3"
+author: "Poobigan Murugesan"
+description: "Tidy Data: Pivoting"
+date: "05/10/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - animal_weights
+  - poobigan murugesan
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+
+Reading in data
+```{r}
+df <- read_csv("_data/animal_weight.csv", show_col_types=FALSE)
+head(df)
+
+```
+
+### Briefly describe the data
+
+Dimensions of the dataset
+```{r}
+dim(df)
+summary(df)
+```
+The "animal_weight.csv" dataset contains weights of various types of animals/livestock(like Ducks, Turkeys, Sheep, Goats, etc) according to the region they are found in. There are 9 rows(regions) and 17 columns in the dataset, including 1 column for the region. Having too many columns makes this dataset difficult to interpret. We can pivot the dataset to restructure it efficiently.
+
+### Anticipate the End Result and final dimensions
+
+The end result would have 3 columns, 1 each for region, animal type and weight. So the expected number of rows would be 9 x (17-1) which is 144.
+
+Expected pivoted dataset dimensions: 144x3 
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+
+
+```{r}
+#| tbl-cap: Pivoted Example
+
+df_pivoted<-pivot_longer(df, col =-`IPCC Area`,
+                 names_to="animal_type",
+                 values_to = "animal_weight")
+df_pivoted
+dim(df_pivoted)
+```
+
+After pivoting our data using pivot_longer(), our resulting data is $144x3$ - exactly what we expected! Making the data more user-friendly and readable.
+

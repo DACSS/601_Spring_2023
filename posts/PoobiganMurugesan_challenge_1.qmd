@@ -1,0 +1,93 @@
+---
+title: "Challenge 1"
+author: "Poobigan Murugesan"
+description: "Reading in data and creating a post"
+date: "05/09/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - railroads
+  - poobigan murugesan
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, using the correct R package and command.
+
+-   railroad_2012_clean_county.csv ⭐
+-   birds.csv ⭐⭐
+-   FAOstat\*.csv ⭐⭐
+-   wild_bird_data.xlsx ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐⭐
+
+Find the `_data` folder, located inside the `posts` folder. Then you can read in the data, using either one of the `readr` standard tidy read commands, or a specialized package such as `readxl`.
+
+Loading the data and printing the top few rows
+```{r}
+df <- read_csv("_data/railroad_2012_clean_county.csv") 
+head(df)
+```
+
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+Description of the railroad dataset 
+```{r}
+str(df)
+```
+Dimensions of the dataset (rows, columns) and names of columns
+```{r}
+dim(df)
+colnames(df)
+```
+Based on the above lines of code, it can be observed that the  "railroad_2012_clean_county" dataset provides data on the number of workers employed by the railroad in each state's various counties in the year 2012. The dataset comprises 2930 records in total, each representing a county and providing information on the number of employees. The dataset consists of three columns: state, county, and total_employees.
+
+Summarizing the data
+```{r}
+summary(df)
+```
+Sorting data based on the total number of employees in increasing order
+```{r}
+arrange(df,total_employees)
+```
+Sorting data based on the total number of employees in decreasing order
+```{r}
+arrange(df, desc(total_employees))
+```
+Based on these outputs, it is evident that the county named 'COOK' in IL has the most employees, which is 8207. Moreover, there exist several counties where only one employee is present, which is the minimum number of employees in any given county.
+
+Grouping railroad employees by state
+```{r}
+group <- df %>%
+  group_by(state) %>%
+  summarize(employees=sum(total_employees)) %>%
+  arrange(desc(employees))
+group
+```
+
+Based on the results shown above, we can see that the state of Texas has the largest number of railroad employees, with a count of 19839 followed by Illinois and New York with 19131 and 17050 employees respectively. Also, from the dimensions of the group dataset we can conclude that there are 53 distinct states where people are employed to work railroads. 

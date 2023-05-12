@@ -1,0 +1,64 @@
+---
+title: "Visualizing Multiple Dimensions"
+author: "Neha Jhurani"
+desription: "Using ggplot2 for visualizing: eggs_tidy.csv"
+date: "05/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge7
+  - Neha Jhurani
+  - eggs_tidy.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analysing eggs_tidy data
+
+```{r}
+library(readr)
+
+#reading eggs_tidy csv data
+eggs_data <- read_csv("_data/eggs_tidy.csv")
+
+#extracting all the column names
+colnames(eggs_data)
+
+#the dataset represents the price of particular quantity of eggs sold during specific time
+#The quantity type has it's own column, Converting it to a single column below as they all represent the quantity/ carton size of eggs
+eggs_tidy_data <- eggs_data%>%
+  pivot_longer(col = c(large_half_dozen, large_dozen, extra_large_half_dozen, extra_large_dozen),
+                         names_to= "carton_size",
+                         values_to= "price_per_pound")
+eggs_tidy_data
+
+#combining month and year to form a new column of data
+#Please note - As no day is mentioned, it assumes the day to be 1st of the month specified
+eggs_lubricate_data <- eggs_tidy_data%>%
+  mutate( date = str_c(month, year , sep = "-"),
+          date = my(date))
+eggs_lubricate_data
+
+# Visualization with Multiple Dimensions
+#Histogram
+eggs_lubricate_data%>%
+  ggplot(aes(x= price_per_pound,color = carton_size)) + geom_histogram() + labs(title = "Quantity of carton sold for a specific price", x = "Price Per Pound", y = "Amount")
+
+#Stacked Bar Graph
+eggs_lubricate_data%>%
+  ggplot(aes(x = year, y = price_per_pound, fill = carton_size)) + geom_bar(position = "stack", stat = "identity") + labs(title = "Total amount/price sold per year", x = "Year", y = "Price per pound")
+
+```

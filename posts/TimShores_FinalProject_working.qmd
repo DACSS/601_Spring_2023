@@ -30,7 +30,28 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 
 ```
 
-Read 'em and weep
+### Summary
+
+300 words go here.
+
+
+### Background of the Topic
+You may want to include this section to present the background information that helps readers understand more about the topic such as literature review, current discussion, major argument, or your previous knowledge. But this isn’t an academic paper, keep it short.
+In a storytelling sense, you are just reminding the reader of why the answer to your question matters, or why we are interested in exploring these data.
+
+### Dataset Introduction
+Identify the source of the dataset(s): who or which organization collected the dataset(s); some dataset(s) also tells you how and when it was collected ;
+Describe the “cases” represented by the dataset(s); in other words, what does each row represent?
+keep it concise. You will likely merge parts 2-4 into a single section.
+
+Dataset Description (keep it short and relevant only)
+(Story) Integrate descriptive information into dataset introduction as much as possible. 
+(Coding component, CODE hereafter) Load the dataset
+(optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step.
+(optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns.
+(optional) If you use multiple datasets, quickly describe and show how you merge and join the datasets
+
+Briefly describe the source data and the technique for reading it in and parsing it.
 
 ```{r}
 
@@ -61,21 +82,23 @@ projectFiles_list <- projectFiles %>%
   map(pdf_data) # purrr function that applies pdf_data reading function to each file element of fs_path vector
   # map creates a list of lists of tibbles (a tibble for each page of each pdf)
 
-  # now that I've consumed my files I can trim down to the basic info stored in each filename
-  # for use in the final data frame
+  # now that I've consumed my files I can str_replace to get town and year info from each filename.
+
 projectFiles <- projectFiles %>% 
   str_replace('posts/TimShores_FinalProject_Data/', '') %>%
   str_replace('.pdf', '') 
 names(projectFiles_list) <- projectFiles
 
-  # This next part took a couple days of searching for a tidy solution. Then I just decided to use a good old fashioned
-  # nested for loop.
+  # This next part took a couple days of searching for a tidy solution. 
+  # Then I just decided to use a good old-fashioned nested for loop.
   # The structure of the original documents is that each of 10 files has a variable number of pages.
-  # Therefore, the projectFiles_list structure is a nested: list[[list]][[dataframe]]. 
-  # I want to mutate each df with its page number -- this corresponds to its nested list element index (j in list[[i]][[j]]) which 
+  # Therefore, the projectFiles_list structure is a nested list of dataframes: list[[list]][[dataframe]]. 
+  # I want to mutate each df with the page number from its PDF, or "innerpageid". 
+  # Inner pagination corresponds to each dataframe's nested list element index (j in list[[i]][[j]]) which 
   # is information that gets destroyed as soon as I map to an unnested list. I couldn't find a tidy solution to capturing that nested
-  # "sub" page id before the map, so I used a nested for loop to assign value to innerpageid before appending my mapped/mutated df to
+  # "inner" page id before the map, so I used a nested for loop to assign value to innerpageid before appending my mapped/mutated df to
   # a new single-layer list.
+
 allYearsList <- list()
 for (i in seq_along(projectFiles_list)) { # seq_along(projectFiles_list) creates vector with a number value for each list element
   for (j in seq_along(projectFiles_list[[i]])) {
@@ -89,24 +112,24 @@ for (i in seq_along(projectFiles_list)) { # seq_along(projectFiles_list) creates
                          )
   }
 
-  # this bind_rows takes all of the df observations from many list elements and binds them together in a single df.
+  # this bind_rows takes all of the df observations from all of the list elements and binds them together in a single df.
   # outerpageid is the 'page' number in an absolute sequence (1 to 78 in this case) rather than segmented by file (1 to 9, 1 to 7 etc.)
+  # Note that outerpageid is not particularly important (it's semantically identical to town, year, innerpageid) 
+  # and I should remove this scaffold.
+
 allYearsDF <- allYearsList %>%
   bind_rows(.id = 'outerpageid') %>% 
   relocate(c(filename, innerpageid), .after = outerpageid) %>%
   filter(height == 11 & y > 13 & text != "Action:")
   
-    # the above group_by and mutate, and the select(-row) below, are to resolve
-    # the warning message "Values from `text` are not uniquely identified; 
-    # output will contain list-cols" ... those list-cols are not easy to
-    # deal with !
-
   # this creates a problem of staggered lines
+
 allYearsDF_wide <- allYearsDF %>% 
   pivot_wider(id_cols = c(outerpageid, filename, innerpageid, y), names_from = x, values_from = text)
 
 # solution from https://stackoverflow.com/questions/45515218/combine-rows-in-data-frame-containing-na-to-make-complete-row
 # Supply lists by splicing them into dots:
+
 coalesce_by_column <- function(df) {
   return(dplyr::coalesce(!!! as.list(df)))
 }
@@ -115,16 +138,19 @@ allYearsDF_wide <- allYearsDF_wide %>%
   mutate(outerpageid = as.integer(outerpageid))
 
 allYearsDF_wide <- allYearsDF_wide %>%
-  group_by(outerpageid, filename, innerpageid, y) %>% # I think outerpageid and filename together are redundant
+  group_by(outerpageid, filename, innerpageid, y) %>% # outerpageid is redundant here
   summarise_all(coalesce_by_column) %>%
   ungroup()
-# do I need to ungroup() ?
+# do I need to ungroup() ? doesn't seem to hurt!
 
   # it will help to order columns by numeric order - they are the x coords from left to right. This looks for all non-alpha column names.
+
 numcols = sort(as.numeric(names(allYearsDF_wide)[!grepl("[a-z]", names(allYearsDF_wide))]))
 allYearsDF_wide <- select(allYearsDF_wide, outerpageid, filename, innerpageid, y, match(numcols, names(allYearsDF_wide))) 
+
   # now we have a df that is simply x:y coordinates of the page
   # time to smush cols together!
+
 allYearsDF_wide <- unite(allYearsDF_wide, "x5to52", c("5":"47"), sep = " ", na.rm = TRUE, remove = TRUE)
 allYearsDF_wide <- unite(allYearsDF_wide, "x53to197", c("53":"197"), sep = " ", na.rm = TRUE, remove = TRUE)
 allYearsDF_wide <- unite(allYearsDF_wide, "x198to238", c("198":"233"), sep = " ", na.rm = TRUE, remove = TRUE)
@@ -133,10 +159,12 @@ allYearsDF_wide <- unite(allYearsDF_wide, "x281to329", c("281":"329"), sep = " "
 allYearsDF_wide <- unite(allYearsDF_wide, "x330to371", c("330":"371"), sep = " ", na.rm = TRUE, remove = TRUE)
 allYearsDF_wide <- unite(allYearsDF_wide, "x372to449", c("372":"431"), sep = " ", na.rm = TRUE, remove = TRUE)
 allYearsDF_wide <- unite(allYearsDF_wide, "x450toEnd", c("450":"545"), sep = " ", na.rm = TRUE, remove = TRUE)
+
   # note that spacing does differ on each page (as indicated by the colnames), but the boundaries are stable
-  # (as indicated by the united colnames -- I manually confirmed pixel widths on the pdf report)
+  # (as indicated by the united colnames -- I manually confirmed the minimum pixel position of each column on each data frame)
 
   # final tidying of Call_Reason text separated into different columns
+
 allYearsDF_wide <- mutate(allYearsDF_wide, 
                           x5to52 = ifelse(nchar(x5to52, type="chars") > 0 & nchar(x53to197, type="chars") > 0, 
                                           paste0(x5to52," ",x53to197), 
@@ -156,17 +184,22 @@ allYearsDF_wide <- mutate(allYearsDF_wide,
                           )
 
 allYearsDF_wide <- allYearsDF_wide %>% mutate_at(c(5,6), ~na_if(., '')) # replace blanks with NAs in the 2nd and 3rd cols. I tried this using paste in the previous mutate, but the result was a text string "NA".
+
   # label each action with its call type
+
 allYearsDF_wide <- fill(allYearsDF_wide, x5to52, .direction = "down")
+
 allYearsDF_wide <- allYearsDF_wide %>% 
   mutate(x53to197 = ifelse(row_number() == 1, "Action", x53to197))
+
 colnames(allYearsDF_wide)[-c(1:4)] <- allYearsDF_wide[1,-c(1:4)]
+
 allYearsDF_wide <- allYearsDF_wide %>% 
   rename_with(tolower) %>%
   rename_with(~ gsub("._", "_", .x, fixed = TRUE)) %>%
-  rename_with(~ gsub("@", "at", .x, fixed = TRUE))
+  rename_with(~ gsub("@", "at", .x, fixed = TRUE)) %>%
 
-allYearsDF_wide <- allYearsDF_wide %>%
+# allYearsDF_wide <- allYearsDF_wide %>%
   filter(innerpageid != 1 | y != 69 | call_reason != "Call_Reason") %>%
   filter(self != "Self_Init") %>%
   # sep filename into town and year
@@ -176,10 +209,9 @@ allYearsDF_wide <- allYearsDF_wide %>%
   select(-c(total, "___%")) %>%
   mutate(across(call_reason:avg_time_at_scene, ~na_if(., "")))
 
-#  mutate_at(c('self':'avg_time_at_scene'), funs(str_replace(., "", '0')))
-  # this doesn't work but I think I might not need it
+  # First df achievement unlocked:
 
-callTypesDF <- allYearsDF_wide %>% # First df achievement unlocked
+callTypesDF <- allYearsDF_wide %>% 
   filter(is.na(action)) %>% 
   filter(!grepl("total", call_reason, ignore.case = TRUE)) %>%
   filter(!is.na(self)) %>%
@@ -189,22 +221,21 @@ callTypesDF <- allYearsDF_wide %>% # First df achievement unlocked
   mutate_at(c("avg_arrive", "avg_time_at_scene"), as.numeric) %>%
   mutate(avg_arrive = ifelse(is.na(avg_arrive), 0, avg_arrive)) 
 
-# sanity check ... pass!
-callTypesDF %>%
-  group_by(town) %>%
-  summarise(selfSum = sum(as.numeric(self)), dispSum = sum(as.numeric(disp)), arriveSum = sum(as.numeric(avg_arrive)), sceneSum = sum(as.numeric(avg_time_at_scene)), .groups = 'drop')
+  # Second df achievement unlocked:
 
-callActionsDF <- allYearsDF_wide %>% # second df achievement unlocked
+callActionsDF <- allYearsDF_wide %>% 
   filter(!is.na(action)) %>%
   filter(!grepl("total", call_reason, ignore.case = TRUE)) %>%
   select(c(outerpageid:action))  %>%
   separate_wider_regex(action, c(actionname = ".+", " = ", actioncount = ".*")) %>%
   mutate(call_reason = factor(call_reason),
-         actionName = factor(actionname),
+         actionname = factor(actionname),
          actioncount = str_squish(actioncount),
          actioncount = as.integer(actioncount))
 
-operatorSummaryDF <- allYearsDF_wide %>% # third and final df achievement unlocked
+  # Third and final df achievement unlocked
+
+operatorSummaryDF <- allYearsDF_wide %>% 
   filter(!is.na(action)) %>%
   filter(grepl("total", call_reason, ignore.case = TRUE)) %>%
   mutate(opcategory = str_extract(action, "Sex|Race|Ethnicity")) %>%
@@ -218,7 +249,49 @@ operatorSummaryDF <- allYearsDF_wide %>% # third and final df achievement unlock
          opid = factor(opid),
          opcount = str_squish(opcount),
          opcount = as.integer(opcount))
+```
 
+
+### Analysis Plan
+
+transformation choices
+NA choices
+
+List more specific questions that help you to answer the general question mentioned in the above introduction, and specify the corresponding columns/variables you expect to use in the dataset.
+Analysis plan: briefly explain what types of analysis or visualization you are conducting, and why you choose to conduct it (in other words, why such visualization/specific graphs help to answer the question). Some of the details of your plan may more naturally fit into the results section.
+
+### Descriptive Statistics 
+- see final project assignment#1
+(CODE) Present the descriptive information of the dataset(s). 
+(STORY) Select and describe only the variables of interest (that you will use in the later analysis and visualization): what do they measure (or what do the variable names mean), how are they measured (or what do the values mean), and what are their the maxes, means, and medians (if applicable) 
+Don’t include tables or figures or statistics just to show you know how to use R - this is one of the most common mistakes students make. Your reader will be bored and the information is really not necessary unless it fits into the flow of your story in a critical way. You may be able to place the majority of descriptive statistics into an appendix if they don’t fit naturally into the flow of your text. Only include statistics, tables, and graphs that are clearly described in the text and fit into your overall story - any information that is only for reference shouldn’t play a prominent role in your storytelling flow.
+This section should be collapsed into the data description when possible, leaving a more seamless flow from Analysis Plan to Results.
+
+
+### Results: Analysis and Visualization
+(STORY) Any additional analysis details, and perhaps a backreference to your analysis plan from section 5. (not needed if section 6 is collapsed with sections 2-4)
+(CODE-Optional) Statistical Analyses: see “Role of Statistics”
+(CODE) Visualization
+You should organize your graphs and pictures by a small set of topics/questions
+There is no strict requirement on the number of graphs/figures you should make. However, we expect you to present sufficient graphs that are necessary to answer the question.
+(STORY) Interpret your analyses and visualization results for the reader
+What information do the analysis results or graphs tell you?
+You should describe the information of graphs comprehensively and detailed enough for readers to picture or envision the graphs in their brains.
+
+https://dacss.github.io/601_Fall_2022_final_posts/posts/final_project_Guanhua_Tan.html#painting-a-global-map
+
+### Conclusion and Discussion
+(STORY) Conclusion and Discussion 
+A brief summary of your work and your findings. What is (are) the answer(s) to your question?
+(optional) Discuss the limitation of your analyses and visualization; and what further analyses or visualizations you would conduct in the future
+
+
+### Bibliography
+Hint: at minimum, you should cite the source of the dataset and R as a programming language.
+	- Any citation style is appropriate since students come from diverse academic backgrounds. Please use whichever style is appropriate for your work.
+
+
+```{r}
 ######### all good up to this point.
 ######### sanity tests
 ######### make more pipelines
@@ -238,6 +311,12 @@ operatorSummaryDF <- allYearsDF_wide %>% # third and final df achievement unlock
 ## testers
 allYearsDF_wideACTION <- arrange(allYearsDF_wide, Action)
 allYearsDF_wideSELF <- arrange(allYearsDF_wide, desc(Self)) # checks out 
+
+# sanity check ... pass!
+callTypesDF %>%
+  group_by(town) %>%
+  summarise(selfSum = sum(as.numeric(self)), dispSum = sum(as.numeric(disp)), arriveSum = sum(as.numeric(avg_arrive)), sceneSum = sum(as.numeric(avg_time_at_scene)), .groups = 'drop')
+
 ```
 
 

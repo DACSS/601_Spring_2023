@@ -74,12 +74,12 @@ names(projectFiles_list) <- projectFiles
   # Therefore, the projectFiles_list structure is a nested: list[[list]][[dataframe]]. 
   # I want to mutate each df with its page number -- this corresponds to its nested list element index (j in list[[i]][[j]]) which 
   # is information that gets destroyed as soon as I map to an unnested list. I couldn't find a tidy solution to capturing that nested
-  # "sub" page id before the map, so I used a nested for loop to assign value to sub_page_id before appending my mapped/mutated df to
+  # "sub" page id before the map, so I used a nested for loop to assign value to innerpageid before appending my mapped/mutated df to
   # a new single-layer list.
 allYearsList <- list()
 for (i in seq_along(projectFiles_list)) { # seq_along(projectFiles_list) creates vector with a number value for each list element
   for (j in seq_along(projectFiles_list[[i]])) {
-    projectFiles_list[[i]][[j]] <- mutate(projectFiles_list[[i]][[j]], sub_page_id = j)
+    projectFiles_list[[i]][[j]] <- mutate(projectFiles_list[[i]][[j]], innerpageid = j)
   }
   allYearsList <- append(allYearsList, map2(projectFiles_list[[i]], 
                                             names(projectFiles_list[i]), 
@@ -90,10 +90,10 @@ for (i in seq_along(projectFiles_list)) { # seq_along(projectFiles_list) creates
   }
 
   # this bind_rows takes all of the df observations from many list elements and binds them together in a single df.
-  # abs_page_id is the 'page' number in an absolute sequence (1 to 78 in this case) rather than segmented by file (1 to 9, 1 to 7 etc.)
+  # outerpageid is the 'page' number in an absolute sequence (1 to 78 in this case) rather than segmented by file (1 to 9, 1 to 7 etc.)
 allYearsDF <- allYearsList %>%
-  bind_rows(.id = 'abs_page_id') %>% 
-  relocate(c(filename, sub_page_id), .after = abs_page_id) %>%
+  bind_rows(.id = 'outerpageid') %>% 
+  relocate(c(filename, innerpageid), .after = outerpageid) %>%
   filter(height == 11 & y > 13 & text != "Action:")
   
     # the above group_by and mutate, and the select(-row) below, are to resolve
@@ -103,7 +103,7 @@ allYearsDF <- allYearsList %>%
 
   # this creates a problem of staggered lines
 allYearsDF_wide <- allYearsDF %>% 
-  pivot_wider(id_cols = c(abs_page_id, filename, sub_page_id, y), names_from = x, values_from = text)
+  pivot_wider(id_cols = c(outerpageid, filename, innerpageid, y), names_from = x, values_from = text)
 
 # solution from https://stackoverflow.com/questions/45515218/combine-rows-in-data-frame-containing-na-to-make-complete-row
 # Supply lists by splicing them into dots:
@@ -112,17 +112,17 @@ coalesce_by_column <- function(df) {
 }
 
 allYearsDF_wide <- allYearsDF_wide %>%
-  mutate(abs_page_id = as.integer(abs_page_id))
+  mutate(outerpageid = as.integer(outerpageid))
 
 allYearsDF_wide <- allYearsDF_wide %>%
-  group_by(abs_page_id, filename, sub_page_id, y) %>% # I think abs_page_id and filename together are redundant
+  group_by(outerpageid, filename, innerpageid, y) %>% # I think outerpageid and filename together are redundant
   summarise_all(coalesce_by_column) %>%
   ungroup()
 # do I need to ungroup() ?
 
   # it will help to order columns by numeric order - they are the x coords from left to right. This looks for all non-alpha column names.
 numcols = sort(as.numeric(names(allYearsDF_wide)[!grepl("[a-z]", names(allYearsDF_wide))]))
-allYearsDF_wide <- select(allYearsDF_wide, abs_page_id, filename, sub_page_id, y, match(numcols, names(allYearsDF_wide))) 
+allYearsDF_wide <- select(allYearsDF_wide, outerpageid, filename, innerpageid, y, match(numcols, names(allYearsDF_wide))) 
   # now we have a df that is simply x:y coordinates of the page
   # time to smush cols together!
 allYearsDF_wide <- unite(allYearsDF_wide, "x5to52", c("5":"47"), sep = " ", na.rm = TRUE, remove = TRUE)
@@ -167,7 +167,7 @@ allYearsDF_wide <- allYearsDF_wide %>%
   rename_with(~ gsub("@", "at", .x, fixed = TRUE))
 
 allYearsDF_wide <- allYearsDF_wide %>%
-  filter(sub_page_id != 1 | y != 69 | call_reason != "Call_Reason") %>%
+  filter(innerpageid != 1 | y != 69 | call_reason != "Call_Reason") %>%
   filter(self != "Self_Init") %>%
   # sep filename into town and year
   separate_wider_regex(filename, c(town = "^[A-Za-z]+", year = "[0-9]{4}$")) %>%
@@ -179,13 +179,14 @@ allYearsDF_wide <- allYearsDF_wide %>%
 #  mutate_at(c('self':'avg_time_at_scene'), funs(str_replace(., "", '0')))
   # this doesn't work but I think I might not need it
 
-callTypesDF <- allYearsDF_wide %>% # I think this completes the first df
+callTypesDF <- allYearsDF_wide %>% # First df achievement unlocked
   filter(is.na(action)) %>% 
   filter(!grepl("total", call_reason, ignore.case = TRUE)) %>%
   filter(!is.na(self)) %>%
   select(-action) %>%
   mutate(call_reason = factor(call_reason)) %>%
-  mutate_at(c("self", "disp", "avg_arrive", "avg_time_at_scene"), as.numeric) %>%
+  mutate_at(c("self", "disp"), as.integer) %>%
+  mutate_at(c("avg_arrive", "avg_time_at_scene"), as.numeric) %>%
   mutate(avg_arrive = ifelse(is.na(avg_arrive), 0, avg_arrive)) 
 
 # sanity check ... pass!
@@ -193,12 +194,37 @@ callTypesDF %>%
   group_by(town) %>%
   summarise(selfSum = sum(as.numeric(self)), dispSum = sum(as.numeric(disp)), arriveSum = sum(as.numeric(avg_arrive)), sceneSum = sum(as.numeric(avg_time_at_scene)), .groups = 'drop')
 
-######### all good up to this point.
-######### To do:
-######### May need to trim
+callActionsDF <- allYearsDF_wide %>% # second df achievement unlocked
+  filter(!is.na(action)) %>%
+  filter(!grepl("total", call_reason, ignore.case = TRUE)) %>%
+  select(c(outerpageid:action))  %>%
+  separate_wider_regex(action, c(actionname = ".+", " = ", actioncount = ".*")) %>%
+  mutate(call_reason = factor(call_reason),
+         actionName = factor(actionname),
+         actioncount = str_squish(actioncount),
+         actioncount = as.integer(actioncount))
 
-callActionsDF <- allYearsDF_wide
-operatorSummaryDF <- allYearsDF_wide
+operatorSummaryDF <- allYearsDF_wide %>% # third and final df achievement unlocked
+  filter(!is.na(action)) %>%
+  filter(grepl("total", call_reason, ignore.case = TRUE)) %>%
+  mutate(opcategory = str_extract(action, "Sex|Race|Ethnicity")) %>%
+  fill(opcategory) %>%
+  filter(!grepl("total", action, ignore.case = TRUE)) %>%
+  rename(opid = action) %>%
+  select(c(outerpageid, town, year, innerpageid, y, opcategory, opid))  %>%
+  separate_wider_regex(opid, c(opid = "[A-Za-z/\\-\\s]+", opcount = "\\s[0-9]{1,3}", ".+")) %>%
+  mutate(opcategory = factor(opcategory),
+         opid = str_squish(opid),
+         opid = factor(opid),
+         opcount = str_squish(opcount),
+         opcount = as.integer(opcount))
+
+######### all good up to this point.
+######### sanity tests
+######### review rubrick
+
+
+
 
 ## testers
 allYearsDF_wideACTION <- arrange(allYearsDF_wide, Action)

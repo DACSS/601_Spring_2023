@@ -1,0 +1,140 @@
+---
+title: "Challenge 2"
+author: "Shaunak Padhye"
+description: "Data wrangling: using group() and summarise()"
+date: "05/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Shaunak Padhye
+  - faostat
+---
+
+## Setup
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+#| code-fold: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Read in the Data
+
+For this challenge I will be using the birds.csv dataset.
+
+```{r}
+birds <- read_csv("_data/birds.csv")
+head(birds)
+```
+
+Lets print out the Column names to check which columns we are interested in.
+
+```{r}
+colnames(birds)
+```
+All the Columns that contain "Code" in them can be removed as we have the normal columns as well. For example, since we have the "Area" column, we can remove the "Area Code" column.
+
+Now, lets go through the unique values of certain columns to see if we need them.
+
+```{r}
+unique(birds$`Flag Description`)
+```
+The "Flag Description" and "Flag" columns give us information about the manner of data collection and the authenticity of the data and can be removed for our analysis.
+
+```{r}
+unique(birds$Unit)
+```
+
+```{r}
+unique(birds$Domain)
+```
+The "Unit" and "Domain" columns contain only one unique value and hence can be removed.
+
+Now we will take a subset of the data with only the columns that we require and perform our analysis.
+```{r}
+birds_subset <- birds[c( "Area", "Element", "Item", "Year", "Value")]
+head(birds_subset)
+```
+
+```{r}
+birds_subset <- na.omit(birds_subset)
+```
+
+
+## Describe the data
+
+By looking at the data we can infer that it is about the stock of various poultry birds for major Areas in the world, for each year. Lets take an example of a row in the data set:
+```{r}
+birds_subset[1,]
+```
+This shows that, for the year 1961, the stock of poultry Chickens in Afghanistan was 4700.
+
+```{r}
+#| label: summary
+summary(birds_subset)
+```
+From the above summary we see that the range of years in this data set goes from 1961 to 2018.
+
+We will now check the unique values for the other columns:
+Areas:
+
+```{r}
+length(unique(birds_subset$Area))
+```
+Items:
+```{r}
+unique(birds_subset$Item)
+```
+
+
+## Grouped Summary Statistics
+
+### Analysis of Items
+
+We will first group the data by Items to see which Poultry Item has been more popular. We will sort it by descending order
+
+```{r}
+birds_subset%>%
+  group_by(Item)%>%
+  summarise(Avg_stocks = mean(Value))%>%
+  arrange(desc(Avg_stocks))
+```
+We can see that Chickens have been the most popular Poultry Item across the world as its stock is significantly higher than the other items. The sum of the stocks of all other items is also less than the stock for Chickens.
+
+### Analysis of Areas
+
+```{r}
+birds_subset%>%
+  filter(Year==2010)%>%
+  group_by(Area)%>%
+  summarise(Total_stocks = sum(Value))%>%
+  arrange(desc(Total_stocks))
+```
+Here, we can see that the larger continental areas, have a larger stock. This makes sense as the aggregate population of a continent will be greater than that of a country and will have higher consumption.
+
+**Asia** has the highest poultry consumption. This could be due to the high population density in Asia which adds to the higher consumption.
+
+**United States of America** is the country with the highest poultry consumption, while **Falkland Islands (Malvinas)** has the lowest consumption.
+
+### Analysis by decade
+
+We can see the trends of poultry as we go through various decades.
+```{r}
+birds_subset %>%
+  mutate(Decade = 10 * floor(Year / 10)) %>%
+  group_by(Item,Decade) %>%
+  summarise(Avg_stocks = mean(Value),
+            Median_stocks = median(Value),
+            Standard_Deviation = sd(Value))
+```
+Here we observe that for each Item, the consumption has gradually increased over the decades. The increase in standard deviation tells us that a few countries are consuming a large chunk of the poultry in the World

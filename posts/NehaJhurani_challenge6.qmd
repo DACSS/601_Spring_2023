@@ -1,0 +1,65 @@
+---
+title: "Visualizing time and relationship trends in a dataset"
+author: "Neha Jhurani"
+desription: "Using ggplot2 to visualize: hotel_bookings.csv"
+date: "05/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge6
+  - Neha Jhurani
+  - hotel_bookings.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Visualizing Hotel Booking Dataset
+
+```{r}
+library(readr)
+
+#reading hotel_bookings csv data
+hotel_bookings_data <- read_csv("_data/hotel_bookings.csv")
+
+summary(hotel_bookings_data)
+
+#The data shows the hotel bookings and their corresponding prices in NYC. The data is about only two hotels - Resort Hotel and City Hotel with three reservation status values - checked-out/ cancelled/ No-Show
+
+#extracting all the column names - It has 32 columns
+colnames(hotel_bookings_data)
+
+#To plot the reservation trend at every month, I am creating a new column "arrival-year-month"
+hotel_bookings_data <- hotel_bookings_data %>% 
+  mutate(date_year = paste0(arrival_date_month," ",arrival_date_day_of_month," ",arrival_date_year))
+
+# Time Dependent Visualization for reservation trend at Resort Hotel
+resort_hotel_reservations <- hotel_bookings_data %>% 
+  filter(reservation_status=="Check-Out",hotel=="Resort Hotel") %>% select(date_year)
+resort_hotel_reservations <- resort_hotel_reservations %>% mutate(reservation_count=1)
+resort_hotel_reservations <- resort_hotel_reservations %>% group_by(date_year) %>% summarise_all(sum)
+resort_hotel_reservations <- resort_hotel_reservations %>% mutate(full_date=as.Date(resort_hotel_reservations$date_year,format="%B %d %Y"))
+
+resort_hotel_reservations %>% ggplot(aes(x=full_date,y=reservation_count)) + geom_line() + xlab("Date") + ylab("Count of reservations")+labs(title="Number of reservations trend for Resort Hotel")
+
+# Visualizing Part-Whole Relationships - Showing the trend between the months and the mean waiting days associated with it
+grouped <- hotel_bookings_data %>% 
+  select(arrival_date_month,days_in_waiting_list) %>% 
+  group_by(arrival_date_month) %>% 
+  summarise_all(max) %>% 
+  mutate(month=as.Date(paste(arrival_date_month,"-01-2021",sep=""),"%B-%d-%Y"))
+grouped %>% ggplot(aes(month,days_in_waiting_list))+geom_line() +scale_x_date(date_labels = "%B",date_breaks = "1 month")+ labs(title="max days in waiting list per month")
+# We can see a peak in waiting days during summer and winter times representing the holiday season when people mostly travel.
+
+```

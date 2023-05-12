@@ -1,0 +1,502 @@
+---
+title: "Final Project Assignment"
+author: "Lauren Zichittella"
+description: "Trends in VAERS Reporting for Influenza Vaccine, 2017- 2021"
+date: "05/02/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_project
+  - laurenzichittella
+  - VAERS
+  - vaccine_safety
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Trends in VAERS Reporting for Influenza Vaccine, 2017- 2021
+
+This study explores the use of the Vaccine Adverse Event Reporting System (VAERS) to measure vaccine bias in the United States, by comparing reporting rates with coverage rates for vaccines with proven safety and efficacy. VAERS is a system established by the Centers for Disease Control and Prevention (CDC) and Food and Drug Administration (FDA) to monitor the safety of vaccines licensed in the United States. The influenza vaccine was chosen as the exposure for analysis, and trends associated with it between 2017 and 2021 were analyzed. Reports for this exposure and time period were first analyzed to understand their distribution across demographic and adverse event groups and across reporting years. Reporting rates were then calculated and analyzed alongside coverage rates by state to identify regions with reporting rates that did not positively correlate with coverage. This study provides insights into the potential of VAERS to measure vaccine bias in the United States and has implications for future vaccine safety monitoring efforts.
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+library(stringr)
+library(forcats)
+library(maps)
+library(ggthemes)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+# Introduction 
+
+VAERS, jointly established by the Centers for Disease Control and Prevention (CDC) and the Food and Drug Administration (FDA), is a system designed to monitor the safety of vaccines licensed in the United States. It receives reports of adverse events associated with vaccination, which are then analyzed to identify signals that warrant further investigation. These reports are voluntarily submitted by the public, including patients, healthcare professionals, manufacturers, and guardians, among others, and are only excluded if they contain blatantly false information. VAERS can also be used to measure vaccine bias in the US by comparing reporting rates with coverage rates for vaccines with proven safety and efficacy.
+
+In this study, we analyzed trends associated with the influenza vaccine between 2017 and 2021, considering its extensive use and well-established safety and efficacy profile. We first analyzed the distribution of reports for this exposure and time period across select demographic and adverse event groups and reporting years. Next, we calculated reporting rates using publicly available data from the CDC website and analyzed them alone and alongside coverage rates by state to identify regions with reporting rates that did not positively correlate with coverage. This allowed us to identify states that are more likely to report safety concerns while having lower vaccination rates. Our analysis sheds light on the potential of VAERS as a tool for measuring vaccine bias and highlights the need for continued monitoring of vaccine safety.
+
+```{r}
+#  ----------------------- Code chunk 1 -----------------------------------
+#  Import raw VAERS data, process, and combine to create one dataset for all report years
+
+# FUNCTION - import VAERS vax table
+read_vaersvax <- function(dir_path, file_year){
+    read_csv(   paste0(dir_path, file_year, 'VAERSVAX.csv')
+                , col_types = cols(  col_integer()	 
+                                   , col_character()	 
+                                   , col_character()	 
+                                   , col_character()	 
+                                   , col_character()	 	 
+                                   , col_character()	 
+                                   , col_character()	 
+                                   , col_character())) %>% 
+        mutate(  VAERS_YEAR= file_year)%>%
+            filter(str_detect(VAX_TYPE, fixed("FLU", ignore_case=TRUE)))%>%
+                group_by(VAERS_YEAR, VAERS_ID)%>% 
+                   summarise(n_fluvax = n())   }
+
+# FUNCTION - import VAERS patient table
+read_vaersdata <- function(dir_path, file_year){
+    read_csv(  paste0(dir_path, file_year, 'VAERSDATA.csv') 
+               , col_types = cols(  col_integer()
+                                  , col_date(format= "%m/%d/%Y")
+                                  , col_character()
+                                  , col_double()
+                                  , col_integer()
+                                  , col_double()
+                                  , col_character()
+                                  , col_date(format= "%m/%d/%Y")
+                                  , col_character()
+                                  , col_character()
+                                  , col_date(format= "%m/%d/%Y")
+                                  , col_character()
+                                  , col_character()
+                                  , col_character()
+                                  , col_integer()
+                                  , col_character()
+                                  , col_character()
+                                  , col_character()
+                                  , col_date(format= "%m/%d/%Y")
+                                  , col_date(format= "%m/%d/%Y")
+                                  , col_integer()
+                                  , col_character()
+                                  , col_character()
+                                  , col_character()
+                                  , col_character()
+                                  , col_character()
+                                  , col_character()
+                                  , col_character()
+                                  , col_character()
+                                  , col_integer()
+                                  , col_date(format= "%m/%d/%Y")
+                                  , col_character()
+                                  , col_character()
+                                  , col_character()
+                                  , col_character() )) %>% 
+        mutate(  AGE_GROUP = case_when(  AGE_YRS >= 0  & AGE_YRS <= 17 ~ ' < 18 years'
+                                       , AGE_YRS >= 18 & AGE_YRS <=64 ~ '>= 18 years' 
+                                       , TRUE ~ NA_character_)
+                , STATE    = str_to_upper(STATE)
+               , VAX_YEAR  = year(VAX_DATE) 
+               , SEVER_AE  = case_when( HOSPITAL=="Y"| DIED =="Y" |L_THREAT =="Y"|DISABLE=="Y" ~'SEVERE', TRUE ~ 'NOT SEVERE/UNKNOWN'))%>% 
+            select (VAERS_ID, STATE, AGE_GROUP, SEX, VAX_YEAR,SEVER_AE)} 
+
+# FUNCTION - join VAERS vax and patient table and summarize 
+join_vaers<- function(dir_path, file_year) {
+   
+      left_join(read_vaersvax(dir_path, file_year)
+              , read_vaersdata(dir_path, file_year)
+              , by =c("VAERS_ID") )  %>%
+      group_by(VAERS_YEAR, VAX_YEAR, STATE, AGE_GROUP, SEX, SEVER_AE) %>%
+         summarise(vaers_reports = n())  }
+
+# Define location of project data and create analysis dataset by importing, processing, and combining files 
+dir_path <- 'laurenzichittella_finalprojectdata/'
+base_vaers  <-
+     bind_rows(  join_vaers(dir_path, 2017)
+               , join_vaers(dir_path, 2018)
+               , join_vaers(dir_path, 2019)
+               , join_vaers(dir_path, 2020)
+               , join_vaers(dir_path, 2021))
+
+```
+# Data Description
+
+The VAERS database contains unique reports with supporting information on vaccinated individuals, type of exposure, and adverse events. Data for years 1990-2023 are publicly available, partitioned by year. To maximize the number of report years analyzed and minimize computing space, original cases were not preserved, and instead, data was filtered, summarized, and combined during import. A dataset was created for report years 2017-2021 with VAERS reports grouped by age, sex, state, year/month of vaccination, and severity of adverse event. Of the 54,131 reports associated with influenza vaccine, some had missing information, but all records were retained except for reports with unknown state. Despite more missing data in 2020, the focus of the project was on analyzing rates rather than quality of reports.
+
+In the analyzed dataset, a total of 54,131 VAERS reports were included that were associated with influenza vaccine. However, a significant portion of these reports had missing information, including 22,929 reports with no age information, 9,547 reports with an unknown state, 4,616 reports with an unknown sex, and 6,369 reports with no vaccination date. The percentage of missing data was found to be higher in 2020 compared to other years. Nevertheless, all records were included in the analysis except for reports with unknown state information (n=9,547), as the primary focus of this evaluation was based on geographic location. The aim of this project was to assess the reporting rates of adverse events associated with influenza vaccine, rather than the completeness of individual reports.
+
+```{r}
+#  ----------------------- Code chunk 2 -----------------------------------
+#  Output basic descriptives for analysis dataset including:
+#  columns, rows, VAERS records, records with missing values by variable 
+
+# Extract column names, sample print, number rows, number of VAERS reports captured 
+   colnames(base_vaers)
+   head(base_vaers)
+   nrow(base_vaers)
+   sum(base_vaers$vaers_reports)
+
+# FUNCTION - output count of reports with missing values per variable 
+   missing_sum <- function(x) {
+      
+      missing <- base_vaers %>%
+                 filter(is.na({{x}}))
+      sum(missing$vaers_reports)
+      }
+# Execute function to get report counts with missing age, state, and vaccine date information 
+missing_sum(AGE_GROUP)      
+missing_sum(STATE)      
+missing_sum(VAX_YEAR)
+   
+#Get of reports by Sex variable value 
+base_vaers %>%
+   group_by(SEX)%>%
+   summarise(vaers_reports = sum(vaers_reports))
+
+
+   
+
+```
+# Results
+
+## Distribution of VAERS Reports by Report Year
+
+The number of VAERS reports remained relatively stable from 2017 to 2021, with a slight increase in 2020 followed by a decrease in 2021. However, the increase in 2020 may be due to a higher percentage of reports with missing information compared to other years. The decrease in 2021 may be attributed to the exclusion of report year 2022 in the analysis, which would include vaccines administered in 2021, as shown in the graph of reports by vaccine and report year. The majority of reports were filed in the same year as vaccination, indicating a tight coupling between reporting and vaccination timing. The distribution of remaining characteristic variables remained constant over time. However, rates of missingness were more pronounced in 2020 across all variables where missing values were allowed, which requires further investigation to determine the reason for this increase.
+
+```{r}
+#  ----------------------- Code chunk 3 -----------------------------------
+#  Distribution by reports by select variables 
+
+# Plot the number of reports by report year
+base_vaers %>% 
+  group_by(VAERS_YEAR) %>%
+  summarise(vaers_reports = sum(vaers_reports)) %>%
+     ggplot(aes(x = factor(VAERS_YEAR), y = vaers_reports, fill = factor(VAERS_YEAR))) +
+     geom_col() + 
+     labs(title = "Figure 1 - Number of VAERS Reports by Year",
+          x     = "Report Year",
+          y     = "Number of Reports", 
+          fill  = "Report Year" ) 
+
+# Plot the number of reports by vaccination date year part 
+base_vaers %>%
+   mutate(VAX_YEAR = if_else(is.na(VAX_YEAR), "Missing", if_else(VAX_YEAR >= 2014, as.character(VAX_YEAR), "2013 or earlier"))) %>%
+   group_by(VAERS_YEAR, VAX_YEAR) %>%
+   summarise(vaers_reports = sum(vaers_reports)) %>%
+   mutate(VAX_YEAR = fct_relevel(VAX_YEAR, "Missing", "2013 or earlier")) %>%
+      ggplot(aes(x = VAX_YEAR, y = vaers_reports, fill = factor(VAERS_YEAR))) + 
+      geom_col() +       
+      labs(title = "Figure 2 - Number of VAERS Reports by Year of Vaccination and Report Year",
+           x     = "Vaccine Year",
+           y     = "Number of Reports",
+           fill  = "Report Year")+
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+# Output piechart of missing vax year counts by VAERS report year
+base_vaers %>% 
+  filter(is.na(VAX_YEAR))  %>%  
+  group_by(VAERS_YEAR) %>% 
+  summarize(missing_vaxyear = sum(vaers_reports)) %>%
+  ggplot(aes(x = "", y = missing_vaxyear, fill = as.factor(VAERS_YEAR))) +
+    geom_bar(stat = "identity", width = 1) +
+    geom_text(aes(label = missing_vaxyear), position = position_stack(vjust = 0.5)) +  
+    coord_polar(theta = "y") +    
+    labs(title = "Figure 3 -Missing Values of Vaccination Year by Report Year",
+         x = NULL,
+         y = NULL,
+         fill = "Report Year") +
+    theme_void() +
+    theme(legend.position = "bottom")
+
+#Distribution of reports by report year and age group
+base_vaers %>%
+   mutate(AGE_GROUP = if_else(is.na(AGE_GROUP), "Missing", AGE_GROUP)) %>%
+      group_by(VAERS_YEAR, AGE_GROUP) %>%
+         summarise(vaers_reports = sum(vaers_reports)) %>% 
+            ggplot(aes(x = VAERS_YEAR, y = vaers_reports, fill = AGE_GROUP)) + 
+            geom_col() +      
+            labs(title = "Figure 4 - Number of VAERS Reports by Report Year and Age Group",
+                 x     = "Report Year",
+                 y     = "Number of Reports",
+                 fill  = "Age Group") +
+            theme(axis.text.x = element_text(angle = 90, hjust = 1))  +
+            facet_wrap(~AGE_GROUP, scales = "fixed", ncol = 3)
+
+# Piechart of missing AGE_GROUP counts by VAERS report year
+base_vaers %>% 
+  filter(is.na(AGE_GROUP))  %>%  
+  group_by(VAERS_YEAR) %>% 
+  summarize(missing_age = sum(vaers_reports)) %>%
+  ggplot(aes(x = "", y = missing_age, fill = as.factor(VAERS_YEAR))) +
+    geom_bar(stat = "identity", width = 1) +
+    geom_text(aes(label = missing_age), position = position_stack(vjust = 0.5)) +    
+    coord_polar(theta = "y") +    
+    labs(title = "Figure 6 - Missing Values of Age by Report Year",
+         x = NULL,
+         y = NULL,
+         fill = "Report Year") +
+    theme_void() +
+    theme(legend.position = "bottom")
+
+#Distribution of reports by report year and sex
+base_vaers %>% 
+   group_by(VAERS_YEAR, SEX) %>%
+   summarise(vaers_reports = sum(vaers_reports)) %>% 
+   ggplot(aes(x = VAERS_YEAR, y = vaers_reports, fill = SEX)) + 
+      geom_col(position = "dodge") +    
+      labs(title = "Figure 7 - Number of VAERS Reports by Report Year and Sex",
+           x     = "Report Year",
+           y     = "Number of Reports",
+           fill  = "Sex") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1))  +
+      facet_wrap(~SEX, scales = "fixed", ncol = 3)
+
+
+#Distribution of reports by report year and severe AE status 
+base_vaers %>% 
+  group_by(VAERS_YEAR, SEVER_AE) %>%
+  summarise(vaers_reports = sum(vaers_reports)) %>% 
+  ggplot(aes(x = VAERS_YEAR, y = vaers_reports, fill = SEVER_AE)) + 
+     geom_col() + 
+     facet_wrap(~SEVER_AE, ncol = 2, scales = "free_y") +    
+     labs(title = "Figure 8 - Number of Reports by Year and Severity of Adverse Event",
+          x = "Report Year",
+          y = "Number of Reports",
+       fill = "Severe Adverse Event Status") +
+     theme(axis.text.x = element_text(angle = 90, hjust = 1))  +
+     guides(fill = FALSE)
+
+```  
+## Distribution of VAERS Reports by State
+
+
+This section of the analysis focuses only on the states within the continental United States, resulting in the removal of 9,743 VAERS reports, which accounts for roughly 22% of the records.
+
+The majority of reports for all years combined were attributed to California, Texas, Florida, New York, and Pennsylvania, which remained in the top 5 states throughout the study period. However, the trend for these states differed from the overall population as their counts remained relatively constant until 2020 and decreased going into 2021, primarily due to the exclusion of reports with missing state information in this analysis. Although the higher report counts for these states are likely due to their larger population sizes, further investigation is required to normalize the measures.
+
+```{r}
+#  ----------------------- Code chunk 4 -----------------------------------
+# Distribution by state with mapped results 
+
+# Prep data to create map 
+   # Create a crosswalk to link abbreviation in source to full state name in map file
+   state_lookup <- data.frame(state            = toupper(state.abb),
+                              state_name       = state.name,
+                              stringsAsFactors = FALSE)
+
+   # Update VAERS source to add state name, convert to lower for join
+   base_vaers_map <- base_vaers %>%
+      mutate(STATE = ifelse(STATE == 'DC', 'MD', STATE)) %>%
+      left_join(state_lookup, by = c("STATE" = "state")) %>%
+      filter(!is.na(state_name))%>%
+      mutate(state_name = tolower(state_name))
+   
+   #  Calculate n and % records removed because of missing, non-continental, or non matching states   
+   sum(base_vaers$vaers_reports) -  sum(base_vaers_map$vaers_reports)
+
+   (sum(base_vaers$vaers_reports) -     sum(base_vaers_map$vaers_reports))/sum(base_vaers_map$vaers_reports)*100
+   
+   # Load map data
+   map_data <- map_data("state")
+
+   # Join map to VAERS
+   vaers_map <- base_vaers_map %>%
+      group_by(state_name) %>%
+      summarise(vaers_reports = sum(vaers_reports)) %>%
+      left_join(map_data, by = c("state_name" = "region"))
+   
+# Plot distribution of total counts across continental US
+ggplot(vaers_map, aes(x = long, y = lat, group = group, fill = vaers_reports)) +
+   geom_polygon() +
+   scale_fill_gradient(low = "lightpink", high = "red", name = "VAERS Reports") +
+   labs(title = "Figure 9 - Number of Reports by State",
+        subtitle = "Report Years 2017 - 2021 Combined",
+        fill = "Number of Reports")+
+   labs(fill = "") +
+   theme(panel.background = element_blank(), axis.line = element_blank())
+   
+# Evaluate distribution of top 5 states over time    
+topn_states <- base_vaers_map %>%
+   group_by(state_name) %>%
+   summarise(total_vaers_reports = sum(vaers_reports)) %>%  
+   arrange(desc(total_vaers_reports)) %>%
+   mutate(rank = rank(-total_vaers_reports))%>%
+   left_join(base_vaers_map, by = c("state_name"))
+   
+# FUNCTION - graph trends over report year by each state highlighted versus others in grey
+state_dist_year <- function(state, figure) {
+  topn_states %>%
+    group_by(state_name, VAERS_YEAR) %>%
+    summarise(vaers_reports = sum(vaers_reports))  %>%  
+    mutate(highlight = ifelse(state_name == state, "Highlighted", "Other")) %>%  
+       ggplot( aes(x=VAERS_YEAR, y=vaers_reports, group=state_name, color=highlight)) +
+       geom_line() +
+       scale_color_manual(values = c("Highlighted" = "red", "Other" = "lightgrey")) +
+       scale_size_manual(values=c(1.5,0.2)) +
+       theme(legend.position="none") +
+       ggtitle(paste0(figure, "Reports Counts 2017 - 2021, ", str_to_title(state))) +
+       labs( x = "Report Year",
+             y = "Number of Reports")
+}
+ 
+# Execute funtion for top 5 states with highest counts of VAERS reports 
+state_dist_year("california", "Figure 10 - ")  
+state_dist_year("new york", "Figure 11 - ")    
+state_dist_year("florida", "Figure 12 - ")   
+state_dist_year("pennsylvania", "Figure 13 - ")   
+state_dist_year("texas", "Figure 14 - ")  
+
+```
+## Correlation between Reporting and Coverage Rates by State
+
+To account for differences in population size, subsequent analysis steps utilized rates of VAERS reporting and influenza vaccine coverage. Influenza vaccine coverage rates were obtained from previously published CDC data. VAERS reporting rates were calculated as the number of reports per 10,000 influenza vaccinations.
+
+Comparing the rates by region for the entire study period, it is evident that reporting rates and coverage are positively correlated, which explains the previously noted higher report counts in California, Texas, New York, and Pennsylvania. However, this is not the case for all states, with Alaska, Wyoming, and Vermont showing higher reporting rates than other states with similar coverage rates (not mapped but shown in the scatter plot). Additionally, VAERS reporting rates for severe adverse events are higher in Alaska and Wyoming compared to other states. Conversely, Massachusetts and Rhode Island have low report rates despite having the highest coverage rates relative to other states.
+
+```{r}
+#  ----------------------- Code chunk 5 -----------------------------------
+# Normalized report 
+
+#Import and reformat flu coverage data 
+flu_coverage <- 
+read_csv("laurenzichittella_finalprojectdata/Influenza_Vaccination_Coverage_for_All_Ages__6__Months_.csv" 
+, col_names = c("del", "del", "state_name", "del", "season", "del", "del", "age_group", "cvg_rate", "del", "del"))%>%
+   select(!contains("del")) %>%
+   filter(  season %in% c('2016-17', '2017-18', '2018-19', '2019-20', '2020-21')
+          , (!str_detect(state_name, 'Region'))
+          , state_name != 'United States'
+          , age_group %in% c('≥6 Months'))%>%
+   mutate(  measure = "cvg_rate"
+          , year = as.numeric(substr(season, 1, 4)) + 1
+          , value = as.numeric(if_else(cvg_rate=="NR †", "0", cvg_rate))
+          , state_name = tolower(state_name)
+          , state_name = ifelse(state_name == 'district of columbia', 'maryland', state_name))%>%     
+   filter(value > 0)%>%
+   group_by(state_name, year, measure)%>%
+   summarise(value = max(value))%>%
+   group_by(state_name, measure)%>%   
+   summarise(value = mean(value)) 
+ 
+
+#Import and reformat 2019 pop estimate table 
+population_2019 <- read_csv( "laurenzichittella_finalprojectdata/SCPRC-EST2019-18+POP-RES.csv"
+                            , skip =2
+                            , col_names = c("del", "del", "del", "del", "state_name", "pop2019", "popadult2019", "del"))%>%
+   select(!contains("del")) %>%
+   filter(  state_name != 'United States' 
+          , state_name != 'Puerto Rico Commonwealth')%>%
+   mutate(  state_name = tolower(state_name)
+          , state_name = ifelse(state_name == 'district of columbia', 'maryland', state_name)   
+          , measure    = 'population'
+          , value      = pop2019)%>%
+   group_by(state_name, measure)%>%
+   summarize(value = sum(value))
+         
+# Prep VAERS data for combining 
+premerge_n <- base_vaers_map%>%
+   mutate(  state = tolower(state_name)
+          , measure = "vaers_reports")%>%
+   group_by(state_name, measure)%>%
+   summarise(value = sum(vaers_reports))%>%
+   mutate(value = as.double(value))%>% 
+   group_by(state_name, measure)%>%
+   summarize(value = mean(value))
+
+# Combine population, vax rate, and vaers counts data - pivot wider to calculate reporting rate by state
+combine_measures <-
+   bind_rows(  flu_coverage
+              , population_2019
+              , premerge_n)%>%
+   pivot_wider(names_from = measure, values_from = value)%>%
+   mutate(  vax_n = ((cvg_rate*population)/100)
+          , rpt_rate10000 = (vaers_reports/vax_n)*10000)
+
+   
+combine_measures%>%
+left_join(map_data, by = c("state_name" = "region"))%>%
+ggplot(aes(x = long, y = lat, group = group, fill = cvg_rate)) +
+      geom_polygon() +
+      scale_fill_gradient(low = "yellow", high = "red", name = "Coverage Rate") +
+      labs(title = "Figure 15 - Mean Influenza Coverage Rate, 2017 - 2021", 
+           fill = "Coverage Rate")+
+      labs(fill = "") +
+      theme(panel.background = element_blank(), axis.line = element_blank()) 
+      
+combine_measures%>%
+left_join(map_data, by = c("state_name" = "region"))%>%
+ggplot(aes(x = long, y = lat, group = group, fill = rpt_rate10000)) +
+      geom_polygon() +
+      scale_fill_gradient(low = "yellow", high = "red", name = "Report Rate") +
+      labs(title = "Figure 16 -  Adverse Event Report Rates per 10,000, 2017 - 2021", 
+           fill = "Report Rate")+
+      labs(fill = "") +
+      theme(panel.background = element_blank(), axis.line = element_blank())
+
+
+# Plot report n by highest ranking states over report period
+# linear trend + confidence interval
+ggplot(combine_measures, aes(x=cvg_rate, y=rpt_rate10000)) +
+  geom_point() +
+  geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
+  geom_label(data=combine_measures %>% filter((rpt_rate10000>3.5&cvg_rate<43)|rpt_rate10000>4.5|cvg_rate>56), 
+             aes(label = state_name),
+             nudge_x = 0.5,
+             nudge_y = 0.3,
+             angle = 45) +
+  xlab("Influenza Coverage Rate") +
+  ylab("VAERS Reporting Rate per 10,000") +
+  ggtitle("Figure 17 - Relationship between Influenza Coverage and Adverse Event Reporting Rates, 2017 - 2021")
+
+# Prep VAERS data for combining 
+premerge_n_severe <- base_vaers_map%>%
+   filter(SEVER_AE == "SEVERE")%>%
+   mutate(  state = tolower(state_name)
+          , measure = "severevaers_reports")%>%
+   group_by(state_name, measure)%>%
+   summarise(value = sum(vaers_reports))%>%
+   mutate(value = as.double(value))%>% 
+   group_by(state_name, measure)%>%
+   summarize(value = mean(value))
+
+# Combine population, vax rate, and vaers counts data - pivot wider to calculate reporting rate by state
+combine_measures2 <-
+   bind_rows(  flu_coverage
+              , population_2019
+              , premerge_n
+              , premerge_n_severe)%>%
+   pivot_wider(names_from = measure, values_from = value)%>%
+   mutate(  vax_n = ((cvg_rate*population)/100)
+          , severe_rate10000  = (severevaers_reports/vax_n)*10000
+          , rpt_rate10000 = (vaers_reports/vax_n)*10000)
+
+ggplot(combine_measures2, aes(x=cvg_rate, y=severe_rate10000)) +
+  geom_point() +
+  geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
+  xlab("Influenza Coverage Rate") +
+  ylab("Severe VAERS Reporting Rate per 10,000")+
+  geom_label(data=combine_measures2 %>% filter(severe_rate10000>.25), 
+             aes(label = state_name),
+             nudge_x = 0.5,
+             nudge_y = 0.5,
+             angle = 45) +
+  ggtitle("Figure 18 - Relationship between Influenza Coverage and Severe Adverse Event Reporting Rates, 2017 - 2021")
+   
+```   
+# Conclusion
+
+In conclusion, this analysis used VAERS data to investigate influenza vaccine safety reporting in the United States from 2017 to 2021. The study found that the number of reports in 2020 was higher than other years, but with a higher percentage of missing data. The majority of reports were filed in the same year of vaccination, and the distribution of characteristic variables remained constant over time.
+
+When analyzing the data by state, California, Texas, Florida, New York, and Pennsylvania had the highest number of reports, likely due to their larger population size. However, after controlling for population size using rates of report and influenza vaccine coverage, it became clear that there were variations among states. For instance, Alaska and Wyoming had higher reporting rates for severe adverse events compared to other states, while Massachusetts and Rhode Island had low reporting rates despite having higher coverage than other states.
+
+Overall, this analysis demonstrates the importance of investigating VAERS data to identify potential safety concerns related to vaccines. However, further research is required to understand the factors contributing to variations in reporting rates among different states.

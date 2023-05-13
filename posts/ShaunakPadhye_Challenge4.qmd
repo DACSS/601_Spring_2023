@@ -1,0 +1,112 @@
+---
+title: "Challenge 4"
+author: "Shaunak Padhye"
+description: "More data wrangling: pivoting"
+date: "05/13/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - Shaunak Padhye
+  - hotel_bookings
+---
+
+## Setup
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+#| code-fold: false
+
+library(tidyverse)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+We will be using the following dataset for this challenge:
+
+-   hotel_bookings.csv⭐⭐⭐⭐
+
+```{r}
+bookings <- read.csv("_data/hotel_bookings.csv")
+head(bookings)
+```
+
+### Briefly describe the data
+
+```{r}
+dim(bookings)
+```
+
+```{r}
+colnames(bookings)
+```
+This dataset contains the booking details for a number of hotels. This is a very comprehensive dataset having 32 variables. It covers various details such as the details of the booking party (adults, children, babies, meal, country, etc), details of the hotel(hotel, reserved room type, assigned room type, etc) and details of the booking itself(arrival date details, reservation status details, etc).
+
+## Tidy Data (as needed)
+
+We can do some simple checks to see if the dataset is tidy. Lets check if there are any duplicate rows or null values in the dataset
+
+```{r}
+#| code-fold: false
+print(anyDuplicated(bookings) == 0)
+print(sum(is.na(bookings)) == 0)
+```
+
+We can see that there are no duplicate rows or null rows. The dataset is tidy.
+
+## Identify variables that need to be mutated
+
+We can see that the arrival details have been split into 4 columns:
+```{r}
+grep("arrival",names(bookings), value = TRUE)
+```
+
+
+Instead we can convert this into a single variable which will hold the arrival date in a standard format. In this case we will convert it to the same format as "reservation_status_date" variable (YYYY-MM-DD).
+
+```{r}
+bookings$date_str <- paste(bookings$arrival_date_year, bookings$arrival_date_month, bookings$arrival_date_day_of_month, sep = "-")
+
+bookings$arrival_date <- as.Date(bookings$date_str, format = "%Y-%B-%d")
+
+bookings <- bookings[, !(names(bookings) %in% "date_str")]
+
+head(select(bookings, arrival_date, reservation_status_date))
+```
+
+Now we can remove the original 4 arrival variables:
+```{r}
+bookings <- select(bookings, -arrival_date_year, -arrival_date_month, -arrival_date_week_number, -arrival_date_day_of_month)
+colnames(bookings)
+```
+The lead_time variable tells us the number of days between the reservation date and the arrival date. Therefore, using the lead_time variable, we can add a variable to store the day the reservation was made.
+
+```{r}
+bookings$reservation_booking_date <- bookings$arrival_date - days(bookings$lead_time)
+head(select(bookings, lead_time, arrival_date, reservation_booking_date))
+```
+
+We can look at the final dataset after the mutations:
+```{r}
+colnames(bookings)
+```
+
+With this our dataset has been mutated to a more convenient format for further analysis.

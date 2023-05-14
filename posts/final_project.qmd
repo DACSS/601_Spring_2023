@@ -1,0 +1,260 @@
+---
+title: "Final Project"
+author: "Xinyang Mao"
+description: "Project & Data Description"
+date: "05/12/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Introduction
+
+Every year the lives of approximately 1.3 million people are cut short as a result of a road traffic crash. Between 20 and 50 million more people suffer non-fatal injuries, with many incurring a disability as a result of their injury.
+
+Road traffic injuries cause considerable economic losses to individuals, their families, and to nations as a whole. These losses arise from the cost of treatment as well as lost productivity for those killed or disabled by their injuries, and for family members who need to take time off work or school to care for the injured. Road traffic crashes cost most countries 3% of their gross domestic product.
+
+In 2020, a total of 35,766 fatal car accidents occurred on roadways across the United States. Another 1,593,390 crashes resulted in injuries and 3,621,681 caused property damage. That means a total of 5,250,837 collisions happened over the course of a single year.Road crashes are the single greatest annual cause of death of healthy U.S. citizens travelling abroad.
+
+source:
+https://www.who.int/news-room/fact-sheets/detail/road-traffic-injuries
+https://www.forbes.com/advisor/legal/car-accident-statistics/
+
+The goal of this project is to analyze these data statistically, to find the states with the most accidents, and to explore when accidents are likely to occur, the weather conditions at the time of the accident, and to visualize this: to summarize the information obtained from the analysis, to tell the overall picture of accidents in the United States, and to identify the factors that influence the occurrence of accidents and the severity of accidents.
+
+## Describe the data set(s)
+
+This part contains both a coding and a storytelling component.
+
+```{r}
+library(dplyr)
+library(DMwR2)
+library(lubridate)
+library(zoo)
+# install.packages('Rmisc')
+library(Rmisc)
+library(mice)
+# install.packages('VIM')
+library(VIM)
+library(zoo)
+library(reshape2)
+```
+
+```{r}
+data <- read.csv("D:/Files/workspace/R/US_Accidents_Dec21_updated.csv")
+head(data)
+```
+
+```{r}
+colnames(data)
+```
+
+```{r}
+dim(data)
+```
+
+```{r}
+length(unique(data))
+
+```
+
+
+```{r}
+print(summarytools::dfSummary(data,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+```{r}
+colSums(is.na(data))
+```
+
+```{r}
+table(is.na(data))
+```
+
+```{r}
+# show the na value amount for each attribute
+mis_col <- colSums(is.na(data))
+mis_col <- sort(mis_col,decreasing  = TRUE)
+mis_col
+```
+
+```{r}
+# select the columns which have NA value
+mis_col <- mis_col[mis_col>0]
+mis_col
+```
+
+```{r}
+# Showing missing values of column variables
+library(ggplot2)
+```
+```{r}
+class(mis_col)
+```
+```{r}
+mis_col_df <- data.frame(
+  attributes = names(mis_col),
+  missing_amount = mis_col
+)
+class(mis_col_df)
+```
+```{r}
+mis_col_df
+```
+
+```{r}
+# Create the bar plot
+ggplot(mis_col_df, aes(x = attributes, y = missing_amount)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Missing Values by Column", x = "attributes", y = "Number of Missing Values") +
+  theme_minimal() +
+  ylim(c(0, 2000000))
+```
+```{r}
+mis_row <- rowSums(is.na(data))/ncol(data) >=0.1
+data_1 <- data[!mis_row, ]
+head(mis_row)
+```
+
+```{r}
+colSums(is.na(data_1))
+```
+
+```{r}
+dim(data_1)
+```
+
+```{r}
+data_del <- subset(data_1, select = -c(ID,End_Time,End_Lat,End_Lng,
+                                   Distance.mi.,Description,Number,Zipcode,Timezone,Airport_Code,
+                                   Weather_Timestamp,Wind_Chill.F.,
+                                   Civil_Twilight,Nautical_Twilight,
+                                   Astronomical_Twilight))
+
+```
+
+```{r}
+# 32 columns
+dim(data_del)
+```
+```{r}
+colSums(is.na(data_del))
+```
+We can see there still are several attributes have na values.
+Deal with the NA values
+```{r}
+#Mean interpolation
+func_mean <- function(x){
+  x[is.na(x)] <- mean(x,na.rm = TRUE)
+}
+```
+```{r}
+data_del$Temperature.F. <- sapply(data_del$Temperature.F.,func_mean)
+data_del$Humidity... <- sapply(data_del$Humidity... ,func_mean)
+data_del$Pressure.in. <- sapply(data_del$Pressure.in.,func_mean)
+data_del$Visibility.mi. <- sapply(data_del$Visibility.mi.,func_mean)
+data_del$Wind_Speed.mph. <- sapply(data_del$Wind_Speed.mph.,func_mean)
+data_del$Precipitation.in. <- sapply(data_del$Precipitation.in.,func_mean)
+```
+
+```{r}
+# Write the modified data back to the original data box
+data_del[] <- lapply(data_del, function(x) {
+  if(is.numeric(x)) replace(x, is.na(x), mean(x, na.rm = TRUE)) else x
+})
+```
+
+```{r}
+colSums(is.na(data_del))
+```
+
+```{r}
+colnames(data_del)
+```
+## Total number of accidents by state
+```{r}
+
+```
+
+```{r}
+data_state <- data_del %>%
+  group_by(State) %>%
+  dplyr::summarize(count = n()) %>%
+  ungroup()
+data_state
+```
+```{r}
+# draw accident map
+# install.packages('maps')
+# install.packages('ggmap')
+library(maps)
+library(ggmap)
+m <- borders("state",colour = "gray50",fill="white")
+df2 <- data_del %>% select(Start_Lat,Start_Lng)  
+point <- df2[sample(nrow(df2),3000),]
+p1 <- ggplot(point,aes(x=Start_Lng,y=Start_Lat)) + m 
+p1 + geom_point(color='red',alpha=.6) + 
+  labs(title='U.S. Traffic Accident Map')+ 
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+
+The raw data includes data for the five-year period 2016-2021, with the six-year accident totals shown in the table below:
+```{r}
+data_del$year <- year(data_del$Start_Time)
+summary(data_del$year)
+```
+```{r}
+colnames(data_del)
+```
+```{r}
+data_year <- data_del %>%
+  group_by(year) %>%
+  dplyr::summarize(count = n()) %>%
+  ungroup()
+data_year
+```
+Because this dataset is so large,so I will only choose 1 year of data to do the analysis.
+```{r}
+data_2021 <- data_del[data_del$year == 2021, ]
+head(data_2021)
+```
+```{r}
+colnames(data_2021)
+```
+## Special Note on the role of statistics {#special-note-on-the-role-of-statistics}
+
+Statistical analyses **are not required**, but any students who wish to include these may do so. However, your primary analysis should center around visualization rather than inferential statistics. Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. Do not run a multiple regression with numerous predictors and report which predictors are significant!!
+
+**Remember: The goal is to tell a story about the data**. For example, you might identify sports where winning athletes are younger or older than average and then try to see if you can find some sort of pattern that accounts for this difference. Or perhaps you might compare a country's performance to GDP and see if this changes over time. The goal is not to get a significant statistical result but to identify an interesting pattern in the data and then extract some sort of meaningful recommendation or information from it.
+
+## Evaluation {#evaluation}
+
+You will be evaluated on both the quality of your source code and your written report, with a greater emphasis on the clarity and details of the description of your dataset(s) and your research questions.

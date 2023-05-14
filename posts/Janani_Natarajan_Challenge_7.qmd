@@ -1,0 +1,140 @@
+---
+title: "Challenge 7"
+author: "Janani Natarajan"
+description: "Visualizing Multiple Dimensions"
+date: "05/13/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+  - australian_marriage
+  - air_bnb
+  - eggs
+  - abc_poll
+  - faostat
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(treemap)
+library(treemapify)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   eggs ⭐
+-   abc_poll ⭐⭐
+-   australian_marriage ⭐⭐
+-   hotel_bookings ⭐⭐⭐
+-   air_bnb ⭐⭐⭐
+-   us_hh ⭐⭐⭐⭐
+-   faostat ⭐⭐⭐⭐⭐
+
+```{r}
+AB_NYC <- read_csv("_data/AB_NYC_2019.csv", show_col_types = FALSE)
+```
+
+### Briefly describe the data
+
+```{r}
+dim(AB_NYC)
+```
+
+```{r}
+head(AB_NYC)
+```
+
+```{r}
+unique(AB_NYC$neighbourhood_group)
+```
+
+This dataset provides information on nearly 49,000 AirBNB listings located in the New York City area in the year 2019. Each listing contains the following details: the listing's name and ID, the host's name and ID, the number of listings associated with that particular host, the location information which includes the borough, specific neighborhood, latitude, and longitude, the type of room (whether it's a private room, shared room, or an entire home), the minimum length of stay in nights, the price, and year-round availability. Additionally, the dataset includes the number of reviews, reviews per month, and the most recent review for each listing.
+
+## Tidy Data (as needed)
+
+The date was originally characters, I used transform and as.date to mutate last_review into date format.
+
+```{r}
+AB_NYC <- transform(mydata, last_review=as.Date(last_review))
+```
+
+## Visualization with Multiple Dimensions
+
+For this series of graph, I did this to help readers more easily identify and understand relationships between different neighborhood groups.
+
+```{r}
+ggplot(mydata, aes(longitude, latitude, color = neighbourhood_group), group = neighbourhood_group) + geom_point() +
+  labs (size = "Price", color = "Neighborhoods", title = "AirBnB Neighborhood Groups")
+```
+
+The map above provides an overview of the geographic distribution of Airbnb units, while the graph below shows that Brooklyn and Manhattan have roughly similar numbers of Airbnb units. In contrast, Staten Island and the Bronx have significantly fewer units in comparison.
+
+```{r}
+mydata %>%
+  count(neighbourhood_group) %>%
+  ggplot(aes(area= n, fill= neighbourhood_group, label = neighbourhood_group)) + 
+  geom_treemap() + 
+  labs(title = "Airbnb Units") + 
+  scale_fill_discrete(name = "Neighborhood Group") +
+  geom_treemap_text(colour = "brown",
+                    place = "centre")
+```
+
+```{r}
+gg<- ggplot(mydata, aes(neighbourhood_group, price, color = neighbourhood_group)) + geom_boxplot() + ylim(0, 800) + 
+  labs (x = "Neighbourhood Group", y = "Price") 
+plot(gg) + labs(title = "Property Prices")
+```
+
+In the above visualization, we can observe the average price of Airbnb units per neighborhood group and room type. This provides us with an understanding of how each neighborhood group typically prices their units. For instance, we can see that a private room in Manhattan costs roughly the same as an entire home/apartment in the Bronx and Staten Island.
+
+Plotting AirBnB hosts with varying numbers of total listings generally price their listings. Additionally, I want to investigate whether certain room types are consistently more affordable or expensive. To achieve this, I plan to create a scatterplot where each listing is assigned a specific color based on its room type.
+
+```{r}
+ggplot(AB_NYC_2019, aes(x=calculated_host_listings_count, y=price)) +
+  geom_point(aes(color=room_type)) + 
+  labs(
+    title = "NYC AirBNB prices sky high even amongst humbler hosts",
+    x = "Number of Listings From Host",
+    y = "Price of AirBNB ($USD)", 
+    caption = "Data from InsideAirbnb.com",
+    color = "Room Type") +
+  scale_color_manual(values=c("green", "blue", "red")) 
+```
+
+```{r}
+ggplot(AB_NYC_2019 %>% 
+         filter(calculated_host_listings_count <= 50), aes(x=calculated_host_listings_count, y=price)) +
+  geom_point(aes(color=room_type)) + 
+  labs(
+    title = "Hosts with more properties offer lower-priced NYC AirBnBs",
+    x = "Listings From Host",
+    y = "Price", 
+    color = "Room Type") +
+  scale_color_manual(values=c("green", "blue", "red")) 
+```
+
+```{r}
+ggplot(AB_NYC_2019, aes(fill=room_type, x=neighbourhood_group, y=number_of_reviews)) +
+  geom_bar(position="dodge", stat = "identity") +
+  labs(
+    title = "AirBnBs in Queens",
+    x = "Borough",
+    y = "Reviews",
+    fill = "Room Type", 
+  ) 
+```

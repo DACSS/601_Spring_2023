@@ -1,0 +1,149 @@
+---
+title: "Challenge 5"
+author: "Jaswanth Reddy Kommuru"
+description: "Introduction to Visualization"
+date: "05/10/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - Jaswanth Reddy Kommuru
+  - air_bnb
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐ 
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐ 
+-   USA Households ⭐⭐⭐⭐⭐
+
+```{r}
+bnbdata <- read.csv("~/Documents/601/601_Spring_2023/posts/_data/AB_NYC_2019.csv")
+```
+
+```{r}
+head(bnbdata)
+```
+```{r}
+colnames(bnbdata)
+```
+```{r}
+dim(bnbdata)
+```
+
+```{r}
+str(bnbdata)
+```
+
+```{r}
+ bnbdata%>%
+  select(`neighbourhood_group`) %>%
+  distinct(.)
+```
+The dataset provides details about Airbnbs located in all boroughs of New York City. It comprises 16 columns and 48,895 entries, with each row providing information on a specific Airbnb such as its type, location, owner details, reviews, and more.
+
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+
+
+```{r}
+bnbdata <- bnbdata %>%
+  mutate(reviews_per_month = ifelse(is.na(reviews_per_month), 0, reviews_per_month))
+
+bnbdata <- bnbdata %>%
+  filter(price > 0)
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+
+## Univariate Visualizations
+
+```{r}
+ggplot(bnbdata, aes(neighbourhood_group, fill = room_type)) + geom_bar() +
+  theme_bw() +
+  labs(title = "The number of available rooms and the type of rooms in each neighbourhood ", y = "Number of available rooms", x = "Neighbourhood")
+```
+Based on the graph, we can infer that Manhattan has the highest proportion of Airbnbs among all the neighborhood's in NYC, while Staten Island has the lowest proportion. The order of boroughs in terms of proportion of Airbnbs is as follows: Manhattan, Brooklyn, Queens, Bronx, and Staten Island.
+
+```{r}
+cheap_hotels <- bnbdata %>%
+  arrange(price) %>%
+  filter(row_number() <= 500)
+
+ggplot(cheap_hotels, aes(x = price, fill = factor(price))) +
+  geom_bar() +
+  theme_bw() +
+  labs(title = "Distribution of Prices for the 500 Most Affordable Rooms")
+```
+
+
+
+
+## Bivariate Visualization(s)
+
+```{r}
+ggplot(bnbdata) + 
+  geom_point(mapping = aes(x = minimum_nights, y = price, color = price)) + 
+  labs(x = "Minimum nights stayed",
+       y = "Price in Dollars",
+       title = "Relationship between Price and Minimum nights stayed")
+```
+From the above graph we can say how the minimum nights stayed is related to the price.
+
+```{r}
+ggplot(bnbdata, aes(x = room_type, y = price, fill = room_type)) +
+  geom_boxplot(alpha = 1) +
+  scale_fill_manual(values = c("red", "blue", "green")) +
+  theme_bw() +
+  labs(title = "Price Distribution Based on Room Type")
+```
+We can gain insights into the price ranges for each room type from the above box plot.
+
+Any additional comments?

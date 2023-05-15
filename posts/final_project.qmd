@@ -57,8 +57,11 @@ library(mice)
 library(VIM)
 library(zoo)
 library(reshape2)
-```
 
+```
+```{r}
+library(hrbrthemes)
+```
 ```{r}
 data <- read.csv("D:/Files/workspace/R/US_Accidents_Dec21_updated.csv")
 head(data)
@@ -243,17 +246,202 @@ data_year
 ```
 Because this dataset is so large,so I will only choose 1 year of data to do the analysis.
 ```{r}
-data_2021 <- data_del[data_del$year == 2021, ]
-head(data_2021)
+data_2020 <- data_del[data_del$year == 2020, ]
+head(data_2020)
 ```
 ```{r}
-colnames(data_2021)
+colnames(data_2020)
 ```
-## Special Note on the role of statistics {#special-note-on-the-role-of-statistics}
+## Influencing Factors
+### Weather condition
+The Weather_Condition variable in the data is presented for analysis.
 
-Statistical analyses **are not required**, but any students who wish to include these may do so. However, your primary analysis should center around visualization rather than inferential statistics. Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. Do not run a multiple regression with numerous predictors and report which predictors are significant!!
+```{r}
+data_2020$Severity <- as.factor(data_2020$Severity)
+data_2020$Weather_Condition <- as.factor(data_2020$Weather_Condition)
+str(data_2020)
+```
 
-**Remember: The goal is to tell a story about the data**. For example, you might identify sports where winning athletes are younger or older than average and then try to see if you can find some sort of pattern that accounts for this difference. Or perhaps you might compare a country's performance to GDP and see if this changes over time. The goal is not to get a significant statistical result but to identify an interesting pattern in the data and then extract some sort of meaningful recommendation or information from it.
+```{r}
+table(data_2020$Weather_Condition)
+```
+We can see the first one is blank,so we need to select valid weather type to analyze.
+```{r}
+data_weather <- data_2020[data_2020$Weather_Condition !="", ]
+table(data_weather$Weather_Condition)
+```
+```{r}
+weather <- data_weather %>%
+  group_by(Weather_Condition) %>%
+  dplyr::summarize(count = n()) %>%
+  ungroup()
+weather
+```
+Count the number of weather conditions by category and select the 10 most common types of weather
+```{r}
+weather <- arrange(weather,desc(count))
+print(n=20,weather)
+```
+
+```{r}
+weather <- filter(weather,count > 2000)
+weather_10 <- weather$Weather_Condition
+weather_10
+```
+```{r}
+df_weather_1 <- filter(data_weather,Weather_Condition %in% weather_10)
+df_weather <- subset(df_weather_1,select=c(Weather_Condition,Severity))
+
+```
+```{r}
+ggplot(df_weather, aes(x=Weather_Condition, fill = Severity)) + 
+    geom_bar(position = 'fill') + 
+    labs(x = 'Weather', y = 'Severity') + 
+    coord_flip() +
+    theme_minimal()
+```
+```{r}
+weather_count <- df_weather %>%
+  group_by(Severity) %>%
+  dplyr::summarize(count = n()) %>%
+  ungroup()
+df_weather <- left_join(df_weather, weather_count, by = "Severity")
+colnames(df_weather)
+```
+```{r}
+ggplot(df_weather, aes(x=Weather_Condition, y= count)) + 
+  geom_bar(stat="identity") + 
+  labs(x = 'Weather', y = 'Severity') + 
+  coord_flip() +
+  theme_minimal() +
+  facet_wrap(~Severity, ncol = 2)
+```
+
+### Visibility
+```{r}
+data_vis <- subset(data_2020,select=c(Visibility.mi.,Severity))
+sum(is.na(data_vis$Visibility.mi.))
+```
+```{r}
+ggplot(data_vis,aes(x=Visibility.mi.)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("The density of accidents at different visibility levels") +
+    theme_ipsum()
+```
+```{r}
+```
+```{r}
+
+ggplot(data_vis,aes(x=Visibility.mi.)) +
+  geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("The density of accidents of different levels at different visibility levels") +
+    theme_ipsum() +
+    facet_wrap(~Severity, ncol = 2)
+```
+
+### Time Factor
+```{r}
+# adjust date format
+data_time <- data_del
+data_time$Start_Time <- as.POSIXct(data_time$Start_Time)
+data_time$month <- month(data_time$Start_Time)
+data_time$hour <- hour(data_time$Start_Time)
+
+```
+```{r}
+head(data_time$month)
+head(data_time$hour)
+```
+
+```{r}
+# Month
+df_month <- data_time %>%
+  group_by(month) %>%
+  dplyr::summarize(mon_count = n()) %>%
+  ungroup()
+```
+```{r}
+# hour
+df_hour <- data_time %>%
+  group_by(hour) %>%
+  dplyr::summarize(hour_count = n()) %>%
+  ungroup()
+```
+```{r}
+data_time <- left_join(data_time,df_month,by ="month")
+data_time <- left_join(data_time,df_hour,by = "hour")
+colnames(data_time)
+```
+```{r}
+```
+```{r}
+# Number of car accidents by month
+# create a vector of month names
+month_names <- month.abb
+
+ggplot(data_time, aes(x=month, y=mon_count)) +
+  geom_line( color="grey") +
+  geom_point(shape=21, color="black", fill="#69b3a2", size=6) +
+  scale_x_continuous(breaks = 1:12, labels = month_names) +
+  labs(x = "Month", y = "Number of Accidents") +
+  ggtitle("Number of Car Accidents by Month") +
+  theme_ipsum()
+```
+
+```{r}
+# Number of car accidents by hour
+# create a vector of hour
+hour_names <- 0:23
+
+ggplot(data_time, aes(x=hour, y=hour_count)) +
+  geom_line( color="grey") +
+  geom_point(shape=21, color="black", fill="#69b3a2", size=6) +
+  scale_x_continuous(breaks = hour_names, labels = hour_names) +
+  labs(x = "Hour", y = "Number of Accidents") +
+  ggtitle("Number of Car Accidents by Hour") +
+  theme_ipsum()
+```
+
+### Road condition factor
+
+```{r}
+df_road <- subset(data_del,select = c(Amenity,Bump,Crossing,Give_Way,Junction,No_Exit,Railway,Roundabout,Station,Stop,Traffic_Calming,Traffic_Signal,Turning_Loop))
+```
+```{r}
+colnames(df_road)
+```
+```{r}
+df_road <- rbind(colSums(df_road=='True'),colSums(df_road=='False')) %>%
+  cbind(Boolean=c('True','False')) %>% 
+  data.frame()
+```
+```{r}
+head(df_road)
+```
+```{r}
+data_env <- melt(df_road,
+                id.vars = 'Boolean',
+                variable.name = 'Conditions',
+                value.name = 'Accidents'
+)
+str(data_env)  
+```
+```{r}
+data_env$Accidents <- as.numeric(data_env$Accidents)
+```
+```{r}
+env_plot <- ddply(data_env,'Conditions',transform,
+            percent_num = Accidents/sum(Accidents)*100)
+```
+```{r}
+ggplot(env_plot,aes(x=Conditions,y=percent_num,fill=Boolean)) +
+  geom_bar(stat = 'identity',color='blue')+ 
+  scale_fill_brewer(palette = 11)+
+  geom_text(aes(label=paste(round(percent_num),"%"),vjust=-0.3))+
+  labs(title='Environmental factors stacking bar chart')+ 
+  theme_minimal()
+
+```
 
 ## Evaluation {#evaluation}
 

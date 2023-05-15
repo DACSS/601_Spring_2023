@@ -1,0 +1,174 @@
+---
+title: "Challenge 6"
+author: "Janani Natarajan"
+description: "Visualizing Time and Relationships"
+date: "05/12/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   debt ⭐
+-   fed_rate ⭐⭐
+-   abc_poll ⭐⭐⭐
+-   usa_hh ⭐⭐⭐
+-   hotel_bookings ⭐⭐⭐⭐
+-   AB_NYC ⭐⭐⭐⭐⭐
+
+```{r}
+data <- read.csv("_data/AB_NYC_2019.csv")
+glimpse(mydata)
+```
+
+```{r}
+View(data)
+```
+
+```{r}
+colnames(data)
+```
+
+### Briefly describe the data
+
+The dataset contains information about 48,895 AirBnB listings in New York City in the year 2019. Each listing is represented by 17 columns, providing details such as the neighborhood and neighborhood group, rental type (entire home, private room, shared room), prices, minimum stay requirements, and the number of guest reviews. The dataset also includes the number of listings each host has on AirBnB, the number of days a listing was available throughout 2019, and the date of the last guest review.
+
+## Tidy Data (as needed)
+
+I want to show how the date of review and other variables relate to one another.There are blank values in the last_review variable. I thus save the observations that were reviewed initially. I then extract the date variable's month and year columns.
+
+```{r}
+mydata2 <- mydata %>% 
+  mutate(Date = ymd(last_review))%>% 
+  drop_na(Date)%>% 
+  mutate(day = day(Date), month = month(Date, label=TRUE), year = year(Date))
+
+#select the required variables.
+select_df<-mydata2 %>%
+  select(id, neighbourhood_group:year)
+```
+
+obtaining the average number of reviews
+
+```{r}
+#Mean 
+summary_numberofreviews <-select_df  %>% 
+summarise (Mean_availability=mean(number_of_reviews, na.rm = TRUE))
+```
+
+```{r}
+#Grouping by month
+summary_month2 <-select_df  %>% 
+filter (availability_365>0)  %>% 
+  filter(price > quantile(price)[2] - 1.5 * IQR(price) & price < quantile(price)[4] + 1.5 * IQR(price))  %>% 
+ group_by(year)  %>%
+  summarise(
+    Mean=mean(price, na.rm = TRUE),
+    Quantile1 = quantile(price, c(0.25), q1 = c(0.25), na.rm = TRUE),
+    Median=median(price, na.rm = TRUE),
+    Quantile3 = quantile(price, c(0.75), q3 = c(0.75), na.rm = TRUE),
+    SD=sd(price, na.rm = TRUE),
+    min=min(price, na.rm = TRUE),
+    max=max(price, na.rm = TRUE),
+    )
+
+```
+
+```{r}
+summary_month3 <- select_df  %>% 
+  filter(availability_365 > 0)  %>% 
+  filter(price > quantile(price)[2] - 1.5 * IQR(price) & price < quantile(price)[4] + 1.5 * IQR(price))  %>% 
+  group_by(year, room_type) %>%
+  summarise(
+    Mean=mean(price, na.rm = TRUE),
+    Quantile1=quantile(price, c(0.25), q1 = c(0.25), na.rm = TRUE),
+    Median=median(price, na.rm = TRUE),
+    Quantile3=quantile(price, c(0.75), q3 = c(0.75), na.rm = TRUE),
+    SD=sd(price, na.rm = TRUE),
+    min=min(price, na.rm = TRUE),
+    max=max(price, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+```
+
+## Time Dependent Visualization
+
+```{r}
+ggplot(summary_month2, aes(x = as.integer(year), y = Mean, group=1)) +
+  geom_line(color = "red") +
+  geom_point(size = 3, color = "blue") +
+  labs(title = "Price",
+       x = "Last Review", y = "Mean") +
+  scale_x_continuous(breaks = seq(min(as.integer(summary_month2$year)), max(as.integer(summary_month2$year)), by = 1),
+                     labels = seq(min(as.integer(summary_month2$year)), max(as.integer(summary_month2$year)), by = 1)) +
+  theme_minimal()
+```
+
+## Visualizing Part-Whole Relationships
+
+People who had their entire apartment for rent and had last reviews in 2012-2014 probably sold their homes. These may have been some of those early starters who were buying up real estate and saw this as a great source of income before they were able to sell and move on to other ventures.
+
+```{r}
+ggplot(mydata, aes(x=`last_review`, y=`room_type`)) + geom_point() +
+    labs(title = "Last Review by Room Type", x = "Last Review", y = "Room Type") 
+```
+
+```{r}
+ggplot(summary_month3, aes(x = factor(year), y = Mean, fill = room_type)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+  labs(x = "Year", y = "Mean", fill = "Room Type") +
+  ggtitle("Year and Room Type") +
+  theme(plot.title = element_text(hjust = 1.0)) +
+  scale_fill_brewer(palette = "Set2")
+```
+
+```{r}
+select_df_type <- select_df %>% filter(year>=2019)%>% group_by(month, room_type) %>% summarise(count=n(), mean_availability=mean(availability_365)) %>%  ungroup()
+
+ggplot(select_df_type, aes(x = month, y = mean_availability, color = room_type, group = room_type)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Average Availability(Room Type)",
+       x = "Month",
+       y = "Average Availability (in days)",
+       color = "Room Type") +
+  scale_color_manual(values = c("pink", "green", "violet")) +
+  theme_minimal()
+```
+
+```{r}
+data_type2 <- select_df %>% filter(year>=2019)%>% group_by(month, neighbourhood_group ) %>% summarise(count=n(), mean_availability=mean(availability_365)) %>%  ungroup()
+ggplot(select_df_type2, aes(x = month, y = count, fill = neighbourhood_group)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Monthly count",
+       x = "Month",
+       y = "Count",
+       fill = "Room Type") +
+  scale_fill_manual(values = c("red", "purple", "yellow", "orange", "#FF69B4")) +
+  theme_minimal()
+```

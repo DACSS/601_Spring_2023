@@ -1,0 +1,176 @@
+---
+title: "Challenge 2"
+author: "FNU Avinesh Krishnan"
+description: "Data wrangling: using group() and summarise()"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - FNU Avinesh Krishnan
+  - FAOSTAT_livestock
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+livestockdata <-read_csv("~/Desktop/601_Spring_2023/posts/_data/FAOSTAT_livestock.csv")
+view(livestockdata)
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+The dataset consists of information related to live animals in different countries. It includes the following cases and variables:
+
+Each row represents a specific case, providing details about live animal stocks in a particular country for a specific year.
+Variables:
+Domain Code: Code representing the domain of the data (e.g., QA for live animals).
+Domain: Domain of the data (e.g., Live Animals).
+Area Code: Code representing the specific area or country (e.g., 2 for Afghanistan).
+Area: Name of the area or country (e.g., Afghanistan).
+Element Code: Code representing the element of the data (e.g., 5111 for stocks).
+Element: Description of the element (e.g., Stocks).
+Item Code: Code representing the specific item or category (e.g., 1107 for asses).
+Item: Description of the item (e.g., Asses).
+Year Code: Code representing the year of the data (e.g., 1961).
+Year: Year of the data (e.g., 1961).
+Unit: Unit of measurement (e.g., Head).
+Value: Numeric value representing the quantity of live animals.
+Flag: Flag indicating additional information or data status (e.g., NA for missing data).
+Flag Description: Description of the flag (e.g., Official data or FAO estimate).
+The data appears to be gathered from official sources, likely collected by the Food and Agriculture Organization (FAO) or a related organization. It provides insights into the stock levels of various live animals in different countries over multiple years.
+
+```{r}
+#| label: summary
+head(livestockdata)
+```
+
+```{r}
+str(livestockdata)
+```
+
+
+```{r}
+colnames(livestockdata)
+```
+
+```{r}
+ livestockdata%>%
+  select("Domain") %>%
+  distinct(.)
+```
+
+```{r}
+ livestockdata%>%
+  select("Element Code") %>%
+  distinct(.)
+```
+
+
+
+```{r}
+dim(livestockdata)
+```
+
+```{r}
+min(livestockdata$Year)
+max(livestockdata$Year)
+```
+
+```{r}
+min(livestockdata$`Area Code`)
+max(livestockdata$`Area Code`)
+```
+
+
+
+```{r}
+summary(livestockdata)
+```
+
+
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+livestockdata %>% 
+  group_by(Area) %>% 
+  summarise(averge_value = mean(Value), Max_value=max(Value), Min_value=min(Value))
+```
+
+```{r}
+livestockdata %>% 
+  filter(Area == "Africa" | Area == "Afghanistan",Item == "Camels", Year == 1961)
+```
+
+There are two data points available for the above filter i.e for two areas.
+
+```{r}
+Summary_Year <- na.omit(livestockdata) %>%
+  group_by(Year) %>%
+  summarize(
+    mean_Value = mean(Value, na.rm = TRUE),
+    median_Value = median(Value, na.rm = TRUE),
+    min_Value = min(Value, na.rm = TRUE),
+    max_Value = max(Value, na.rm = TRUE),
+    sd_Value = sd(Value, na.rm = TRUE),
+    var_Value = var(Value, na.rm = TRUE),
+    IQR_Value = IQR(Value, na.rm = TRUE)
+  )
+Summary_Year
+```
+
+
+```{r}
+Summary_Area <- na.omit(livestockdata) %>%
+  group_by(Area) %>%
+  summarize(
+    mean_Value = mean(Value, na.rm = TRUE),
+    median_Value = median(Value, na.rm = TRUE),
+    min_Value = min(Value, na.rm = TRUE),
+    max_Value = max(Value, na.rm = TRUE),
+    sd_Value = sd(Value, na.rm = TRUE),
+    var_Value = var(Value, na.rm = TRUE),
+    IQR_Value = IQR(Value, na.rm = TRUE)
+  )
+Summary_Area
+```
+
+The data spans a period from 1961 to 2018, indicating a long-term collection of data. The Element column contains only one distinct value, which is "Stocks". Similarly, the Element Code also has a single value, which is 5111. This suggests that the dataset focuses specifically on the stocks element. The Area Code ranges from 1 to 5504, indicating a wide range of areas or regions included in the dataset. The Value column exhibits a significant amount of variance, suggesting diverse numerical values for the specific element being measured.
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.

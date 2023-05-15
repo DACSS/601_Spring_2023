@@ -1,0 +1,250 @@
+---
+title: "Challenge 8"
+author: "Kekai Liu"
+description: "Joining Data"
+date: "05/14/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - military
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - military marriages ⭐⭐
+  - faostat ⭐⭐
+  - railroads  ⭐⭐⭐
+  - fed_rate ⭐⭐⭐
+  - debt ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - snl ⭐⭐⭐⭐⭐
+
+This data contains counts of military servicemembers broken down by pay grade (E-1 to E-9, O-1 to O-10, and W-1 to W-5), marital status (single without children, single with children, joint service marriage, civilian marriage), gender (male, female), and branch (Total DoD, Air Force, Marine Corps, Navy, and Army). In this data, there are 1,414,951
+total servicemembers in Total DoD, 331,793 total servicemembers in Air Force, 201,843 total servicemembers in Marine Corps, 324,371 total servicemembers in Navy, and 556,944
+total servicemembers in Army.
+```{r}
+military_path <- "_data/ActiveDuty_MaritalStatus.xls"
+
+#extract the sheet names as a vector of strings
+#then loop through vector to read in each sheet as separate dataframe
+#rename columns:
+#suffix: male - m, female - f, total - t
+#single without children: swoc_m, swoc_f, swoc_t
+#single with children: swc_m, swc_f, swc_t
+#joint service marriage: jsm_m, jsm_f, jsm_t
+#civilian marriage: cm_m, cm_f, cm_t
+#total: tot_m, tot_f, tot_t
+#will need to do a pivot later to turn columns into single marital status column and single gender column
+
+military_sheets %>%
+  purrr::map(function(sheet){
+    
+    if (sheet == "TotalDoD") {
+      assign(x = sheet,
+         value = readxl::read_xls(path = military_path, sheet = sheet, range="B9:Q37"),
+         envir = .GlobalEnv)
+    } else if (sheet == "AirForce") {
+      assign(x = sheet,
+         value = readxl::read_xls(path = military_path, sheet = sheet, range="B9:Q31"),
+         envir = .GlobalEnv)
+    } else if (sheet == "MarineCorps") {
+      assign(x = sheet,
+         value = readxl::read_xls(path = military_path, sheet = sheet, range="B9:Q37"),
+         envir = .GlobalEnv)
+    } else if (sheet == "Navy") {
+      assign(x = sheet,
+         value = readxl::read_xls(path = military_path, sheet = sheet, range="B9:Q36"),
+         envir = .GlobalEnv)
+    } else if (sheet == "Army") {
+      assign(x = sheet,
+         value = readxl::read_xls(path = military_path, sheet = sheet, range="B9:Q37"),
+         envir = .GlobalEnv)
+    }
+  })
+
+TotalDoD$branch <- "Total DoD"
+AirForce$branch <- "Air Force"
+MarineCorps$branch <- "Marine Corps"
+Navy$branch <- "Navy"
+Army$branch <- "Army"
+
+head(TotalDoD)
+print(summarytools::dfSummary(TotalDoD, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+head(AirForce)
+print(summarytools::dfSummary(AirForce, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+head(MarineCorps)
+print(summarytools::dfSummary(MarineCorps, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+head(Navy)
+print(summarytools::dfSummary(Navy, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+head(Army)
+print(summarytools::dfSummary(Army, varnumbers = FALSE, plain.ascii = FALSE, style = "grid", graph.magnif = 0.70, valid.col = FALSE), method = 'render', table.classes = 'table-condensed')
+
+```
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data is not tidy, as the counts are split into individual columns based on marital status and gender. To tidy the data, these columns must be collapsed into a three columns: one column denoting the marital status, one column denoting the gender, and one column denoting the count. The expected number of rows in the pivoted dataset, which combines all branches, is 1995. However, there are 285 rows which denote enlisted, officer, and grand totals which need to be removed. Then, the expected number of rows in the pivoted dataset after cleaning is 1710. The expected number of columns in the pivoted dataset is 5; there are 17 columns in the original dataset, 15 columns to be pivoted, and 3 new columns created after pivoting.
+
+```{r}
+#existing rows/cases
+
+print("Total DoD Cases")
+nrow(TotalDoD)
+
+print("Air Force Cases")
+nrow(AirForce)
+
+print("MarineCorps Cases")
+nrow(MarineCorps)
+
+print("Navy Cases")
+nrow(Navy)
+
+print("Army Cases")
+nrow(Army)
+
+#existing columns/cases
+
+print("Total DoD Cases")
+ncol(TotalDoD)
+
+print("Air Force Cases")
+ncol(AirForce)
+
+print("MarineCorps Cases")
+ncol(MarineCorps)
+
+print("Navy Cases")
+ncol(Navy)
+
+print("Army Cases")
+ncol(Army)
+
+#expected rows/cases
+
+print("Expected Rows after Pivot")
+
+nrow(TotalDoD) * (ncol(TotalDoD)-2) + nrow(AirForce) * (ncol(AirForce)-2) + nrow(MarineCorps) * (ncol(MarineCorps)-2) + nrow(Navy) * (ncol(Navy)-2) + nrow(Army) * (ncol(Army)-2) - 60 - 45 - 60 - 60 - 60
+
+# expected columns 
+
+print ("Expected Columns after Pivot")
+17 - 15 + 3 #17 columns, 15 columns to be pivoted, 3 columns created
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+The default column names of the data are not conducive to pivoting. They need to be renamed in accordance to a pattern in order to facilitate pivoting. The columns are broken down by marital status and gender, so the column names should contain the marital status and gender separated by a common separator such as an underscore. For example, the column of counts for male servicemembers who are "single without children" shall be renamed "swoc_m." This enables the use of the pivot_longer function to separate "swoc" into a "marital_status" column and "m" into a "gender" column. After pivoting, mutate() and case_when() are utilized in conjunction to recode the new columns into more meaningful values (i.e. "swoc" is recoded to "single without children" and "m" is recoded to "male"). Furthermore, the rows representing the enlisted total, officer total, and grand total are to be dropped by using filter() and grepl() to remove rows containing the "total" in the "pay_grade" column. A function called "clean_data(dfname)" is written to apply the aforementioned process across the dataframes corresponding to each respective service branch.
+
+```{r}
+
+clean_data <- function(dfname) {
+
+  dfname %>% #rename columns by index
+    rename(pay_grade = 1,
+         swoc_m = 2,
+         swoc_f = 3,
+         swoc_t = 4,
+         swc_m = 5,
+         swc_f = 6,
+         swc_t = 7,
+         jsm_m = 8,
+         jsm_f = 9,
+         jsm_t = 10,
+         cm_m = 11,
+         cm_f = 12,
+         cm_t = 13,
+         tot_m = 14,
+         tot_f = 15,
+         tot_t = 16) %>%
+    pivot_longer(
+    cols = !c(pay_grade, branch),
+    names_to = c("marital_status", "gender"),
+    names_sep = "_",
+    values_to = "count"
+  ) %>%
+    mutate(marital_status = case_when(marital_status == "swoc" ~ "single without children",
+                                      marital_status == "swc" ~ "single with children",
+                                      marital_status == "jsm" ~ "joint service marriage",
+                                      marital_status == "cm" ~ "civilian marriage",
+                                      marital_status == "tot" ~ "total"),
+           gender = case_when(gender == "m" ~ "male",
+                              gender == "f" ~ "female",
+                              gender == "t" ~ "total")) %>%
+    filter(!grepl('total', pay_grade, ignore.case=TRUE))
+}
+
+df_list <- list(TotalDoD, AirForce, MarineCorps, Navy, Army) #store dataframes inside list to apply cleaning function
+
+cleaned_data <- lapply(df_list, clean_data)
+
+```
+
+## Join Data
+
+Be sure to include a sanity check, and double-check that case count is correct!
+
+The cleaning process creates a tibble which contains cleaned versions of the data for each service branch. Each service branch is extracted from the tibble and converted to dataframes, which are then appended by rbind() to create a joined dataset. The joined dataset has 1710 rows and 5 columns (pay_grade, branch, marital_status, gender, count) which is in line with expectation.
+
+```{r}
+
+df1 <- as.data.frame(cleaned_data[[1]])
+df2 <- as.data.frame(cleaned_data[[2]])
+df3 <- as.data.frame(cleaned_data[[3]])
+df4 <- as.data.frame(cleaned_data[[4]])
+df5 <- as.data.frame(cleaned_data[[5]])
+
+military <- rbind(df1, df2, df3, df4, df5)
+
+head(military)
+
+print("Dimensions of Joined Dataset")
+
+dim(military)
+
+```
+## Visualization
+
+At the Total DoD level, the most common marital status is single without children, followed by civilian marriage, then joint service marriage, and lastly single with children. The distribution of marital status across individual service branches is very similar, with either single without children or civilian marriage as the most common and joint service marriage or single with children as the least common.
+
+```{r}
+
+ggplot(military,                                      
+       aes(x = marital_status, y=count, fill = branch)) +
+  geom_bar(stat="identity",position = "dodge") + theme(axis.text.x = element_text(size = 7)) + xlab("Marital Status") + ggtitle("Marital Status of Servicemembers")
+```

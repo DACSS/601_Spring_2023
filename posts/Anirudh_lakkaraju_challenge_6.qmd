@@ -1,0 +1,82 @@
+---
+title: "Challenge 6"
+author: "Anirudh Lakkaraju"
+description: "Visualizing Time and Relationships"
+date: "05/14/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - Anirudh Lakkaraju
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+```{r}
+df <- read.csv("_data/hotel_bookings.csv")
+```
+
+```{r}
+head(df)
+```
+
+### Briefly describe the data
+
+```{r}
+dim(df)
+```
+
+```{r}
+colnames(df)
+```
+
+## Tidy Data (as needed)
+
+I would like to create a plot that displays the trend of reservations for each month. To achieve this, we must first create a new column in the dataset called "arrival-year-month".
+
+```{r}
+df <- df %>% 
+  mutate(date_year = paste0(arrival_date_month," ",arrival_date_day_of_month," ",arrival_date_year))
+df$date_year %>% head()
+```
+
+## Time Dependent Visualization
+
+```{r}
+df %>%
+  filter(arrival_date_year == 2015) %>%
+  group_by(arrival_date_month, hotel) %>%
+  summarise(total_bookings = n()) %>%
+  ggplot(aes(x = arrival_date_month, y = total_bookings, fill = hotel)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Month", y = "Total Bookings", title = "Monthly bookings by hotel") +
+  scale_fill_manual(values = c("#4e79a7", "#f28e2c"), 
+                    name = "Hotel", 
+                    labels = c("City Hotel", "Resort Hotel"))
+```
+
+## Visualizing Part-Whole Relationships
+
+```{r}
+grouped <- df %>% 
+  select(arrival_date_month,days_in_waiting_list) %>% 
+  group_by(arrival_date_month) %>% 
+  summarise_all(max) %>% 
+  mutate(month=as.Date(paste(arrival_date_month,"-01-2021",sep=""),"%B-%d-%Y"))
+grouped %>% ggplot(aes(month,days_in_waiting_list))+geom_line() +scale_x_date(date_labels = "%B",date_breaks = "1 month")+ labs(title="max days in waiting list per month")
+```

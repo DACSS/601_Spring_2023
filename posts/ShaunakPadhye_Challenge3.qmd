@@ -1,0 +1,113 @@
+---
+title: "Challenge 3"
+author: "Shaunak Padhye"
+description: "Tidy Data: Pivoting"
+date: "05/12/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - Shaunak Padhye
+  - australian_marriage
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+#| code-fold: false
+
+library(tidyverse)
+library(readxl)
+library(tidyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+For this challenge, we will be using the following dataset:
+
+-   australian_marriage\*.xls ⭐⭐⭐
+
+```{r}
+votes <- read_excel("_data/australian_marriage_law_postal_survey_2017_-_response_final.xls",
+                        sheet="Table 2",
+                        skip=6)
+colnames(votes) <- c("District", "Yes", "del1", "No", rep("del2", 6), "Illegible", "del3", "No Response", rep("del4", 3))
+votes <- votes[, !grepl("del", names(votes))]
+votes
+```
+
+We can see that this dataset will require some cleaning before it can be used.
+We will start with removing the NA values from the "District" column.
+
+```{r}
+votes <- votes[!is.na(votes$District),]
+votes
+```
+
+Now we can remove all the rows where the District value contains the string "(Total)" or starts with the character '('. These rows provide aggregated data which can be calculated using the rest of the dataset.
+
+```{r}
+votes <- votes[!grepl("(Total)", votes$District), ]
+votes <- votes[!grepl("^\\(", votes$District), ]
+votes
+```
+
+We can observe that some values in the District column contain Divisions. These rows define the Divisions of the Districts given in the underlying rows.
+```{r}
+votes[grep("Divisions", votes$District), ]
+```
+
+Ideally these values shouldn't exist in the Districts column, since they aren't districts. However, we cannot remove these rows either as they contain useful information that we might want to retain. For this reason we will create a new variable (column) which will store the Division of the DIstrict in the row.
+
+```{r}
+votes$Division <- ifelse(grepl("Divisions", votes$District), votes$District, NA)
+#votes$Division <- tidyr::fill(votes$Division, .direction = "down")
+for (i in 2:length(votes$Division)) {
+  if (is.na(votes$Division[i])) {
+    votes$Division[i] <- votes$Division[i-1]
+  }
+}
+votes <- votes[!grepl("Divisions", votes$District), ]
+votes <- na.omit(votes)
+votes
+```
+
+
+### Briefly describe the data
+
+This data set provides results of a survey held in Australia regarding same sex marriages. Participants had to give either a "Yes" or a "No" response. Many participants were unclear on their response hence the data set also has a column for that. Many participants failed to respond and hence that is also considered in the data set. The voting results have been grouped by Divisions and Districts in Australia.
+
+After some initial pre-processing, we can see that the data set has 6 columns, and 150 rows. We can observe that the following columns: Yes, No, Illegible, No Response; are the results of the same survey and hence can be pivoted into a single column.
+
+## Anticipate the End Result
+
+Our dataset has $150$ rows and $6$ variables. 2 of the variables are used to identify a case, so we will be pivoting $6-2$ variables into a longer format where the $6-2$ variable names will move into the `names_to` variable and the current values in each of those columns will move into the `values_to` variable. Therefore, we would expect $150 * (6-2) = 600$ rows in the pivoted dataframe. We will have $2$ unpivoted variables, plus the two new variable defined by the `names_to` and the `values_to` parameter of the pivot function. Hence we end up with $4$ variables in the pivoted dataset.
+
+Therefore, we expect that the dimensions of the pivoted dataset will be $600 * 4$.
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+```{r}
+#| tbl-cap: Pivoted Example
+
+votes_piv<-pivot_longer(votes, cols = Yes:`No Response`,
+                 names_to="Response",
+                 values_to = "Count")
+votes_piv
+```
+
+Dimensions of the pivoted dataset:
+```{r}
+dim(votes_piv)
+```
+
+Yes, once it is pivoted long, our resulting data are $600*4$ - exactly what we expected!

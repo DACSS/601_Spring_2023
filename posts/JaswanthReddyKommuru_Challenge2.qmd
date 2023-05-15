@@ -1,0 +1,199 @@
+---
+title: "Challenge 2"
+author: "Jaswanth Reddy Kommuru"
+description: "Data wrangling: using group() and summarise()"
+date: "05/08/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Jaswanth Reddy Kommuru
+  - birds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+birdsdata<-read_csv("~/Documents/601/601_Spring_2023/posts/_data/birds.csv")
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+The data appears to be related to live animal stocks, specifically chickens, in various countries over multiple years. Here's a high-level description of the data:
+
+The dataset consists of cases representing different observations and variables providing specific information about those observations. Each case represents a particular combination of country, year, and other attributes. The variables in the dataset are as follows:
+
+Domain Code: Code indicating the domain or category of the data.
+Domain: Descriptive label for the domain.
+Area Code: Code representing the country or area.
+Area: Name of the country or area.
+Element Code: Code indicating the element or attribute being measured.
+Element: Description of the element or attribute.
+Item Code: Code representing the specific item or category being measured.
+Item: Description of the item or category.
+Year Code: Code representing the year of observation.
+Year: Specific year of observation.
+Unit: Unit of measurement for the values.
+Value: Numerical value or measurement for the specific observation.
+Flag: Flag indicating any additional information or peculiarities about the observation.
+Flag Description: Description providing further details about the flag.
+
+It seems that the data was likely gathered by the Food and Agriculture Organization (FAO) as estimates of live animal stocks, focusing on chickens. The observations include the country, year, and the stock of chickens measured in units of 1000 head. The dataset also includes flags that might indicate specific circumstances or notes related to the observations.
+
+```{r}
+#| label: summary
+head(birdsdata)
+```
+
+```{r}
+dim(birdsdata)
+```
+
+```{r}
+tail(birdsdata)
+```
+
+
+```{r}
+colnames(birdsdata)
+```
+
+```{r}
+nrow(birdsdata)
+```
+
+
+```{r}
+str(birdsdata)
+```
+
+```{r}
+summary(birdsdata)
+```
+
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+ birdsdata%>%
+  select(`Area`) %>%
+  n_distinct(.)
+```
+
+```{r}
+ birdsdata%>%
+  select(`Year`) %>%
+  n_distinct(.)
+```
+
+
+
+```{r}
+distinct(birdsdata,`Domain`)
+```
+
+
+```{r}
+req_data<-select(birdsdata,Area,Item,Year,Value)
+req_data %>%
+  group_by(Year) %>%
+  summarise(Total_sum=sum(Value,na.rm=TRUE)) %>% 
+  arrange(desc(`Total_sum`))
+```
+
+Population of the live animals in the available data of all the countries in different years and we can observe from the above table that as the years are increasing generally the count of the live animals is also increasing.
+
+```{r}
+birdsdata %>%
+  group_by(Item)%>%
+  summarise(average_value = mean(Value, na.rm = TRUE), Medain_value=median(Value, na.rm = TRUE))
+```
+```{r}
+Item_group <-
+birdsdata %>%
+  group_by(`Item`) %>%
+  select(Item,Value) %>%
+  summarise(mean_stock_value = mean(Value, na.rm=TRUE),
+            median_stock_value = median(Value, na.rm=TRUE),
+            stock_value_sd = sd(Value, na.rm=TRUE),
+            min_stock_value = min(Value, na.rm=TRUE),
+            max_stock_value = max(Value, na.rm=TRUE),
+            first_quartile_stock_value = quantile(Value, 0.25, na.rm=TRUE),
+            third_quartile_stock_value = quantile(Value, 0.75, na.rm=TRUE))
+Item_group
+```
+
+```{r}
+Area_group <-
+birdsdata %>%
+  group_by(`Area`) %>%
+  summarise(mean_stock_value = mean(Value, na.rm=TRUE),
+            median_stock_value = median(Value, na.rm=TRUE),
+            stock_value_sd = sd(Value, na.rm=TRUE),
+            min_stock_value = min(Value, na.rm=TRUE),
+            max_stock_value = max(Value, na.rm=TRUE),
+            first_quartile_stock_value = quantile(Value, 0.25, na.rm=TRUE),
+            third_quartile_stock_value = quantile(Value, 0.75, na.rm=TRUE))
+Area_group
+```
+
+```{r}
+Year_group <- birdsdata %>%
+  group_by(`Year`) %>%
+  summarise(mean_stock_value = mean(Value, na.rm=TRUE),
+            median_stock_value = median(Value, na.rm=TRUE),
+            stock_value_sd = sd(Value, na.rm=TRUE),
+            min_stock_value = min(Value, na.rm=TRUE),
+            max_stock_value = max(Value, na.rm=TRUE),
+            first_quartile_stock_value = quantile(Value, 0.25, na.rm=TRUE),
+            third_quartile_stock_value = quantile(Value, 0.75, na.rm=TRUE))
+print(Year_group)
+```
+
+
+
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.
+
+Our objective was to analyze the sizes of the five livestock categories within the dataset and determine the poultry quantities in different countries within the specified time period. Through a specific grouping approach, we observed a notable disparity between the presence of chickens and other types of poultry in these countries. It became evident that the countries had significantly higher numbers of chicken livestock compared to other poultry varieties.
+
+```{r}
+birdsdata %>%
+  group_by(Area)%>%
+  summarize(mean_stock_value = mean(Value, na.rm = TRUE))
+```

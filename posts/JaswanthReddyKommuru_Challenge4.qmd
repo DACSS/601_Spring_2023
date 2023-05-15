@@ -1,0 +1,135 @@
+---
+title: "Challenge 4"
+author: "Jaswanth Reddy Kommuru"
+description: "More data wrangling: pivoting"
+date: "05/09/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - Jaswanth Reddy Kommuru
+  - poultry_tidy
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(lubridate)
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+poultrydata <-readxl::read_excel("~/Documents/601/601_Spring_2023/posts/_data/poultry_tidy.xlsx")
+```
+
+```{r}
+head(poultrydata)
+```
+
+```{r}
+dim(poultrydata)
+```
+
+```{r}
+str(poultrydata)
+```
+
+```{r}
+ poultrydata%>%
+  select("Product") %>%
+  distinct(.)
+```
+
+
+```{r}
+ poultrydata%>%
+  select("Year") %>%
+  distinct(.)
+```
+
+
+```{r}
+colnames(poultrydata)
+```
+
+```{r}
+nrow(poultrydata)
+```
+
+
+```{r}
+summary(poultrydata)
+```
+
+
+### Briefly describe the data
+
+The dataset comprises 4 columns and 600 rows spanning from 2004 to 2013. It includes various poultry products such as Whole, B/S Breast, Bone-in Breast, Whole Legs, and Thighs. The price range for these products extends from a minimum of 1.935 to 7.037. Upon examining the summary, it becomes evident that certain price values are missing, specifically those associated with product Bone-in Breast and Thighs. Upon further investigation, it was observed that a majority of the missing values are concentrated within these two product categories.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The provided dataset is already in a tidy format. While there is the possibility of removing the rows with missing data, but still I will preserve these rows. Despite the presence of missing values, these rows still contain valuable information in other columns, making them important for a comprehensive analysis.
+
+
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+Making two modifications to the dataset would enhance the analysis. Firstly, since the prices are currently discrete values, it would be advantageous to introduce price ranges, allowing for categorization into high, low, and medium price categories. This would provide a more meaningful representation of the data. Secondly, I suggest combining the variables "year" and "month" into a single column to facilitate direct analysis using the merged time information. This would streamline the analysis process and enable more comprehensive insights.
+
+```{r}
+poultrydata_mutated <- poultrydata %>%
+  mutate(Price_Range = ifelse(Price_Dollar < 3, 'low', ifelse(Price_Dollar < 5, 'medium', 'high')))
+
+poultrydata_mutated <- poultrydata_mutated %>%
+  mutate(Date = as.Date(paste(Year, Month, '01'), format = '%Y %B %d'))
+
+poultrydata_mutated
+```
+
+```{r}
+ poultrydata_mutated%>%
+  select(`Price_Range`) %>%
+  n_distinct(.)
+```
+
+```{r}
+ poultrydata_mutated%>%
+  select(`Price_Range`) %>%
+  distinct(.)
+```
+
+Any additional comments?

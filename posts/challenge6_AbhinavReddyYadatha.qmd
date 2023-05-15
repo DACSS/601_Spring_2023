@@ -1,0 +1,146 @@
+---
+title: "Challenge 6"
+author: "Abhinav Reddy Yadatha"
+description: "Visualizing Time and Relationships"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - Abhinav Reddy Yadatha
+  - hotel_bookings
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(ggplot2)
+library(tidyr)
+library(readxl)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+  
+
+```{r}
+debt_data_trill <- read_xlsx("_data/debt_in_trillions.xlsx")
+
+# checking the dimensions of the data
+dim(debt_data_trill)
+
+# Printing the first few values of the data
+head(debt_data_trill)
+
+# Displaying the summary of the dataset
+summary(debt_data_trill)
+
+```
+
+### Briefly describe the data
+
+The dataset comprises of 8 columns and 74 rows, indicating the debt over a period of years and quarters. The types of debt included are mortgage, HE revolving, auto loan, credit card, student loan, and other, with the total debt amount listed in the final column.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+In my opinion, separating the year and quarter into two distinct columns would facilitate the process of generating visualizations.
+
+```{r}
+
+debt_data_trill <- debt_data_trill %>%
+  rename(year_quarter = `Year and Quarter`)
+
+debt_data_trill <- debt_data_trill %>%
+  separate(year_quarter, into= c("Year", "Quarter"), sep = ":Q")
+
+head(debt_data_trill)
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+
+## Time Dependent Visualization
+
+```{r}
+
+avg_debt_year <- debt_data_trill %>%
+  group_by(Year) %>%
+  summarise(AvgTotalDebt = mean(Total))
+
+head(avg_debt_year)
+
+ggplot(avg_debt_year,aes(x=Year, y=AvgTotalDebt)) + geom_point() + ggtitle("Time dependent visualization of Average Debt over Years")
+
+```
+
+
+
+## Visualizing Part-Whole Relationships
+
+```{r}
+
+# Mutating the year in the column 
+
+debt_data_trill<-debt_data_trill%>%
+  mutate(Yeaar = as.integer(Year)+2000,Quarteer = as.integer(Quarter))%>%
+  gather("debt_type_tril", "amt", Mortgage:Total)
+
+head(debt_data_trill)
+
+
+debt_data_trill %>%
+  filter(debt_type_tril != "Total") %>%
+  mutate(debt_type_tril = fct_relevel(debt_type_tril, "Mortgage", "Auto Loan", "Credit Card", "HE Revolving", "Other", "Student Loan")) %>%
+  ggplot(aes(x = Yeaar + (Quarteer-1) / 4, y = amt, fill = debt_type_tril)) +
+  geom_area() +
+  labs(title = "Quarter wise Debt Breakdown",
+       x = "Year",
+       y = "Debt_Amt_trillion (Trillions of US Dollars)",
+       fill = "Debt_Type_Trill") 
+
+
+```
+

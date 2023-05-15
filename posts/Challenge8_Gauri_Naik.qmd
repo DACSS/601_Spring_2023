@@ -1,0 +1,100 @@
+---
+title: "Challenge 8"
+author: "Gauri Naik"
+date: "04/25/2023"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+
+```{r library, echo = FALSE, message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(purrr)
+```
+
+
+```{r sheets, echo = FALSE, results='hide', message =FALSE}
+sheet_names <- c('TotalDoD','AirForce', 'MarineCorps', 'Navy', 'Army')
+adms_list <- list()
+
+for(i in 1:5){  
+  adms_list[[i]] <- readxl::read_excel("_data/ActiveDuty_MaritalStatus.xls", sheet = sheet_names[i], range = "B9:Q31")
+}
+
+names(adms_list) <- sheet_names
+
+for(i in 1:5){
+  adms_list[[i]] <- adms_list[[i]] %>%
+      rename(Male_SWOC = Male...2,
+         Female_SWOC = `Female...3`,
+         Total_SWOC = `Total...4`,
+         Male_SWC = `Male...5`,
+         Female_SWC = `Female...6`,
+         Total_SWC = `Total...7`,
+         Male_JSM = `Male...8`,
+         Female_JSM = `Female...9`,
+         Total_JSM = `Total...10`,
+         Male_CM = `Male...11`,
+         Female_CM = `Female...12`,
+         Total_CM = `Total...13`,
+         Total_Male = `Male...14`,
+         Total_Female = `Female...15`,
+         Total = `Total...16`)
+}
+
+adms_enl <- list()
+adms_off <- list()
+for(i in 1:5){
+  adms_enl[[i]] <- adms_list[[i]] %>%
+    head(n = 10)
+}
+for(i in 1:5){
+  adms_off[[i]] <- adms_list[[i]] %>%
+    tail(n = 12)
+}
+
+adms_merge <- data.frame()
+for (i in 1:5) {
+    adms_merge <- merge(adms_merge, adms_list[[i]], all=TRUE)
+}
+
+Branch <- c('Marine', 'Air Force', 'Navy', 'Army')
+Branch <- rep(Branch, times=22, each=1)
+adms_merge <- cbind(adms_merge, Branch)
+
+adms_merge <- adms_merge %>%
+  relocate(Branch, .before = `Pay Grade`) %>%
+  arrange(`Pay Grade`)
+
+adms_list1 <- adms_list
+for(i in 1:5){
+  adms_list1[[i]] <- adms_list[[i]] %>%
+  select(-c(Total_SWOC,
+            Total_SWC,
+            Total_JSM,
+            Total_CM,
+            Total_Male,
+            Total_Female))
+}
+```
+
+We're going to be working with the dataset ActiveDuty_MaritalStatus.xls which is an Excel document with sheets. We're going to first read in the sheet using this for loop.
+```{r loopcode, include=TRUE, results='hide', message=FALSE}
+for(i in 1:5){  
+  adms_list[[i]] <- readxl::read_excel("_data/ActiveDuty_MaritalStatus.xls", sheet = sheet_names[i], range = "B9:Q31")
+}
+```
+
+Then we will look at a preview of one of the sheets available to us.
+```{r preview, echo=FALSE}
+head(adms_list[[1]])
+```
+Now we will merge all the sheets together and add a column labeled Branch to see the datasets that have been combined.
+```{r merge, echo = FALSE}
+adms_merge
+```
+

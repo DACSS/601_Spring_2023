@@ -1,0 +1,154 @@
+---
+title: "Challenge 8"
+author: "Abhinav Reddy Yadatha"
+description: "Joining Data"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - Abhinav Reddy Yadatha
+  - snl
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - military marriages ⭐⭐
+  - faostat ⭐⭐
+  - railroads  ⭐⭐⭐
+  - fed_rate ⭐⭐⭐
+  - debt ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - snl ⭐⭐⭐⭐⭐
+
+```{r}
+
+seasons_data <- read.csv("_data/snl_seasons.csv")
+actors_data <- read.csv("_data/snl_actors.csv")
+casts_data <- read.csv("_data/snl_casts.csv")
+
+# Displaying first few rows of the datasets
+head(seasons_data)  
+head(actors_data)
+head(casts_data)
+
+# Dimensions of datasets
+dim(seasons_data)
+dim(actors_data)
+dim(casts_data)
+
+
+# Summaries of datasets
+summary(seasons_data)
+summary(actors_data)
+summary(casts_data)
+
+
+
+
+
+
+```
+
+### Briefly describe the data
+
+The data frames contain independent and well-organized data. The actors Data Frame consists of a comprehensive list of actors, guests, musical guests, and crew members who have appeared on the show. Each observation pertains to an individual actor and includes details about their role type and gender.
+
+On the other hand, the casts data frame focuses on actors who were part of the cast during a specific season. Each observation represents an actor and includes information such as their featured status, dates of the first and last episodes they appeared in, whether they served as an anchor on weekend update, and the number of episodes they participated in during that season.
+
+Lastly, the seasons data frame encompasses information about each specific season. Each observation corresponds to a particular season and includes data such as the year it aired, the dates of the first and last episodes, and the total number of episodes.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+# Mutating seasons dataset 
+
+seasons_data <- seasons_data %>% # (46 x 5)
+        mutate(first_epid = ymd(first_epid), last_epid = ymd(last_epid))
+
+# Mutating casts dataset 
+casts_data <- casts_data %>%  
+        mutate(first_epid = ymd(first_epid), last_epid = ymd(last_epid))
+
+
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+```
+
+## Join Data
+
+Be sure to include a sanity check, and double-check that case count is correct!
+
+
+```{r}
+# Sanity chack : cast members count :154 
+
+actors_data <-actors_data %>%
+       select(-url) %>%
+       filter(type == "cast")  
+
+
+
+# Saanity Check:  cast members count : 156
+casts_data %>%
+      select(aid)%>%
+      n_distinct()              
+
+fullyjoined_data <- full_join(actors_data, casts_data, by = "aid") %>%
+        select(c(aid, gender, sid, featured, update_anchor))
+
+```
+
+Join of both the tables have been completed. Let us perform some analysis.
+
+```{r}
+head(fullyjoined_data) 
+
+fullyjoined_data %>%
+      filter(update_anchor == "True") %>%
+      select(gender)%>%
+      table() %>%
+      prop.table() 
+
+# When considering all seasons, approximately 74% of the hosts for weekend update are male.
+
+```
+

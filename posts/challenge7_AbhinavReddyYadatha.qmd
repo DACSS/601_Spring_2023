@@ -1,0 +1,120 @@
+---
+title: "Challenge 7"
+author: "Abhinav Reddy Yadatha"
+description: "Visualizing Multiple Dimensions"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - Abhinav Reddy Yadatha
+  - AB_NYC_2019.csv
+  
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+```{r}
+df_data <- read.csv("_data/AB_NYC_2019.csv")
+head(df_data)
+dim(df_data)
+summary(df_data)
+```
+
+### Briefly describe the data
+
+The dataset comprises data on nearly 49,000 Airbnb rental properties located in New York City throughout 2019. Each observation represents a distinct rental unit and consists of 16 variables, providing information such as the unit's ID, name, location, host ID and name, room type, price, minimum required nights for a reservation, number of reviews, last review date, average monthly reviews, calculated count of host listings on Airbnb, and availability.
+
+```{r}
+str(df_data)
+```
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+# Removing empty data values
+df_data <- na.omit(df_data)
+
+
+# Mutating by setting a limit of 450 as high and low otherwisw
+df_data <- df_data %>% mutate(high_price = ifelse(price > 450, "high", "low"))
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+
+## Visualization with Multiple Dimensions
+
+Univariate Visualizations (Single dimension): 
+
+```{r}
+library(ggplot2)
+
+ggplot(df_data, aes(x=price)) + 
+  geom_histogram(binwidth=35, color="green", fill="black") +
+  labs(title="Price Distribution vs frequency", x="Price", y="Frequency")
+
+```
+
+
+Bi-variate Visualizations : 
+
+The initial scatterplot depicts the relationship between price and reviews_per_month across the entire dataset. The plot is initialized using the ggplot function, with the aes function specifying the variables for the x and y axes. Points are added to the plot using geom_point, while labs is utilized to define the title and axis labels.
+
+```{r}
+ggplot(df_data, aes(x=price, y=reviews_per_month)) +
+  geom_point(alpha=0.46, color="black") +
+  labs(title="Monthly Price vs Reviews", x="Price", y="Reviews per Month")
+
+```
+
+
+
+

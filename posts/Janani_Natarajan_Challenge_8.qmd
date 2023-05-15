@@ -1,0 +1,163 @@
+---
+title: "Challenge 8"
+author: "Meredith Rolfe"
+description: "Joining Data"
+date: "05/14/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - railroads
+  - snl
+  - faostat
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   military marriages ⭐⭐
+-   faostat ⭐⭐
+-   railroads ⭐⭐⭐
+-   fed_rate ⭐⭐⭐
+-   debt ⭐⭐⭐
+-   us_hh ⭐⭐⭐⭐
+-   snl ⭐⭐⭐⭐⭐
+
+```{r}
+dfactors <- read.csv(file = "_data/snl_actors.csv",
+                header=TRUE,
+                sep = ","
+                )
+```
+
+```{r}
+dfcasts <- read.csv(file = "_data/snl_casts.csv",
+                header=TRUE,
+                sep = ","
+                )
+```
+
+```{r}
+dfseasons <- read.csv(file = "_data/snl_seasons.csv",
+                header=TRUE,
+                sep = ","
+                )
+```
+
+### Briefly describe the data
+
+The dfactor dataset contains 2306 rows and four columns, with each row representing a unique actor and detailed information provided in each column. The first column contains the actor's name, the second column contains a corresponding URL, the third column identifies whether the actor was a cast member or a guest, and the fourth column specifies the actor's gender. All variables in the dataset are categorical/character data.
+
+The dfcast dataset contains 614 rows and eight columns. This dataset covers 46 seasons of the show from 1975 to 2020, including information about the cast members but not the guests. The dataset includes each cast member's first and last episode dates, whether they were an Update Anchor, and the number of episodes they appeared in for each season. Additionally, the dataset provides the proportion of episodes in which each cast member appeared.
+
+```{r}
+head(dfactors)
+```
+
+```{r}
+head(dfcasts)
+```
+
+```{r}
+head(dfseasons)
+```
+
+```{r}
+colnames(dfactors)
+```
+
+```{r}
+colnames(dfcasts)
+```
+
+```{r}
+colnames(dfseasons)
+```
+
+## Tidy Data
+
+```{r}
+dfactors<- na.omit(dfactors)
+dfcasts<- na.omit(dfcasts)
+dfseasons<- na.omit(dfseasons)
+
+```
+
+```{r}
+colnames(dfcasts)
+```
+
+```{r}
+colnames(dfactors)
+```
+
+```{r}
+dfactors <- dfactors %>%
+  mutate(appearances = rowSums(select(., starts_with("ep_")), na.rm = TRUE))
+```
+
+## Join Data
+
+Be sure to include a sanity check, and double-check that case count is correct!
+
+```{r}
+casts_actors <- dfcasts %>%
+  left_join(dfactors, by = "aid") %>%
+  select(sid, type, gender, featured, appearances)
+```
+
+```{r}
+data <- dfseasons %>%
+  left_join(df_casts_actors, by = "sid")
+```
+
+```{r}
+colnames(data)
+```
+
+```{r}
+colnames(casts_actors)
+```
+
+```{r}
+joined_data <- dfcasts %>%
+  select(-update_anchor, -season_fraction, -n_episodes) %>%
+  left_join(dfseasons, by="sid")
+
+joined_data
+```
+
+```{r}
+colnames(joined_data)
+```
+
+```{r}
+casts_actors %>%
+  ggplot(aes(sid, featured)) +
+  geom_point() + 
+  labs(title = "Featured")
+```
+
+```{r}
+casts_actors %>%
+  ggplot(aes(sid, col=gender)) +
+  geom_histogram() + 
+  labs(title = "Gender Makeup")
+```

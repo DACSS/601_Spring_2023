@@ -1,0 +1,145 @@
+---
+title: "Challenge 5"
+author: "FNU Avinesh Krishnan"
+description: "Introduction to Visualization"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - FNU Avinesh Krishnan
+  - Cereal
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐ 
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐ 
+-   USA Households ⭐⭐⭐⭐⭐
+
+```{r}
+cerealdata <- read_csv("~/Desktop/601_Spring_2023/posts/_data/cereal.csv")
+```
+
+### Briefly describe the data
+
+```{r}
+head(cerealdata)
+```
+
+```{r}
+dim(cerealdata)
+```
+
+```{r}
+colnames(cerealdata)
+```
+
+```{r}
+str(cerealdata)
+```
+
+```{r}
+ncol(cerealdata)
+```
+
+In the dataset we observe the presence of four variables: the name of the cereal, the sodium and sugar contents, and a categorical label assigned to each entry referred to as "Type." Although the specific differentiation between the various types remains unclear at this stage, it is evident that the dataset encompasses cereals categorized as type A and C
+
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+There seems to be no need for any data tidying the dataset. We can see that there are no missing values and no variables with irrelevant values that need to be eliminated.
+
+```{r}
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+```
+
+## Univariate Visualizations
+
+
+
+```{r}
+ggplot(cerealdata, aes(x = Sugar, fill = factor(Type))) +
+  geom_histogram(binwidth = 5) +
+  labs(title = "The amount of Sugar Content in Cereals") +
+  scale_fill_manual(values = c("red", "blue"))
+
+```
+
+```{r}
+ggplot(cerealdata, aes(x = Sodium, fill = factor(Type))) +
+  geom_histogram(binwidth = 5) +
+  labs(title = "The amount of Sodium Content in Cereals") +
+  scale_fill_manual(values = c("blue", "red"))
+
+```
+
+
+
+## Bivariate Visualization(s)
+
+```{r}
+ggplot(data = cerealdata) +
+  geom_point(mapping = aes(x = Sodium, y = Sugar, color = factor(Type))) +
+  labs(title = "The amount of sodium vs sugar") +
+  scale_color_manual(values = c("red", "blue"))
+
+```
+
+By observing the scatter plot, it is evident that the majority of data points are clustered around the median sodium level, with a few outliers on either side. On the other hand, the sugar content in cereals exhibits a wide range of variation. This observation aligns with the expected pattern, where cereals targeting children tend to have significantly higher sugar content, while cereals marketed towards adults are generally considered "healthy" and contain considerably less sugar.
+
+```{r}
+ggplot(cerealdata, aes(Type, Sugar, fill = Type)) +
+  geom_boxplot() +
+  labs(title = "Amount of Sugar in Cereal by Type")
+
+```
+In the data, the sugar content in children's cereal is higher compared to adult cereal.

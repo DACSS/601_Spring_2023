@@ -1,0 +1,119 @@
+---
+title: "Challenge 4"
+author: "FNU Avinesh Krishnan"
+description: "More data wrangling: pivoting"
+date: "05/15/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - FNU Avinesh Krishnan
+  - HOTEL
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+hotelbookdata <- read_csv("~/Desktop/601_Spring_2023/posts/_data/hotel_bookings.csv")
+```
+
+### Briefly describe the data
+
+```{r}
+head(hotelbookdata)
+```
+
+```{r}
+str(hotelbookdata)
+```
+
+```{r}
+dim(hotelbookdata)
+```
+
+```{r}
+colnames(hotelbookdata)
+```
+
+```{r}
+unique(hotelbookdata$hotel)
+```
+
+
+
+
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+
+
+```
+
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+mutated_data <- hotelbookdata %>%
+    mutate(month = case_when(arrival_date_month == "January" ~ 1,arrival_date_month == "February" ~ 2,arrival_date_month == "March" ~ 3,arrival_date_month == "April" ~ 4,arrival_date_month == "May" ~ 5,arrival_date_month == "June" ~ 6,arrival_date_month == "July" ~ 7,arrival_date_month == "August" ~ 8,arrival_date_month == "September" ~ 9,arrival_date_month == "October" ~ 10,arrival_date_month == "November" ~ 11,arrival_date_month == "December" ~ 12,)) %>%
+    mutate(date_of_arrrival = make_date(arrival_date_year, month, arrival_date_day_of_month)) %>%
+    select(-c(arrival_date_year, arrival_date_month, arrival_date_day_of_month, month, arrival_date_week_number))
+
+mutated_data
+
+```
+
+After eliminating four of the initial date columns (year, month, day, and week) and introducing a new column to represent the complete expected arrival date, the total number of columns (variables) in our dataset is 29.
+
+```{r}
+ncol(mutated_data)
+```
+
+```{r}
+dim(mutated_data)
+```
+
+
+
+Any additional comments?

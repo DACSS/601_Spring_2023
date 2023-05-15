@@ -1,0 +1,77 @@
+---
+title: "Join Tables and Analyzing Data"
+author: "Sahan Prasad Podduturi Reddy"
+description: "Joining Data"
+date: "05/14/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - snl
+  - Sahan Prasad Podduturi Reddy
+---
+
+## Introduction
+
+I was trying to analyze the `snl_actors` and `snl_casts` datasets in order to find out the approximate screen time for male and female SNL actors. We first start by importing the necessary libraries and setting the working directory to point to the location where the spreadsheet is located. Then we read in both the datasets into dataframes. From the `snl_casts` dataset, we approximate the screen_time for every actor by multiplying the number of episodes the actor appreared in with the season_fraction.
+
+```{r}
+#| label: Setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+setwd("D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data")
+actors <- read.csv("snl_actors.csv")
+casts <- read.csv("snl_casts.csv") %>%
+  select(-"first_epid", -"last_epid") %>%
+  mutate(screen_time = n_episodes * season_fraction)
+```
+
+## Join Data
+
+Our actors dataframe has information about actor gender. We create `join_one` by combining both `actors` and `casts` dataframes with an inner join grouping by actor id - `aid` and summarizing to get total screen time per actor in terms of episodes. We know that `actors` has a separate row of information for every cast member and guest on snl, while `casts` contains rows of information for actors only. Performing inner join based on `aid` will match rows based on `aid` which guests do not have. Therefore, to perform a sanity check of our join results, we can print number of rows in `casts` and number of rows in `join_one` and they must be the same. Afterwards, we get `join_two` which contains a separate row for every different actor in `join_one`. Here, we are getting a separate row for every aid by summing the screen times for actors. Thus we can perform a sanity check once again by making sure the length of `join_two` is the same as the number of unique actors ids in `join_one`. 
+
+```{r}
+#| label: Join
+#| warning: false
+#| message: false
+
+join_one <- casts %>% 
+  inner_join(actors, by = "aid") %>%
+  select(-"update_anchor", -"n_episodes", -"url", -"season_fraction", -"featured", -"type")
+head(casts)
+head(join_one)
+print(nrow(casts))
+print(nrow(join_one))
+
+join_two <- join_one %>% group_by(aid, gender) %>%
+  summarise(total_screen_time = sum(screen_time))
+head(join_two)
+print(length(unique(join_one$aid)))
+print(nrow(join_two))
+```
+
+## Visualization and Analysis
+
+We can visualize the resulting dataframe comparing actor's screen time and coloring them based on gender to give a good picture of average screen time for male and female snl stars.
+
+
+```{r}
+#| label: Visualize
+#| warning: false
+#| message: false
+
+join_two %>% 
+    ggplot(aes(y=total_screen_time, x=aid, color=gender)) +
+    geom_point() +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, margin = margin(t = 0.5, unit = "cm"), size = 8)) +
+    scale_x_discrete(breaks = join_two$aid[seq(1, length(join_two$aid), by = 3)]) +
+    labs(title = "Actor's Screen Time Comparision", x = "Actor", y = "Approx. No. of Episodes of Screen Time")
+```

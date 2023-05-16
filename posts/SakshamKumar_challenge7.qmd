@@ -1,0 +1,152 @@
+---
+title: "Challenge 7 : Visualizing multiple dimensions in Hotel Bookings"
+author: "Saksham Kumar"
+description: "Visualizing Multiple Dimensions"
+date: "05/15/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+  - Saksham Kumar
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(ggrepel)
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - hotel_bookings ⭐⭐⭐
+
+
+```{r}
+hotel_data <- read.csv("_data/hotel_bookings.csv")
+hotel_data
+```
+
+### Briefly describe the data
+
+As seen in challenge 6. (Code directly used from Challenge 6)
+
+```{r}
+hotel_data %>% colnames()
+```
+We see that there are 32 variables in the dataset. Lets have a look at the summary for each variable of the dataset below.
+
+```{r}
+hotel_data %>% summary()
+```
+Lets see the number of unique hotels and countries
+
+```{r}
+hotel_data$hotel %>% unique()
+```
+
+There are two unique types of hotels
+
+```{r}
+hotel_data$country %>% unique()
+```
+And the data describes values from 178 countries
+
+## Tidy Data (as needed)
+
+Like challenge 6, we start by combine all start date related fields to create a singular date field. (Code directly used from Challenge 6)
+
+```{r}
+hotel_mutated<-hotel_data%>%
+  mutate(date_arrival = str_c(arrival_date_day_of_month,
+                              arrival_date_month,
+                              arrival_date_year, sep="/"),
+         date_arrival = dmy(date_arrival))%>%
+  select(-c("arrival_date_day_of_month", "arrival_date_year", "arrival_date_week_number"))
+
+hotel_mutated
+```
+
+## Visualization with Multiple Dimensions
+
+In challenge 6, we visulaized the number of bookings made in each month. Here we try to find the count of babies that arrive each month, while introducing variables like
+
+```{r}
+hotels_babybookings_bymonth_pre <- hotel_data %>% 
+                                  group_by(arrival_date_month, arrival_date_year, hotel) %>%
+                                  summarise(sum_babies = sum(babies))
+
+hotels_babybookings_bymonth <- hotels_babybookings_bymonth_pre %>% mutate(
+                                                  arrival_date_month = factor(arrival_date_month, levels = month.name)
+                                                  ) %>%
+                                                  arrange(arrival_date_month)
+
+hotels_babybookings_bymonth
+```
+We first visualize the nu,ber of babies arriving in a given month. We use a histogram as it is an excellent way of depicting count. We fill the histogram based on the hotel type hence introducing another dimension in our visualization:
+
+```{r}
+ggplot(hotels_babybookings_bymonth) + geom_bar(aes(x=arrival_date_month, y=sum_babies, fill=(hotel)), stat="identity") + scale_x_discrete(breaks = c('January', 'April', 'July', 'October')) + labs(y= "Total Babies", x = "Month")
+```
+
+Next, we try to introduce one more dimension, which is arrival_date_year. We use a line plot here. As we can see, we have two plots, for the two hotels. For each month, we see multiple datat points that correspond to the different years
+
+```{r}
+ggplot(hotels_babybookings_bymonth, aes(arrival_date_month, sum_babies, col=hotel)) + facet_wrap(vars(hotel)) + scale_x_discrete(breaks = c('January', 'April', 'July', 'October')) + geom_line() + geom_point() + geom_text_repel(size=1.5, aes(label = arrival_date_year)) + labs(y= "Total Babies", x = "Month")
+
+```
+
+Next we try to visualize a different set of dimensions: total number of bookings, total number of adults and total number of children for a given month. This type of visualization is useful when a user wants to compare the three "totals" we mentioned earlier. We use a line to represent each of the three "totals" and also divide the data by hotel type.
+
+```{r}
+hotels_babyadultratio_bymonth_pre <- hotel_data %>% 
+                                  group_by(arrival_date_month, hotel) %>%
+                                  summarise(total_babies = sum(babies), total_adults = sum(adults), bookings = n(), .groups = 'drop')
+
+hotels_babyadultratio_bymonth <- hotels_babyadultratio_bymonth_pre %>% mutate(
+                                                  arrival_date_month = factor(arrival_date_month, levels = month.name)
+                                                  ) %>%
+                                                  arrange(arrival_date_month)
+
+hotels_babyadultratio_bymonth <- hotels_babyadultratio_bymonth %>% pivot_longer(cols=c(total_babies, total_adults, bookings), names_to = 'sum', values_to = 'value')
+
+hotels_babyadultratio_bymonth
+```
+
+
+```{r}
+ggplot(hotels_babyadultratio_bymonth, aes(arrival_date_month, value, color = sum, group=sum)) +
+  facet_wrap(vars(hotel)) +
+  geom_point() +
+  geom_line() + 
+  scale_x_discrete(breaks = c('January', 'April', 'July', 'October')) + 
+  labs(y= "Value", x = "Month", color ="Totals")
+```

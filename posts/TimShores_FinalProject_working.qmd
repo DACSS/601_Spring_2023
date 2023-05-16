@@ -615,10 +615,39 @@ crYearDF <- callReasonsDF %>%
     callTotalHours = callTotal * avgHours
   ) 
 
-# calculate growth percentage of total hours worked
-crYeargrowthPct <- as.character(round((crYearDF[5,4] - crYearDF[1,4]) / crYearDF[1,4] * 100, 1))
-crYeargrowthLM <- as.character(round(lm(callTotalHours ~ year(year), data = crYearDF)$coefficients[2], 1))
+###
+### begin calculations for crYearDF
+###
 
+# calculate growth percentage of total hours worked
+
+crYeargrowthPct <- as.character(round((crYearDF[5,4] - crYearDF[1,4]) / crYearDF[1,4] * 100, 1))
+
+# (values used inline to communicate growth, hence character conversions)
+
+# calculate linear model coefficient estimate of x (hour increase by year)
+
+crYeargrowthLM <- round(lm(callTotalHours ~ year(year), data = crYearDF)$coefficients[2], 1)
+
+# calculate weekly hour increase per lm
+
+crYeargrowthLMweek <- as.character(round(crYeargrowthLM / 52, 1))
+
+# a standard 40-hour work week
+
+assumedFTE <- 40
+
+# calculate hour increase per lm in terms of weekly FTE
+
+crYeargrowthFTE <- as.character(round(crYeargrowthLM / 52 / assumedFTE, 2))
+
+# convert lm coefficient of x to character
+
+crYeargrowthLM <- as.character(crYeargrowthLM)
+
+###
+### end of calculations for crYearDF
+###
 
 # group by town and year
 crTownYearDF <- callReasonsDF %>%
@@ -629,9 +658,52 @@ crTownYearDF <- callReasonsDF %>%
     callTotalHours = callTotal * avgHours
   ) 
 
-# calculate growth percentage of total hours worked by town
-crLevgrowth <- as.character(round((crTownYearDF[5,5] - crTownYearDF[1,5]) / crTownYearDF[1,5] * 100, 1))
-crWengrowth <- as.character(round((crTownYearDF[10,5] - crTownYearDF[6,5]) / crTownYearDF[6,5] * 100, 1))
+###
+### begin calculations for crTownYearDF
+###
+
+# For each town: calculate growth percentage of hours worked
+
+crLevgrowth <- round(
+  (crTownYearDF[5,5] - crTownYearDF[1,5]) / crTownYearDF[1,5] * 100, 1)[[1]]
+crWengrowth <- round(
+  (crTownYearDF[10,5] - crTownYearDF[6,5]) / crTownYearDF[6,5] * 100, 1)[[1]]
+
+# (values communicated in a df, 
+# hence no need for character conversions
+
+# calculate linear model coefficient estimate of x (hour increase by year)
+
+crLevgrowthLM <- round(lm(callTotalHours ~ year(year), 
+                          data = filter(crTownYearDF, 
+                                        town == "Leverett")
+                          )$coefficients[2], 1)
+crWengrowthLM <- round(lm(callTotalHours ~ year(year), 
+                          data = filter(crTownYearDF, 
+                                        town == "Wendell")
+                          )$coefficients[2], 1)
+
+# calculate weekly hour increase per lm
+
+crLevgrowthLMweek <- round(crLevgrowthLM / 52, 1)
+crWengrowthLMweek <- round(crWengrowthLM / 52, 1)
+
+# defined in previous code: assumed standard 40-hour work week
+# calculate hour increase per lm in terms of weekly FTE
+
+crLevgrowthFTE <- round(crLevgrowthLM / 52 / assumedFTE, 2)
+crWengrowthFTE <- round(crWengrowthLM / 52 / assumedFTE, 2)
+
+###
+### end of calculations for crTownYearDF
+###
+### now assign to df for presentation:
+
+crtyGrowthDF <- tribble(
+  ~town, ~yr_pct_growth,  ~yr_hr_growth, ~wk_hr_growth, ~fte_growth,
+  "Leverett", crLevgrowth, crLevgrowthLM, crLevgrowthLMweek, crLevgrowthFTE,
+  "Wendell", crWengrowth, crWengrowthLM, crWengrowthLMweek, crWengrowthFTE
+)
 
 # group by year and theme
 crThemeYear <- callReasonsDF %>%
@@ -670,9 +742,13 @@ crYearDF %>%
 
 ```
 
-The big picture shows **`r crYeargrowthPct`% growth** in total hours worked by police officers in the two towns together **from `r year(crYearDF$year)[1]` to `r year(crYearDF$year)[5]`**. Another way to express this is with a linear model, the orange line: we've seen the two towns add **`r crYeargrowthLM` hours** of policing every year. What drives this growth in policing in 2 small rural towns?
+The big picture shows **`r crYeargrowthPct`% growth** in total hours worked by police officers in the two towns together **from `r year(crYearDF$year)[1]` to `r year(crYearDF$year)[5]`**. 
 
-The simplest next step is to compare the towns. Faceting the 3 key metrics by town lets us compare the change in calls and hours worked over the 5-year period:
+Another way to express this is with a linear model, the orange line: we've seen the two towns add **`r crYeargrowthLM` hours** of policing every year. This could be useful for the town's personnel planning. Assuming a **`r assumedFTE`-hour full-time equivalence (FTE)** and an increase of `r crYeargrowthLM` hours per year (or **`r crYeargrowthLMweek` hours per week**), Leverett and Wendell police call hours grow by **`r crYeargrowthFTE` FTE each year**.
+
+What drives this growth in policing in 2 small rural towns?
+
+A simple next step is to compare the towns. Faceting the 3 key metrics by town lets us compare the change in calls and hours worked over the 5-year period:
 
 ```{r chunkByTown, fig.width=10, fig.height=10}
 
@@ -725,16 +801,18 @@ grid.arrange(g1, g2, g3, nrow = 3)
 
 ```
 
-Total hours worked from `r year(crYearDF$year)[1]` to `r year(crYearDF$year)[5]`:
+Using the same analysis, this table summarizes growth rates that correspond to the orange trend lines in the above plots by town: 
 
-Leverett: **`r crLevgrowth`% growth** 
+```{r chunkByTownGrowthSummary, fig.width=10, fig.height=4}
+crtyGrowthDF
+```
 
-Wendell: **`r crWengrowth`% growth**
+This reveals that Wendell drives the growth in calls by a factor of around 20 to 1 compared with Leverett.
 
-As described earlier, I learned from the LPD Chief that Wendell's police department didn't log every call. We see a lot of growth from the change in administration, increasing the number of Wendell issues logged as calls.
+It's more accurate and fair to say that missing data from Wendell drives an apparent growth in calls. As described above, when I discussed the data with LPD Chief Minckler, I learned that Wendell's former police chief didn't log every call. Improved data input by LPD officers has created a more accurate record of policing in Wendell. It's possible to use this data set to estimate Wendell's past police call data, but that's beyond the scope of this analysis.
 
 
-```{r name-of-chunk, fig.width=10, fig.height=10}
+```{r chunkByTheme, fig.width=10, fig.height=10}
 
   
 sumCRTownYearTheme %>% # order themes by callTotal

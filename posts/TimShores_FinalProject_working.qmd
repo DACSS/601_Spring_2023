@@ -24,7 +24,7 @@ editor_options:
 #| warning: false
 #| message: false
 
-my_packages <- c("tidyverse", "fs", "pdftools", "knitr", "ggplot") # create vector of packages
+my_packages <- c("tidyverse", "fs", "pdftools", "knitr", "ggplot2") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
@@ -34,7 +34,7 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 
 ### Summary
 
-This is the story of two small, rural Massachusetts towns that have made an agreement to combine their two local police departments into a single, regionalized department. The regionalization agreement, initiated in 2020, has made it more challenging to assess police and other public safety personnel need. 
+This is the story of two small, rural Massachusetts towns that have made an agreement to combine their two local police departments into a single regionalized department. The goal of regionalization, initiated in 2020, is to reduce cost by sharing a service. However, regionalization has made it more challenging for the towns to assess personnel needs of their police and other public safety services. 
 
 For example, if demand for first responders has increased, is it because a single police department is now responding to calls from both towns, or is it for reasons unrelated to regionalization, such as increased police response to medical calls or other calls for which police response is not required?
 
@@ -66,7 +66,7 @@ At the recent budget meetings in Spring 2023, the Leverett Police Chief made a b
 
 :::
 
-Since 2021, state POST reform has made it difficult for local police departments to fill their on-duty schedules with reserve police officers. Before 2021, reserve officers required half as much training as full-time officers. Reserve officers could work part-time and as a second job in seasonal positions or on shifts as-needed could do so with lower training requirements. The State of Massachusetts Peace Officer Standards and Training (POST) Commission has enacted a series of reforms that increased the amount of training required by reserve officers. Reserves must now train as much as full-time officers. This has removed an incentive and reduced the availability of reserve officers. Local police departments now struggle to meet their scheduling needs and turn to requests for more full-time positions.
+Since 2021, state POST reform has made it [difficult for local police departments](https://www.berkshireeagle.com/news/central_berkshires/lenox-police-chief-talks-impact-of-new-rules-for-part-time-officers/article_3949b04c-35b2-11ec-8169-a72d6e4669a8.html) to fill their on-duty schedules with reserve police officers. Before 2021, reserve officers required half as much training as full-time officers. Reserve officers could work part-time and as a second job in seasonal positions or on shifts as-needed could do so with lower training requirements. The State of Massachusetts Peace Officer Standards and Training (POST) Commission has enacted a series of reforms that increased the amount of training required by reserve officers. Reserves must now train as much as full-time officers. This has removed an incentive and reduced the availability of reserve officers. Local police departments now struggle to meet their scheduling needs and turn to requests for more full-time positions.
 
 ::: {.callout-tip icon=false}
 
@@ -491,6 +491,76 @@ callActionsDF <- left_join(callActionsDF, factorThemesDF, by ='call_reason')
 
 ```
 
+To get a sense of the scale of time spent on calls, these 3 tables show (1) a summary of time per call by the top 5 call reason mean times; (2) a summary of time per call by town; and (3)  a summary of time per year.
+
+```{r}
+
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
+
+callReasonsDF_ReasonSummary <- callReasonsDF %>% 
+  mutate(avg_hours_per_call = avg_hours_to_arrive + avg_hours_at_scene) %>%
+  group_by(call_reason) %>% 
+  summarise(
+    meanHrs = mean(avg_hours_per_call, na.rm = TRUE), 
+    modeHrs = find_mode(avg_hours_per_call), 
+    minHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[1], 
+    lHingeHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[2], 
+    medHrs = median(avg_hours_per_call, na.rm = TRUE), 
+    uHingeHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[4], 
+    maxHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[5]
+    ) %>%
+  arrange(desc(meanHrs))
+
+crReasonRoundedDF <- callReasonsDF_ReasonSummary %>% 
+  mutate_if(is.numeric, round, digits = 2)
+head(crReasonRoundedDF, 5)
+
+
+callReasonsDF_TownSummary <- callReasonsDF %>% 
+  mutate(avg_hours_per_call = avg_hours_to_arrive + avg_hours_at_scene) %>%
+  group_by(town) %>% 
+  summarise(
+    meanHrs = mean(avg_hours_per_call, na.rm = TRUE), 
+    modeHrs = find_mode(avg_hours_per_call), 
+    minHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[1], 
+    lHingeHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[2], 
+    medHrs = median(avg_hours_per_call, na.rm = TRUE), 
+    uHingeHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[4], 
+    maxHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[5]
+    ) %>%
+  arrange(desc(meanHrs))
+
+crTownRoundedDF <- callReasonsDF_TownSummary %>% 
+  mutate_if(is.numeric, round, digits = 2)
+crTownRoundedDF
+
+
+callReasonsDF_YearSummary <- callReasonsDF %>% 
+  mutate(avg_hours_per_call = avg_hours_to_arrive + avg_hours_at_scene) %>%
+  group_by(year) %>% 
+  summarise(
+    meanHrs = mean(avg_hours_per_call, na.rm = TRUE), 
+    modeHrs = find_mode(avg_hours_per_call), 
+    minHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[1], 
+    lHingeHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[2], 
+    medHrs = median(avg_hours_per_call, na.rm = TRUE), 
+    uHingeHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[4], 
+    maxHrs = fivenum(avg_hours_per_call, na.rm = TRUE)[5]
+    ) %>%
+  arrange(desc(meanHrs))
+
+crYearRoundedDF <- callReasonsDF_YearSummary %>% 
+  mutate_if(is.numeric, round, digits = 2)
+crYearRoundedDF
+
+```
 
 ### Analysis Plan
 
@@ -520,148 +590,13 @@ My analysis plan is to answer the following more specific questions for both tow
 :::
 
 
-### Descriptive Statistics 
-
-a. `callReasonsDF` (`r ncol(callReasonsDF)` variables, `r nrow(callReasonsDF)` observations): Each observation is a call reason (examples include "Assault", "Traffic violation", "Community policing") for each year and town, with a summary count of calls initiated by the local PD, the count of calls sent to the PD from dispatch, the average time to arrive to the call (in hours), and the average time spent on the call (in hours). 
-b. `callActionsDF` (`r ncol(callActionsDF)` variables, `r nrow(callActionsDF)` observations): Each observation is a call action (examples include "Investigated", "Services Rendered", "Report Taken") for each year, town, and call reason, with a summary count of call actions. Each observation has a many to one relationship with a call reason observation: each call reason observation can have many call actions, but each call action observation can have only one call reason observation.
-c. `operatorSummaryDF` (`r ncol(operatorSummaryDF)` variables, `r nrow(operatorSummaryDF)` observations): Each observation is an ethnicity, race, or sex describing automobile operators for each year and town, with summary count of operators. The data does not relate these records to call reasons or call actions.
-
-To get a sense of the scale of time spent on calls, here is a summary of time per call by the top 5 call reason mean times:
-
-```{r}
-
-#define function to calculate mode
-find_mode <- function(x) {
-  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
-  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
-  u[tab == max(tab)] #  the max occurrence is the mode
-  mean(u) # return mean in case the data is multimodal
-}
-
-
-callReasonsDF_ReasonSummary <- callReasonsDF %>% 
-  mutate(avg_hours_per_call = avg_hours_to_arrive + avg_hours_at_scene) %>%
-  group_by(call_reason) %>% 
-  summarise(
-    meanHours = mean(avg_hours_per_call, na.rm = TRUE), 
-    modeHours = find_mode(avg_hours_per_call), 
-    minHours = fivenum(avg_hours_per_call, na.rm = TRUE)[1], 
-    lowHingeHours = fivenum(avg_hours_per_call, na.rm = TRUE)[2], 
-    medianHours = median(avg_hours_per_call, na.rm = TRUE), 
-    upHingeHours = fivenum(avg_hours_per_call, na.rm = TRUE)[4], 
-    maxHours = fivenum(avg_hours_per_call, na.rm = TRUE)[5]
-    ) %>%
-  arrange(desc(meanHours))
-
-crReasonRoundedDF <- callReasonsDF_ReasonSummary %>% 
-  mutate_if(is.numeric, round, digits = 2)
-head(crReasonRoundedDF, 5)
-
-```
-
-
-Summary of time per call by town:
-
-```{r}
-
-callReasonsDF_TownSummary <- callReasonsDF %>% 
-  mutate(avg_hours_per_call = avg_hours_to_arrive + avg_hours_at_scene) %>%
-  group_by(town) %>% 
-  summarise(
-    meanHours = mean(avg_hours_per_call, na.rm = TRUE), 
-    modeHours = find_mode(avg_hours_per_call), 
-    minHours = fivenum(avg_hours_per_call, na.rm = TRUE)[1], 
-    lowHingeHours = fivenum(avg_hours_per_call, na.rm = TRUE)[2], 
-    medianHours = median(avg_hours_per_call, na.rm = TRUE), 
-    upHingeHours = fivenum(avg_hours_per_call, na.rm = TRUE)[4], 
-    maxHours = fivenum(avg_hours_per_call, na.rm = TRUE)[5]
-    ) %>%
-  arrange(desc(meanHours))
-
-crTownRoundedDF <- callReasonsDF_TownSummary %>% 
-  mutate_if(is.numeric, round, digits = 2)
-crTownRoundedDF
-
-```
-
-Summary of time per call by year:
-
-```{r}
-
-callReasonsDF_YearSummary <- callReasonsDF %>% 
-  mutate(avg_hours_per_call = avg_hours_to_arrive + avg_hours_at_scene) %>%
-  group_by(year) %>% 
-  summarise(
-    meanHours = mean(avg_hours_per_call, na.rm = TRUE), 
-    modeHours = find_mode(avg_hours_per_call), 
-    minHours = fivenum(avg_hours_per_call, na.rm = TRUE)[1], 
-    lowHingeHours = fivenum(avg_hours_per_call, na.rm = TRUE)[2], 
-    medianHours = median(avg_hours_per_call, na.rm = TRUE), 
-    upHingeHours = fivenum(avg_hours_per_call, na.rm = TRUE)[4], 
-    maxHours = fivenum(avg_hours_per_call, na.rm = TRUE)[5]
-    ) %>%
-  arrange(desc(meanHours))
-
-crYearRoundedDF <- callReasonsDF_YearSummary %>% 
-  mutate_if(is.numeric, round, digits = 2)
-crYearRoundedDF
-
-```
-
-Sanity check of call totals from source report against calculated call totals: 
-
-```{r}
-
-checkTotalsDF <- callReasonsDF %>%
-  group_by(town) %>%
-  summarise(
-    selfTotal = sum(self),
-    dispTotal = sum(disp)#,
-    #avgArriveTotal = mean(avg_hours_to_arrive),
-    #avgSceneTotal = mean(avg_hours_at_scene)
-  )
-
-checkTotalsDF <- totalReasonsDF %>%
-  group_by(town) %>%
-  summarise(
-    selfTotal = sum(self),
-    dispTotal = sum(disp)#,
-    #avgArriveTotal = mean(avg_hours_to_arrive),
-    #avgSceneTotal = mean(avg_hours_at_scene)
-  ) %>%
-  bind_rows(checkTotalsDF) %>%
-  arrange(town)
-
-checkTotalsDF
-
-checkTotalsDF <- callReasonsDF %>%
-  group_by(year) %>%
-  summarise(
-    selfTotal = sum(self),
-    dispTotal = sum(disp)#,
-    #avgArriveTotal = mean(avg_hours_to_arrive),
-    #avgSceneTotal = mean(avg_hours_at_scene)
-  )
-
-checkTotalsDF <- totalReasonsDF %>%
-  group_by(year) %>%
-  summarise(
-    selfTotal = sum(self),
-    dispTotal = sum(disp)#,
-    #avgArriveTotal = mean(avg_hours_to_arrive),
-    #avgSceneTotal = mean(avg_hours_at_scene)
-  ) %>%
-  bind_rows(checkTotalsDF) %>%
-  arrange(year)
-
-checkTotalsDF
-
-```
-
-Don’t include tables or figures or statistics just to show you know how to use R - this is one of the most common mistakes students make. Your reader will be bored and the information is really not necessary unless it fits into the flow of your story in a critical way. You may be able to place the majority of descriptive statistics into an appendix if they don’t fit naturally into the flow of your text. Only include statistics, tables, and graphs that are clearly described in the text and fit into your overall story - any information that is only for reference shouldn’t play a prominent role in your storytelling flow.
-
 
 ### Results: Analysis and Visualization
+
+What types of calls are increasing?
+What is the change in personnel time needed per call and per type of call?
+What days and times of day do we see the most calls or the most change in calls?
+Why do we need another officer when the populations and number of properties in the two towns have not grown substantially?
 
 ## Call Volume
 
@@ -669,6 +604,14 @@ Don’t include tables or figures or statistics just to show you know how to use
 
 myPalette <- c('#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a')
 
+# initialize all dfs used below
+
+## comparing reasons 
+crCompareReasons <- callReasonsDF %>%
+  mutate(callTotal = self + disp,
+         avgHours = avg_hours_to_arrive + avg_hours_at_scene,
+         callTotalHours = callTotal * avgHours) %>%
+  arrange(desc(callTotalHours)) 
 
 sumCRTownYear <- callReasonsDF %>%
   group_by(town, year) %>%
@@ -678,14 +621,6 @@ sumCRTownYear <- callReasonsDF %>%
     callTotalHours = callTotal * avgHours
   )
 
-ggplot(sumCRTownYear, aes(x = year, y = callTotal, fill = town)) + 
-  geom_area() +
-  labs(title = "Total police call volume by town",
-       y = "Calls") +
-  geom_smooth(method = lm, 
-              se = FALSE,
-              color = "Black") +
-  scale_fill_manual(values = myPalette[c(1,2)])
 
 sumCRTownYearTheme <- callReasonsDF %>%
   group_by(year, call_theme) %>%
@@ -695,59 +630,17 @@ sumCRTownYearTheme <- callReasonsDF %>%
     callTotalHours = callTotal * avgHours
   ) %>%
   arrange(desc(callTotal))
-  
-sumCRTownYearTheme %>% # order themes by callTotal
-  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%
-  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Total police call volume by call theme", 
-         y = "Calls") + 
-    scale_fill_manual(values = myPalette[1:10]) # to establish consistent colors between graphs, this maps max callTotal = color 1, min callTotal = color 10
 
-sumCRTownYearTheme %>% 
-  slice_max(order_by = callTotal, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%
-  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Call volume, top 5 call themes in each year", 
-         y = "Calls") +
-    scale_fill_manual(values = myPalette[c(6:10)]) # consistent colors between graphs
+### plots
 
-sumCRTownYearTheme %>% 
-  slice_min(order_by = callTotal, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%  
-  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Call volume, bottom 5 call themes in each year", 
-         y = "Calls") +
-    ylim(0, 4000) + # same scale as first graph
-    scale_fill_manual(values = myPalette[c(1:5)]) # consistent colors between graphs
-
-sumCRTownYearTheme %>% 
-  slice_min(order_by = callTotal, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%    
-  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Call volume, bottom 5 call themes in each year", 
-         y = "Calls") +
-    ylim(0, 1000) + # same order of magnitude as first graph
-    scale_fill_manual(values = myPalette[c(1:5)]) # consistent colors between graphs
-
-sumCRTownYearTheme %>% 
-  slice_min(order_by = callTotal, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%    
-  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Call volume, bottom 5 call themes in each year", 
-         y = "Calls") +
-                    # lower order of magnitude than first graph
-    scale_fill_manual(values = myPalette[c(1:5)]) # consistent colors between graphs
-
-```
-
-# Officer hours on calls - average and total
-
-```{r}
+ggplot(sumCRTownYear, aes(x = year, y = callTotal, fill = town)) + 
+  geom_area() +
+  labs(title = "Total police call volume by town",
+       y = "Calls") +
+  geom_smooth(method = lm, 
+              se = FALSE,
+              color = "Black") +
+  scale_fill_manual(values = myPalette[c(1,2)])
 
   # avgHours by town
 sumCRTownYear %>% 
@@ -760,11 +653,100 @@ ggplot(aes(x = year, y = avgHours, fill = town)) +
               color = "Black") +
   scale_fill_manual(values = myPalette[c(1,2)]) # consistent colors between graphs
 
+```
+
+
+```{r}
+
+  
+sumCRTownYearTheme %>% # order themes by callTotal
+  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%
+  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
+    geom_area() +
+    labs(title = "Total police call volume by call theme", 
+         y = "Calls") + 
+    scale_fill_manual(values = myPalette[1:10]) # to establish consistent colors between graphs, this maps max callTotal = color 1, min callTotal = color 10
+
+
+sumCRTownYearTheme %>% 
+  slice_max(order_by = callTotal, n = 5) %>%
+  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%
+  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
+    geom_area() +
+    labs(title = "Call volume, zoom in on top 5 call themes", 
+         y = "Calls") +
+    scale_fill_manual(values = myPalette[c(6:10)]) # consistent colors between graphs
+
+# sumCRTownYearTheme %>% 
+#   slice_min(order_by = callTotal, n = 5) %>%
+#   mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%  
+#   ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
+#     geom_area() +
+#     labs(title = "Call volume, bottom 5 call themes in each year", 
+#          subtitle = "Y-axis at same scale as top 5 call themes",
+#          y = "Calls") +
+#     ylim(0, 4000) + 
+#     scale_fill_manual(values = myPalette[c(1:5)]) # consistent colors between graphs
+
+# sumCRTownYearTheme %>% 
+#   slice_min(order_by = callTotal, n = 5) %>%
+#   mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%    
+#   ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
+#     geom_area() +
+#     labs(title = "Call volume, bottom 5 call themes in each year", 
+#          subtitle = "Y-axis at 1/4 scale of top 5 call themes",
+#          y = "Calls") +
+#     ylim(0, 1000) + 
+#     scale_fill_manual(values = myPalette[c(1:5)]) # consistent colors between graphs
+
+sumCRTownYearTheme %>% 
+  slice_min(order_by = callTotal, n = 5) %>%
+  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%    
+  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
+    geom_area() +
+    labs(title = "Call volume, zoom in on bottom 5 call themes", 
+         subtitle = "Y-axis at 1/10 scale of top 5 call themes",
+         y = "Calls") +
+    ylim(0, 400) + 
+    scale_fill_manual(values = myPalette[c(1:5)]) # consistent colors between graphs
+
+```
+
+# Officer hours on calls - average and total
+
+```{r}
+
+
+#   # Goal: use facet to compare total hour growth to total call volume growth by town
+# callReasonsDF %>% 
+# ggplot(aes(x = year, y = avg_hours_to_arrive + avg_hours_at_scene)) + 
+#   geom_area() +
+#   labs(title = "Average police officer hours on all calls by town",
+#        y = "Hours") +
+#   geom_smooth(method = lm, 
+#               se = FALSE,
+#               color = "Black") +
+#   scale_fill_manual(values = myPalette[c(1,2)]) + # consistent colors between graphs
+#   facet_grid(call_theme ~ town)
+
+
+  # avgHours by town
+sumCRTownYear %>% 
+ggplot(aes(x = year, y = avgHours, fill = town)) + 
+  geom_area() +
+  labs(title = "Average hours per call by town",
+       y = "Hours") +
+  geom_smooth(method = lm, 
+              se = FALSE,
+              color = "Black") +
+  scale_fill_manual(values = myPalette[c(1,2)]) # consistent colors between graphs
+
+
   # callTotalHours by town
 sumCRTownYear %>% 
 ggplot(aes(x = year, y = callTotalHours, fill = town)) + 
   geom_area() +
-  labs(title = "Total police officer hours on all calls by town",
+  labs(title = "Total hours by town",
        y = "Hours") +
   geom_smooth(method = lm, 
               se = FALSE,
@@ -772,62 +754,167 @@ ggplot(aes(x = year, y = callTotalHours, fill = town)) +
   scale_fill_manual(values = myPalette[c(1,2)]) # consistent colors between graphs
 
   # avgHours by all themes
+# sumCRTownYearTheme %>% 
+#   mutate(call_theme = fct_reorder(call_theme, avgHours, .fun = 'sum')) %>%
+#   ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
+#     geom_area() +
+#     labs(title = "Average police officer hours by call theme", 
+#          y = "Hours") + 
+#     scale_fill_manual(values = myPalette[1:10]) # consistent colors between graphs
+
+###
+###
+###
+
+
+# this works, and shows relationship between reason and theme
+crCompareReasons  %>%
+  group_by(call_reason, call_theme, town) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  arrange(desc(callTotalHours)) %>%
+  head(20) %>%
+  ggplot(aes(x = call_theme, y = callTotalHours, fill = call_reason)) +
+    theme(axis.text.x = element_text(angle = 90)) +
+    geom_bar(stat = "identity") +  
+      labs(title = "Top 20 call reasons by total hours",
+           subtitle = "Both towns and all years (2018 to 2022)",
+           y = "Hours") +
+    #scale_fill_manual(values = myPalette) + # too many values
+    facet_wrap(vars(town))
+
+
+crCompareReasons %>%
+  group_by(call_reason, town) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  ggplot(aes(town, callTotalHours)) +
+    geom_boxplot() +
+    scale_y_continuous(limits = quantile(crCompareReasons$callTotalHours, c(0.05, 0.95)))
+
+# this is the key to getting factors of top call reasons by hours worked
+topfactors <- crCompareReasons %>%
+  group_by(call_reason) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  subset(callTotalHours < quantile(crCompareReasons$callTotalHours, 0.99)) %>% # complement
+  droplevels.data.frame()
+
+# this works!
+crCompareReasons %>%
+  group_by(call_reason, year) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  droplevels.data.frame(exclude = c(levels(topfactors[[1]]))) %>% 
+  filter(!is.na(call_reason)) %>%
+  ggplot(aes(x = year, y = callTotalHours, fill = call_reason)) +
+    geom_area() +
+    theme(axis.text.x = element_text(angle = 90)) +
+      labs(title = "Top level-of-effort call reasons",
+           subtitle = "total hours > than 99% of total hours",
+           y = "Hours") +
+    scale_fill_manual(values = myPalette) + 
+    facet_wrap(~call_reason)
+
+# #2 this doesn't work for some reason
+topfactors <- crCompareReasons %>%
+  group_by(call_reason) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  subset(callTotalHours = quantile(crCompareReasons$callTotalHours, c(0.98, 0.99))) %>% # complement
+  droplevels.data.frame()
+
+# #2 this doesn't work for some reason
+crCompareReasons %>%
+  group_by(call_reason, year) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  droplevels.data.frame(exclude = c(levels(topfactors[[1]]))) %>% 
+  filter(!is.na(call_reason)) %>%
+  ggplot(aes(x = year, y = callTotalHours, fill = call_reason)) +
+    geom_area() +
+    theme(axis.text.x = element_text(angle = 90)) +
+      labs(title = "Top level-of-effort call reasons",
+           subtitle = "total hours > than 99% of total hours",
+           y = "Hours") +
+    scale_fill_manual(values = myPalette) + 
+    facet_wrap(~call_reason)
+
+  # avgHours over time by reasons, facets
 sumCRTownYearTheme %>% 
-  mutate(call_theme = fct_reorder(call_theme, avgHours, .fun = 'sum')) %>%
   ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
     geom_area() +
-    labs(title = "Average police officer hours by call theme", 
-         y = "Hours") + 
-    scale_fill_manual(values = myPalette[1:10]) # consistent colors between graphs
+    theme(axis.text.x = element_text(angle = 90)) +
+    labs(title = "Average hours per call", 
+         y = "Hours") +
+    scale_fill_manual(values = myPalette) + # consistent colors between graphs
+    facet_wrap(~call_theme, nrow = 2)
 
-  # callTotalHours by all themes
+  # callTotalHours over time by themes, facets
 sumCRTownYearTheme %>% 
+  ggplot(aes(x = year, y = callTotalHours, fill = call_theme)) +
+    geom_area() +
+    theme(axis.text.x = element_text(angle = 90)) +
+    labs(title = "Total hours", 
+         y = "Hours") + 
+    scale_fill_manual(values = myPalette) + # consistent colors between graphs
+    facet_wrap(~call_theme, nrow = 2)
+
+  # avgHours over time by themes, facets
+sumCRTownYearTheme %>% 
+  ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
+    geom_area() +
+    theme(axis.text.x = element_text(angle = 90)) +
+    labs(title = "Average hours per call", 
+         y = "Hours") +
+    scale_fill_manual(values = myPalette) + # consistent colors between graphs
+    facet_wrap(~call_theme, nrow = 2)
+
+
+  # callTotalHours by top 6 themes
+sumCRTownYearTheme %>% 
+  slice_max(order_by = callTotalHours, n = 6) %>%
   mutate(call_theme = fct_reorder(call_theme, callTotalHours, .fun = 'sum')) %>%
   ggplot(aes(x = year, y = callTotalHours, fill = call_theme)) +
     geom_area() +
-    labs(title = "Total hours by call theme", 
-         y = "Hours") + 
-    scale_fill_manual(values = myPalette[1:10]) # consistent colors between graphs
-
-  # avgHours by top 5 themes
-sumCRTownYearTheme %>% 
-  slice_max(order_by = avgHours, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, avgHours, .fun = 'sum')) %>%
-  ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Average hours, top 5 call themes in each year", 
+    labs(title = "Total hours: Zoom in on top 6 call themes", 
          y = "Hours") +
-    scale_fill_manual(values = myPalette[c(6:10)]) # consistent colors between graphs
+    scale_fill_manual(values = myPalette[c(5:10)]) # consistent colors between graphs
 
-  # callTotalHours by top 5 themes
-sumCRTownYearTheme %>% 
-  slice_max(order_by = callTotalHours, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, callTotalHours, .fun = 'sum')) %>%
-  ggplot(aes(x = year, y = callTotalHours, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Total hours, top 5 call themes in each year", 
-         y = "Hours") +
-    scale_fill_manual(values = myPalette[c(6:10)]) # consistent colors between graphs
 
-  # avgHours by bottom 5 themes
-sumCRTownYearTheme %>% 
-  slice_min(order_by = avgHours, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, avgHours, .fun = 'sum')) %>%    
-  ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Average hours, bottom 5 call themes in each year", 
-         y = "Calls") +
-    scale_fill_manual(values = myPalette[c(1:6)]) # consistent colors between graphs
 
-  # callTotalHours by bottom 5 themes
-sumCRTownYearTheme %>% 
-  slice_min(order_by = callTotalHours, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, callTotalHours, .fun = 'sum')) %>%    
-  ggplot(aes(x = year, y = callTotalHours, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Total hours, bottom 5 call themes in each year", 
-         y = "Calls") +
-    scale_fill_manual(values = myPalette[c(1:5)]) # consistent colors between graphs
+
+
+# 
+#   # avgHours by bottom 5 themes
+# sumCRTownYearTheme %>% 
+#   slice_min(order_by = avgHours, n = 5) %>%
+#   mutate(call_theme = fct_reorder(call_theme, avgHours, .fun = 'sum')) %>%    
+#   ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
+#     geom_area() +
+#     labs(title = "Average hours, bottom 5 call themes in each year", 
+#          y = "Calls") +
+#     scale_fill_manual(values = myPalette[c(1:6)]) # consistent colors between graphs
+# 
+#   # callTotalHours by bottom 5 themes
+# sumCRTownYearTheme %>% 
+#   slice_min(order_by = callTotalHours, n = 5) %>%
+#   mutate(call_theme = fct_reorder(call_theme, callTotalHours, .fun = 'sum')) %>%    
+#   ggplot(aes(x = year, y = callTotalHours, fill = call_theme)) +
+#     geom_area() +
+#     labs(title = "Total hours, bottom 5 call themes in each year", 
+#          y = "Calls") +
+#     scale_fill_manual(values = myPalette[c(1:5)]) # consistent colors between graphs
+# 
+
+
+
 
 ```
 

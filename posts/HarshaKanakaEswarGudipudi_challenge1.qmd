@@ -1,0 +1,93 @@
+---
+title: "Challenge 1"
+author: "Harsha Kanaka Eswar Gudipudi"
+description: "Reading the data to create a post"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_1
+  - Harsha Kanaka Eswar Gudipudi
+  - FAOstat_livestock.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a dataset, and
+
+2)  describe the dataset using both words and any supporting information (e.g., tables, etc)
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, using the correct R package and command.
+
+-   railroad_2012_clean_county.csv ⭐
+-   birds.csv ⭐⭐
+-   FAOstat\*.csv ⭐⭐
+-   wild_bird_data.xlsx ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐⭐
+
+Find the `_data` folder, located inside the `posts` folder. Then you can read in the data, using either one of the `readr` standard tidy read commands, or a specialized package such as `readxl`.
+
+##### Reading the FAOstat_livestock.csv data and displaying a few columns
+
+```{r}
+df <- read_csv('_data/FAOstat_livestock.csv')
+head(df)
+```
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+Description : The "livestock" dataset with the columns "Domain Code, Domain, Area Code, Area, Element Code, Element, Item Code, Item, Year Code, Year, Unit, Value, Flag, Flag Description" is to describe livestock production and trade across various geographic areas and years.
+
+Following is the summary and dimension of data:
+```{r}
+#| label: summary
+summary(df)
+dim(df)
+```
+
+
+All varitey of live stocks in the data:
+
+```{r}
+unique_items <- unique(df$Item)
+num_unique_items <- length(unique_items)
+cat(paste("There are", num_unique_items, "unique Varitey of animals present in the dataset"))
+cat(paste(unique_items, collapse = ", "))
+```
+The data is collected from various areas like:
+
+```{r}
+unique_items <- unique(df$Area)
+num_unique_items <- length(unique_items)
+cat(paste("Total no of areas: ", num_unique_items))
+cat(paste(unique_items, collapse = ", "))
+```
+ 
+Here are the no of datapoints present from year 1961-1965:
+```{r}
+year_filter <- df$Year %in% c("1961", "1962", "1963", "1964", "1965")
+filtered_data <- df[year_filter,]
+year_counts <- table(filtered_data$Year)
+barplot(year_counts, xlab = "Year", ylab = "Number of data points", 
+        ylim = c(0, 2000))
+```

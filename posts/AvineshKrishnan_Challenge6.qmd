@@ -1,0 +1,147 @@
+---
+title: "Challenge 6"
+author: "FNU Avinesh Krishnan"
+description: "Visualizing Time and Relationships"
+date: "05/16/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - FNU Avinesh Krishnan
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readxl)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+  
+
+```{r}
+debtdata <- read_xlsx("~/Desktop/601_Spring_2023/posts/_data/debt_in_trillions.xlsx")
+```
+
+### Briefly describe the data
+
+```{r}
+head(debtdata)
+```
+
+```{r}
+dim(debtdata)
+```
+
+```{r}
+colnames(debtdata)
+```
+
+```{r}
+str(debtdata)
+```
+
+```{r}
+summary(debtdata)
+```
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+debtdata <- rename(debtdata,year_and_quarter = `Year and Quarter`)
+debtdata <- separate(debtdata, year_and_quarter, into= c("Year", "Quarter"), sep = ":Q")
+head(debtdata)
+
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+```
+
+## Time Dependent Visualization
+
+```{r}
+average_debtyear <- debtdata %>%
+  group_by(Year) %>%
+  summarise(total_average_debt = mean(Total))
+
+head(average_debtyear)
+
+```
+```{r}
+ggplot(average_debtyear, aes(x = Year, y = total_average_debt, color = Year)) +
+geom_point() +
+ggtitle("Average Debt Over Years")
+```
+
+
+
+## Visualizing Part-Whole Relationships
+
+```{r}
+debtdata<-debtdata%>%
+  mutate(Full_Year = as.integer(Year)+2000,Quarter_2 = as.integer(Quarter))%>%
+  gather("debttype", "amt", Mortgage:Total)
+
+head(debtdata)
+```
+```{r}
+debtdata %>%
+filter(debttype != "Total") %>%
+mutate(debttype = fct_relevel(debttype, "Mortgage", "Auto Loan", "Credit Card", "HE Revolving", "Other", "Student Loan")) %>%
+ggplot(aes(x = Full_Year + (Quarter_2 - 1) / 4, y = amt, fill = debttype)) +
+geom_area(color = "black", alpha = 0.8) +
+labs(title = "Quarterly Breakdown of Debt",
+x = "Year",
+y = "Debt Amount (in Trillions USD)",
+fill = "Debt Type")
+```
+

@@ -24,7 +24,7 @@ editor_options:
 #| warning: false
 #| message: false
 
-my_packages <- c("tidyverse", "fs", "pdftools", "knitr", "ggplot2") # create vector of packages
+my_packages <- c("tidyverse", "fs", "pdftools", "knitr", "ggplot2", "viridis", "hrbrthemes") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
@@ -600,9 +600,11 @@ Why do we need another officer when the populations and number of properties in 
 
 ## Call Volume
 
-```{r}
+Three key metrics are the number of calls (call volume), average hours worked, and total hours worked. These metrics can broken down further by factors town, year, call reason, and call theme.
 
-myPalette <- c('#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a')
+```{r name-of-chunk, fig.width=10, fig.height=4}
+
+#myPalette <- c('#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a')
 
 # initialize all dfs used below
 
@@ -633,25 +635,44 @@ sumCRTownYearTheme <- callReasonsDF %>%
 
 ### plots
 
-ggplot(sumCRTownYear, aes(x = year, y = callTotal, fill = town)) + 
-  geom_area() +
-  labs(title = "Total police call volume by town",
+callReasonsDF %>%
+  group_by(town, year) %>%
+  summarise(
+    callTotal = sum(self) + sum(disp),
+    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
+    callTotalHours = callTotal * avgHours
+  ) %>%
+ggplot(aes(x = year, y = callTotal, fill = town)) + 
+  geom_area(alpha = 0.5, color = "white") +
+  labs(title = "Total call volume by town",
        y = "Calls") +
-  geom_smooth(method = lm, 
-              se = FALSE,
-              color = "Black") +
-  scale_fill_manual(values = myPalette[c(1,2)])
+  geom_smooth(method = lm,
+              se = FALSE, 
+              linewidth = 1.5,
+              color = "orangered") +
+  scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() +
+  facet_wrap(vars(town))
 
   # avgHours by town
-sumCRTownYear %>% 
+callReasonsDF %>%
+  group_by(town, year) %>%
+  summarise(
+    callTotal = sum(self) + sum(disp),
+    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
+    callTotalHours = callTotal * avgHours
+  ) %>%
 ggplot(aes(x = year, y = avgHours, fill = town)) + 
-  geom_area() +
-  labs(title = "Average police officer hours on all calls by town",
+  geom_area(alpha = 0.5, color = "white") +
+  labs(title = "Average hours per call by town",
        y = "Hours") +
-  geom_smooth(method = lm, 
-              se = FALSE,
-              color = "Black") +
-  scale_fill_manual(values = myPalette[c(1,2)]) # consistent colors between graphs
+  geom_smooth(method = lm,
+              se = FALSE, 
+              linewidth = 1.5,
+              color = "orangered") +
+  scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() +
+  facet_wrap(vars(town))
 
 ```
 

@@ -1,0 +1,153 @@
+---
+title: "Challenge 2"
+author: "Priyanka Perumalla"
+description: "Data wrangling: using group() and summarise()"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Priyanka Perumalla
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+hotel_data <- read_csv("_data/hotel_bookings.csv")
+print(hotel_data,show_col_types = FALSE)
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+head(hotel_data)
+```
+```{r}
+str(hotel_data)
+```
+
+```{r}
+#| label: summary
+library(summarytools)
+dfSummary(hotel_data)
+```
+
+
+```{r}
+dim(hotel_data)
+
+```
+It can be observed that there are 119390 rows and 32 columns
+
+Printing the column names of the hotel bookings dataset :
+
+```{r}
+colnames(hotel_data)
+```
+Description : The data set involved gathering information of hotel bookings in different hotels. Every booking entry is a row having information on which hotel the booking corresponds to, when it happened, what is the start date and what is the end date, who made the booking, for who all the booking was made, the channel used for booking, the number of days for which it was made, how much money was paid, all the preferences that were entered along with the booking etc. 
+ 
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+Group by Arrival date month:
+```{r}
+hotel_data %>% 
+  group_by(arrival_date_month) %>% 
+  summarise(stays_in_week_nights = mean(stays_in_week_nights, na.rm=TRUE), StandardDeviation = sd(stays_in_week_nights, na.rm = TRUE))
+```
+
+```{r}
+df<- hotel_data %>%
+filter(country == "GBR")
+print(df)
+```
+```{r}
+df<- hotel_data %>%
+filter(babies > 0 && meal=="BB")
+print(df)
+```
+
+
+
+```{r}
+#IQR for railroads
+hotel_data %>%
+  summarize_all(IQR, na.rm = TRUE)
+#Mean for railroads
+hotel_data %>%
+  summarize_all(mean, na.rm = TRUE)
+#Median for railroads
+hotel_data %>%
+  summarize_all(median, na.rm = TRUE)
+```
+
+Total number of days spent(stays in week nights) via bookings for each hotel:
+
+```{r}
+hotel_wise_ct = select(hotel_data, hotel,stays_in_week_nights)
+hotel_wise_ct %>% 
+  group_by(hotel) %>%
+  summarize(stays_in_week_nights=sum(stays_in_week_nights))
+hotel_wise_ct
+```
+
+
+Median, Mean and standard deviation of stays_in_week_nights in every hotel:
+```{r}
+hotel_wise_ct = select(hotel_data, hotel, stays_in_week_nights)
+hotel_wise_ct %>% 
+  group_by(hotel) %>%
+  summarize(meanDays=mean(stays_in_week_nights),medianDays=median(stays_in_week_nights),standardDeviation = sd(stays_in_week_nights))
+```
+
+Hotel wise number of days busy count displayed in descending order :
+```{r}
+hotel_wise_grouped_cts <- hotel_wise_ct %>% 
+  group_by(hotel) %>%
+  summarize(Sum = sum(stays_in_week_nights))
+count_sorted <- hotel_wise_grouped_cts %>%
+  arrange(desc(Sum))
+count_sorted
+```
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.
+
+I attempted to see which hotel is the busiest from among all the hotels in the given data set. If I go by number of bookings, then I would not get an appropriate answer. The true measure is the availability for a booking, which in turn is the number of days.I tried to group the data by hotel and then attempted to see the total number of days that were busy at every hotel. Additionally, I have also observed some metrics relate to the data in terms of the days spent like mean, median, standard deviation.
+
+Overall, City Hotel looks more busy compared to Resort Hotel. We can draw an assumed conclusion from the name by assuming that city hotel is more accessible than resort hotel where people only go on holidays.
+

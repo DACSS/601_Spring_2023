@@ -1,0 +1,117 @@
+---
+title: "Challenge 3"
+author: "Priyanka Perumalla"
+description: "Tidy Data: Pivoting"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_3
+  - Priyanka Perumalla
+  - animal_weights
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+animal_weights_data <- read_csv("_data/animal_weight.csv")
+print(animal_weights_data,show_col_types = FALSE)
+
+```
+
+
+```{r}
+head(animal_weights_data)
+
+```
+### Briefly describe the data
+
+Describe the data, and be sure to comment on why you are planning to pivot it to make it "tidy"
+
+
+```{r}
+nrow(animal_weights_data)
+```
+
+```{r}
+ncol(animal_weights_data)
+```
+
+```{r}
+summary(animal_weights_data)
+```
+
+The data set has information on animal weights by geographical area. There are again different types of categories of animals as columns. The data set in its original orientation gives us the information on how the animal weights are changing country wise depending on the category they animals they fall under.I plan to pivot the table to see the variation in weights of livestock alone preliminarly by country.The inital data set has 9 rows and 17 columns.
+
+## Anticipate the End Result
+
+The first step in pivoting the data is to try to come up with a concrete vision of what the end product *should* look like - that way you will know whether or not your pivoting was successful.
+
+I anticipate the data to look smaller and more readable as I am bringing together livestock information. The dimensions that are anticipated at 144 x 3.
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+
+```{r}
+animal_data_pivoted<-pivot_longer(animal_weights_data, col=-`IPCC Area`,
+                                    names_to = "Livestock",
+                                    values_to = "Weight")
+print(animal_data_pivoted)
+```
+
+Dimensions of pivoted tibble after restructuring the data
+
+```{r}
+
+dim(animal_data_pivoted)
+```
+
+
+
+
+Yes, once it is pivoted long, our resulting data are $144x3$ - exactly what we expected!
+
+### Challenge: Describe the final dimensions
+
+Document your work here.
+
+The final dimensions of pivoted data are 144 x 3. This is expected as we used pivot_longer().
+```{r}
+
+dim(animal_data_pivoted)
+```
+
+

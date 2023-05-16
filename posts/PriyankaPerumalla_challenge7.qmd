@@ -1,0 +1,128 @@
+---
+title: "Challenge 7"
+author: "Priyanka Perumalla"
+description: "Visualizing Multiple Dimensions"
+date: "05/16/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - Priyanka Perumalla
+  - hotel_bookings.csv
+  
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+```{r}
+hotel_data <- read.csv("_data/hotel_bookings.csv")
+data<-hotel_data
+dim(hotel_data)
+head(hotel_data)
+```
+
+
+### Briefly describe the data
+
+The dataset comprises data on nearly 49,000 Airbnb rental properties located in New York City throughout 2019. Each observation represents a distinct rental unit and consists of 16 variables, providing information such as the unit's ID, name, location, host ID and name, room type, price, minimum required nights for a reservation, number of reviews, last review date, average monthly reviews, calculated count of host listings on Airbnb, and availability.
+
+```{r}
+str(hotel_data)
+```
+Varities of countries present in the data:
+```{r}
+unique_country <- unique(hotel_data$country)
+cat(paste(unique_country, collapse = ", "))
+```
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.\
+
+Filtering the data for only required columns county, lead_time and meal. Aggregating the values in bookings for total no of bookings grouping by county, lead_time and meal type for 5 countries: USA, BEL, GBR, DEU, FRA.
+
+```{r}
+# Tidy the data (if required)
+tidy_data <- hotel_data %>%
+  select(country, lead_time, meal) %>%
+  drop_na()
+hotel_data <- tidy_data %>%filter(country %in% c("USA", "BEL", "GBR", "DEU", "FRA"))
+head(hotel_data, n = 5)
+
+# Group by country, lead_time, and meal, and calculate the number of bookings made
+bookings_data <- hotel_data %>% group_by(country, lead_time, meal) %>% 
+  summarise(bookings = n())
+```
+
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Some of the columns can be mutated in the main data. The first new column, total_stays, is created by adding the stays_in_weekend_nights and stays_in_week_nights columns together. The second new column, arrival_month_num, is created by converting the arrival_date_month column into a numerical value using the match() function and the month.name vector.
+
+```{r}
+
+# Mutate columns to create a new column for total stays
+data <- data %>%
+  mutate(total_stays = stays_in_weekend_nights + stays_in_week_nights)
+
+# Mutate columns to convert arrival_date_month into a numerical value
+data <- data %>%
+  mutate(arrival_month_num = match(arrival_date_month, month.name))
+```
+
+## Visualization with Multiple Dimensions
+This visualization provides an overview of the booking patterns for different countries and the influence of lead time and meal type on the bookings. It can be useful for identifying trends and patterns and for making informed decisions related to pricing, promotions, and marketing strategies for different countries and meal types.
+
+```{r}
+# Plot the data using ggplot2
+ggplot(bookings_data, aes(x = lead_time, y = bookings, color = meal)) +
+  geom_point(size = 2) +
+  facet_wrap(~country, ncol = 2) +
+  labs(title = "Bookings by Lead Time, Meal, and Country",
+       x = "Lead Time",
+       y = "Bookings",
+       color = "Meal Type")
+
+```

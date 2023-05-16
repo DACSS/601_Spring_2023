@@ -1,0 +1,111 @@
+---
+title: "Challenge 3"
+author: "Harsha Kanaka Eswar Gudipudi"
+description: "Tidy Data: Pivoting"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    
+categories:
+  - challenge_3
+  - Harsha Kanaka Eswar Gudipudi
+  - egg_tidy.csv
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1.  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2.  identify what needs to be done to tidy the current data
+3.  anticipate the shape of pivoted data
+4.  pivot the data into tidy format using `pivot_longer`
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   animal_weights.csv ⭐
+-   eggs_tidy.csv ⭐⭐ or organiceggpoultry.xls ⭐⭐⭐
+-   australian_marriage\*.xls ⭐⭐⭐
+-   USA Households\*.xlsx ⭐⭐⭐⭐
+-   sce_labor_chart_data_public.xlsx 🌟🌟🌟🌟🌟
+
+```{r}
+
+library(readr)
+#Read eggs_tidy csv data
+df <- read_csv("_data/eggs_tidy.csv",show_col_types = FALSE)
+head(df)
+```
+
+### Briefly describe the data
+
+The summary below is showing the data for the month, year, and prices of different types of egg cartons over a period of 10 years from 2004 to 2013. The data is summarized based on the different egg carton sizes, which include large_half_dozen, large_dozen, extra_large_half_dozen, and extra_large_dozen.The data shows that the average price for the large_half_dozen egg cartons is \$155.2, while the average price for the large_dozen egg cartons is \$254.2. The average price for extra_large_half_dozen egg cartons is \$164.2, and the average price for extra_large_dozen egg cartons is \$266.8.
+
+```{r}
+#| label: summary
+summary(df)
+dim(df)
+cat(paste("no of rows in df = ", nrow(df)))
+```
+
+## Anticipate the End Result
+Here the four columns "large_half_dozen, large_dozen, extra_large_half_dozen, extra_large_dozen" which can be made into two columns based on the size and quantity. And the corresponding values for the eggs should be displayed in the new column as price.
+
+
+### Challenge: Describe the final dimensions
+
+
+Here we are piovting 4 columns and the no of rows of df is 120 before pivoting. So the final no of rows would be equal to nrows(df)*4 = 120*4 = 480 and the no of columns after pivoting = 3+2 = 5. therefore the final dimension is 480*5.
+
+## Pivot the Data
+
+Now we will pivot the data, and compare our pivoted data dimensions to the dimensions calculated above as a "sanity" check.
+
+### Example
+
+```{r}
+df_long <- df %>% 
+  pivot_longer(
+    cols = -c(month, year),
+    names_to = c("size", "quantity"),
+    names_pattern = "(.+)_(.+)",
+    values_to = "price"
+  )
+
+# View the pivoted data frame
+df_long
+print("size: ")
+print(dim(df_long))
+```
+
+Yes, once it is pivoted long, our resulting data are $480x5$ - exactly what we expected!
+
+### Challenge: Pivot the Chosen Data
+
+Document your work here. What will a new "case" be once you have pivoted the data? How does it meet requirements for tidy data?
+
+Once pivoted, each row in the new data frame represents a unique combination of month, year, size, quantity and price. The value column contains the corresponding value for each combination. This meets the requirements for tidy data because each row represents a single observation and each variable is in a separate column. Additionally, the column names are informative and easy to understand.
+
+```{r}
+
+
+```
+
+Any additional comments?
+

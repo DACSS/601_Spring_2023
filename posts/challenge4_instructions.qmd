@@ -1,0 +1,93 @@
+---
+title: "Challenge 4"
+author: "Harsha Kanaka Eswar Gudipudi"
+description: "More data wrangling: pivoting"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - Harsha Kanaka Eswar Gudipudi
+  - poultry_tidy.xlsx
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+# Reading the poultry dataset
+df <-readxl::read_excel("_data/poultry_tidy.xlsx")
+df
+summary(df)
+dim(df)
+```
+
+There are four types of product in poultry. Which are as follows:
+```{r}
+cat(paste(unique(df$Product), collapse = ", "))
+```
+
+### Briefly describe the data
+
+The data includes information about products, their prices in US dollars, year, and month. It has 600 rows and 4 columns: Product, Year, Month, and Price_Dollar. The minimum and maximum year in the data are 2004 and 2013, respectively. The minimum and maximum price in the data are 1.935 and 7.037 US dollars, respectively. The data has some missing values in the Price_Dollar column, indicated by NA's.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data can still be considered tidy even with some NA values in the Price_Dollar column. The tidy data principles only require that each variable has a separate column, each observation has a separate row, and each value has a separate cell. As long as the data follows these principles, it is considered tidy. In this case, the data meets these requirements, so no additional steps are required to make it tidy.
+
+Any additional comments?
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+Combining the "Year" and "Month" variables to create a "Date" variable in a suitable format can be useful in a few ways.
+
+First, it allows for easy time-series analysis and visualization. By having the data in a time-series format, we can easily plot the data and observe trends and patterns over time.
+
+Second, it can simplify the data structure. Instead of having multiple variables representing time (i.e., "Year" and "Month"), we can have a single variable that represents time and use it for further analysis and visualization.
+
+```{r}
+df <- df %>%
+  mutate(Date = ymd(paste(Year, Month, "01", sep = "-")))
+
+df
+```
+
+Any additional comments?

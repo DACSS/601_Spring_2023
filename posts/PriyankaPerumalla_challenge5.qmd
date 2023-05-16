@@ -1,0 +1,120 @@
+---
+title: "Challenge 5"
+author: "Priyanka Perumalla"
+description: "Introduction to Visualization"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - air_bnb
+  - Priyanka Perumalla
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least two univariate visualizations
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+5)  Create at least one bivariate visualization
+   - try to make them "publication" ready
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   cereal.csv ⭐
+-   Total_cost_for_top_15_pathogens_2018.xlsx ⭐
+-   Australian Marriage ⭐⭐ 
+-   AB_NYC_2019.csv ⭐⭐⭐
+-   StateCounty2012.xls ⭐⭐⭐
+-   Public School Characteristics ⭐⭐⭐⭐ 
+-   USA Households ⭐⭐⭐⭐⭐
+
+```{r}
+airbnb_df <- read_csv("_data/AB_NYC_2019.csv")
+print(airbnb_df)
+```
+
+
+### Briefly describe the data
+
+
+```{r}
+dim(airbnb_df)
+```
+
+```{r}
+colnames(airbnb_df)
+```
+
+```{r}
+head(airbnb_df)
+```
+
+The data set on Air BnBs in NYC comprises 16 attributes, which include the aibnb name, host name and host id, neighbourhood group, neighbourhood name, latitude and longitude, room type, price, minimum number of nights, number of reviews, reviews_per_month and other columns. Every row corresponds to a unique Air Bnb and every column describes about an attribute of the Air BnB. This data is useful to draw  booking patterns like which Air Bnbs are more preferred and what makes them more preferred etc.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+
+sum(is.na(airbnb_df))
+```
+
+The data is not very tidy. It has a lot of missing values.
+
+There are'nt any columns that can be mutated in the Air bnb dataset.
+
+## Univariate Visualizations
+
+I wanted to observe the distribution of Air BNBs based on neighbour hood group.
+
+```{r}
+ggplot(airbnb_df, aes(x = neighbourhood_group)) + geom_bar() + ggtitle("Air BNB Neighbourhood Distribution")
+```
+
+I have chosen a Bar chart to observe the distribution of Air BnBs in various neighbour hoods in New York to get an an overall understanding of the data distribution, which can be useful in identifying what are all the convinient places to stay in New York.
+
+Upon analyzing the bar graph, we can observe a few neighbour hoods which have very few Air BnBs probably indicating that the places don't attract tourists while others have extremely high count of Air BnBs.
+
+To see if there is a similar trend in the preference for room type, we can do same analysis using a bar chart.
+
+```{r}
+ggplot(airbnb_df, aes(x = room_type)) + geom_bar() + ggtitle("Prefered room type")
+```
+
+Since both are categorical variables we can see the distribution is very similar.
+
+## Bivariate Visualization(s)
+
+```{r}
+ggplot(data = airbnb_df)+ geom_point(mapping = aes(x = price, y = number_of_reviews,col=room_type)) + ggtitle("Number of reviews vs Price")
+```
+
+A scatter plot of Number of reviews and price by room type gives information on how the relationship between these two attributes is. It tells us that as price is increasing the number of reviews are decreasing. The reviews for entire apartment are relatively less even in lesser price range. Indicating entire apartments are usally less review or less preferred altogether.

@@ -1,0 +1,184 @@
+---
+title: "Challenge 8"
+author: "Priyanka Perumalla"
+description: "Joining Data"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - Priyanka Perumalla
+  - snl
+  
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - military marriages ⭐⭐
+  - faostat ⭐⭐
+  - railroads  ⭐⭐⭐
+  - fed_rate ⭐⭐⭐
+  - debt ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - snl ⭐⭐⭐⭐⭐
+
+```{r}
+library(readr)
+snl_actors_df <- read_csv("_data/snl_actors.csv")
+snl_casts_df <- read_csv("_data/snl_casts.csv")
+snl_seasons_df <- read_csv("_data/snl_seasons.csv")
+head(snl_actors_df)
+head(snl_casts_df)
+head(snl_seasons_df)
+```
+
+
+```{r}
+# Understanding the column names of the 3 data sets
+colnames(snl_actors_df)
+colnames(snl_casts_df)
+colnames(snl_seasons_df)
+```
+
+
+
+
+```{r}
+# Understanding the dimensions of the dataset 
+dim(snl_actors_df)
+dim(snl_casts_df)
+dim(snl_seasons_df)
+```
+
+```{r}
+# Identifying the data types of the columns
+sapply(snl_actors_df, class)
+table(sapply(snl_actors_df, function(x) typeof(x)))
+
+sapply(snl_seasons_df, class)
+table(sapply(snl_seasons_df, function(x) typeof(x)))
+
+
+sapply(snl_casts_df, class)
+table(sapply(snl_casts_df, function(x) typeof(x)))
+```
+
+### Briefly describe the data
+
+I have picked 3 datasets for this challenge. The three data sets I have chosen are snl_actors, snl_casts, snl_seasons data sets. The snl_actors data set has the details of the actors that appeared in a role  and the type of their appearence, The snl_casts data set has information on the episodes and the seasons in which a particular actor was casted. The snl_seasons dataset has the information on every season of a series like the number of episodes, the year in which first episode was released, the year in which last episode was released etc. The First data set (snl_actors) has 2306 rows and 4 columns out of which all 4 are character type. The  Second data set(snl_casts) has 614 rows and 8 columns out of which 1 is of type character, 5 double and 2 logical data types. The third data set (snl_seasons) has 46 rows and 5 columns of which everything but one is of type numeric. Actor ID (aid) is common in first two datasets. Season ID (sid) is common in second and third datasets.
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+
+Checking to see how many entries in the snl_actors dataset has null values.
+```{r}
+sum(is.na(snl_actors_df))
+```
+Checking to see how many entries in the snl_casts dataset has null values.
+```{r}
+sum(is.na(snl_casts_df))
+```
+
+Checking to see how many entries in the snl_seasons dataset has null values.
+```{r}
+sum(is.na(snl_seasons_df))
+```
+
+
+We can observe that the snl_seasons_df is very tidy. The snl_actors data set is almost tidy as 57 is a very small number. The snl_casts data set is not very tidy and hence needs cleaning. But I don't plan to clean to prevent loss of useful information.
+
+Cleaning the snl_actors and snl_casts data set
+```{r}
+#snl_actors_df<- na.omit(snl_actors_df)
+#snl_casts_df<- na.omit(snl_casts_df)
+```
+
+
+
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+
+Since the column name type is very confusing, I have attempted to rename 'type' to 'Appearence Type'
+
+```{r}
+snl_actors_df <- snl_actors_df %>%
+  rename("Appearence Type"= "type")
+head(snl_actors_df)
+
+```
+
+## Join Data
+
+Be sure to include a sanity check, and double-check that case count is correct!
+
+I would like to join data based on actor id and season id as stated previously.
+
+
+
+```{r}
+snl_seasons_casts <- snl_seasons_df %>% 
+  left_join(snl_casts_df, by = "sid")
+snl_seasons_casts
+```
+```{r}
+colnames(snl_seasons_casts)
+```
+
+```{r}
+snl_actors_casts_seasons <- snl_actors_df %>% 
+  left_join(snl_seasons_casts, by = "aid")
+snl_actors_casts_seasons
+```
+
+```{r}
+colnames(snl_actors_casts_seasons)
+```
+The above data frame is an overall combined data frame made from snl_actors, snl_casts, snl_seasons. We can use this to answer most of the analysis questions.
+
+For example, we can use the joined data frame to observe how many seasons featured more women, more men or overall more features of any gender
+
+```{r}
+snl_actors_casts_seasons %>%
+  ggplot(aes(sid,col=gender)) +
+  geom_bar() + 
+  labs(title = "Count of featured seasons by gender")
+```
+We can also answer questions like
+```{r}
+
+snl_actors_casts_seasons %>% filter(year >= 2005) %>%filter(sid >= 5) 
+
+```

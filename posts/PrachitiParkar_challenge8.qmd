@@ -1,0 +1,119 @@
+---
+title: "Challenge 8"
+author: "Prachiti Parkar"
+description: "Joining Data"
+date: "05/10/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - railroads
+  - snl
+  - faostat
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - military marriages ⭐⭐
+  - faostat ⭐⭐
+  - railroads  ⭐⭐⭐
+  - fed_rate ⭐⭐⭐
+  - debt ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - snl ⭐⭐⭐⭐⭐
+
+```{r}
+
+snl_actors <- read_csv("_data/snl_actors.csv")
+head(snl_actors)
+
+snl_casts <- read_csv("_data/snl_casts.csv")
+head(snl_casts)
+
+snl_seasons <- read_csv("_data/snl_seasons.csv")
+head(snl_seasons)
+
+colnames(snl_actors)
+colnames(snl_casts)
+colnames(snl_seasons)
+
+```
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+snl_actors %>%
+  snl_actors(na.rm = True)
+
+snl_casts %>%
+  snl_casts(na.rm = True)
+
+snl_seasons %>%
+  snl_seasons(na.rm = True)
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+```
+
+## Join Data
+
+Be sure to include a sanity check, and double-check that case count is correct!
+
+```{r}
+snl_data <- snl_actors %>%
+  select(aid, gender) %>%
+  left_join(snl_casts, by="aid")
+
+head(snl_data)
+
+```
+
+## Visualize Data
+```{r}
+snl_data %>%
+  ggplot(aes(x = gender,y = first_epid))+geom_boxplot()
+
+snl_data %>%
+  ggplot(aes(gender)) + 
+  geom_bar()
+
+```
+
+We understand that there are gender data specifically referring to andy and unknown but they don't have any data belonging to first_epid. This means that they have not had any. 

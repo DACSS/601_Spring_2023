@@ -1,0 +1,119 @@
+---
+title: "Challenge 7"
+author: "Harsha Kanaka Eswar Gudipudi"
+description: "Visualizing Multiple Dimensions"
+date: "05/16/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - Harsha Kanaka Eswar Gudidpudi
+  - hotel_bookings.csv
+  
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+```{r}
+df <- read.csv("_data/hotel_bookings.csv")
+head(df)
+```
+
+
+### Briefly describe the data
+
+The dataset comprises data on nearly 49,000 Airbnb rental properties located in New York City throughout 2019. Each observation represents a distinct rental unit and consists of 16 variables, providing information such as the unit's ID, name, location, host ID and name, room type, price, minimum required nights for a reservation, number of reviews, last review date, average monthly reviews, calculated count of host listings on Airbnb, and availability.
+
+```{r}
+dim(df)
+summary(df)
+# Get unique values for the market_segment column
+unique_market_segment <- unique(df$market_segment)
+cat(paste(unique_market_segment, collapse = ", "))
+str(df)
+```
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.\
+
+The data provided in the CSV file is already in a tidy format, with each row representing a unique observation and each column representing a variable. Therefore, it is not necessary to tidy the data any further. The only change need is to remove rows with NA values.
+```{r}
+df<-df%>% filter(!is.na(lead_time))
+head(df[, c("lead_time", "is_canceled")], n = 5)
+```
+
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Creating the date column and merging the total bookings
+```{r}
+df <- df %>%
+  mutate(date = paste(arrival_date_year, arrival_date_month, arrival_date_day_of_month, sep = "-"),
+         date = as.Date(date, format = "%Y-%B-%d"))
+
+head(df[, c("date", "is_canceled")], n = 5)
+```
+
+Document your work here.
+
+
+## Visualization with Multiple Dimensions
+The visualization we did below is a multiple dimensional plot of the number of bookings done based on the market segment. The plot shows the number of bookings made for each market segment, with the x-axis representing the market segment and the y-axis representing the number of bookings. This provides insights into the popularity of each segment. This type of visualization is useful for understanding the trends in the hospitality industry and for making informed decisions about marketing and sales strategies.
+
+```{r}
+# Select the columns we want to visualize
+subset_data <- df %>% select(lead_time, market_segment, is_canceled)
+
+# Group by lead_time and market_segment, and calculate the number of bookings made
+bookings_data <- subset_data %>% group_by(lead_time, market_segment) %>% 
+  summarise(bookings = sum(!is_canceled))
+
+# Create a scatter plot with lead_time on the x-axis, bookings on the y-axis, and color-coded by market_segment
+ggplot(bookings_data, aes(x = lead_time, y = bookings, color = market_segment)) + 
+  geom_point() + 
+  labs(x = "Lead Time", y = "Number of Bookings", color = "Market Segment") +
+  ggtitle("Relationship between Lead Time and Bookings by Market Segment")
+```

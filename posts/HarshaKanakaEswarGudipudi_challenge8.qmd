@@ -1,0 +1,176 @@
+---
+title: "Challenge 8"
+author: "Harsha Kanaka Eswar Gudipudi"
+description: "Joining Data"
+date: "05/16/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - Harsha Kanakeswar Gudipudi
+  - faostat
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - military marriages ⭐⭐
+  - faostat ⭐⭐
+  - railroads  ⭐⭐⭐
+  - fed_rate ⭐⭐⭐
+  - debt ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - snl ⭐⭐⭐⭐⭐
+
+```{r}
+eggs_chicken_df <- read_csv("_data/FAOSTAT_egg_chicken.csv")
+livestock_df <- read_csv("_data/FAOSTAT_livestock.csv")
+dairy_df <- read_csv("_data/FAOSTAT_cattle_dairy.csv")
+```
+Printing the first five rows of every dataset
+```{r}
+head(eggs_chicken_df) 
+head(livestock_df) 
+head(dairy_df) 
+```
+
+Understanding the dimensions of data set 1
+```{r}
+dim(eggs_chicken_df)
+```
+Understanding the dimensions of data set 2
+```{r}
+dim(livestock_df)
+```
+Understanding the dimensions of data set 3
+```{r}
+dim(dairy_df)
+```
+
+Understanding the columns of data set 1
+```{r}
+colnames(eggs_chicken_df)
+```
+Understanding the columns of data set 2
+```{r}
+colnames(livestock_df)
+```
+Understanding the columns of data set 3
+```{r}
+colnames(dairy_df)
+```
+
+
+
+
+### Briefly describe the data
+
+I am using three data sets having information on eggs and chicken, livestock and dairy producing animals. The data sets contain information on livestock, live animals, eggs and chicken country wise. I would like to combine these three datasets to do an exploratory analysis country wise, item code wise etc.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+Checking to see how many entries in the 1st dataset has null values.
+```{r}
+sum(is.na(eggs_chicken_df))
+```
+Checking to see how many entries in the 1st dataset has null values.
+```{r}
+sum(is.na(livestock_df))
+```
+
+Checking to see how many entries in the 1st dataset has null values.
+```{r}
+sum(is.na(dairy_df))
+```
+
+
+The datasets are not very tidy but so I would like to clean them.
+
+Cleaning the 3 data sets
+```{r}
+eggs_chicken_df<- na.omit(eggs_chicken_df)
+livestock_df<- na.omit(livestock_df)
+dairy_df<- na.omit(dairy_df)
+```
+
+Understanding the dimensions of the data sets post cleaning.
+```{r}
+dim(eggs_chicken_df)
+dim(livestock_df)
+dim(dairy_df)
+```
+
+##Join Data
+```{r}
+dairy_livestock_df <-full_join(dairy_df,livestock_df)
+
+dairy_livestock_df
+```
+Understanding the columns of Dairy-Livestock combined data frame.
+```{r}
+colnames(dairy_livestock_df)
+dim(dairy_livestock_df)
+
+```
+
+
+```{r}
+dairy_livestock_eggschicken_df <- full_join(dairy_livestock_df,eggs_chicken_df)
+dairy_livestock_eggschicken_df
+
+```
+Understanding columns of overall combined data
+```{r}
+colnames(dairy_livestock_eggschicken_df)
+
+```
+
+Understanding dimensions of overall combined data
+```{r}
+dim(dairy_livestock_eggschicken_df)
+summary(dairy_livestock_eggschicken_df)
+```
+ 
+With the final combined data set which was created by joining 3 individual data sets, we can answer a lot of questions. As an example, I attempted to see how the total value of Milk Production in Afghanistan is changing over years.I observed an exponential increase in terms of value as illustrated in the graph below.
+```{r}
+
+milk_production <- dairy_livestock_eggschicken_df %>%
+  filter(Element == "Production", Item == "Milk, whole fresh cow", Area == "Afghanistan" )
+
+# Plotting the Milk Production over the years
+ggplot(milk_production, aes(x = Year, y = Value)) +
+  geom_line() +
+  labs(x = "Year", y = "Milk Production") +
+  ggtitle("Milk Production in Afghanistan") +
+  theme_minimal()
+```
+
+

@@ -1,0 +1,117 @@
+---
+title: "Challenge 6"
+author: "Harsha Kanaka Eswar Gudipudi"
+description: "Visualizing Time and Relationships"
+date: "05/16/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - Harsha Kanaka Eswar Gudipudi
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+
+
+```{r}
+df <- read.csv("_data/hotel_bookings.csv")
+head(df)
+```
+
+### Briefly describe the data
+The dataset contains information about hotels including whether a booking was canceled, lead time, arrival date, stays in weekend nights, stays in week nights, number of adults, children, and babies, market segment, distribution channel, whether the guest was a repeat visitor, previous cancellations and bookings, reserved and assigned room types, booking changes, deposit type, agent and company IDs, days in waiting list, customer type, average daily rate, required parking spaces, total special requests, and reservation status. The data covers the years 2015 to 2017.
+```{r}
+summary(df)
+```
+
+```{r}
+# Get unique values for the market_segment column
+unique_market_segment <- unique(df$market_segment)
+cat(paste(unique_market_segment, collapse = ", "))
+```
+
+## Tidy Data (as needed)
+
+I would like to create a plot that displays the trend of reservations whether it is online,direct,etc for each month in a pirticular year. To achieve this, we must first create a new column in the dataset called "arrival-year-month" and aggregate all the bookings into single column.
+
+```{r}
+df_tidy <- df %>%
+  mutate(date = paste(arrival_date_year, arrival_date_month, arrival_date_day_of_month, sep = "-"),
+         date = as.Date(date, format = "%Y-%B-%d"))
+df_tidy$bookings<-rowSums(df_tidy[, c("adults", "children","babies")], na.rm = TRUE)
+
+head(df_tidy[, c("date", "bookings")], n = 5)
+```
+
+## Time Dependent Visualization
+```{r}
+year<-2016
+bookings_filtered <- df_tidy %>% filter(format(date, "%Y") == 2016)
+
+# Group the data by month and market segment and calculate the total number of bookings in each group
+bookings_grouped <- bookings_filtered %>% group_by(format(date, "%m"), market_segment) %>% summarise(total_bookings = sum(bookings))
+
+
+print(sum(is.na(bookings_grouped$bookings_filtered)))
+b1<-bookings_grouped
+bookings_grouped<-bookings_grouped%>% 
+  filter(market_segment %in% c("Direct", "Online TA"))
+bookings_grouped
+ggplot(bookings_grouped, aes(x = `format(date, "%m")`, y = total_bookings, fill = market_segment)) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  labs(x = "Month of Booking", y = "Number of Bookings", title = paste("Total Bookings by Market Segment in", year)) + 
+  theme_bw()
+```
+
+## Visualizing Part-Whole Relationships
+```{r}
+ggplot(b1, aes(x = `format(date, "%m")`, y = total_bookings, fill = market_segment)) +
+  geom_col() +
+  labs(title = "Part-Whole Relationships for Bookings by Market Segment and Month",
+       y = "Total Bookings",
+       x = "Month") +
+  theme(legend.position = "bottom")
+```

@@ -604,8 +604,6 @@ Three key metrics are the number of calls (call volume), average hours worked, a
 
 ```{r chunkTotalHours, fig.width=10, fig.height=5}
 
-#myPalette <- c('#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a')
-
 # initialize all dfs used below
 
 # group by year
@@ -617,6 +615,11 @@ crYearDF <- callReasonsDF %>%
     callTotalHours = callTotal * avgHours
   ) 
 
+# calculate growth percentage of total hours worked
+crYeargrowthPct <- as.character(round((crYearDF[5,4] - crYearDF[1,4]) / crYearDF[1,4] * 100, 1))
+crYeargrowthLM <- as.character(round(lm(callTotalHours ~ year(year), data = crYearDF)$coefficients[2], 1))
+
+
 # group by town and year
 crTownYearDF <- callReasonsDF %>%
   group_by(town, year) %>%
@@ -625,6 +628,10 @@ crTownYearDF <- callReasonsDF %>%
     avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
     callTotalHours = callTotal * avgHours
   ) 
+
+# calculate growth percentage of total hours worked by town
+crLevgrowth <- as.character(round((crTownYearDF[5,5] - crTownYearDF[1,5]) / crTownYearDF[1,5] * 100, 1))
+crWengrowth <- as.character(round((crTownYearDF[10,5] - crTownYearDF[6,5]) / crTownYearDF[6,5] * 100, 1))
 
 # group by year and theme
 crThemeYear <- callReasonsDF %>%
@@ -658,15 +665,14 @@ crYearDF %>%
     theme_ipsum() +
     theme(axis.text.x = element_text(angle = 90))
 
-crYearDF %>%
-  select(year, callTotalHours)
+# crYearDF %>%
+#   select(year, callTotalHours)
 
 ```
 
-The big picture shows `r crYearDF[5,4] / crYearDF[1,4] * 100`% growth in total hours worked by police officers in the two towns together from `r year(crYearDF[1,1])` 
+The big picture shows **`r crYeargrowthPct`% growth** in total hours worked by police officers in the two towns together **from `r year(crYearDF$year)[1]` to `r year(crYearDF$year)[5]`**. Another way to express this is with a linear model, the orange line: we've seen the two towns add **`r crYeargrowthLM` hours** of policing every year. What drives this growth in policing in 2 small rural towns?
 
-
-Faceting the 3 key metrics by town lets us compare the change in calls and hours worked over the 5-year period:
+The simplest next step is to compare the towns. Faceting the 3 key metrics by town lets us compare the change in calls and hours worked over the 5-year period:
 
 ```{r chunkByTown, fig.width=10, fig.height=10}
 
@@ -719,6 +725,13 @@ grid.arrange(g1, g2, g3, nrow = 3)
 
 ```
 
+Total hours worked from `r year(crYearDF$year)[1]` to `r year(crYearDF$year)[5]`:
+
+Leverett: **`r crLevgrowth`% growth** 
+
+Wendell: **`r crWengrowth`% growth**
+
+As described earlier, I learned from the LPD Chief that Wendell's police department didn't log every call. We see a lot of growth from the change in administration, increasing the number of Wendell issues logged as calls.
 
 
 ```{r name-of-chunk, fig.width=10, fig.height=10}

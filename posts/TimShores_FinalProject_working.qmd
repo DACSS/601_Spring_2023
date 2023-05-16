@@ -24,7 +24,7 @@ editor_options:
 #| warning: false
 #| message: false
 
-my_packages <- c("tidyverse", "fs", "pdftools", "knitr", "ggplot2", "viridis", "hrbrthemes") # create vector of packages
+my_packages <- c("tidyverse", "fs", "pdftools", "knitr", "ggplot2", "viridis", "hrbrthemes", "gridExtra") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
@@ -600,48 +600,78 @@ Why do we need another officer when the populations and number of properties in 
 
 ## Call Volume
 
-Three key metrics are the number of calls (call volume), average hours worked, and total hours worked. These metrics can broken down further by factors town, year, call reason, and call theme.
+Three key metrics are the number of calls (call volume), average hours worked, and total hours worked. The first question for a municipal department is about what impacts the budget. The change in total hours worked over time shows the big picture:
 
-```{r name-of-chunk, fig.width=10, fig.height=4}
+```{r chunkTotalHours, fig.width=10, fig.height=5}
 
 #myPalette <- c('#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a')
 
 # initialize all dfs used below
 
-## comparing reasons 
+# group by year
+crYearDF <- callReasonsDF %>%
+  group_by(year) %>%
+  summarise(
+    callTotal = sum(self) + sum(disp),
+    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
+    callTotalHours = callTotal * avgHours
+  ) 
+
+# group by town and year
+crTownYearDF <- callReasonsDF %>%
+  group_by(town, year) %>%
+  summarise(
+    callTotal = sum(self) + sum(disp),
+    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
+    callTotalHours = callTotal * avgHours
+  ) 
+
+# group by year and theme
+crThemeYear <- callReasonsDF %>%
+  group_by(call_theme, year) %>%
+    summarise(
+    callTotal = sum(self) + sum(disp),
+    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
+    callTotalHours = callTotal * avgHours
+  )
+
+## comparing reasons - what is this for again?
 crCompareReasons <- callReasonsDF %>%
   mutate(callTotal = self + disp,
          avgHours = avg_hours_to_arrive + avg_hours_at_scene,
          callTotalHours = callTotal * avgHours) %>%
   arrange(desc(callTotalHours)) 
 
-sumCRTownYear <- callReasonsDF %>%
-  group_by(town, year) %>%
-  summarise(
-    callTotal = sum(self) + sum(disp),
-    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
-    callTotalHours = callTotal * avgHours
-  )
+### first plot shows the big picture: change in total hours
+
+crYearDF %>%
+  select(year, callTotalHours) %>%
+  ggplot(aes(x = year, y = callTotalHours)) + 
+    geom_area(alpha = 0.5) +
+    labs(title = "Total hours working on calls",
+         y = "Calls") +
+    geom_smooth(method = lm,
+                se = FALSE, 
+                linewidth = 1.5,
+                color = "orangered") + 
+    scale_fill_viridis(discrete = T, option = "cividis") +
+    theme_ipsum() +
+    theme(axis.text.x = element_text(angle = 90))
+
+crYearDF %>%
+  select(year, callTotalHours)
+
+```
+
+The big picture shows `r crYearDF[5,4] / crYearDF[1,4] * 100`% growth in total hours worked by police officers in the two towns together from `r year(crYearDF[1,1])` 
 
 
-sumCRTownYearTheme <- callReasonsDF %>%
-  group_by(year, call_theme) %>%
-    summarise(
-    callTotal = sum(self) + sum(disp),
-    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
-    callTotalHours = callTotal * avgHours
-  ) %>%
-  arrange(desc(callTotal))
+Faceting the 3 key metrics by town lets us compare the change in calls and hours worked over the 5-year period:
 
-### plots
+```{r chunkByTown, fig.width=10, fig.height=10}
 
-callReasonsDF %>%
-  group_by(town, year) %>%
-  summarise(
-    callTotal = sum(self) + sum(disp),
-    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
-    callTotalHours = callTotal * avgHours
-  ) %>%
+  # total call volume by town
+g1 <- crTownYearDF %>%
 ggplot(aes(x = year, y = callTotal, fill = town)) + 
   geom_area(alpha = 0.5, color = "white") +
   labs(title = "Total call volume by town",
@@ -652,16 +682,11 @@ ggplot(aes(x = year, y = callTotal, fill = town)) +
               color = "orangered") +
   scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90)) +
   facet_wrap(vars(town))
 
-  # avgHours by town
-callReasonsDF %>%
-  group_by(town, year) %>%
-  summarise(
-    callTotal = sum(self) + sum(disp),
-    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
-    callTotalHours = callTotal * avgHours
-  ) %>%
+  # avg hours per call by town
+g2 <- crTownYearDF %>%
 ggplot(aes(x = year, y = avgHours, fill = town)) + 
   geom_area(alpha = 0.5, color = "white") +
   labs(title = "Average hours per call by town",
@@ -672,12 +697,31 @@ ggplot(aes(x = year, y = avgHours, fill = town)) +
               color = "orangered") +
   scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90)) +
   facet_wrap(vars(town))
+
+  # total hours by town
+g3 <- crTownYearDF %>%
+ggplot(aes(x = year, y = callTotalHours, fill = town)) + 
+  geom_area(alpha = 0.5, color = "white") +
+  labs(title = "Total hours by town",
+       y = "Hours") +
+  geom_smooth(method = lm,
+              se = FALSE, 
+              linewidth = 1.5,
+              color = "orangered") +
+  scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_wrap(vars(town))
+
+grid.arrange(g1, g2, g3, nrow = 3)
 
 ```
 
 
-```{r}
+
+```{r name-of-chunk, fig.width=10, fig.height=10}
 
   
 sumCRTownYearTheme %>% # order themes by callTotal

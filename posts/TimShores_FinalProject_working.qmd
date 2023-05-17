@@ -578,13 +578,13 @@ My analysis plan is to answer the following more specific questions for both tow
 
 ::: {.callout-warning icon=false}
 
-## Specific question for analysis
+## Specific questions for analysis
 
 1. Has the time spent doing police work grown over time?
-2. What call reasons have grown over time?
-3. Which call reasons require the most personnel time, and how has this changed from 2018 to 2022?
-4. Which call actions are associated with the most time-consuming call reasons, and how has this changed?
-5. Leverett and Wendell began a regionalization agreement in 2020. How has that impacted the data of time spent on calls?
+2. Leverett and Wendell began a regionalization agreement in 2020. How has that impacted the data of time spent on calls?
+3. What call reasons have grown over time?
+4. Which call reasons require the most personnel time, and how has this changed from 2018 to 2022?
+5. Which call actions are associated with the most time-consuming call reasons, and how has this changed?
 6. Are there differences in call volume, reasons, actions, and themes made directly to the local PD and to Shelburne Dispatch?
 7. How often does the LPD refer calls to third parties?
 :::
@@ -604,8 +604,7 @@ Three key metrics are the number of calls (call volume), average hours worked, a
 
 ```{r chunkTotalHours, fig.width=10, fig.height=5}
 
-# initialize all dfs used below
-
+# initialize df
 # group by year
 crYearDF <- callReasonsDF %>%
   group_by(year) %>%
@@ -669,7 +668,7 @@ crLevgrowth <- round(
 crWengrowth <- round(
   (crTownYearDF[10,5] - crTownYearDF[6,5]) / crTownYearDF[6,5] * 100, 1)[[1]]
 
-# (values communicated in a df, 
+# values communicated in a df, 
 # hence no need for character conversions
 
 # calculate linear model coefficient estimate of x (hour increase by year)
@@ -705,22 +704,6 @@ crtyGrowthDF <- tribble(
   "Wendell", crWengrowth, crWengrowthLM, crWengrowthLMweek, crWengrowthFTE
 )
 
-# group by year and theme
-crThemeYear <- callReasonsDF %>%
-  group_by(call_theme, year) %>%
-    summarise(
-    callTotal = sum(self) + sum(disp),
-    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
-    callTotalHours = callTotal * avgHours
-  )
-
-## comparing reasons - what is this for again?
-crCompareReasons <- callReasonsDF %>%
-  mutate(callTotal = self + disp,
-         avgHours = avg_hours_to_arrive + avg_hours_at_scene,
-         callTotalHours = callTotal * avgHours) %>%
-  arrange(desc(callTotalHours)) 
-
 ### first plot shows the big picture: change in total hours
 
 crYearDF %>%
@@ -736,9 +719,6 @@ crYearDF %>%
     scale_fill_viridis(discrete = T, option = "cividis") +
     theme_ipsum() +
     theme(axis.text.x = element_text(angle = 90))
-
-# crYearDF %>%
-#   select(year, callTotalHours)
 
 ```
 
@@ -764,7 +744,7 @@ Yes, Leverett and Wendell added `r crYeargrowthLM` hours of policing, or `r crYe
 
 :::
 
-Note that 2,080 hours is a year's worth of FTE, and the call data show that the total hours spent policing in both towns is less than 1 FTE. The call hour workload isn't the only factor in public safety personnel management -- there is also the need for sufficient coverage so officers are available to respond to call when they come in. 
+Note that 2,080 hours is a year's worth of FTE, and the call data show that the total hours spent policing in both towns is less than 1 FTE. The call hour workload isn't the only factor in public safety personnel management. There is also the need for sufficient coverage so officers are available to respond to calls when they come in. There is also the self-determination of the community: the people who live in a town contribute by right to decisions about public safety. Although these are both necessary elements of a full understanding of policing and public safety, they're beyond the scope of this analysis.
 
 
 ### Comparing towns
@@ -824,28 +804,202 @@ grid.arrange(g1, g2, g3, nrow = 3)
 
 ```
 
-Using the same analysis, this table summarizes **Total hours by town** growth rates that correspond to the orange trend lines in these plots: 
+Most calls come from Leverett and the LPD works most hours in response to Leverett calls. Leverett trend lines are flat: volume increases slightly, average hours per call decreases slightly, total hours is flat. Wendell average per call declines at about the same slope as Leverett, but Wendell call volume and hours show steeper incline.
+
+Using the same analysis that I applied to total hours, this table summarizes rates of change that correspond to the orange trend lines in these plots: 
+
+#### Growth trends: Total hours by town
 
 ```{r chunkByTownGrowthSummary, fig.width=10, fig.height=4}
 crtyGrowthDF
 ```
 
-This reveals that Wendell drives the growth in calls by a factor of around 20 to 1 compared with Leverett.
+This reveals that Wendell, despite their low proportion of calls and hours, drives the growth in calls by a factor of around 20 to 1 compared with Leverett. 
 
 It's more accurate and fair to say that missing data from Wendell drives an apparent growth in calls. As described above, when I discussed the data with LPD Chief Minckler, I learned that Wendell's former police chief didn't log every call. Improved data input by LPD officers has created a more accurate record of policing in Wendell. It's possible to use this data set to estimate Wendell's past police call data, but that's beyond the scope of this analysis.
 
+::: {.callout-warning icon=false}
 
-```{r chunkByTheme, fig.width=10, fig.height=10}
+## Specific questions for analysis
 
-  
-sumCRTownYearTheme %>% # order themes by callTotal
+2. Leverett and Wendell began a regionalization agreement in 2020. How has that impacted the data of time spent on calls?
+
+:::
+
+::: {.callout-tip icon=false}
+
+## An answer!
+
+By taking responsibility for policing in Wendell, LPD officers have improved call data about Wendell policing, bringing it up to LPD quality. When summarizing data inclusively before and after regionalization, Wendell boasts **an astounding `r as.character(crtyGrowthDF[2,2])`% annual growth** in hours on calls -- or what appears to be the addition of `r as.character(crtyGrowthDF[2,4])` hours of demand for police work every week. 
+
+Anecdotally, I learned from LPD Chief Minckler that the previous Wendell police chief did not log all calls. With Leverett trends flat, this is likely enough to explain Wendell's high rate. Two to three years from now, LPD will have enough data to make a more confident assessment of Wendell's policing needs.
+
+:::
+
+### Comparing call reasons
+
+
+
+```{r chunkByReason, fig.width=10, fig.height=10}
+
+callReasonsDF %>%
+  group_by(year, call_reason) %>%
+  summarise(
+    callTotal = sum(self) + sum(disp),
+    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
+    callTotalHours = callTotal * avgHours
+  ) %>%
+  ggplot(aes(x = year, y = callTotalHours, fill = call_reason)) + 
+    geom_area(alpha = 0.5, show.legend = FALSE) +
+    labs(title = "Total hours by call reason",
+         y = "Hours") +
+    # geom_smooth(method = lm,
+    #             se = FALSE, 
+    #             linewidth = .5,
+    #             color = "orangered",
+    #             show.legend = FALSE) + 
+    scale_fill_viridis(discrete = T, option = "cividis") +
+    theme_ipsum() +
+    theme(axis.text.x = element_text(angle = 90))
+
+
+### stay below - call reasons
+###
+###
+
+
+## init df: comparing reasons
+crCompareReasons <- callReasonsDF %>%
+  mutate(callTotal = self + disp,
+         avgHours = avg_hours_to_arrive + avg_hours_at_scene,
+         callTotalHours = callTotal * avgHours) %>%
+  arrange(desc(callTotalHours)) 
+
+# # group by year and theme
+# crThemeYear <- callReasonsDF %>%
+#   group_by(call_theme, year) %>%
+#     summarise(
+#     callTotal = sum(self) + sum(disp),
+#     avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
+#     callTotalHours = callTotal * avgHours
+#   )
+
+
+
+# this shows relationship between reason and theme
+crCompareReasons  %>%
+  group_by(call_reason, call_theme, town) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  arrange(desc(callTotalHours)) %>%
+  head(20) %>%
+  ggplot(aes(x = call_theme, y = callTotalHours, fill = call_reason)) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  geom_bar(stat = "identity") +  
+    labs(title = "Top 20 call reasons by total hours",
+         subtitle = "Both towns and all years (2018 to 2022)",
+         y = "Hours") +
+      scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_wrap(vars(town))
+
+
+crCompareReasons %>%
+  group_by(call_reason, town) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  ggplot(aes(town, callTotalHours)) +
+    geom_boxplot() +
+    scale_y_continuous(limits = quantile(crCompareReasons$callTotalHours, c(0.05, 0.95)))
+
+# this is the key to getting factors of top call reasons by hours worked
+topfactors <- crCompareReasons %>%
+  group_by(call_reason) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  subset(callTotalHours < quantile(crCompareReasons$callTotalHours, 0.99)) %>% # complement
+  droplevels.data.frame()
+
+# this works!
+crCompareReasons %>%
+  group_by(call_reason, year) %>%
+    summarise(
+    callTotalHours = sum(callTotalHours)
+  ) %>%
+  droplevels.data.frame(exclude = c(levels(topfactors[[1]]))) %>% 
+  filter(!is.na(call_reason)) %>%
+  ggplot(aes(x = year, y = callTotalHours, fill = call_reason)) +
+    geom_area() +
+    theme(axis.text.x = element_text(angle = 90)) +
+      labs(title = "Top level-of-effort call reasons",
+           subtitle = "total hours > than 99% of total hours",
+           y = "Hours") +
+    scale_fill_manual(values = myPalette) + 
+    facet_wrap(~call_reason)
+
+### stay above - call reasons
+###
+###
+
+
+### first plot shows the big picture: change in total hours
+
+crYearDF %>%
+  select(year, callTotalHours) %>%
+  ggplot(aes(x = year, y = callTotalHours)) + 
+    geom_area(alpha = 0.5) +
+    labs(title = "Total hours working on calls",
+         y = "Calls") +
+    geom_smooth(method = lm,
+                se = FALSE, 
+                linewidth = 1.5,
+                color = "orangered") + 
+    scale_fill_viridis(discrete = T, option = "cividis") +
+    theme_ipsum() +
+    theme(axis.text.x = element_text(angle = 90))
+
+```
+
+
+
+
+
+::: {.callout-warning icon=false}
+
+## Specific questions for analysis
+
+3. What call reasons have grown over time?
+4. Which call reasons require the most personnel time, and how has this changed from 2018 to 2022?
+
+:::
+
+::: {.callout-tip icon=false}
+
+## An answer!
+
+:::
+
+
+
+
+
+```{r chunkByThemeMAYBE, fig.width=10, fig.height=10}
+
+
+# order themes by callTotal  
+sumCRTownYearTheme %>% 
   mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%
   ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
-    geom_area() +
-    labs(title = "Total police call volume by call theme", 
-         y = "Calls") + 
-    scale_fill_manual(values = myPalette[1:10]) # to establish consistent colors between graphs, this maps max callTotal = color 1, min callTotal = color 10
-
+  geom_area(alpha = 0.5, color = "white") +
+  labs(title = "Total police call volume by call theme", 
+       y = "Calls") + 
+  scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90))
 
 sumCRTownYearTheme %>% 
   slice_max(order_by = callTotal, n = 5) %>%
@@ -944,86 +1098,33 @@ ggplot(aes(x = year, y = callTotalHours, fill = town)) +
 ###
 ###
 ###
-
-
-# this works, and shows relationship between reason and theme
-crCompareReasons  %>%
-  group_by(call_reason, call_theme, town) %>%
-    summarise(
-    callTotalHours = sum(callTotalHours)
-  ) %>%
-  arrange(desc(callTotalHours)) %>%
-  head(20) %>%
-  ggplot(aes(x = call_theme, y = callTotalHours, fill = call_reason)) +
-    theme(axis.text.x = element_text(angle = 90)) +
-    geom_bar(stat = "identity") +  
-      labs(title = "Top 20 call reasons by total hours",
-           subtitle = "Both towns and all years (2018 to 2022)",
-           y = "Hours") +
-    #scale_fill_manual(values = myPalette) + # too many values
-    facet_wrap(vars(town))
-
-
-crCompareReasons %>%
-  group_by(call_reason, town) %>%
-    summarise(
-    callTotalHours = sum(callTotalHours)
-  ) %>%
-  ggplot(aes(town, callTotalHours)) +
-    geom_boxplot() +
-    scale_y_continuous(limits = quantile(crCompareReasons$callTotalHours, c(0.05, 0.95)))
-
-# this is the key to getting factors of top call reasons by hours worked
-topfactors <- crCompareReasons %>%
-  group_by(call_reason) %>%
-    summarise(
-    callTotalHours = sum(callTotalHours)
-  ) %>%
-  subset(callTotalHours < quantile(crCompareReasons$callTotalHours, 0.99)) %>% # complement
-  droplevels.data.frame()
-
-# this works!
-crCompareReasons %>%
-  group_by(call_reason, year) %>%
-    summarise(
-    callTotalHours = sum(callTotalHours)
-  ) %>%
-  droplevels.data.frame(exclude = c(levels(topfactors[[1]]))) %>% 
-  filter(!is.na(call_reason)) %>%
-  ggplot(aes(x = year, y = callTotalHours, fill = call_reason)) +
-    geom_area() +
-    theme(axis.text.x = element_text(angle = 90)) +
-      labs(title = "Top level-of-effort call reasons",
-           subtitle = "total hours > than 99% of total hours",
-           y = "Hours") +
-    scale_fill_manual(values = myPalette) + 
-    facet_wrap(~call_reason)
-
-# #2 this doesn't work for some reason
-topfactors <- crCompareReasons %>%
-  group_by(call_reason) %>%
-    summarise(
-    callTotalHours = sum(callTotalHours)
-  ) %>%
-  subset(callTotalHours = quantile(crCompareReasons$callTotalHours, c(0.98, 0.99))) %>% # complement
-  droplevels.data.frame()
-
-# #2 this doesn't work for some reason
-crCompareReasons %>%
-  group_by(call_reason, year) %>%
-    summarise(
-    callTotalHours = sum(callTotalHours)
-  ) %>%
-  droplevels.data.frame(exclude = c(levels(topfactors[[1]]))) %>% 
-  filter(!is.na(call_reason)) %>%
-  ggplot(aes(x = year, y = callTotalHours, fill = call_reason)) +
-    geom_area() +
-    theme(axis.text.x = element_text(angle = 90)) +
-      labs(title = "Top level-of-effort call reasons",
-           subtitle = "total hours > than 99% of total hours",
-           y = "Hours") +
-    scale_fill_manual(values = myPalette) + 
-    facet_wrap(~call_reason)
+# 
+# 
+# # #2 this doesn't work for some reason
+# topfactors <- crCompareReasons %>%
+#   group_by(call_reason) %>%
+#     summarise(
+#     callTotalHours = sum(callTotalHours)
+#   ) %>%
+#   subset(callTotalHours = quantile(crCompareReasons$callTotalHours, c(0.98, 0.99))) %>% # complement
+#   droplevels.data.frame()
+# 
+# # #2 this doesn't work for some reason
+# crCompareReasons %>%
+#   group_by(call_reason, year) %>%
+#     summarise(
+#     callTotalHours = sum(callTotalHours)
+#   ) %>%
+#   droplevels.data.frame(exclude = c(levels(topfactors[[1]]))) %>% 
+#   filter(!is.na(call_reason)) %>%
+#   ggplot(aes(x = year, y = callTotalHours, fill = call_reason)) +
+#     geom_area() +
+#     theme(axis.text.x = element_text(angle = 90)) +
+#       labs(title = "Top level-of-effort call reasons",
+#            subtitle = "total hours > than 99% of total hours",
+#            y = "Hours") +
+#     scale_fill_manual(values = myPalette) + 
+#     facet_wrap(~call_reason)
 
   # avgHours over time by reasons, facets
 sumCRTownYearTheme %>% 

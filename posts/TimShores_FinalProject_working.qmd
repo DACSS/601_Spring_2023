@@ -1,8 +1,8 @@
 ---
-title: "Final Project Assignment #2: Tim Shores"
+title: "Final Project: Tim Shores"
 author: "Tim Shores"
 description: "Project & Data Description"
-date: "04/09/2023"
+date: "05/20/2023"
 format:
   html:
     df-print: paged
@@ -13,8 +13,7 @@ format:
     code-overflow: wrap
     css: styles.css
 categories:
-  - final_Project_assignment_1
-  - final_project_data_description
+  - final_Project
 editor_options: 
   chunk_output_type: console
 ---
@@ -328,7 +327,6 @@ allYearsDF_wide <- allYearsDF_wide %>%
 
 callReasonsDF <- allYearsDF_wide %>% 
   filter(is.na(action)) %>% 
-  #filter(!grepl("total", call_reason, ignore.case = TRUE)) %>%
   filter(!is.na(self)) %>%
   select(town, year, call_reason, self, disp, avg_hours_to_arrive, avg_hours_at_scene) %>%
   mutate(call_reason = factor(call_reason)) %>%
@@ -341,8 +339,6 @@ callReasonsDF <- allYearsDF_wide %>%
     totalCalls = self + disp,
     totalHours = totalCalls * avg_hours_per_call) %>%
   select(-c(avg_hours_to_arrive, avg_hours_at_scene))
-#    avg_hours_to_arrive = avg_hours_to_arrive / 60, 
-#    avg_hours_at_scene = avg_hours_at_scene / 60) # convert times to hours
 
   # keeps only rows with call_reason = TOTAL
 totalReasonsDF <- callReasonsDF %>% 
@@ -610,17 +606,27 @@ Three key metrics are the number of calls (call volume), average hours worked, a
 ### totalCalls is getting doubled
 ### 2018 should be 1,998, not 3,996
 ### 2018 avg should be 0.584170513
-### 2018 totalHours should be 1167.172685
+### 2018 totalHours should be 1998 * 0.584... = 849.2
 ###
+### Make note in analysis: not clear how the source reports handle their average time totals.
+### So my interp is a guess: avgHours is the mean of the columsn together: time to arrive plus time on scene. 
+### Mean denominator is the number of rows. 
+### Since the report values are already averages, we don't want to use number of calls as denominator.
 # initialize df
 # group by year
 crYearDF <- callReasonsDF %>%
   group_by(year) %>%
   summarise(
     totalCalls = sum(totalCalls),
-    avgHours = mean(avg_hours_per_call),
-    totalHours = sum(totalHours)
+    totalHours = sum(totalHours)                                  # this is correct
+    # avgHoursTEST = sum(avg_hours_per_call) / totalCalls,        # this does not work - wrong denominator
+    # avgHours = mean(avg_hours_per_call),                          # this is correct - denominator should be # of rows
+    # totalHoursTEST = avgHours * totalCalls,                       # this does not work but I don't understand why
   ) 
+# view(crYearDF)
+# rm(crYearDF)
+# write.csv(callReasonsDF,file='./callReasonsDF.csv', row.names=FALSE)
+# write.csv(allYearsDF_wide,file='./allYearsDF_wide.csv', row.names=FALSE)
 
 ###
 ### begin calculations for crYearDF
@@ -628,7 +634,7 @@ crYearDF <- callReasonsDF %>%
 
 # calculate growth percentage of total hours worked
 
-crYeargrowthPct <- as.character(round((crYearDF[5,4] - crYearDF[1,4]) / crYearDF[1,4] * 100, 1))
+crYeargrowthPct <- as.character(round((crYearDF[5,3] - crYearDF[1,3]) / crYearDF[1,3] * 100, 1))
 
 # (values used inline to communicate growth, hence character conversions)
 
@@ -660,9 +666,11 @@ crYeargrowthLM <- as.character(crYeargrowthLM)
 crTownYearDF <- callReasonsDF %>%
   group_by(town, year) %>%
   summarise(
-    callTotal = sum(self) + sum(disp),
-    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
-    totalHours = callTotal * avgHours # needs to happen before grouping
+    totalCalls = sum(totalCalls),
+    totalHours = sum(totalHours) 
+    # callTotal = sum(self) + sum(disp),
+    # # avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
+    # totalHours = callTotal * avgHours # needs to happen before grouping
   ) 
 
 ###
@@ -672,9 +680,9 @@ crTownYearDF <- callReasonsDF %>%
 # For each town: calculate growth percentage of hours worked
 
 crLevgrowth <- round(
-  (crTownYearDF[5,5] - crTownYearDF[1,5]) / crTownYearDF[1,5] * 100, 1)[[1]]
+  (crTownYearDF[5,4] - crTownYearDF[1,4]) / crTownYearDF[1,4] * 100, 1)[[1]]
 crWengrowth <- round(
-  (crTownYearDF[10,5] - crTownYearDF[6,5]) / crTownYearDF[6,5] * 100, 1)[[1]]
+  (crTownYearDF[10,4] - crTownYearDF[6,4]) / crTownYearDF[6,4] * 100, 1)[[1]]
 
 # values communicated in a df, 
 # hence no need for character conversions
@@ -717,7 +725,7 @@ crtyGrowthDF <- tribble(
 crYearDF %>%
   ggplot(aes(x = year, y = totalHours)) + 
   geom_area(alpha = 0.5) +
-  labs(title = "Total hours working on calls",
+  labs(title = "Total hours: Police officers working on calls",
        y = "Hours") +
   geom_smooth(method = lm,
               se = FALSE, 
@@ -764,7 +772,7 @@ A simple next step is to compare the towns. Faceting the 3 key metrics by town l
 
   # total call volume by town
 g1 <- crTownYearDF %>%
-ggplot(aes(x = year, y = callTotal, fill = town)) + 
+ggplot(aes(x = year, y = totalCalls, fill = town)) + 
   geom_area(alpha = 0.5, color = "white") +
   labs(title = "Total call volume by town",
        y = "Calls") +
@@ -776,24 +784,24 @@ ggplot(aes(x = year, y = callTotal, fill = town)) +
   theme_ipsum() +
   theme(axis.text.x = element_text(angle = 90)) +
   facet_wrap(vars(town))
-
-  # avg hours per call by town
-g2 <- crTownYearDF %>%
-ggplot(aes(x = year, y = avgHours, fill = town)) + 
-  geom_area(alpha = 0.5, color = "white") +
-  labs(title = "Average hours per call by town",
-       y = "Hours") +
-  geom_smooth(method = lm,
-              se = FALSE, 
-              linewidth = 1.5,
-              color = "orangered") +
-  scale_fill_viridis(discrete = T, option = "cividis") +
-  theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  facet_wrap(vars(town))
+# 
+#   # avg hours per call by town
+# g2 <- crTownYearDF %>%
+# ggplot(aes(x = year, y = avgHours, fill = town)) + 
+#   geom_area(alpha = 0.5, color = "white") +
+#   labs(title = "Average hours per call by town",
+#        y = "Hours") +
+#   geom_smooth(method = lm,
+#               se = FALSE, 
+#               linewidth = 1.5,
+#               color = "orangered") +
+#   scale_fill_viridis(discrete = T, option = "cividis") +
+#   theme_ipsum() +
+#   theme(axis.text.x = element_text(angle = 90)) +
+#   facet_wrap(vars(town))
 
   # total hours by town
-g3 <- crTownYearDF %>%
+g2 <- crTownYearDF %>%
 ggplot(aes(x = year, y = totalHours, fill = town)) + 
   geom_area(alpha = 0.5, color = "white") +
   labs(title = "Total hours by town",
@@ -807,11 +815,11 @@ ggplot(aes(x = year, y = totalHours, fill = town)) +
   theme(axis.text.x = element_text(angle = 90)) +
   facet_wrap(vars(town))
 
-grid.arrange(g1, g2, g3, nrow = 3)
+grid.arrange(g1, g2, nrow = 2)
 
 ```
 
-Most calls come from Leverett and the LPD works most hours in response to Leverett calls. Leverett trend lines are flat: volume increases slightly, average hours per call decreases slightly, total hours is flat. Wendell average per call declines at about the same slope as Leverett, but Wendell call volume and hours show steeper incline.
+Most calls come from Leverett and the LPD works most hours in response to Leverett calls. Leverett trend lines show a slight incline. Wendell call volume and hours show a steep incline.
 
 Using the same analysis that I applied to total hours, this table summarizes rates of change that correspond to the orange trend lines in these plots: 
 
@@ -821,9 +829,9 @@ Using the same analysis that I applied to total hours, this table summarizes rat
 crtyGrowthDF
 ```
 
-This reveals that Wendell, despite their low proportion of calls and hours, drives the growth in calls by a factor of around 20 to 1 compared with Leverett. 
+This reveals that Wendell, despite their low proportion of calls and hours, has driven most growth in calls compared with Leverett. 
 
-It's more accurate and fair to say that missing data from Wendell drives an apparent growth in calls. As described above, when I discussed the data with LPD Chief Minckler, I learned that Wendell's former police chief didn't log every call. Improved data input by LPD officers has created a more accurate record of policing in Wendell. It's possible to use this data set to estimate Wendell's past police call data, but that's beyond the scope of this analysis.
+It's more accurate and fair to say that missing data from Wendell has driven call growth as it appears in the data, but not in real department operations. As described earlier, I learned from my discussion with LPD Chief Minckler that Wendell's former police chief didn't log calls consistently. Improved data input by LPD officers has created a more accurate record of policing in Wendell. It's possible to use this data set to estimate Wendell's past police call data, but that's beyond the scope of this analysis.
 
 ::: {.callout-warning icon=false}
 
@@ -837,7 +845,7 @@ It's more accurate and fair to say that missing data from Wendell drives an appa
 
 ## An answer!
 
-By taking responsibility for policing in Wendell, LPD officers have improved call data about Wendell policing, bringing it up to LPD quality. When summarizing data inclusively before and after regionalization, Wendell boasts **an astounding `r as.character(crtyGrowthDF[2,2])`% annual growth** in hours on calls -- or what appears to be the addition of `r as.character(crtyGrowthDF[2,4])` hours of demand for police work every week. 
+By taking responsibility for policing in Wendell, LPD officers have improved call data about Wendell policing, bringing it up to LPD quality. When summarizing data inclusively before and after regionalization, Wendell shows **`r as.character(crtyGrowthDF[2,2])`% annual growth** in hours on calls -- or what appears to be **`r as.character(crtyGrowthDF[2,4])` additional hour** of police work every week. 
 
 Anecdotally, I learned from LPD Chief Minckler that the previous Wendell police chief did not log all calls. With Leverett trends flat, this is likely enough to explain Wendell's high rate. Two to three years from now, LPD will have enough data to make a more confident assessment of Wendell's policing needs.
 
@@ -850,28 +858,24 @@ With `r as.character(length(levels(callReasonsDF$call_reason))[1])` factor level
 
 ```{r chunkByReason, fig.width=10, fig.height=10}
 
-### why does this have a different shape? 
-
 ###
 ### HERE
 ###
-
-# NOT WORKING
-# verified multiple times: grouping by multiple factors
-# plays havoc with my total hours
 
 crYearReason <- callReasonsDF %>%
   group_by(year, call_reason) %>%
   #group_by(year) %>%
   summarise(
-    callTotal = sum(self) + sum(disp),
-    avgHours = mean(avg_hours_to_arrive) + mean(avg_hours_at_scene),
-    totalHours = callTotal * avgHours # needs to happen before grouping
+    totalCalls = sum(totalCalls),
+    totalHours = sum(totalHours) 
+    # callTotal = sum(self) + sum(disp),
+    # avgHours = mean(avg_hours_to_arrive) + mean(avg_hours_at_scene),
+    # totalHours = callTotal * avgHours # needs to happen before grouping
   )
 
 crYearReason %>%
   ggplot(aes(x = year, y = totalHours, fill = call_reason)) +
-    geom_area(alpha = 0.5, show.legend = FALSE, color = "tomato") +
+    geom_area(alpha = 0.5, show.legend = FALSE, color = "lavenderblush") +
     labs(title = "Total hours by call reason",
          y = "Hours") +
     scale_fill_viridis(discrete = T, option = "cividis") +
@@ -882,14 +886,16 @@ crYearReason %>%
 crThemeYear <- callReasonsDF %>%
   group_by(call_theme, year) %>%
     summarise(
-    callTotal = sum(self) + sum(disp),
-    avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
-    totalHours = callTotal * avgHours # needs to happen before grouping
+      totalCalls = sum(totalCalls),
+      totalHours = sum(totalHours) 
+    # callTotal = sum(self) + sum(disp),
+    # avgHours = mean(avg_hours_to_arrive + avg_hours_at_scene),
+    # totalHours = callTotal * avgHours # needs to happen before grouping
   ) 
 
 crThemeYear %>%
   ggplot(aes(x = year, y = totalHours, fill = call_theme)) + 
-    geom_area(alpha = 0.5, show.legend = TRUE, color = "tomato") +
+    geom_area(alpha = 0.5, show.legend = TRUE, color = "lavenderblush") +
     labs(title = "Total hours by call theme",
          y = "Hours") +
     scale_fill_viridis(discrete = T, option = "cividis") +
@@ -903,9 +909,13 @@ crThemeYear %>%
 
 ## init df: comparing reasons
 crCompareReasons <- callReasonsDF %>%
-  mutate(callTotal = self + disp,
-         avgHours = avg_hours_to_arrive + avg_hours_at_scene,
-         totalHours = callTotal * avgHours) %>%
+  mutate(
+    totalCalls = sum(totalCalls),
+    totalHours = sum(totalHours) 
+    # callTotal = self + disp,
+    #      avgHours = avg_hours_to_arrive + avg_hours_at_scene,
+    #      totalHours = callTotal * avgHours
+    ) %>%
   arrange(desc(totalHours)) 
 
 # this shows relationship between reason and theme
@@ -1012,10 +1022,10 @@ crYearDF %>%
 ```{r chunkByThemeMAYBE, fig.width=10, fig.height=10}
 
 
-# order themes by callTotal  
+# order themes by totalCalls  
 sumCRTownYearTheme %>% 
-  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%
-  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
+  mutate(call_theme = fct_reorder(call_theme, totalCalls, .fun = 'sum')) %>%
+  ggplot(aes(x = year, y = totalCalls, fill = call_theme)) +
   geom_area(alpha = 0.5, color = "white") +
   labs(title = "Total police call volume by call theme", 
        y = "Calls") + 
@@ -1024,18 +1034,18 @@ sumCRTownYearTheme %>%
   theme(axis.text.x = element_text(angle = 90))
 
 sumCRTownYearTheme %>% 
-  slice_max(order_by = callTotal, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%
-  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
+  slice_max(order_by = totalCalls, n = 5) %>%
+  mutate(call_theme = fct_reorder(call_theme, totalCalls, .fun = 'sum')) %>%
+  ggplot(aes(x = year, y = totalCalls, fill = call_theme)) +
     geom_area() +
     labs(title = "Call volume, zoom in on top 5 call themes", 
          y = "Calls") +
     scale_fill_manual(values = myPalette[c(6:10)]) # consistent colors between graphs
 
 sumCRTownYearTheme %>% 
-  slice_min(order_by = callTotal, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, callTotal, .fun = 'sum')) %>%    
-  ggplot(aes(x = year, y = callTotal, fill = call_theme)) +
+  slice_min(order_by = totalCalls, n = 5) %>%
+  mutate(call_theme = fct_reorder(call_theme, totalCalls, .fun = 'sum')) %>%    
+  ggplot(aes(x = year, y = totalCalls, fill = call_theme)) +
     geom_area() +
     labs(title = "Call volume, zoom in on bottom 5 call themes", 
          subtitle = "Y-axis at 1/10 scale of top 5 call themes",
@@ -1064,15 +1074,15 @@ sumCRTownYearTheme %>%
 
 
   # avgHours by town
-sumCRTownYear %>% 
-ggplot(aes(x = year, y = avgHours, fill = town)) + 
-  geom_area() +
-  labs(title = "Average hours per call by town",
-       y = "Hours") +
-  geom_smooth(method = lm, 
-              se = FALSE,
-              color = "Black") +
-  scale_fill_manual(values = myPalette[c(1,2)]) # consistent colors between graphs
+# sumCRTownYear %>% 
+# ggplot(aes(x = year, y = avgHours, fill = town)) + 
+#   geom_area() +
+#   labs(title = "Average hours per call by town",
+#        y = "Hours") +
+#   geom_smooth(method = lm, 
+#               se = FALSE,
+#               color = "Black") +
+#   scale_fill_manual(values = myPalette[c(1,2)]) # consistent colors between graphs
 
 
   # totalHours by town
@@ -1127,14 +1137,14 @@ ggplot(aes(x = year, y = totalHours, fill = town)) +
 #     facet_wrap(~call_reason)
 
   # avgHours over time by reasons, facets
-sumCRTownYearTheme %>% 
-  ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
-    geom_area() +
-    theme(axis.text.x = element_text(angle = 90)) +
-    labs(title = "Average hours per call", 
-         y = "Hours") +
-    scale_fill_manual(values = myPalette) + # consistent colors between graphs
-    facet_wrap(~call_theme, nrow = 2)
+# sumCRTownYearTheme %>% 
+#   ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
+#     geom_area() +
+#     theme(axis.text.x = element_text(angle = 90)) +
+#     labs(title = "Average hours per call", 
+#          y = "Hours") +
+#     scale_fill_manual(values = myPalette) + # consistent colors between graphs
+#     facet_wrap(~call_theme, nrow = 2)
 
   # totalHours over time by themes, facets
 sumCRTownYearTheme %>% 
@@ -1147,14 +1157,14 @@ sumCRTownYearTheme %>%
     facet_wrap(~call_theme, nrow = 2)
 
   # avgHours over time by themes, facets
-sumCRTownYearTheme %>% 
-  ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
-    geom_area() +
-    theme(axis.text.x = element_text(angle = 90)) +
-    labs(title = "Average hours per call", 
-         y = "Hours") +
-    scale_fill_manual(values = myPalette) + # consistent colors between graphs
-    facet_wrap(~call_theme, nrow = 2)
+# sumCRTownYearTheme %>% 
+#   ggplot(aes(x = year, y = avgHours, fill = call_theme)) +
+#     geom_area() +
+#     theme(axis.text.x = element_text(angle = 90)) +
+#     labs(title = "Average hours per call", 
+#          y = "Hours") +
+#     scale_fill_manual(values = myPalette) + # consistent colors between graphs
+#     facet_wrap(~call_theme, nrow = 2)
 
 
   # totalHours by top 6 themes
@@ -1232,7 +1242,7 @@ Hint: at minimum, you should cite the source of the dataset and R as a programmi
 
 
 ```{r}
-######### all good up to this point.
+
 ######### sanity tests
 ######### make more pipelines
 
@@ -1247,15 +1257,6 @@ Hint: at minimum, you should cite the source of the dataset and R as a programmi
 # Effective and efficient coding
 
 
-
-## testers
-allYearsDF_wideACTION <- arrange(allYearsDF_wide, Action)
-allYearsDF_wideSELF <- arrange(allYearsDF_wide, desc(Self)) # checks out 
-
-# sanity check ... pass!
-callReasonsDF %>%
-  group_by(town) %>%
-  summarise(selfSum = sum(as.numeric(self)), dispSum = sum(as.numeric(disp)), arriveSum = sum(as.numeric(avg_hours_to_arrive)), sceneSum = sum(as.numeric(avg_hours_at_scene)), .groups = 'drop')
 
 ```
 

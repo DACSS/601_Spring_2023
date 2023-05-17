@@ -1,0 +1,129 @@
+---
+title: "Challenge 8"
+author: "Maanusri Balasubramanian"
+description: "Joining Data"
+date: "05/11/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - maanusri balasubramanian
+  - snl
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - military marriages ⭐⭐
+  - faostat ⭐⭐
+  - railroads  ⭐⭐⭐
+  - fed_rate ⭐⭐⭐
+  - debt ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - snl ⭐⭐⭐⭐⭐
+
+```{r}
+
+# reading the datasets from CSV
+snl_actors <- read.csv("_data/snl_actors.csv")
+snl_casts <- read.csv("_data/snl_casts.csv")
+snl_seasons <- read.csv("_data/snl_seasons.csv")
+
+# peaking into the datasets
+head(snl_actors)
+head(snl_casts)
+head(snl_seasons)
+
+# number of rows in each
+nrow(snl_actors)
+nrow(snl_casts)
+nrow(snl_seasons)
+
+# number of columns in each
+ncol(snl_actors)
+ncol(snl_casts)
+ncol(snl_seasons)
+
+# print column names of each
+colnames(snl_actors)
+colnames(snl_casts)
+colnames(snl_seasons)
+
+```
+
+### Briefly describe the data
+
+These 3 datasets contain data about Saturday Night Live actors, casts and seasons respectively. Based on the number of rows, number of columns and column names information from above, we know that there were a total of 2306 actors and 46 seasons in Saturday Night Live. snl_actors dataset contains specific information about actors, snl_casts dataset contains information about the appearance of the show cast (like if they were featured in the show, their episode of appearance, number of episodes of appearance, etc.) and the snl_seasons dataset contains information about each season of the show (like the start episode, the end episode, year it was aired and the number of episodes in the season)
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+The data is already tidy, so no extra work needs to be done.
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+```
+
+## Join Data
+
+Be sure to include a sanity check, and double-check that case count is correct!
+
+```{r}
+
+# Merging snl_actors and snl_casts
+cast_actor <- merge(snl_casts, snl_actors, by = 'aid')
+
+# merging cast_actor and snl_seasons
+cast_actor_season <- cast_actor %>%
+  merge(snl_seasons, by = 'sid') %>%
+  group_by(sid, year, gender) %>%
+  count(sid, gender)
+
+# plotting gender count over the years
+cast_actor_season %>%
+  ggplot(aes(year, n, col = gender)) +
+  geom_line() +
+  ylab("Count") +
+  ggtitle("Gender count by year")
+
+```
+
+```{r}
+
+cast_actor_season 
+
+```
+From the above visualization we can see that there is rise in number of employees in each season over the years.
+
+We can see that there is an increase in the number of actors in the show over the years, which is expected. The number of female actors is lesser than the number of male actors over the years too. We can also see that characters are being added and removed from the show on a regular basis, so the kinks in the graph.

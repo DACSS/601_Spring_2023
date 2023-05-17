@@ -1,0 +1,222 @@
+---
+title: "Final Project Assignment#1: Incidents of Malaria Worldwide"
+author: "Linda Humphrey"
+description: "Project & Data Description"
+date: "03/05/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description 
+editor_options: 
+  chunk_output_type: console
+---
+
+## Important Formatting & Submission Notes: {#important-formatting-submission-notes}
+
+1.  **Use this file as the template to work on: start your own writing from Section "Part.1"**
+
+2.  **Please make the following changes to the above YAML header:**
+
+    -   Change the "title" to "Final Project Assignment#1: First Name Last Name";
+
+    -   Change the "author" to your name;
+
+    -   Change the "date" to the current date in the "MM-DD-YYYY" format;
+
+3.  **Submission:**
+
+    -   Delete the unnecessary sections ("Overview", "Tasks", "Special Note", and "Evaluation").
+    -   **In the posts folder of your local 601_Spring_2023 project, create a folder named "FirstNameLastName_FinalProjectData", and save your final project dataset(s) in this folder. DO NOT save the dataset(s) to the \_data folder which stores the dataset(s) for challenges.**
+    -   Render and submit the file to the blog post like a regular challenge.
+
+## Overview of the Final Project {#overview-of-the-final-project}
+
+The goal is to tell a coherent and focused story with your data, which answers a question (or questions) that a researcher, or current or future employer, might want to have answered. The goal might be to understand a source of covariance, make a recommendation, or understand change over time. We don't expect you to reach a definitive conclusion in this analysis. Still, you are expected to tell a data-driven story using evidence to support the claims you are making on the basis of the exploratory analysis conducted over the past term.
+
+In this final project, statistical analyses **are not required**, but any students who wish to include these may do so. However, **your primary analysis should center around visualization rather than inferential statistics.** Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. **Do not run a multiple regression with numerous predictors and report which predictors are significant!!**
+
+## Tasks of Assignment#1 {#Tasks-of-assignment1}
+
+This assignment is the first component of your final project. Together with the later assignments, it make up a short paper/report. In this assignment, you should introduce a dataset(s) and how you plan to present this dataset(s). This assignment should include the following components:
+
+1.  **A clear description of the dataset(s) that you are using.**
+
+2.  **What "story" do you want to present to the audience? In other words, what "question(s)" do you like to answer with this dataset(s)?**
+
+3.  **The Plan for Further Analysis and Visualization.**
+
+We will have a special class meeting on April 12 to review and discuss students' proposed datasets for the final project. **If you want your project being discussed in the class, please submit this assignment before April 12.**
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(plotly)
+library(gapminder)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+In this part, you should introduce the dataset(s) and your research questions.
+
+1.  Dataset(s) Introduction:
+The dataset I will be describing is about malaria incidences worldwide, My data is collected from WHO.org.and cdc.gov. Malaria occurs mostly in poor tropical and subtropical areas of the world. In many of the countries affected by malaria, it is a leading cause of illness and death. In areas with high transmission, the most vulnerable groups are young children, who have not developed immunity to malaria yet, and pregnant women, whose immunity has been decreased by pregnancy. The costs of malaria – to individuals, families, communities, nations – are enormous.In 2020, an estimated 627,000 people died of malaria—most were young children in sub-Saharan Africa. Within the last decade, increasing numbers of partners and resources have rapidly increased malaria control efforts. This scale-up of interventions has saved millions of lives globally and cut malaria mortality by 36% from 2010 to 2020, leading to hopes and plans for elimination and ultimately eradication. CDC brings its technical expertise to support these efforts with its collaborative work in many malaria-endemic countries and regions. Link - https://www.who.int/news-room/fact-sheets/detail/malaria , https://www.cdc.gov/malaria/malaria_worldwide/impact.html
+  
+
+2.  What questions do you like to answer with this dataset(s)?
+Who Is Most Vulnerable? Persons with no or little immunity to malaria are the most vulnerable, especially in areas with high transmission.
+
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+Entity: This column lists all countries in the world that have reported malaria incidence
+
+Code: This column indicates each country code
+
+Year: This column indicates the incidences reported in each year
+
+Incidence of Malaria(per 1,000 population at risk): This column indicates the risk of Malaria per 1,000 population at risk in every country.
+
+1.  read the dataset;
+
+```{r}
+library(tidyverse)
+library(tidyr)
+
+# Read in the csv file
+df <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/incidence-of-malaria.csv", sep = ",", header = T)
+
+# view data
+view(df)
+```
+
+2.  present the descriptive information of the dataset(s) using the functions in Challenges 
+The data below describes the dim(), length(unique()), head(); with reperesntation of number of rows and columns in the dataset.
+
+    ```{r}
+dim(df)
+    ```
+
+```{r}
+length(unique(df$Incidence.of.malaria..per.1.000.population.at.risk.))
+```
+
+```{r}
+df <- incidence_of_malaria %>%
+select(starts_with("Code"))
+dim(df)
+```
+
+```{R}
+head(df, 10)
+```
+
+3.  The dataset below shows the  summary statistics of the  Incidence.of.malaria..per.1.000.population.at.risk.
+
+```{r}
+summary(df$Incidence.of.malaria..per.1.000.population.at.risk.)
+```
+
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+I use line chart using ggplot2 that shows the trend of malaria incidence over time for all regions in the dataset. The chart has the year on the x-axis, the incidence on the y-axis, and the regions are distinguished by color. The labs() function is used to add a title and axis labels, and the theme_minimal() function is used to set the chart's theme to a minimal style.
+```{R}
+# Libraries
+library(tidyverse)
+library(hrbrthemes)
+library(plotly)
+library(patchwork)
+library(viridis)
+
+# Read in the csv file
+df <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/incidence-of-malaria.csv", sep = ",", header = T)
+
+df %>%
+  ggplot( aes(x=Year, y = Incidence.of.malaria..per.1.000.population.at.risk.)) +
+    geom_area(fill="#69b3a2", alpha=0.5) +
+    geom_line(color="#69b3a2") +
+    ggtitle("Trend of malaria incidence") +
+    ylab("Number of Incidences") +
+    theme_ipsum()
+
+```
+ 
+```{r}
+# Load necessary libraries
+library(ggplot2)
+
+# Load the incidence-of-malaria dataset
+incidence_of_malaria <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/incidence-of-malaria.csv", sep = ",", header = T)
+
+df %>%
+ filter(Entity %in% c("Afghanistan", "Angola", "Belize", "Chad",   "Gambia", "Nepal", "Pakistan", "Senegal", "Tanzania")) %>%
+  filter(Year== 2020)
+
+# Create a plot of incidence over time for all regions
+df %>%
+  ggplot(aes(x=Year, y=Entity, group=Entity, fill=Entity)) +
+  geom_area()+
+  scale_fill_viridis(discrete = TRUE) +
+    theme(legend.position="none") +
+    ggtitle("Incidences of Malaria for the year 2004") +
+    hrbrthemes::theme_ipsum() +
+    theme(
+      legend.position="none",
+      panel.spacing = unit(0, "lines"),
+      strip.text.x = element_text(size = 8),
+      plot.title = element_text(size=13)
+    ) +
+    facet_wrap(~Entity, scale="free_y")
+
+```
+
+## Evaluation {#evaluation}
+
+As we can see from the graph, the number of malaria cases in sub-Saharan Africa has been decreasing over the past decade. This is partly due to increased efforts to control and prevent the disease, including the distribution of insecticide-treated bed nets and the use of antimalarial drugs.
+However, the fight against malaria is far from over. According to WHO, sub-Saharan Africa still accounted for 94% of all malaria cases and deaths in 2019. The visualization below shows the number of deaths due to malaria in sub-Saharan Africa over time:
+```{R}
+library(ggplot2)
+incidence_of_malaria <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/incidence-of-malaria.csv", sep = ",", header = T)
+
+df %>%
+ filter(Entity %in% c("Nigeria","Ghana","Chad", "Gambia", "Senegal", "Siera Leone")) %>%
+  filter(Year== 2019)
+ggplot( aes(x=Entity, y =Year)) +
+  geom_line() +
+  labs(title = "Malaria Deaths in Sub-Saharan Africa",
+  x = "Year",
+  y = "Number of Deaths")
+```
+
+As we can see from the graph, although the number of deaths due to malaria has decreased over the past decade, it still remains a significant public health issue in the region.
+One of the challenges in fighting malaria in sub-Saharan Africa is the high incidence of drug-resistant strains of the malaria parasite. The visualization below shows the percentage of confirmed malaria cases in sub-Saharan Africa that were resistant to antimalarial drugs:
+
+
+```{R}
+library(ggplot2)
+
+MALARIA_EST_DEATHS <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/MALARIA_EST_DEATHS.csv", sep = ",", header = T)
+
+ggplot(MALARIA_EST_DEATHS = malaria_drug_resistance, aes(x = X, y = , fill = Type)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Percentage of Confirmed Malaria Cases Resistant to Antimalarial Drugs in Sub-Saharan Africa",
+       x = "Year",
+       y = "Entity",
+       fill = "Drug Type") +
+  scale_fill_manual(values = c("red", "blue", "green")) +
+  theme_classic()
+
+```
+

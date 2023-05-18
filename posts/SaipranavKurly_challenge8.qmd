@@ -1,0 +1,147 @@
+---
+title: "Challenge 8 Instructions"
+author: "Sai Pranav Kurly"
+description: "Joining Data"
+date: "05/15/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - railroads
+  - snl
+  - faostat
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - military marriages ⭐⭐
+  - faostat ⭐⭐
+  - railroads  ⭐⭐⭐
+  - fed_rate ⭐⭐⭐
+  - debt ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - snl ⭐⭐⭐⭐⭐
+
+I'm planning to use the SNL data:
+```{r}
+snl_actors <- read_csv("_data/snl_actors.csv")
+head(snl_actors)
+dim(snl_actors)
+```
+
+```{r}
+snl_casts <- read_csv("_data/snl_casts.csv")
+head(snl_casts)
+dim(snl_casts)
+```
+
+```{r}
+snl_seasons <- read_csv("_data/snl_seasons.csv")
+head(snl_seasons)
+dim(snl_seasons)
+
+```
+### Briefly describe the data
+This dataset contains information on the casts of Saturday Night Live from 1975 to 2020. Each row of this newly created dataframe represents a distinct actor-season pairing, complete with information on the actor and the SNL seasons in which they have appeared. Each row includes information about the actor's gender, whether they appeared in a specific season, the date of their first episode, the date of their last episode, the number of episodes they've appeared in, the percentage of each season they've appeared in, a URL for that actor, whether they were a member of the cast or a guest on the show, and whether they were an anchor on weekend update. 
+
+## Tidy Data (as needed)
+
+We can check for N/A and get rid of them in all the datasets. 
+
+```{r}
+snl_actors <- snl_actors %>%
+  drop_na()
+snl_actors
+```
+
+```{r}
+snl_casts <- snl_casts %>%
+  select(aid, sid, featured, update_anchor, n_episodes, season_fraction)
+snl_casts <- snl_casts %>%
+  drop_na()
+snl_casts
+```
+
+```{r}
+snl_seasons <- snl_seasons %>% 
+  drop_na()
+snl_seasons
+```
+
+## Join Data
+
+We can join all 3 datasets and then analyze
+
+```{r}
+snl_actors_casts <- snl_actors %>%
+  inner_join(snl_casts, by="aid")
+
+snl_actors_casts_seasons <- snl_actors_casts %>%
+  inner_join(snl_seasons, by="sid")
+snl_actors_casts_seasons
+
+```
+
+
+With the below plot we can see how analyze SNL cast by their gender per season
+```{r}
+graph <- ggplot(snl_actors_casts_seasons, aes(sid, fill = gender)) +
+  geom_bar() +
+  labs(
+    title = "SNL Cast by Gender per Season",
+    x = "Season",
+    y = "Count",
+    fill = "Gender"
+  ) 
+graph
+```
+With the below plot we can see the top 10 actors based on number of performances
+
+```{r}
+# Calculate the number of times each actor acted in each year
+actor_counts <- snl_actors_casts_seasons %>%
+  group_by(aid) %>%
+  summarise(count = n())
+
+top_10_actors <- actor_counts %>%
+  arrange(desc(count)) %>%
+  head(10)
+
+# Create the graph
+graph <- ggplot(top_10_actors, aes(x = aid, y = count)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Top 10 actors based on number of performances",
+    x = "Actor",
+    y = "Count",
+  ) + theme(axis.text.x = element_text(angle = 90))
+graph
+```

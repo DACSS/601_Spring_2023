@@ -1,0 +1,97 @@
+---
+title: "Challenge 4"
+author: "Pranav Komaravolu"
+description: "More data wrangling: pivoting"
+date: "05/18/2023"
+format:
+  html:
+    toc: true
+    code-fold: false
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+<!--## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+-->
+## Data Description
+Reading the dataset
+```{r}
+data <- read_csv("_data/hotel_bookings.csv", show_col_types = FALSE)
+head(data)
+```
+Columns in the dataset
+```{r}
+colnames(data)
+```
+The Dimensions of the dataset is as follows:
+```{r}
+dim(data)
+```
+From the above cells we can see that the dataset has 32 columns of which 3 columns only depict the arrival date this can be brought down to one column and that will reduce the dimensionality of the dataset to (119390, 30).
+
+## Tidying the dataset
+
+The month column in the dataset is as follows:
+```{r}
+head(data["arrival_date_month"])
+```
+This can be changed to numerical data so that the date can be represented as a string of numerical values depicting month, day and year.
+The code to mutate the data is as follows:
+```{r}
+mutated_data <- data %>%
+                  mutate(arrival_date_month = case_when(
+                    arrival_date_month == "January" ~ 1,
+                    arrival_date_month == "Febuary" ~ 2,
+                    arrival_date_month == "March" ~ 3,
+                    arrival_date_month == "April" ~ 4,
+                    arrival_date_month == "May" ~ 5,
+                    arrival_date_month == "June" ~ 6,
+                    arrival_date_month == "July" ~ 7,
+                    arrival_date_month == "August" ~ 8,
+                    arrival_date_month == "September" ~ 9,
+                    arrival_date_month == "October" ~ 10,
+                    arrival_date_month == "November" ~ 11,
+                    arrival_date_month == "December" ~ 12
+                  ))
+head(mutated_data)
+```
+
+## Variables to be mutated
+Now we can mutate all the three columns arrival_date_year, arrival_date_month, arrival_date_day_of_month to a single column arrival_date
+
+```{r}
+final_data <- mutated_data %>%
+                mutate(
+                  arrival_date = make_date(arrival_date_year, arrival_date_month, arrival_date_day_of_month)
+                ) %>%
+                select(-c(arrival_date_day_of_month, arrival_date_month, arrival_date_year))
+
+head(final_data)
+```
+The dimensions of the new modified dataset is as follows:
+```{r}
+dim(final_data)
+```
+Therefore we achieved the desired target and reduced the divided arrival date data into a single column.

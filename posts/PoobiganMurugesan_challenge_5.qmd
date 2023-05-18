@@ -1,0 +1,83 @@
+---
+title: "Challenge 5"
+author: "Poobigan Murugesan"
+description: "Introduction to Visualization"
+date: "05/10/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - cereal
+  - poobigan murugesan
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+## Read in data
+
+```{r}
+df <- read_csv("_data/cereal.csv")
+df
+```
+
+### Briefly describe the data
+
+The dataset includes the names of about 20 well-known cereal brands that are classified into two types: Adult Cereal (type A) and Children's Cereal (type C). The data has information pertaining to the amount of sodium and sugar found in both types of cereal. 
+
+The data is already in a format that is suitable for visualization, so there is no need to perform any data tidying.
+
+
+
+
+## Univariate Visualizations
+
+We create a histogram using the Sodium content as the basis. Next, we use a density function to refine the distribution. The majority of cereals are concentrated in the middle range of Sodium content, specifically around 200mg. However, as the Sodium content increases or decreases, the number of cereals gradually decreases.
+We use a histogram here as it shows the overall distribution of a numerical value with emphasis on the the most frequent values and lower attention to the infrequent extremes.
+
+
+
+```{r}
+df <- read_csv("_data/Cereal.csv")
+ggplot(df, aes(Sodium)) + 
+  geom_histogram(aes(y = ..density..), alpha = 0.6) +
+  geom_density(alpha = 0.3, fill="red")
+
+
+```
+
+The density of this histogram appears significantly higher compared to the previous one. There don't seem to be any notable outliers in terms of sugar content, as most cereals have a value around 10.
+```{r}
+ggplot(df, aes(x = Sugar)) +
+  geom_histogram(binwidth = 8) +
+  labs(title = "Sugar Content in Cereals") 
+
+
+
+```
+
+## Bivariate Visualization(s)
+In the following bivariate graph, we observe the relationship between Sugar and Cereal. Fiber one and Cheerios have low Sugar levels, while Raisin Bran and Crackling Oat Bran have higher Sugar content, indicating they should be consumed sparingly. Additionally, we create a separate point graph representing Sugar and Sodium, using different colors to indicate the type of cereal.
+
+```{r}
+df %>%
+  arrange(Sugar) %>%
+  ggplot(aes(x=Cereal, y=Sugar)) + geom_segment(aes(xend=Cereal, yend=0)) + geom_point(color='red', fill='black',shape=20, size = 4)  + coord_flip(expand = TRUE) + labs(title = "Sugar levels in cereals", y = "Sugar level", x = "Cereal") 
+
+
+```
+
+```{r}
+ggplot(df,aes(x=Sodium,y=Sugar,col=Type))+
+  geom_point()
+```

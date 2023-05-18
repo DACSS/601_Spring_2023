@@ -816,12 +816,11 @@ Anecdotally, I learned from LPD Chief Minckler that the previous Wendell police 
 
 With `r as.character(length(levels(callReasonsDF$call_reason))[1])` factor levels, the plot of total hours by call reason is a blur and the legend would take up the whole page.
 
-```{r chunkByReason1, fig.width=10, fig.height=10}
+```{r chunkByReason1, fig.width=10, fig.height=4}
 
 crYearReason <- callReasonsDF %>%
   group_by(year, call_reason) %>%
-  #group_by(year) %>%
-  summarise(
+  summarize(
     totalCalls = sum(totalCalls),
     totalHours = sum(totalHours)
   )
@@ -838,11 +837,105 @@ crYearReason %>%
 ```
 
 
+Zoom in on call reasons with the most hours
+
 ```{r chunkByReason2, fig.width=10, fig.height=10}
+
+# this gets factors of top call reasons by hours worked
+topfactors <- callReasonsDF %>%
+  group_by(call_reason) %>%
+    summarise(
+    totalHours = sum(totalHours)
+  )
+
+
+
+  # first we want the top 50 reasons with the most total call hours
+topfactors <- topfactors %>%
+  arrange(desc(totalHours)) %>%
+  head(n = 30) %>%
+  droplevels.data.frame() # discard the empty factor levels
+
+
+# this uses top50factors to target factors for removal
+
+callReasonsDF %>%
+  group_by(call_reason) %>%
+    summarize(
+    totalHours = sum(totalHours)
+  ) %>%
+  filter(call_reason %in% c(levels(topfactors[[1]]))) %>%
+  droplevels.data.frame() %>% 
+  mutate(call_reason = fct_reorder(call_reason, totalHours)) %>% 
+  ggplot(aes(x = totalHours, y = call_reason)) +
+  geom_bar(stat = "identity", fill = "dodgerblue4", alpha = .6, width = 0.3) +  
+  geom_point(size = 4, color = "orangered") + 
+  labs(title = "Top level-of-effort call reasons",
+        subtitle = "Total hours 2018-2022, top 30 call reasons",
+        x = "Hours",
+        y = "Reasons") +
+  #scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() 
+
 
 ###
 ### HERE
 ###
+###
+
+ # set a quantile boundary to variable so I can use it in a plot label
+# quantileBoundary = 0.5
+  # we only want reasons with the most total call hours
+# top9factors <- topfactors %>%
+#   arrange(desc(totalHours)) %>%
+#   head(n = 9)
+#   #subset(totalHours > quantile(topfactors$totalHours, quantileBoundary)) %>% 
+#   droplevels.data.frame() # discard the empty factor levels
+
+
+  # next we only want top 9 reasons with the most total call hours
+topfactors <- topfactors %>%
+  arrange(desc(totalHours)) %>%
+  head(n = 9) %>%
+  droplevels.data.frame() # discard the empty factor levels
+
+# this uses topfactors to target factors for removal
+
+callReasonsDF %>%
+  group_by(call_reason, year) %>%
+    summarize(
+    totalHours = sum(totalHours)
+  ) %>%
+  filter(call_reason %in% c(levels(topfactors[[1]]))) %>%
+  droplevels.data.frame() %>% 
+  mutate(call_reason = fct_reorder(call_reason, totalHours)) %>% # this isn't working
+  ggplot(aes(x = year, 
+             y = totalHours, 
+             fill = call_reason)) +
+  geom_area(alpha = 0.5, color = "lavenderblush") +
+  geom_smooth(method = lm,
+              se = FALSE, 
+              linewidth = .8,
+              color = "orangered",
+              show.legend = FALSE) + 
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title = "Top level-of-effort call reasons",
+       subtitle = "Leaderboard: 9 call reasons with the most total hours",
+       y = "Hours") +
+  scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_wrap(~call_reason) +
+  theme(strip.text.x = 
+          element_text(size = 9, color = "gray40", face = "bold"))
+
+
+```
+
+Cool story bro
+
+```{r chunkByReason3, fig.width=10, fig.height=4}
+
 
 # a boxplot that doesn't serve a clear purpose yet
 callReasonsDF %>%
@@ -853,53 +946,23 @@ callReasonsDF %>%
   theme(axis.text.x = element_text(angle = 90)) +
   scale_y_continuous(limits = quantile(callReasonsDF$totalHours, c(0.05, 0.95)))
 
-# this gets factors of top call reasons by hours worked
-topfactors <- callReasonsDF %>%
-  group_by(call_reason) %>%
-    summarise(
-    totalHours = sum(totalHours)
-  )
+# a pie chart I will probably remove
 
-quantileBoundary = 0.9
-  # we only want reasons with the most total call hours,
-  # choosing upper hinge as lower boundary for maximum mathiness
-topfactors <- topfactors %>%
-  subset(totalHours > quantile(topfactors$totalHours, quantileBoundary)) %>% 
-  droplevels.data.frame() # discard the empty factor levels
-
-# rm(testtest, topfactors)
-# this uses topfactors to remove all but the reasons with the most total call hours
-# then graph only the call reasons with total hours above 75th percentile
-callReasonsDF %>%
-  group_by(call_reason, year) %>%
+callReasonsDF %>% 
+    group_by(call_reason) %>%
     summarize(
     totalHours = sum(totalHours)
   ) %>%
-  filter(call_reason %in% c(levels(topfactors[[1]]))) %>%
-  droplevels.data.frame() %>% 
-  ggplot(aes(x = year, y = totalHours, fill = call_reason)) +
-  geom_area(alpha = 0.5, show.legend = FALSE, color = "lavenderblush") +
-  theme(axis.text.x = element_text(angle = 90)) +
-  labs(title = "Top level-of-effort call reasons",
-       subtitle = "total hours > than 99% of total hours",
-       y = "Hours") +
+  mutate(call_reason = fct_reorder(call_reason, totalHours)) %>%
+  ggplot(aes(x = "", y = totalHours, fill = call_reason)) +
+  geom_bar(stat = "identity", width = 1, color = "lavenderblush", show.legend = FALSE) +
+  coord_polar("y", start = 0) +
+  #geom_text(aes(y = ypos, label = group), color = "white", size=6) +
   scale_fill_viridis(discrete = T, option = "cividis") +
-  theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  facet_wrap(~call_reason)
-
-### stay above - call reasons
-###
-###
-
-```
-
-```{r chunkByReason3, fig.width=10, fig.height=10}
-
-
+  theme_ipsum()
 
 # this shows relationship between reason and theme
-crCompareReasons  %>%
+callReasonsDF  %>%
   group_by(call_reason, call_theme, town) %>%
     summarise(
     totalHours = sum(totalHours)
@@ -1001,7 +1064,7 @@ crTownYearThemeDF %>%
 
 ```
 
-# Officer hours on calls - average and total
+# Officer hours on calls 
 
 ```{r}
 

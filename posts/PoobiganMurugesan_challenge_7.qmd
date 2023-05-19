@@ -1,0 +1,99 @@
+---
+title: "Challenge 7"
+author: "Poobigan Murugesan"
+description: "Visualizing Multiple Dimensions"
+date: "05/18/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+  - poobigan murugesan
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+```{r}
+df<-read.csv("_data/hotel_bookings.csv")
+```
+Summary
+```{r}
+dim(df)
+summary(df)
+```
+
+
+### Briefly describe the data
+
+The dataset contains data on hotel bookings and comprises a total of 119,390 entries. It encompasses various information, including hotel type, cancellation status, lead time, arrival date (year, month, day), duration of stay, number of adults, children, and babies, meal preferences, country of origin, market segment, distribution channel, previous cancellations, reserved and assigned room types, booking changes, deposit type, days on the waiting list, customer type, average daily rate, required car parking spaces, and total number of special requests.
+
+Unique countries in dataset (178)
+```{r}
+df$country%>%unique()
+```
+
+Unique hotels in dataset (2)
+```{r}
+df$hotel%>%unique()
+df$arrival_date_year %>%unique()
+```
+## Tidy Data (as needed)
+
+To observe the reservations trend over time, we merge all the relevant fields(date, month, year) into a single date field. However, we will keep the "arrival_month" field unchanged in order to visualize the monthly trend.
+```{r}
+
+df$date <- as.Date(paste(df$arrival_date_year, df$arrival_date_month, df$arrival_date_day_of_month, sep = "-"), format = "%Y-%B-%d")
+df$date %>% head()
+```
+
+## Visualization with Multiple Dimensions
+In challenge 6 we visualized the trend of number of reservations for a hotel, here we add fill type for hotels thus adding a dimension.
+We use a histogram since it excels at providing a visual summary of count data, aiding in the exploration, comparison, and interpretation of distributions, making it an outstanding choice for data analysis and visualization.
+Number of reservations trend:
+```{r}
+df_plot2 <-df %>%
+                  group_by(date, hotel)%>%
+                  summarise(count = n())
+  
+ggplot(df_plot2) +labs(title = "Number of reservations trend")+
+  geom_bar(aes(x=date, y=count, fill=hotel), stat = "identity")
+```
+
+Recreating the second graph from previous assignment but using a bar plot instead of a line to show better distinction and adding a year dimension
+```{r}
+df_plot <-df %>% 
+                                  group_by(arrival_date_month, hotel, arrival_date_year) %>%
+                                  summarise(count = n()) 
+
+ggplot(df_plot) + geom_bar(aes(x = arrival_date_month, y = count, fill = hotel ), stat="identity", position = "dodge")+theme_bw() + facet_grid(~arrival_date_year)+ coord_flip()+labs(title = "Distribution of monthly reservation data yearwise for both hotels")
+```
+

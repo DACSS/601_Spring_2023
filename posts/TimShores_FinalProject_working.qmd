@@ -834,10 +834,14 @@ crYearReason %>%
     theme_ipsum() +
     theme(axis.text.x = element_text(angle = 90))
 
+# will use this in next chunk to get proportion of each call reason factor
+grandTotalHours = round(sum(callReasonsDF$totalHours), 0)
+grandTotalHoursChar = as.character(format(grandTotalHours, big.mark = ",", scientific = FALSE))
+
+
 ```
 
-
-Zoom in on call reasons with the most hours
+Grouping by `call_reason` and summing total hours allows me to learn which types of calls take the most time. This lollipop plot shows the top 30 call reasons in terms of hours worked in both towns over the 5-year period. From 2018 to 2022, there was **a grand total of `r grandTotalHoursChar` hours** for all calls in both towns. Each lollipop in the plot shows the absolute number of hours and the percentage of the grant total.
 
 ```{r chunkByReason2, fig.width=10, fig.height=10}
 
@@ -848,49 +852,46 @@ topfactors <- callReasonsDF %>%
     totalHours = sum(totalHours)
   )
 
-
-
-  # first we want the top 50 reasons with the most total call hours
+  # first we want the top reasons with the most total call hours
 topfactors <- topfactors %>%
   arrange(desc(totalHours)) %>%
   head(n = 30) %>%
   droplevels.data.frame() # discard the empty factor levels
 
-
-# this uses top50factors to target factors for removal
+# order by totalHours
 
 callReasonsDF %>%
   group_by(call_reason) %>%
     summarize(
-    totalHours = sum(totalHours)
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1)
   ) %>%
-  filter(call_reason %in% c(levels(topfactors[[1]]))) %>%
-  droplevels.data.frame() %>% 
   mutate(call_reason = fct_reorder(call_reason, totalHours)) %>% 
+  filter(call_reason %in% c(levels(topfactors[[1]]))) %>%    # this uses topfactors to target factors for removal
+                                                              # it works in this plot but not the next one...
+  droplevels.data.frame() %>% 
   ggplot(aes(x = totalHours, y = call_reason)) +
   geom_bar(stat = "identity", fill = "dodgerblue4", alpha = .6, width = 0.3) +  
   geom_point(size = 4, color = "orangered") + 
+  geom_text(aes(label = paste0(percentOfAllHours, "%"), hjust = -0.5)) +
+  scale_x_continuous(
+    limits = c(0,1500),
+    breaks = seq(0, 1500, 250),
+    minor_breaks = seq(0, 1500, 50),
+    position = "top"
+  ) +
   labs(title = "Top level-of-effort call reasons",
-        subtitle = "Total hours 2018-2022, top 30 call reasons",
+        subtitle = "Top 30 call reasons 2018-2022 (Total work in number of hours worked and percent of all hours)",
         x = "Hours",
         y = "Reasons") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() 
 
+```
 
-###
-### HERE
-###
-###
+We can facet plot to zoom in on the top 9 reasons, and see how they've changed over time. This is interesting, but difficult to see a pattern with all of the variation. Some trend up, some trend down.
 
- # set a quantile boundary to variable so I can use it in a plot label
-# quantileBoundary = 0.5
-  # we only want reasons with the most total call hours
-# top9factors <- topfactors %>%
-#   arrange(desc(totalHours)) %>%
-#   head(n = 9)
-#   #subset(totalHours > quantile(topfactors$totalHours, quantileBoundary)) %>% 
-#   droplevels.data.frame() # discard the empty factor levels
+```{r chunkByReason2, fig.width=10, fig.height=10}
 
 
   # next we only want top 9 reasons with the most total call hours
@@ -904,8 +905,10 @@ topfactors <- topfactors %>%
 callReasonsDF %>%
   group_by(call_reason, year) %>%
     summarize(
-    totalHours = sum(totalHours)
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1)
   ) %>%
+  mutate(call_reason = fct_reorder(call_reason, totalHours)) %>%
   filter(call_reason %in% c(levels(topfactors[[1]]))) %>%
   droplevels.data.frame() %>% 
   mutate(call_reason = fct_reorder(call_reason, totalHours)) %>% # this isn't working
@@ -929,12 +932,24 @@ callReasonsDF %>%
   theme(strip.text.x = 
           element_text(size = 9, color = "gray40", face = "bold"))
 
-
 ```
 
 Cool story bro
 
 ```{r chunkByReason3, fig.width=10, fig.height=4}
+
+### HERE
+### #1 - consider fetching trends and ordering factors by that, then observing the top reasons by uptrend.
+### #2 - theme/reason
+
+ # set a quantile boundary to variable so I can use it in a plot label
+# quantileBoundary = 0.5
+  # we only want reasons with the most total call hours
+# top9factors <- topfactors %>%
+#   arrange(desc(totalHours)) %>%
+#   head(n = 9)
+#   #subset(totalHours > quantile(topfactors$totalHours, quantileBoundary)) %>% 
+#   droplevels.data.frame() # discard the empty factor levels
 
 
 # a boxplot that doesn't serve a clear purpose yet

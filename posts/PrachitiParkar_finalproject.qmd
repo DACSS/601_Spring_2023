@@ -1,0 +1,354 @@
+---
+title: "Final Project: Prachiti Parkar"
+author: "Prachiti Parkar"
+description: "San Francisco Crime Data Exploration"
+date: "05/19/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+## Overview of the Final Project {#overview-of-the-final-project}
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+In this part, you should introduce the dataset(s) and your research questions.
+
+1.  Dataset(s) Introduction:
+
+The dataset is downloaded from DataSF, which has a number of open datasets provided by the San Francisco Government.
+Reference Link: https://datasf.org/opendata/ 
+
+This dataset contains incident reports filed as of January 1, 2018. These reports are filed by officers or self-reported by members of the public through the San Francisco Police Department's online reporting system. Based on how the report was received and the sort of incident, the reports are divided into the following categories:
+
+Initial Reports: the first report filed in response to an incident.
+Coplogic Reports: incident reports submitted by members of the public using the San Francisco Police Department's online reporting system.
+Vehicle Reports: any incident reports involving stolen or recovered automobiles
+
+Data is added to open data once incident reports have been reviewed and approved by a supervising Sergeant or Lieutenant. Incident reports may be removed from the dataset if in compliance with court orders to seal records or for administrative purposes such as active internal affair investigations and/or criminal investigations.
+
+2.  What questions do you like to answer with this dataset(s)?
+
+We can make observations about 
+1. The district wise distribution of crime,
+2. What is the most frequent resolution in different districts,
+3. What are the top crimes and what time does it occur,
+4. What are the crime hotspots, 
+5. Frequency of count of crimes across months.
+
+## Part 2. Background Study {#describe-the-data-sets-1}
+San Francisco has a complex crime landscape, with challenges including property crimes, drug offenses, theft, assault, and homelessness-related issues. Analyzing crimes provides insights into patterns, hotspots, and factors influencing community safety. It helps assess the effectiveness of law enforcement strategies and prevention programs, aiding evidence-based decision-making.
+
+Analyzing crimes in San Francisco in 2023 is crucial due to evolving post-pandemic effects, shifting social and economic factors, and the need to ensure community safety. It helps understand the impact of the pandemic, adapt strategies accordingly, and address emerging challenges. Data-driven analysis supports evidence-based decision-making, enabling targeted interventions and resource allocation for creating safer communities.
+
+## Part 3. Dataset Introduction {#describe-the-data-sets-1}
+Since the data is huge containing 713107 columns and 35 columns, I decided to minimize my dataset to only the year 2023 which has around 30K rows. 
+
+## Part 4. Dataset Description {#describe-the-data-sets-1}
+This part contains both a coding and a storytelling component.
+
+In the coding component, you should:
+
+1.  read the dataset;
+
+    -   (optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step.
+
+    -   (optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns.
+
+
+```{r}
+data <- read.csv("PrachitiParkar_FinalProjectData/Police_Department_Incident_Reports__2018_to_Present.csv")
+
+data = filter(data, Incident.Year == 2023)
+```
+
+2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;
+
+    -   for examples: dim(), length(unique()), head();
+
+    ```{r}
+dim(data)
+length(unique(data))
+head(data)
+    ```
+
+3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
+
+```{r}
+summary(data)
+
+```
+
+Storytelling:
+
+The description of each column is -
+
+Incident Datetime: The date and time when the incident occurred.
+
+Incident Date: The date the incident occurred.
+
+Incident Time: The time the incident occurred.
+
+Incident Year: The year the incident occurred.
+
+Incident Day of Week: The day of the week when the incident occurred.
+
+Report Datetime: The date and time when the report was filed.
+
+Row ID: A unique identifier for each row of data in the dataset.
+
+Incident ID: A system-generated identifier for incident reports.
+
+Incident Number: The number issued on the report, used to reference cases and report documents.
+
+CAD Number: The Computer Aided Dispatch number, assigned by the Department of Emergency Management.
+
+Report Type Code: A system code for different types of reports.
+
+Report Type Description: The description of the report type.
+
+Filed Online: Indicates if the report was filed online using a self-service reporting system.
+
+Incident Code: System codes that describe the type of incident.
+
+Incident Category: A category mapped to the incident code for statistical and reporting purposes.
+
+Incident Subcategory: A subcategory mapped to the incident code for statistical and reporting purposes.
+
+Incident Description: A description of the incident corresponding to the incident code.
+
+Resolution: The resolution of the incident at the time of the report.
+
+Intersection: The names of the intersecting streets closest to the incident location.
+
+CNN: A unique identifier for the intersection.
+
+Police District: The police district where the incident occurred.
+
+Analysis Neighborhood: The neighborhood where each incident occurred.
+
+Supervisor District: The geographic district represented by a member of the Board of Supervisors.
+
+Latitude: The latitude coordinate of the incident location.
+
+Longitude: The longitude coordinate of the incident location.
+
+Point: The geolocation of the incident in OGC WKT format.
+
+
+
+## Part 5. Analysis Plan {#describe-the-data-sets-1}
+Q: Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above.
+
+I plan to plot some line graphs, bar graphs, heatmaps and use various visualization tools to answer the research questions. 
+
+  The district wise distribution of crime - I plan to plot a bar graph to show safe and unsafe districts - the tallest bar would be the one has the highest amount of crimes (unsafe) and the shortest would be the one which has the least amount of crimes. (safe)
+  
+  What is the most frequent resolution in different districts - I plan to plot compound bar graph to show various resolutions in each district, this would be a further deep down than the first plot. The larger proportion of the bar would point to highest number of crimes with that resolution. 
+  
+  What are the top crimes and what time does it occur - I plan to plot bar graphs and heat maps for this question. 
+  
+  What are the crime hotspots - I plan to use the map of San Francisco from get_statemap() library and then accordingly plot the crimes at the respective longitude and latitude. 
+  
+  Frequency of count of crimes across months- I plan to plot line graph/ bar graph (depending on better visual appearance) showing the crimes across months.  
+## Part 6. Descriptive Statistics {#describe-the-data-sets-1}
+Q: Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?
+
+  The district wise distribution of crime - This will help us figure out the most unsafe and safe districts.
+     
+  What is the most frequent resolution in different districts - This would help us understand most and least adopted resolutions to deal with crimes.
+     
+  What are the top crimes and what time does it occur - This will help us identify the most unsafe times - day or night and this can help the police increase & tighten security during that time to prevent crimes.
+     
+  What are the crime hotspots - The San Francisco state map with the crimes plot will help us locate most unsafe cities in the state and can help the police department to tighten security there. 
+     
+  Frequency of count of crimes across months - Plotting a line/bar graph will help us understand the most unsafe months and we can according correlate it with inflation/recession and develop insights.
+
+Q:If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.
+
+    -   What do you need to do to mutate the datasets (convert date data, create a new variable, pivot the data format, etc.)?
+
+    -   How are you going to deal with the missing data/NAs and outliers? And why do you choose this way to deal with NAs?
+    
+I plan to first remove columns which has mostly NA values since that would not lead to any concrete insights. 
+I have already filtered the data to focus on the year 2023 since the data is huge and processing so many rows will take some time. 
+I also plan to mutate and add additional columns like months from the date column during the preprocessing step so that it will make it easier to plot graphs. 
+
+```{r}
+
+
+data <- data %>%
+  separate('Incident.Time',c('Incident.Hour','Incident.Minute'),sep = ":")
+
+data$Incident.Date <- as.Date(data$Incident.Date, format = "%m/%d/%y")
+
+data <- data %>% 
+  mutate(Incident.Month = month(Incident.Date, label = T))
+
+```
+
+I have divided the time component into hour and minute so that I can answer the my 3rd research question about the time of crime in an effective manner. 
+
+Similarly, I have added another month so that I can answer the fifth question related to the distribution of crimes across months in an effective way.
+
+
+
+## Part 7. Analysis and Visualizations
+
+#Q1: District wise distribution of crime
+```{r}
+crime_per_district <- data %>% 
+  group_by(Police.District) %>% 
+  summarise(n = n())
+
+colnames(crime_per_district) <- c("Police.District", "Total")
+head(crime_per_district )
+
+g <- ggplot(crime_per_district, aes(Police.District, Total))
+g + geom_bar(stat="identity", width = 0.5, fill="red") + 
+      labs(title="District-wise distribution of crime in San Francisco", 
+           subtitle="2023", 
+           caption=" Total crime in each district") +
+      theme(axis.text.x = element_text(angle=45, vjust=1))
+```
+
+#Q2: Most frequent resolution in different districts
+
+```{r}
+g <- ggplot(data, aes(Police.District))
+g + geom_bar(aes(fill=Resolution), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=45,vjust=1)) +
+  labs(title="Resolution in each District", 
+     )
+
+```
+
+#Q3: Analysis of Top Crimes and Their Occurrence Time
+
+#a) Hourly Crime Distribution
+
+We can create a dataframe by grouping by Incident Hour.
+
+```{r}
+crime_perhours <- data %>% 
+  group_by(Incident.Hour) %>% 
+  summarise(TotalCrime = n())
+head(crime_perhours)
+
+```
+
+```{r}
+ggplot(crime_perhours, aes(x = Incident.Hour, y = TotalCrime))+
+  geom_col(fill = "maroon")+
+  theme_minimal()+
+  labs(
+    title = "Crime per hour, San Francisco 2018 - 2022",
+    x = "Hours",
+    y = "Total Crime"
+  )
+
+```
+
+We can observe that maximum crimes occur around 12 in the afternoon,
+then another spike at midnight. It then gradually decreases from 1 am -
+7 am in the morning.
+
+#b) Theft time Heatmap
+
+Of the above hourly districution, let us focus on Larcent Theft and plot
+the heatmap.
+
+```{r}
+
+df_theft_time <- data %>%
+  filter(Incident.Category=="Larceny Theft")%>%
+  group_by(Incident.Day.of.Week, Incident.Hour) %>%
+  summarize(count = n())
+head(df_theft_time)
+```
+
+```{r}
+plot <- ggplot(df_theft_time, aes(x = Incident.Hour, y = Incident.Day.of.Week, fill = count)) +
+  geom_tile() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.6), legend.title = element_blank(), legend.position="top", legend.direction="horizontal", legend.key.width=unit(2, "cm"), legend.key.height=unit(0.25, "cm"), legend.margin=unit(-0.5,"cm"), panel.margin=element_blank()) +
+  labs(x = "Hour of Theft (Local Time)", y = "Day of Week of Theft", title = "Number of Thefts in San Francisco from 2018 – 2022, by Time of Theft") +
+  scale_fill_gradient(low = "white", high = "orange")
+plot
+
+```
+
+#Q4: Crime hotspots
+
+
+#a) Map of San Francisco
+
+```{r}
+
+library(ggmap)
+
+sf = get_stamenmap(bbox = c(left = -122.5164, bottom = 37.7066, right = -122.3554, top = 37.8103), 
+maptype = c("toner-lite"), zoom = 13)
+
+map = ggmap(sf)
+map
+```
+
+#b) Plotting the first 500 random points on the map
+
+```{r}
+map + geom_point(data = sample_n(data, 500), aes(x = Longitude, y = Latitude))
+
+```
+
+We can already observe a clustering towards the city center.
+
+#c) Density Plot
+
+```{r}
+map + 
+stat_density2d( data = sample_frac(data, 0.2), aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 1, bins = 50, geom = 'polygon') +
+scale_fill_gradient('Crime\nDensity', low = 'green', high = 'orange') +
+scale_alpha(range = c(.2, .3), guide = FALSE) +
+guides(fill = guide_colorbar(barwidth = 1.5, barheight = 10))
+
+
+
+
+```
+
+#Q5: Count of crimes across months
+
+```{r}
+
+
+data %>%
+  ggplot(aes(Incident.Month)) + geom_bar()+
+  labs(title = "Count of crimes across Months in 2023")
+
+```
+
+## Part 8. Conclusion
+In conclusion, the analysis of crime in San Francisco provided valuable insights. The district-wise distribution of crime highlighted unsafe and safe areas, informing targeted interventions. Understanding the most frequent resolution in different districts identified effective strategies. Identifying top crimes and their occurrence times helps enhance security measures. Mapping crime hotspots assists in focusing resources. Examining crime frequency across months enables understanding seasonal variations and correlation with external factors. Overall, these insights support evidence-based decision-making and create safer communities in San Francisco.

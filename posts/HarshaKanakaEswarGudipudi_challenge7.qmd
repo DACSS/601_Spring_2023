@@ -2,7 +2,7 @@
 title: "Challenge 7"
 author: "Harsha Kanaka Eswar Gudipudi"
 description: "Visualizing Multiple Dimensions"
-date: "05/16/2023"
+date: "05/18/2023"
 format:
   html:
     toc: true
@@ -11,7 +11,7 @@ format:
 categories:
   - challenge_7
   - Harsha Kanaka Eswar Gudidpudi
-  - hotel_bookings.csv
+  - abc_poll_2021.csv
   
 ---
 
@@ -56,21 +56,22 @@ Read in one (or more) of the following datasets, using the correct R package and
   - faostat ⭐⭐⭐⭐⭐
 
 ```{r}
-df <- read.csv("_data/hotel_bookings.csv")
+# Read in the data
+df <- read.csv("_data/abc_poll_2021.csv")
 head(df)
 ```
 
 
 ### Briefly describe the data
 
-The dataset comprises data on nearly 49,000 Airbnb rental properties located in New York City throughout 2019. Each observation represents a distinct rental unit and consists of 16 variables, providing information such as the unit's ID, name, location, host ID and name, room type, price, minimum required nights for a reservation, number of reviews, last review date, average monthly reviews, calculated count of host listings on Airbnb, and availability.
+The dataset consists of 527 observations, each representing an individual. The variables in the dataset include demographic information such as age, gender, ethnicity, education level, household size, income range, marital status, and region of residence. The dataset also includes variables related to work status, employment, and political affiliation. Additionally, there are multiple-choice questions and responses, along with measures of concern, self-perceived quality of life, and optimism/pessimism about the future. The dataset also contains information about the individual's willingness to be interviewed and weights assigned to each observation. The dataset provides a comprehensive overview of various demographic and socio-political factors for a sample of individuals. It offers valuable insights into the characteristics and perspectives of the respondents, making it suitable for analyzing relationships and patterns among the variables and drawing conclusions about the population they represent.
 
 ```{r}
 dim(df)
 summary(df)
-# Get unique values for the market_segment column
-unique_market_segment <- unique(df$market_segment)
-cat(paste(unique_market_segment, collapse = ", "))
+# Get unique values for the ppstaten column
+unique_ppstaten <- unique(df$ppstaten)
+cat(paste(unique_ppstaten, collapse = ", "))
 str(df)
 ```
 
@@ -79,41 +80,59 @@ str(df)
 
 Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.\
 
-The data provided in the CSV file is already in a tidy format, with each row representing a unique observation and each column representing a variable. Therefore, it is not necessary to tidy the data any further. The only change need is to remove rows with NA values.
+Taking the selected columns Q1_a, Q1_b, Q1_c, Q1_d, Q1_e, and Q1_f and transforming them into two new columns: Question and Response. The Question column contains the names of the original columns, and the Response column contains the corresponding values. It becomes easier to perform operations such as grouping, filtering, and plotting.
 ```{r}
-df<-df%>% filter(!is.na(lead_time))
-head(df[, c("lead_time", "is_canceled")], n = 5)
+tidy_data <- df %>%
+  select(ppgender, ppethm, ppmarit5, ppinc7, ppstaten, Q1_a, Q1_b, Q1_c, Q1_d, Q1_e, Q1_f, Q2, Q3, Q4, Q5) %>%
+  pivot_longer(cols = c(Q1_a, Q1_b, Q1_c, Q1_d, Q1_e, Q1_f),
+               names_to = "Question",
+               values_to = "Response") %>%
+  filter(!is.na(Response))
+head(tidy_data %>% select(Question, Response))
 ```
 
 
 Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
 
-Creating the date column and merging the total bookings
-```{r}
-df <- df %>%
-  mutate(date = paste(arrival_date_year, arrival_date_month, arrival_date_day_of_month, sep = "-"),
-         date = as.Date(date, format = "%Y-%B-%d"))
+Creating a new column called "ppage_category" the cut() function. This new column categorizes the values in the "ppage" column into different age groups based on specified intervals. The resulting "ppage_category" column provides a categorical representation of the age groups: "Young", "Middle-aged", "Senior", and "Unknown".
 
-head(df[, c("date", "is_canceled")], n = 5)
+```{r}
+selected_data <- df[, c("id", "ppage", "ppeducat", "ppgender", "ppethm", "pphhsize", "ppinc7")]
+
+selected_data$ppage_category <- cut(selected_data$ppage,
+                                    breaks = c(0, 30, 50, 70, Inf),
+                                    labels = c("Young", "Middle-aged", "Senior", "Unknown"))
+
 ```
+
 
 Document your work here.
 
 
 ## Visualization with Multiple Dimensions
-The visualization we did below is a multiple dimensional plot of the number of bookings done based on the market segment. The plot shows the number of bookings made for each market segment, with the x-axis representing the market segment and the y-axis representing the number of bookings. This provides insights into the popularity of each segment. This type of visualization is useful for understanding the trends in the hospitality industry and for making informed decisions about marketing and sales strategies.
+creating two visualizations. The first is a bar chart showing the count of responses for each question. The second is a stacked bar chart displaying the count of responses for each question, grouped by gender and ethnicity.These visualizations allow us to explore the distribution of responses across different questions and examine how it varies by gender and ethnicity.
+
 
 ```{r}
-# Select the columns we want to visualize
-subset_data <- df %>% select(lead_time, market_segment, is_canceled)
+# Create a bar chart of count by Question and Response
+ggplot(tidy_data, aes(x = Question, fill = Response)) +
+  geom_bar() +
+  labs(title = "Count by Question and Response",
+       x = "Question",
+       y = "Count",
+       fill = "Response") +
+  theme_bw()
 
-# Group by lead_time and market_segment, and calculate the number of bookings made
-bookings_data <- subset_data %>% group_by(lead_time, market_segment) %>% 
-  summarise(bookings = sum(!is_canceled))
+# Create a stacked bar chart of count by Question response Approve, grouped by Gender and Ethnicity
+ggplot(tidy_data %>%filter(Response == "Approve"), aes(x = Question, fill = ppethm)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~ppgender) +
+  labs(title = "Count by Question, Gender, and Ethnicity",
+       x = "Question",
+       y = "Proportion",
+       fill = "Ethnicity") +
+  theme_bw()
 
-# Create a scatter plot with lead_time on the x-axis, bookings on the y-axis, and color-coded by market_segment
-ggplot(bookings_data, aes(x = lead_time, y = bookings, color = market_segment)) + 
-  geom_point() + 
-  labs(x = "Lead Time", y = "Number of Bookings", color = "Market Segment") +
-  ggtitle("Relationship between Lead Time and Bookings by Market Segment")
+
+
 ```

@@ -1,0 +1,97 @@
+---
+title: "Challenge 6"
+author: "Pranav Komaravolu"
+description: "Visualizing Time and Relationships"
+date: "05/19/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+options(dplyr.summarise.inform = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+<!--
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+-->
+## Data Description
+
+Reading the data
+```{r}
+data <- read_csv("_data/hotel_bookings.csv", show_col_types = FALSE)
+head(data)
+```
+Columns in the dataset:
+```{r}
+colnames(data)
+```
+The dimensions of the dataset are as follows:
+```{r}
+dim(data)
+```
+There are 32 columns and 119390 rows in the dataset.
+
+## Tidying the Data
+I plan on visualizing the number of people who stayed in a hotel during each year so the dataset can be assumed to be tidy and can be used for visualization.
+
+## Time Dependent Visualization
+First I want to analyse at which of these years the hotels had a maximum number of people staying at the hotel. To do that first I will have to filter out the people who cancelled from the dataset, then we can group the data on hotel and arrival_date_year and this data could be summarised to obtain the number of bookings in each of the hotels during different years. The command is as follows:
+```{r}
+yearly_data <- data%>%
+  filter(is_canceled == 0)%>%
+  group_by(hotel, arrival_date_year)%>%
+  summarise(yearly_count = n())
+head(yearly_data)
+```
+This data can be efficiently depicted using a histogram as it involves frequencies.
+```{r}
+ggplot(yearly_data)+
+  geom_bar(aes(x = arrival_date_year, y = yearly_count, fill= hotel), stat = "identity", position = "dodge")
+```
+Therefore from the above bar plot both the hotels seem to perform well in the year 2016, hosting more number of guests than any other year.
+
+## Visualizing Part-Whole Relationships
+Since there are some cancelled bookings in the dataset we can plot the total bookings while depicting a part with canceled bookings. To get such a visualization the following command can be run:
+```{r}
+total_yearly_data <- data%>%
+                      group_by(hotel, arrival_date_year) %>%
+                      summarise(yearly_counts = n(),
+                                canceled_bookings = sum(is_canceled))
+head(total_yearly_data)
+```
+Now the plot depicting the different parts of the data is as follows:
+```{r}
+ggplot(total_yearly_data)+
+  geom_col(aes(x = arrival_date_year, y = yearly_counts, fill = canceled_bookings))
+```
+

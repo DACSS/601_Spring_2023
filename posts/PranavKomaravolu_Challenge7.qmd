@@ -1,0 +1,108 @@
+---
+title: "Challenge 7"
+author: "Pranav Komaravolu"
+description: "Visualizing Multiple Dimensions"
+date: "05/19/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(readr)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+options(dplyr.summarise.inform = FALSE)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+<!--
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+-->
+
+## Data Description
+<!--
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+-->
+## Data Description
+
+Reading the data
+```{r}
+data <- read_csv("_data/hotel_bookings.csv", show_col_types = FALSE)
+head(data)
+```
+Columns in the dataset:
+```{r}
+colnames(data)
+```
+The dimensions of the dataset are as follows:
+```{r}
+dim(data)
+```
+There are 32 columns and 119390 rows in the dataset.
+
+## Tidy Data (as needed)
+I plan on visualizing the number of people who stayed in a hotel during each year so the dataset can be assumed to be tidy and can be used for visualization.
+
+## Visualization with Multiple Dimensions
+First I want to analyse at which of these years the hotels had a maximum number of people staying at the hotel. To do that first I will have to filter out the people who cancelled from the dataset, then we can group the data on hotel and arrival_date_year and this data could be summarised to obtain the number of people staying in each of the hotels during different years. The command is as follows:
+```{r}
+month_yearly_data <- data%>%
+  filter(is_canceled == 0)%>%
+  group_by(hotel, arrival_date_year, arrival_date_month)%>%
+  mutate(total_people = adults + children + babies)%>%
+  summarise(bookings = n(), total_guests = sum(total_people))
+
+head(month_yearly_data)
+
+yearly_data <- month_yearly_data%>%
+  group_by(hotel, arrival_date_year)%>%
+  summarise(yearly_bookings = sum(bookings), yearly_guests = sum(total_guests))
+
+head(yearly_data)
+```
+Now we have a clear idea on the number of bookings that took place and the total number of guests that stayed in a hotel during a particular year. So now similar to the last experiment we try to plot a bar graph indicating these factors.
+```{r}
+ggplot(yearly_data) + 
+  geom_bar(aes(x = arrival_date_year, y = yearly_guests, fill = hotel), , stat = "identity", position = "dodge") +
+  labs(title = "A bar graph depicting total number of guests every year")
+```
+Now we need to visualize the third dimension i.e, months in which the number of guests were high. This information helps the hotel owners prepare well for any kind of future scenarios. We can visualize the three dimensions of yearly guests
+```{r}
+ggplot(month_yearly_data, aes(x = arrival_date_year, y = total_guests, col = hotel)) +
+  facet_wrap(vars(hotel))+
+  geom_line() +
+  geom_point()+
+  geom_text(size=2.5, aes(label = arrival_date_month))
+```
+The above plot represents the number of guests that were present during each year and also depicts the number of guests each month.

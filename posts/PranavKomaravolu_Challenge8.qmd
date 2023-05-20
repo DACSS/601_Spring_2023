@@ -1,0 +1,107 @@
+---
+title: "Challenge 8"
+author: "Pranav Komaravolu"
+description: "Joining Data"
+date: "05/19/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - snl
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(readr)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+<!--
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+-->
+
+## Data Description
+I chose the SNL dataset for this project and it comprises of 3 files where each of these files talk about the following details respectively:
+
+1) Actors
+```{r}
+data_actors <- read_csv("_data/snl_actors.csv", show_col_types = FALSE)
+head(data_actors)
+```
+This file specifically talks about the crew who work or associated to SNL. There are 4 columns where the column 'aid' represents the name of the person, 'url' refers to the url associated to the aid and two other columns type and gender which talks about how the aid is associated and the gender of the aid respectively.
+
+The dimensions of the actors dataset is as follows:
+```{r}
+dim(data_actors)
+```
+
+2) Casts
+```{r}
+data_casts <- read_csv("_data/snl_casts.csv", show_col_types = FALSE)
+head(data_casts)
+```
+This dataset appears to depict the engagement of the casts with SNL like episodes appeared on and other casting related information.
+
+The dimensions of the casts dataset is as follows:
+```{r}
+dim(data_casts)
+```
+
+3) Seasons
+```{r}
+data_seasons <- read_csv("_data/snl_seasons.csv", show_col_types = FALSE)
+head(data_seasons)
+```
+This dataset appears to talk about the number of episodes that were telecasted during different years.
+
+The dimensions of the dataset are as follows:
+```{r}
+dim(data_seasons)
+```
+
+## Tidying Data
+Let the target be to find the cast members who made most number of appearances on SNL. So first we'll need to re-structure the casts dataset and obtain a new dataframe comprising of total number of appearances made by each actor.
+
+```{r}
+modified_data_casts <- data_casts %>%
+                        group_by(aid) %>%
+                        select(-last_epid, -first_epid) %>%
+                        summarise(total_appearances = sum(n_episodes))
+head(modified_data_casts)
+
+```
+Now we have each of the cast members and the number of episodes in which they appeared in. Now this dataset can be merged with the actors dataset to observe many other things such as what is the distribution of the cast members in SNL and how often did they make their appearances on the SNL.
+
+## Join Data
+
+Now we join the modified_data_casts with the actors dataframe and it can be done as follows:
+```{r}
+combined_cast_data <- modified_data_casts %>%
+                        left_join(data_actors, by='aid')
+head(combined_cast_data)
+```
+
+Now we can plot the box plot to obtain statistics about the appearances of cast on SNL.
+```{r}
+ggplot(combined_cast_data)+
+  geom_boxplot(aes(x = gender, y = total_appearances))+
+  labs(title = "Box plot representing the distributions of appearances based on gender")
+```

@@ -1,0 +1,87 @@
+---
+title: "Challenge 7"
+author: "Shaunak Padhye"
+description: "Visualizing Multiple Dimensions"
+date: "05/19/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - Shaunak Padhye
+  - air_bnb
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(RColorBrewer)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Read in data
+
+For this challenge, I will be using the following dataset:
+
+  - air_bnb  ⭐⭐⭐
+
+```{r}
+airbnb <- read_csv("_data/AB_NYC_2019.csv")
+
+glimpse(airbnb)
+```
+
+### Briefly describe the data
+
+The dataset contains approximately 49,000 observations representing Airbnb rentals in New York City during 2019. Each observation corresponds to a rental unit and includes 16 variables. These variables provide information about the unit (ID and name), hosts (ID and name), location (neighborhood, city borough, longitude, and latitude), room type, price, minimum nights required for a reservation, review details (number of reviews, date of last review, and average reviews per month), a calculated host listings count (likely indicating the number of listings by the host on Airbnb), and availability (presumably indicating the number of days the unit is available in a year).
+
+The dataset appears to be well-organized, and no changes or additions to the variables are currently required.
+
+## Visualization with Multiple Dimensions
+
+We can check the distribution of the various Boroughs for each room type in NYC.
+
+```{r}
+ggplot(airbnb, aes(x = room_type, fill = room_type)) +
+  geom_bar() +
+  aes(color = neighbourhood_group, fill = neighbourhood_group) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1") +
+  xlab("Room Type") +
+  ylab("Number of Units") +
+  ggtitle("Number of Units of each Room type") +
+  labs(color = "Neighbourhood Group") +
+  guides(color = FALSE)
+```
+
+We can check the distribution of the various room types for each neighborhood in a Borough in NYC. Lets take Manhattan as an example. We can visualize which neighborhoods are most popular and the distribution of room types for those neighborhoods.
+```{r}
+airbnb %>%
+  filter(neighbourhood_group == "Manhattan") %>%
+  ggplot(aes(x = neighbourhood, fill = room_type)) +
+  geom_bar() +
+  labs(x = "Neighbourhood", y = "Number of Units",
+       fill = "Room Type", title = "Number of Units of each Room type") +
+  scale_fill_brewer(palette = "Set1") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+```
+Harlem and Hell's Kitchen seem to be the most popular neighborhoods in Manhattan.
+
+
+We can create a boxplot of average price and room type and see the variation across the Boroughs for each Room Type.
+```{r}
+ggplot(airbnb, aes(x = room_type, y = price, color = neighbourhood_group)) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = "Dark2") +
+  labs(title = "Boxplot of Prices by Borough and Room Type", x = "Room Type", y = "Price") +
+  theme_minimal()
+```

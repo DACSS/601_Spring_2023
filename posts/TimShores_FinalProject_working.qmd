@@ -513,6 +513,7 @@ callReasonsDF <- callReasonsDF %>%
   filter(!is.na(estYearlyHourChange_Reason))       # omit call reasons with NA values estimated growth, these have the lowest incidence 
 
 rm(tempGroupDF)
+rm(crHoursEstByYear)
 
 tempGroupDF <- callReasonsDF %>%
   group_by(call_reason) %>%
@@ -526,66 +527,45 @@ callReasonsDF <- callReasonsDF %>%
 
 ##########
 
-# initialize df for reasons: group by year
-crYearDF <- callReasonsDF %>%
-  group_by(year) %>%
-  summarise(
-    totalCalls = sum(totalCalls),
-    totalHours = sum(totalHours),
-    estYear_HoursByReason = mean(estYear_HoursByReason) # averages estimated changes of all call reasons in each year
-  ) 
-
-
-
-#### REVISING ABOVE HERE
-
-########## do that again for year
-
-########## 
-
-# initialize df for reasons: group by year
-crYearDF <- callReasonsDF %>%
-  group_by(year) %>%
-  summarise(
-    totalCalls = sum(totalCalls),
-    totalHours = sum(totalHours),
-    estYear_HoursByReason = mean(estYear_HoursByReason) # averages estimated changes of all call reasons in each year
-  ) 
 
 ########## 
 
 ########## do that again for town
 
+# initialize df for reasons: group by year
 tempGroupDF <- callReasonsDF %>%
   group_by(town) %>%
-  mutate(year = as.integer(year(year))) 
+  mutate(year = as.integer(year(year)))
 
 crHoursEstByYear <- do(tempGroupDF, 
    tidy(
      lm(totalHours ~ year, data = .))) %>%      
   filter(term == "year") %>%                    
-  mutate(estYear_HoursByTown = round(estimate, 1)) %>%
+  mutate(estYearlyHourChange_Town = round(estimate, 1)) %>%
   arrange(desc(estimate)) %>%
-  select(c(town, estYear_HoursByTown))
+  select(c(town, estYearlyHourChange_Town))
 
 callReasonsDF <- callReasonsDF %>%
   inner_join(crHoursEstByYear, by = join_by(town))
 
 callReasonsDF <- callReasonsDF %>%
-  filter(!is.na(estYear_HoursByTown)) 
+  filter(!is.na(estYearlyHourChange_Town))
 
-##########
+rm(tempGroupDF)
+rm(crHoursEstByYear)
 
-# initialize df for town: group by year
-crTownYearDF <- callReasonsDF %>%
-  group_by(town, year) %>%
-  summarise(
-    totalCalls = sum(totalCalls),
-    totalHours = sum(totalHours),
-    estYear_HoursByTown = mean(estYear_HoursByTown)
+tempGroupDF <- callReasonsDF %>%
+  group_by(town) %>%
+  summarize(
+    totalCalls_Town = sum(totalCalls),
+    totalHours_Town = sum(totalHours)
   ) 
 
+callReasonsDF <- callReasonsDF %>%
+  inner_join(tempGroupDF, by = join_by(town))
+
 ########## do that again for theme
+### HERE
 
 tempGroupDF <- callReasonsDF %>%
   group_by(call_theme) %>%
@@ -605,15 +585,12 @@ callReasonsDF <- callReasonsDF %>%
 callReasonsDF <- callReasonsDF %>%
   filter(!is.na(estYear_HoursByTheme)) 
 
-##########
-
 # initialize df for theme: group by year
 crTownYearThemeDF <- callReasonsDF %>%
-  group_by(theme, year) %>%
+  group_by(call_theme) %>%
   summarise(
     totalCalls = sum(totalCalls),
     totalHours = sum(totalHours),
-    estYear_HoursByTheme = mean(estYear_HoursByTheme)
   ) 
 
 ##########
@@ -699,34 +676,6 @@ crWengrowthFTE <- round(crWengrowthLM / 52 / assumedFTE, 2)
 ###
 ### end of summary and lm calculations 
 ###
-
-######################################
-################new###################
-######################################
-
-# repeating the analysis used in the previous chunks, 
-# this gets factors of top 30 call reasons -- but this time, by linear regression model of change over time
-
-
-# 
-# testtidy %>%
-#   ggplot(aes(year, .fitted)) +
-#   geom_line(aes(group = totalHours), alpha = 1 / 2) + 
-#   geom_smooth(se = FALSE) +
-#   #ylim(-100, 25) + 
-#   scale_fill_viridis(discrete = T, option = "cividis") +
-#   theme_ipsum() +
-#   theme(axis.text.x = element_text(angle = 90))
-  
-
-########## trying out this awesomeness
-######################################
-######################################
-######################################
-######################################
-######################################
-
-
 
 ### now assign to df for presentation:
 

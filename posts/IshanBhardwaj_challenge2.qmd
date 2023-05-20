@@ -1,0 +1,96 @@
+---
+title: "Challenge 2"
+author: "Ishan Bhardwaj"
+description: "Summary statistics for birds dataset"
+date: "05/20/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - Ishan Bhardwaj
+  - birds
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+birds <- read_csv("_data/birds.csv")
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+#| label: summary
+head(birds, 100)
+bird_type_table <- table(select(birds, "Item"))
+bird_type_table
+stock_source_table <- table(select(birds, "Flag Description"))
+stock_source_table
+```
+
+This dataset presents the "stocks" or count of live animals present in different areas from the year 1961 to 2018. The live animals analysed are turkeys, chickens, ducks, geese + guinea fowls, pigeons, and "other birds". The unit in which the stocks are counted is 1000 head. This data was likely gathered by the FAO, or the Food and Agriculture Organization of the United Nations. This is because for the "Flag Description" variable, which describes the source of each observation in the dataset, the only *organization* listed as a source is the FAO.
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+summary <- birds %>%
+  select("Area", "Year", "Item", "Value", "Unit") %>%
+  group_by(Item) %>%
+  # Mean, median, and standard deviation of stocks of different animals
+  summarise(mean_stocks = mean(Value, na.rm=TRUE),
+            median_stocks = median(Value, na.rm=TRUE),
+            std_stocks = sd(Value, na.rm=TRUE)) %>%
+  arrange(desc(mean_stocks))
+summary
+```
+
+This tabulates general summary statistics for the birds dataset.
+
+```{r}
+highest <- birds %>%
+  select("Area", "Year", "Item", "Value", "Unit") %>%
+  filter(`Area` == "World", `Item` == "Chickens") %>%
+  arrange(desc(Value))
+highest
+```
+
+From here, we see that the highest world count of chickens was in 2018. Furthermore, we see a relatively consistent decrease in the chicken stock as we go to each previous year, especially in the years of the 21st century. This could hint at an increasing yearly population, which increases the demand for chickens.
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.
+
+The summary code chunk above groups the birds dataset by the five different bird categories. It then calculates the mean, median, and standard deviation of the stocks of these groups. After arranging them we see that in general, the number of chickens far outweighs the counts of other birds. However, this result comes with a lot of variance, which means that for the areas whose stocks are composed of chickens, some have either a very high or a very low stock. Ducks, turkeys, and geese + guinea fowls have stocks relatively within the same range, and pigeons have the lowest mean stock. This grouping arrangement is insightful because it gives us information on which types of birds may be cheaper to rear.

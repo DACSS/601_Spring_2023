@@ -7,6 +7,9 @@ format:
   html:
     df-print: paged
     toc: true
+    toc-depth: 4
+    toc-expand: 4
+    toc-location: left
     code-copy: true
     code-tools: true
     code-fold: true
@@ -464,10 +467,9 @@ My analysis plan is to answer the following more specific questions for both tow
 1. Has the time spent doing police work grown over time?
 2. Leverett and Wendell began a regionalization agreement in 2020. How has that impacted the data of time spent on calls?
 3. Which call reasons require the most personnel time?
-4. What call reasons have grown over time?
-5. Which call actions are associated with the most time-consuming call reasons, and how has this changed?
-6. Are there differences in call volume, reasons, actions, and themes made directly to the local PD and to Shelburne Dispatch?
-7. How often does the LPD refer calls to third parties?
+4. What call reasons have grown the most over time, in terms of personnel time?
+5. What call reasons have decreased the most in terms of personnel time?
+6. What can we learn about public safety need in terms of broad themes?
 :::
 
 
@@ -783,7 +785,7 @@ grid.arrange(g1, g2, nrow = 2)
 
 ```
 
-Most calls come from Leverett and the LPD works most hours in response to Leverett calls. **<span style="color:orangered;">Orange trend line</span>** trend have a positive slope on all 4 plots, slightly more so for Wendell. This means that there is a positive correlation coefficient when using year as a predictor of total hours: positive growth over time.
+Most calls come from Leverett and the LPD works most hours in response to Leverett calls. **<span style="color:orangered;">Orange trend lines</span>** have a positive slope on all 4 plots, slightly more so for Wendell. This means that there is a positive correlation coefficient when using year as a predictor of total hours: positive growth over time.
 
 Using the same analysis that I applied to total hours, this table summarizes rates of change that correspond to the **<span style="color:orangered;">orange trend line</span>** in these plots: 
 
@@ -844,6 +846,8 @@ grandTotalHoursChar = as.character(format(grandTotalHours, big.mark = ",", scien
 
 ```
 
+#### Top level-of-effort call reasons
+
 Grouping by `call_reason` and summing total hours allows me to learn which types of calls take the most time. This lollipop plot shows the top 30 call reasons in terms of hours worked in both towns over the 5-year period. From 2018 to 2022, there was **a grand total of `r grandTotalHoursChar` hours** for all calls in both towns. Each lollipop in the plot shows the absolute number of hours and the percentage of the grant total.
 
 ```{r chunkByReason2, fig.width=10, fig.height=10}
@@ -880,8 +884,8 @@ callReasonsDF %>%
     minor_breaks = seq(0, 1500, 50),
     position = "top"
   ) +
-  labs(title = "Top level-of-effort call reasons",
-        subtitle = "Top 30 call reasons 2018-2022 (Total work in number of hours worked and percent of all hours)",
+  labs(title = "Top level-of-effort",
+        subtitle = "Top 30 call reasons 2018-2022 (# of hours, % of all hours)",
         x = "Hours",
         y = "Reasons") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
@@ -938,8 +942,8 @@ crTopHours %>%
               linewidth = .8,
               color = "orangered",
               show.legend = FALSE) + 
-  labs(title = "Top level-of-effort call reasons",
-       subtitle = "Leaderboard: 9 call reasons with the most total hours",
+  labs(title = "Leaderboard: Top level-of-effort",
+       subtitle = "9 call reasons with the most hours",
        y = "Hours") +
   scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() +
@@ -957,19 +961,328 @@ find_mode <- function(x) {
   mean(u) # return mean in case the data is multimodal
 }
 
-crTopHours %>% 
-  group_by(call_reason) %>% 
-  summarise(
-    grandTotal = round(sum(totalHours, na.rm = TRUE), 1),
-    meanHrs = round(mean(totalHours, na.rm = TRUE), 1), 
-    modeHrs = round(find_mode(totalHours), 1), 
-    minHrs = round(fivenum(totalHours, na.rm = TRUE)[1], 1), 
-    lHingeHrs = round(fivenum(totalHours, na.rm = TRUE)[2], 1), 
-    medHrs = round(median(totalHours, na.rm = TRUE), 1), 
-    uHingeHrs = round(fivenum(totalHours, na.rm = TRUE)[4], 1), 
-    maxHrs = round(fivenum(totalHours, na.rm = TRUE)[5], 1)
-    ) %>%
-  arrange(desc(grandTotal))
+```
+
+
+#### Top growth call reasons
+
+Since we can calculate a trend line for each call reason, we can identify the call reasons with the steepest trend lines as a representation of call level-of-effort that has grown the most since 2018. The next lollipop plot shows the top 30 call reasons by growth. In parity with the previous plot, the <span style="color:dodgerblue4;">blue</span> and <span style="color:orangered;">orange</span> lollipops still represent total hours worked.
+
+```{r chunkByReason5, fig.width=10, fig.height=10}
+
+# this gets factors of top 30 call reasons by growth in hours
+crFactorTotals2 <- callReasonsDF %>%
+  group_by(call_reason) %>%
+    summarise(
+    estimateChangeHours = mean(estYearlyHourChange_Reason)
+  ) 
+
+rm(topHourFactors) # clear the previous df
+
+topHourFactors <- crFactorTotals2 %>%
+  arrange(desc(estimateChangeHours)) %>%
+  head(n = 30) %>%
+  droplevels.data.frame() # discard the empty factor levels
+
+callReasonsDF %>%
+  group_by(call_reason) %>%
+    summarize(
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
+    estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason)
+  ) %>%
+  mutate(call_reason = fct_reorder(call_reason, estYearlyHourChange_Reason)) %>% 
+  filter(call_reason %in% c(levels(topHourFactors[[1]]))) %>%    
+      # this uses topHourFactors to target factors for removal
+      # does it work in this plot?
+  droplevels.data.frame() %>% 
+  ggplot(aes(x = totalHours, y = call_reason)) +
+  geom_bar(stat = "identity", fill = "dodgerblue4", alpha = .6, width = 0.3) +  
+  geom_point(size = 4, color = "orangered") + 
+  geom_text(aes(label = 
+                  paste0("+", estYearlyHourChange_Reason, " hrs/yr"), hjust = -0.5)) +
+  scale_x_continuous(
+    limits = c(0,1100),
+    breaks = seq(0, 1500, 250),
+    minor_breaks = seq(0, 1500, 50),
+    position = "top"
+  ) +
+  labs(title = "Top growth",
+        subtitle = "Top 30 call reasons by growth (Hours worked + growth)",
+        x = "Hours",
+        y = "Reasons") +
+  #scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() 
+
+```
+
+The top 9 facets by growth reveal somewhat more clearly the public safety landscape of these two towns. 
+
+
+```{r chunkByReason6, fig.width=10, fig.height=10}
+
+  # next we only want top 9 high growth reasons with the most total call hours
+topHourFactors <- topHourFactors %>%
+  arrange(desc(estimateChangeHours)) %>%
+  head(n = 9) %>%
+  droplevels.data.frame() # discard the empty factor levels
+
+# this uses topHourFactors to target factors for removal
+
+crTopGrowthHours <- callReasonsDF %>%
+  group_by(call_reason, year) %>%
+    summarize(
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
+    estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason)
+  ) %>%
+  filter(call_reason %in% c(levels(topHourFactors[[1]]))) %>%
+  droplevels.data.frame() %>% 
+  mutate(call_reason = fct_reorder(call_reason, estYearlyHourChange_Reason)) 
+        # this fct_reorder isn't working to reorder the facets
+
+crTopGrowthHours %>%
+  ggplot(aes(x = year, 
+             y = totalHours, 
+             fill = call_reason)) +
+  geom_area(alpha = 0.5, color = "lavenderblush") +
+  geom_smooth(method = lm,
+              se = FALSE, 
+              linewidth = .8,
+              color = "orangered",
+              show.legend = FALSE) + 
+  labs(title = "Leaderboard: Top growth",
+       subtitle = "9 call reasons growing the most",
+       y = "Hours") +
+  scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_wrap(~call_reason) +
+  theme(strip.text.x = 
+          element_text(size = 9, color = "gray40", face = "bold"))
+
+```
+
+Or -- an important reminder that volume and rate are independent from each other -- we may have revealed a mix of public safety needs with other causes. For example, do these rates of change reflect administrative changes in record keeping? Do 'assist citizen' and 'officer wanted' call trends represent change in public safety needs, or change in how calls are logged?  Has the incidence of death been so infrequent, or were calls about a person's death coded differently during 2019 and 2020? This data won't answer these questions, but my hope is that people can use this analysis will help prompt and clarify questions like these.
+
+#### Top impact call reasons
+
+Let's combine total hours with top growth to get a better sense of call reasons with the greatest impact.
+
+```{r chunkByReason7, fig.width=10, fig.height=10}
+
+# this gets factors of top 30 call reasons with top hours worked by growth in hours
+
+rm(crFactorTotals2)  # clear the previous df
+
+crFactorTotals2 <- callReasonsDF %>%
+  group_by(call_reason) %>%
+    summarise(
+    totalHours = sum(totalHours),
+    estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
+    productTopHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+  ) 
+
+rm(topHourFactors) # clear the previous df
+
+topHourFactors <- crFactorTotals2 %>%
+  arrange(desc(productTopHours)) %>%
+  head(n = 30) %>%
+  droplevels.data.frame() # discard the empty factor levels
+
+callReasonsDF %>%
+  group_by(call_reason) %>%
+    summarize(
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
+    estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
+    productTopHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+  ) %>%
+  mutate(call_reason = fct_reorder(call_reason, productTopHours)) %>% 
+  filter(call_reason %in% c(levels(topHourFactors[[1]]))) %>%    
+      # this uses topHourFactors to target factors for removal
+      # does it work in this plot?
+  droplevels.data.frame() %>% 
+  ggplot(aes(x = totalHours, y = call_reason)) +
+  geom_bar(stat = "identity", fill = "dodgerblue4", alpha = .6, width = 0.3) +  
+  geom_point(size = 4, color = "orangered") + 
+  geom_text(aes(label = 
+                  paste0("+", estYearlyHourChange_Reason, " hrs/yr"), hjust = -0.5)) +
+  scale_x_continuous(
+    limits = c(0,1100),
+    breaks = seq(0, 1500, 250),
+    minor_breaks = seq(0, 1500, 50),
+    position = "top"
+  ) +
+  labs(title = "Top impact",
+        subtitle = "30 call reasons with top level-of-effort and top growth",
+        x = "Hours",
+        y = "Reasons") +
+  #scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() 
+
+```
+
+Now can examine the 9 facets of the most impactful call reasons:
+
+```{r chunkByReason8, fig.width=10, fig.height=10}
+
+topHourFactors <- topHourFactors %>%
+  arrange(desc(productTopHours)) %>%
+  head(n = 9) %>%
+  droplevels.data.frame() # discard the empty factor levels
+
+
+crTopGrowthHours <- callReasonsDF %>%
+  group_by(call_reason, year) %>%
+    summarize(
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
+    estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
+    productTopHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+  ) %>%
+  filter(call_reason %in% c(levels(topHourFactors[[1]]))) %>%
+  droplevels.data.frame() %>% 
+  mutate(call_reason = fct_reorder(call_reason, productTopHours)) 
+        # this fct_reorder isn't working to reorder the facets
+
+crTopGrowthHours %>%
+  ggplot(aes(x = year, 
+             y = totalHours, 
+             fill = call_reason)) +
+  geom_area(alpha = 0.5, color = "lavenderblush") +
+  geom_smooth(method = lm,
+              se = FALSE, 
+              linewidth = .8,
+              color = "orangered",
+              show.legend = FALSE) + 
+  labs(title = "Leaderboard: Top impact",
+       subtitle = "9 call reasons with top hours and top growth",
+       y = "Hours") +
+  scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_wrap(~call_reason) +
+  theme(strip.text.x = 
+          element_text(size = 9, color = "gray40", face = "bold"))
+
+```
+
+::: {.callout-warning icon=false}
+
+## Specific questions for analysis
+
+4. What call reasons have grown the most over time, in terms of personnel time?
+
+:::
+
+::: {.callout-tip icon=false}
+
+## An answer!
+`r topHourFactors`
+
+:::
+
+
+#### Bottom impact call reasons
+
+Which call reasons have decreased the most?
+
+```{r chunkByReason9, fig.width=10, fig.height=10}
+
+# this gets factors of bottom 30 call reasons with top hours worked by growth in hours
+
+rm(crFactorTotals2)  # clear the previous df
+
+crFactorTotals2 <- callReasonsDF %>%
+  group_by(call_reason) %>%
+    summarise(
+    totalHours = sum(totalHours),
+    estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
+    productBottomHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+  ) 
+
+bottomHourFactors <- crFactorTotals2 %>%
+  arrange(desc(productBottomHours)) %>%
+  tail(n = 30) %>%
+  droplevels.data.frame() # discard the empty factor levels
+
+callReasonsDF %>%
+  group_by(call_reason) %>%
+    summarize(
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
+    estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
+    productBottomHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+  ) %>%
+  mutate(call_reason = fct_reorder(call_reason, productBottomHours)) %>% 
+  filter(call_reason %in% c(levels(bottomHourFactors[[1]]))) %>%    
+      # this uses topHourFactors to target factors for removal
+      # does it work in this plot?
+  droplevels.data.frame() %>% 
+  ggplot(aes(x = totalHours, y = call_reason)) +
+  geom_bar(stat = "identity", fill = "dodgerblue4", alpha = .6, width = 0.3) +  
+  geom_point(size = 4, color = "orangered") + 
+  geom_text(aes(label = 
+                  paste0(estYearlyHourChange_Reason, " hrs/yr"), hjust = -0.5)) +
+  scale_x_continuous(
+    limits = c(0,1600),
+    breaks = seq(0, 1600, 250),
+    minor_breaks = seq(0, 1600, 50),
+    position = "bottom"
+  ) +
+  labs(title = "Bottom impact",
+        subtitle = "30 call reasons with greatest negative growth 
+and greatest level-of-effort",
+        x = "Hours",
+        y = "Reasons") +
+  #scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() 
+
+```
+
+The 9 facets of the least impactful call reasons:
+
+```{r chunkByReason10, fig.width=10, fig.height=10}
+
+bottomHourFactors <- bottomHourFactors %>%
+  arrange(desc(productBottomHours)) %>%
+  tail(n = 9) %>%
+  droplevels.data.frame() # discard the empty factor levels
+
+
+crBottomGrowthHours <- callReasonsDF %>%
+  group_by(call_reason, year) %>%
+    summarize(
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
+    estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
+    productBottomHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+  ) %>%
+  filter(call_reason %in% c(levels(bottomHourFactors[[1]]))) %>%
+  droplevels.data.frame() %>% 
+  mutate(call_reason = fct_reorder(call_reason, productBottomHours)) 
+        # this fct_reorder isn't working to reorder the facets
+
+crBottomGrowthHours %>%
+  ggplot(aes(x = year, 
+             y = totalHours, 
+             fill = call_reason)) +
+  geom_area(alpha = 0.5, color = "lavenderblush") +
+  geom_smooth(method = lm,
+              se = FALSE, 
+              linewidth = .8,
+              color = "orangered",
+              show.legend = FALSE) + 
+  labs(title = "Leaderboard: Bottom impact",
+       subtitle = "9 call reasons with top hours and top decrease",
+       y = "Hours") +
+  scale_fill_viridis(discrete = T, option = "cividis") +
+  theme_ipsum() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_wrap(~call_reason) +
+  theme(strip.text.x = 
+          element_text(size = 9, color = "gray40", face = "bold"))
 
 ```
 
@@ -978,26 +1291,25 @@ crTopHours %>%
 
 ## Specific questions for analysis
 
-4. What call reasons have grown over time?
+5. What call reasons have decreased the most in terms of personnel time?
 
 :::
 
 ::: {.callout-tip icon=false}
 
 ## An answer!
-
-
+`r bottomHourFactors`
 
 :::
 
 
-```{r chunkByReason5, fig.width=10, fig.height=4}
+```{r chunkByReason11, fig.width=10, fig.height=4}
+
 
 ### HERE
-### #1 - consider fetching trends and ordering factors by that, then observing the top reasons by uptrend.
+### double check that lm stuff
 ### #2 - theme/reason
-
-
+### #3 - nix the year and town group_by LM code? why did I even do that? Maybe it'll be useful later.
 
 
  # set a quantile boundary to variable so I can use it in a plot label
@@ -1072,14 +1384,6 @@ crThemeYear %>%
     theme(axis.text.x = element_text(angle = 90))
 
 ```
-
-
-
-
-
-xxx
-
-
 
 
 

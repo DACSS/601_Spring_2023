@@ -525,14 +525,10 @@ tempGroupDF <- callReasonsDF %>%
 callReasonsDF <- callReasonsDF %>%
   inner_join(tempGroupDF, by = join_by(call_reason))
 
-##########
-
-
-########## 
 
 ########## do that again for town
 
-# initialize df for reasons: group by year
+# initialize df for reasons: group by town
 tempGroupDF <- callReasonsDF %>%
   group_by(town) %>%
   mutate(year = as.integer(year(year)))
@@ -565,7 +561,7 @@ callReasonsDF <- callReasonsDF %>%
   inner_join(tempGroupDF, by = join_by(town))
 
 ########## do that again for theme
-### HERE
+
 
 tempGroupDF <- callReasonsDF %>%
   group_by(call_theme) %>%
@@ -585,38 +581,47 @@ callReasonsDF <- callReasonsDF %>%
 callReasonsDF <- callReasonsDF %>%
   filter(!is.na(estYear_HoursByTheme)) 
 
+rm(tempGroupDF)
+rm(crHoursEstByYear)
+
 # initialize df for theme: group by year
-crTownYearThemeDF <- callReasonsDF %>%
+tempGroupDF <- callReasonsDF %>%
   group_by(call_theme) %>%
   summarise(
-    totalCalls = sum(totalCalls),
-    totalHours = sum(totalHours),
+    totalCalls_Theme = sum(totalCalls),
+    totalHours_Theme = sum(totalHours),
   ) 
 
+callReasonsDF <- callReasonsDF %>%
+  inner_join(tempGroupDF, by = join_by(call_theme))
+
 ##########
-
-
-# # group by town and year
-# crTownYearDF <- callReasonsDF %>%
-#   group_by(town, year) %>%
-#   summarise(
-#     totalCalls = sum(totalCalls),
-#     totalHours = sum(totalHours),
-#     est_AnnualChangeHours = mean(est_AnnualChangeHours)
-#   ) 
-# 
-# crTownYearThemeDF <- callReasonsDF %>%
-#   group_by(town, year, call_theme) %>%
-#   summarise(
-#     totalCalls = sum(totalCalls),
-#     totalHours = sum(totalHours),
-#     est_AnnualChangeHours = mean(est_AnnualChangeHours) 
-#   )
-
 
 ###
 ### summary and linear model (lm) calculations for presentation
 ###
+
+crYearDF <- callReasonsDF %>%
+  group_by(year) %>%
+  summarize(
+    totalCalls = sum(totalCalls),
+    totalHours = sum(totalHours)
+  )
+
+crTownYearDF <- callReasonsDF %>%
+  group_by(town, year) %>%
+  summarise(
+    totalCalls = sum(totalCalls),
+    totalHours = sum(totalHours),
+  )
+
+crTownYearThemeDF <- callReasonsDF %>%
+  group_by(town, year, call_theme) %>%
+  summarise(
+    totalCalls = sum(totalCalls),
+    totalHours = sum(totalHours),
+  )
+
 
 # Calculate growth percentage of hours worked
 
@@ -688,8 +693,12 @@ crtyGrowthDF <- tribble(
 
 ### first plot shows the big picture: change in total hours
 
-crYearDF %>%
-  ggplot(aes(x = year, y = totalHours)) + 
+callReasonsDF %>%
+  group_by(year, town) %>%
+  summarize(
+    totalHours = sum(totalHours)
+    ) %>% 
+  ggplot(aes(x = year, y = totalHours, fill = town)) + 
   geom_area(alpha = 0.5) +
   labs(title = "Total hours: Police officers working on calls",
        y = "Hours") +
@@ -846,7 +855,7 @@ crFactorTotals <- callReasonsDF %>%
     totalHours = round(sum(totalHours), 1)
   ) 
 
-topHourFactors %>% crFactorTotals
+topHourFactors <- crFactorTotals %>%
   arrange(desc(totalHours)) %>%
   head(n = 30) %>%
   droplevels.data.frame() # discard the empty factor levels

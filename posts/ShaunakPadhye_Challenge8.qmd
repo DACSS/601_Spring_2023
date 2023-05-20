@@ -1,0 +1,123 @@
+---
+title: "Challenge 8"
+author: "Shaunak Padhye"
+description: "Joining Data"
+date: "05/20/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - Shaunak Padhye
+  - snl
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+For this challenge I will be using the following dataset.
+
+  - snl ⭐⭐⭐⭐⭐
+
+```{r}
+snl_casts <- read_csv("_data/snl_casts.csv", skip = 1, col_names = c("aid", "sid", "featured", "cast_first_epid", "cast_last_epid", "update_anchor", "cast_n_epid", "season_fraction"))
+  
+snl_actors <- read_csv("_data/snl_actors.csv")
+  
+snl_seasons <- read_csv("_data/snl_seasons.csv", skip = 1, col_names = c("sid", "year", "seasons_first_epid", "seasons_last_epid", "seasons_n_epid"))
+```
+
+### Briefly describe the data
+
+This dataset contains three different dataframes:
+
+snl_actors: The actors dataframe contains details of the cast of people who have appeared in SNL from 1975 to 2020.
+
+snl_casts: The casts dataframe contains details of the cast for various seasons of SNL.
+
+snl_seasons: The seasons dataframe contains details of each season from 1975 to 2020.
+
+## Tidy Data (as needed)
+
+Lets look what dataframes we have.
+
+```{r}
+head(snl_actors)
+```
+
+We can remove the url column for our analysis.
+```{r}
+snl_actors <- snl_actors %>% select(-url)
+str(snl_actors)
+```
+Lets look at the casts dataframe:
+
+```{r}
+head(snl_casts)
+```
+```{r}
+summary(snl_casts)
+```
+
+Finally we take a look at the seasons data.
+
+```{r}
+head(snl_seasons)
+```
+```{r}
+summary(snl_seasons)
+```
+
+## Join Data
+
+Now we will join the dataframes:
+
+```{r}
+snl_castsseasons <- left_join(snl_casts, snl_seasons, by = "sid")
+
+snl_data <- left_join(snl_castsseasons, snl_actors, "aid")
+
+glimpse(snl_data)
+```
+
+## Data Exploration
+
+We can see the distribution of gender for the cast member who have been Weekend Update Anchors.
+```{r}
+snl_data %>%
+  filter(update_anchor == TRUE) %>%
+  ggplot(aes(x = gender, fill = gender)) +
+  geom_bar() +
+  xlab("Gender") +
+  ylab("Count") +
+  ggtitle("Gender Distribution for Weekend Update") +
+  scale_fill_brewer(palette = "Set1")
+```
+We can see from the above graph that SNL has cast more Male cast members over female cast members as the Weekend Update Anchor.
+
+
+It will be interesting to see the gender distribution of cast members over the years.
+```{r}
+snl_data %>%
+  group_by(year, gender) %>%
+  summarise(count = n()) %>%
+  ggplot(aes(x = year, y = count, fill = gender)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(x = "Year", y = "Count", fill = "Gender") +
+  ggtitle("Gender Distribution by Year") +
+  scale_fill_brewer(palette = "Set1") +
+  theme_minimal()
+```
+The percentage of female cast members has increased over the years. However, SNL still tends to cast more male actors than female.

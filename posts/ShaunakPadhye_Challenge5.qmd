@@ -1,0 +1,101 @@
+---
+title: "Challenge 5"
+author: "Shaunak Padhye"
+description: "Introduction to Visualization"
+date: "05/19/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_5
+  - Shaunak Padhye
+  - air_bnb
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(RColorBrewer)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+For this challenge, I will be using the following dataset:
+
+-   AB_NYC_2019.csv ⭐⭐⭐
+
+```{r}
+airbnb <- read_csv("_data/AB_NYC_2019.csv")
+
+glimpse(airbnb)
+```
+
+### Briefly describe the data
+
+The dataset contains approximately 49,000 observations representing Airbnb rentals in New York City during 2019. Each observation corresponds to a rental unit and includes 16 variables. These variables provide information about the unit (ID and name), hosts (ID and name), location (neighborhood, city borough, longitude, and latitude), room type, price, minimum nights required for a reservation, review details (number of reviews, date of last review, and average reviews per month), a calculated host listings count (likely indicating the number of listings by the host on Airbnb), and availability (presumably indicating the number of days the unit is available in a year).
+
+The dataset appears to be well-organized, and no changes or additions to the variables are currently required.
+
+## Univariate Visualizations
+
+Lets draw a pie chart displaying the distribution of Airbnb units among the five NYC Boroughs.
+
+```{r}
+# Calculate frequencies
+freqs <- table(airbnb$neighbourhood_group)
+percentages <- freqs / sum(freqs) * 100
+percentages[percentages < 5] <- NA
+
+ggplot(data = data.frame(freqs = freqs, labels = names(freqs)),
+       aes(x = "", y = freqs, fill = labels)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  scale_fill_manual(values = brewer.pal(n = length(freqs), name = "Set2")) +
+  geom_text(aes(label = ifelse(!is.na(percentages), paste0(round(percentages), "%"), "")), 
+            position = position_stack(vjust = 0.5)) +
+  ggtitle("Distribution of Airbnb units between NYC Boroughs")
+```
+
+Seems like Manhattan and Brooklyn contain the majority of the Airbnb units. A Pie chart is the right tool for visualization as we can view the distribution as part of a percentage using the Pie chart.
+
+We can check the count of each unit type using a bar chart.
+
+```{r}
+ggplot(airbnb, aes(x = room_type, fill = room_type)) +
+  geom_bar() +
+  theme_classic() +
+  scale_fill_brewer(palette = "Accent") +
+  xlab("Room Type") +
+  ylab("Number of Units") +
+  ggtitle("Number of Units of each Room type")
+```
+Looks like, most units available are either entire apartments or private rooms.
+
+## Bivariate Visualization(s)
+
+Lets plot a bar graph to compare the average price of units for different room types.
+
+```{r}
+airbnb_room_price <- airbnb %>%
+  group_by(room_type)%>%
+  summarise(Avg_price = mean(price))
+airbnb_room_price
+
+ggplot(airbnb_room_price, aes(x = room_type,y = Avg_price, fill=room_type)) +
+  geom_bar(stat = "identity") +
+  theme_classic() +
+  scale_fill_brewer(palette = "Paired") +
+  labs(title = "Average price for Room Types",
+       x = "Room Type",
+       y = "Average Price")
+```
+It is interesting to see the difference between the average price of entire apartments and private rooms, considering that the number of units of either types were relatively close.

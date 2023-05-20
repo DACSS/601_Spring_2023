@@ -1,0 +1,107 @@
+---
+title: "Challenge 6"
+author: "Shaunak Padhye"
+description: "Visualizing Time and Relationships"
+date: "05/19/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - Shaunak Padhye
+  - hotel_bookings
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+For this challenge, I will be using the following dataset:
+
+  - hotel_bookings ⭐⭐⭐⭐
+
+  
+```{r}
+bookings <- read.csv("_data/hotel_bookings.csv")
+head(bookings)
+```
+
+### Briefly describe the data
+
+This dataset contains the booking details for a number of hotels. This is a very comprehensive dataset having 32 variables. It covers various details such as the details of the booking party (adults, children, babies, meal, country, etc), details of the hotel(hotel, reserved room type, assigned room type, etc) and details of the booking itself(arrival date details, reservation status details, etc).
+The data will need to be tidied and some columns will be mutated.
+
+## Tidy Data (as needed)
+
+We can merge the arrival columns to create a single column that holds the arrival date in a standard format.
+
+```{r}
+bookings$date_str <- paste(bookings$arrival_date_year, bookings$arrival_date_month, bookings$arrival_date_day_of_month, sep = "-")
+
+bookings$arrival_date <- as.Date(bookings$date_str, format = "%Y-%B-%d")
+
+bookings <- bookings[, !(names(bookings) %in% "date_str")]
+
+head(select(bookings, arrival_date, reservation_status_date))
+```
+
+```{r}
+bookings <- select(bookings, -arrival_date_week_number, -arrival_date_day_of_month)
+colnames(bookings)
+```
+
+We can use the lead_time column along with the arrival_date column to get the booking date for the booking.
+
+```{r}
+bookings$reservation_booking_date <- bookings$arrival_date - days(bookings$lead_time)
+head(select(bookings, lead_time, arrival_date, reservation_booking_date))
+```
+
+## Time Dependent Visualization
+
+We can plot the number of bookings for a month over time. This can give us a good idea regarding which months are popular.
+```{r}
+bookings %>%
+  mutate(year_month = format(as.Date(arrival_date), "%Y-%m")) %>%
+  group_by(year_month) %>%
+  summarise(Total_bookings = n()) %>%
+  ggplot(aes(x = as.Date(paste0(year_month, "-01")), y = Total_bookings)) +
+  geom_line(color = "grey") +
+  geom_point(shape = 21, color = "black", fill = "#69b3a2", size = 6) +
+  theme_minimal() +
+  labs(title = "Bookings by Month and Year",
+       x = "Year and Month",
+       y = "Count") +
+  scale_x_date(date_breaks = "3 month", date_labels = "%Y-%m")
+
+```
+
+From the above graph, we can see that there is a dip in the number of bookings for the winter months and the number of bookings are highest during the summer months.
+
+## Visualizing Part-Whole Relationships
+
+We can check the cancellation percentage for each hotel by plotting a bar graph.
+
+```{r}
+ggplot(bookings, aes(x = hotel, fill = factor(is_canceled))) +
+  geom_bar(position = position_stack(reverse = TRUE)) +
+  scale_fill_manual(values = c("#00AFBB", "#FC4E07"), name = "Is Canceled") +
+  labs(title = "Composition of Cancellation by Hotel", x = "Hotel", y = "Count",fill="Cancellation") +
+   scale_fill_manual(values = c("#00AFBB", "#FC4E07"), 
+                     guide = guide_legend(reverse = TRUE),
+                    labels = c("No", "Yes"))
+```
+We observe that while "City Hotel" received more bookings overall, there was a less percentage of cancellations for the "Resort Hotel"

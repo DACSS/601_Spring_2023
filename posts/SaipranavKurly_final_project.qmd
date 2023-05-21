@@ -1,0 +1,449 @@
+---
+title: "Final Project: Sai Pranav Kurly"
+author: "Sai Pranav Kurly"
+description: "Boston Crime Data Analysis"
+date: "05/20/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(leaflet)
+library(tidyverse)
+library(gridExtra)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Background:
+
+In today's society, analyzing crime data is critical because it serves several important purposes. For starters, it enables efficient resource allocation by identifying crime hotspots and patterns. Law enforcement agencies can strategically deploy personnel and resources to high-crime areas to maximize their impact on public safety. Second, the analysis of crime data allows for proactive crime prevention efforts. Authorities can develop targeted interventions and implement preventive measures to deter criminals and reduce crime rates by understanding the underlying factors and dynamics of criminal activities. This data-driven approach enables law enforcement to be more proactive and preventative rather than reactive.Furthermore, crime data analysis is critical in identifying and apprehending criminals. It aids in the creation of offender profiles, the linking of seemingly unrelated crimes, and the narrowing down of suspects, resulting in more successful investigations and arrests. Furthermore, analyzing crime data helps to inform policy and decision-making processes. Policymakers can learn about emerging crime trends, assess the effectiveness of current policies, and develop evidence-based strategies to address specific crime issues. Governments and organizations can create more targeted and impactful policies that improve public safety and security by leveraging data-driven insights. Finally, analyzing crime data contributes to overall public safety improvement. It raises community awareness of potential risks, empowers individuals to take necessary precautions, and allows law enforcement agencies to respond to incidents more effectively.Emergency response times can be improved, and individuals' safety and well-being can be better protected, by leveraging crime data.
+
+
+## Dataset(s) Introduction:
+
+The Boston Crime Dataset, also known as the Boston Crime Incident Reports, is a dataset that contains information about reported incidents of crime in the city of Boston, Massachusetts, USA. It provides a detailed record of criminal activities and incidents that have occurred within the city.
+The dataset includes various attributes related to each reported crime, such as the type of offense, location, date and time of occurrence, and other relevant details. The information is collected and maintained by the Boston Police Department, which aims to promote transparency and public awareness regarding crime trends and patterns in the city.
+Researchers, analysts, and data enthusiasts often utilize the Boston Crime Dataset to study crime patterns, develop predictive models, and gain insights into criminal activities within the city. It can be used for various purposes, such as identifying high-crime areas, evaluating the effectiveness of law enforcement strategies, or understanding the impact of crime on different neighborhoods.
+
+The Dataset contains the following columns and below are the descriptions:
+
+- Incident Number: Internal report number for each incident, non-null value.
+- Offense Code: Numerical code representing the offense description.
+- Offense Code Group: High-level group name for the offense code.
+- Offense Description: Detailed description and internal categorization of the offense.
+- District: District where the crime occurred.
+- Reporting Area: Number of the reporting area where the crime occurred.
+- Shooting: Numerical value indicating if a shooting took place.
+- Occurred on Date: Date and time of when the crime occurred.
+- Year: Year when the crime occurred.
+- Month: Month when the crime occurred.
+- Day of Week: Day of the week when the crime occurred.
+- Hour: Hour when the crime occurred.
+- UCR Part: Universal Crime Reporting Part Number.
+- Street: Street name where the crime occurred.
+- Lat: Latitude coordinate of the crime location.
+- Long: Longitude coordinate of the crime location.
+- Location - Gives the location of where the crime has taken place.
+
+I've also used another dataset i.e. the Offense_code Dataset which helps map the offense name since the original Dataset did not contain this and was NA. 
+- CODE: Numerical code representing the offense description.
+- Name: High-level group name for the offense code.
+**The Dataset consists of crimes from 2019 to 2022**
+
+## Read Data and brifly describing
+
+I want the latest data which can only be found on the Boston PD website, hence I am combining all the data that I downloaded from the website first. 
+
+```{r}
+folder_path <- "SaipranavKurly_FinalProjectData/"
+file_list <- list.files(folder_path)
+file_list <- sort(file_list)
+combined_data <- data.frame()
+for (file_name in file_list) {
+    if(file_name != 'Offense_Codes.csv' & file_name != 'Combined_Dataset.csv'){
+          file_path <- file.path(folder_path, file_name)
+    file_data <- read.csv(file_path)
+    combined_data <- rbind(combined_data, file_data)
+    }
+}
+combined_file_path <- file.path(folder_path, "Combined_Dataset.csv")
+write.csv(combined_data, combined_file_path, row.names = FALSE)
+```
+
+Reading the Dataset and merging:
+```{r}
+crime_dataset <- read.csv("SaipranavKurly_FinalProjectData/Combined_Dataset.csv")
+offence_codes_dataset <- read.csv("SaipranavKurly_FinalProjectData/Offense_Codes.csv")
+names(offence_codes_dataset) <- c("OFFENSE_CODE", "OFFENCE_NAME")
+crime_dataset <- merge(crime_dataset, offence_codes_dataset, by = "OFFENSE_CODE", all.x = TRUE)
+
+```
+
+```{r}
+dim(crime_dataset)
+```
+
+```{r}
+length(unique(crime_dataset))
+```
+
+```{r}
+head(crime_dataset)
+```
+
+## Tidy the data
+
+To clean the dataset, I am removing all the rows where the OFFENCE_NAMES are NA. Additionally there are a few categories which I feel are not of much use to analyze the crimes in boston and I have removed them as well. I also plan to mutate and add additional columns like months from the date column during the preprocessing step so that it will make it easier to plot graphs.
+
+Cleaning the dataset:
+```{r}
+crime_dataset <- crime_dataset[crime_dataset$OFFENCE_NAME != "INVESTIGATE PERSON", ]
+crime_dataset <- crime_dataset[crime_dataset$OFFENCE_NAME != "INVESTIGATE PROPERTY", ]
+crime_dataset <- crime_dataset[, !(names(crime_dataset) == "OFFENSE_CODE_GROUP")]
+crime_dataset <- crime_dataset[complete.cases(crime_dataset$OFFENCE_NAME), ]
+```
+
+
+## Plan for Visualization 
+
+ I am planning to to analyze the following using the dataset:
+
+- Crime Distribution and Frequency: 
+
+Create a bar chart to depict the distribution of crime types in Boston. 
+
+Additionally, I am also going to determine the most and least common crime categories.
+
+Finally, I plan to also visualize which streets have the highest crime.
+
+- Temporal Patterns and Trends: 
+
+Using line graphs or time series plots, plot the number of reported crimes over time.
+
+Identify any notable trends or patterns in crime rates over time. For example, at what hour do mouse crimes happen at.
+
+- Seasonal Variation in Crime: 
+
+Aggregate the data by month or season to see if there are seasonal variations in crime rates.
+
+To compare the distribution of crimes across seasons, create box plots or violin plots.
+
+- Geographic Crime Hotspots: 
+
+Identify high-crime areas in Boston using geospatial visualization techniques. 
+
+To visualize crime density, plot crime incidents on a map with markers or heatmaps. 
+
+The distribution of crime types can be represented visually using bar charts or pie charts. They give a clear overview of the most common and least common crime categories, making it simple to identify major crime trends. Line graphs and time series plots are useful for examining how crime rates change over time. In crime data, they reveal trends, patterns, and cyclical behavior. These visualizations aid in the identification of long-term trends, seasonal patterns, and unexpected changes in crime rates.Box plots and violin plots allow for the comparison of crime rates across seasons. They provide insights into the distribution of crime incidents during specific periods and aid in determining whether there are significant seasonal differences in crime rates.
+
+## Descriptive Statistics
+
+The Boston Crime dataset contains descriptive information about various criminal incidents reported in the city of Boston. The dataset contains a detailed record of crimes, including details such as the type of offense, location, date, and time of occurrence. It includes, but is not limited to, assaults, robberies, burglaries, larcenies, drug-related offenses, and homicides. The dataset includes attributes that provide additional context about each crime, such as the district or neighborhood where the incident occurred, the reporting area, and the street where the crime occurred. It may also contain information about the incident's outcome, such as arrests or charges filed.Temporal data, such as the weekday and month, is frequently included, allowing for the analysis of crime patterns and trends over time. Researchers and analysts can use this temporal granularity to investigate correlations between crime and factors such as seasonality, day of the week, or time of day. Furthermore, the dataset may include geographic coordinates (latitude and longitude) or other spatial information that enables mapping and spatial analysis of crime incidents. This spatial data makes it easier to identify high-crime areas, investigate spatial clusters, and assess the spatial distribution of criminal activities throughout the city.
+
+
+```{r}
+summary(crime_dataset)
+```
+
+```{r}
+unique(crime_dataset$OFFENCE_NAME)
+```
+
+```{r}
+table(crime_dataset$OFFENCE_NAME) 
+```
+
+## Analysis and Visualization
+
+*1)* *What are the various crime categories in Boston, and which crimes are most commonly committed among these categories?*
+
+We have previously seen the various types of crimes that are committed in Boston. Now, we will analyze which crime is most commonly committed.
+
+First, we need the frequency of the various crimes:
+```{r}
+crime_freq <- crime_dataset %>%
+  group_by(OFFENCE_NAME) %>%
+  summarize(crime_count = n()) %>%
+  arrange(desc(crime_count))
+crime_freq
+```
+
+Now we can use a bar chart to visualize the top 10 crimes that occur in Boston
+```{r}
+ggplot(head(crime_freq,10), aes(x = reorder(OFFENCE_NAME, -crime_count), y = crime_count)) +
+  geom_bar(stat = "identity", fill = "lightpink") +
+  labs(x = "Crime Types", y = "Number of crimes", title = "Crime Distribution in Boston") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+*Interpretation:*
+We see that crimes like Vandalism,Towed Motor Vehicle, Property Damage, Assault and Larceny shoplifting are the most common types of crime in Boston.These crimes exhibit the highest frequencies among the various crime categories in Boston.The bar chart visually represents the distribution of these crimes, with Vandalism showing the highest occurrence. A bar chart allows for a straightforward visual comparison of the frequency of different crimes. The length of each bar directly corresponds to the number of occurrences, making it easy to identify the most common crimes.
+
+*2)* *Whats the trend in crime over various years in Boston? How do the different years compare to each other? Is it increasing every year?*
+
+We can plot a line graph which gives us an overview trend of the total crimes in Boston from 2019-2023:
+
+```{r}
+crime_dates <- crime_dataset %>%
+  mutate(Date = as.Date(OCCURRED_ON_DATE)) %>%
+  count(Date) %>%
+  mutate(Year = year(Date), Month = month(Date, label = TRUE))
+ggplot(crime_dates, aes(x = Date, y = n)) +
+  geom_line(color = "steelblue") +
+  labs(x = "Date", y = "Number of Crimes", title = "Temporal Patterns of Reported Crimes") 
+```
+
+Below, we compare the various years and see then trends:
+```{r}
+plots <- list()
+unique_years <- unique(crime_dates$Year)
+for (year in unique_years) {
+  filtered_data <- crime_dates %>% filter(Year == year)
+  plot <- ggplot(filtered_data, aes(x = Date, y = n)) +
+    geom_line(color = "steelblue") +
+    labs(x = "Date", y = "Number of Crimes", title = paste("Temporal Patterns of Reported Crimes -", year)) 
+  plots[[as.character(year)]] <- plot
+}
+grid.arrange(grobs = plots,nrow = length(plots), ncol = 1)  
+```
+
+Finally, we have a graph that shows us the total crime per year and how they differed:
+```{r}
+crime_counts <- crime_dataset %>%
+  group_by(YEAR) %>%
+  summarize(Count = n())
+ggplot(crime_counts, aes(x = YEAR, y = Count)) +
+  geom_point(color = "steelblue") +
+  labs(x = "Year", y = "Number of Crimes", title = "Trend in Crime Over Years") 
+```
+
+*Interpretation:*
+We see that the crime rate has reduced from 2019 and then again slowly started to increase.
+The year 2020 is an anomaly and there are much fewer crimes committed in 2020 compared to other years. This may be due to COVID-19 pandemic. We also see that the crime has been increasing slowly since 2020. However it has been at a lower rate than 2019 which is a good sign.This may be due to increase and improved Law Enforcement and Social Programs and Support.
+
+*3)* *Which hours of the day has the highest number of crimes in Boston? Does this change over the years when compared to all the years?*
+
+
+```{r}
+crime_hour_plot <- ggplot(crime_dataset, aes(x = HOUR)) +
+  geom_bar(fill = "lightsalmon", color = "black") +
+  labs(x = "HOUR", y = "Number of Crimes", title = "Crimes During Different Hours")
+crime_hour_plot +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))  # Rotate x-axis labels if needed
+```
+
+```{r}
+# Filter data for each year and create separate plots
+plots <- list()
+unique_years <- unique(crime_dataset$YEAR)
+
+for (year in unique_years) {
+  filtered_data <- crime_dataset %>% filter(YEAR == year)
+  
+  # Create a bar graph for each year
+  plot <- ggplot(filtered_data, aes(x = HOUR)) +
+    geom_bar(fill = "lightsalmon", color = "black") +
+    labs(x = "Hour", y = "Number of Crimes", title = paste("Crimes During Different Hours -", year)) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))  # Rotate x-axis labels if needed
+  
+  plots[[as.character(year)]] <- plot
+}
+
+# Combine and display the plots next to each other
+library(gridExtra)
+grid.arrange(grobs = plots, nrows = length(plots))
+```
+
+*Interpretation:*
+We see that most of the crimes seem to happen at 12 am. This seems to be common for all years too. Another interesting thing to take note of it that the the crimes seem to reduce after 12 am. This could have been due to multiple reasons like decreased foot traffic. The number of people present on the streets is typically lower during these hours. With fewer potential victims or witnesses around, criminals may perceive a higher risk of detection or intervention, leading to a decrease in criminal activities.It could also be because the daily routines of most individuals involve sleeping during these hours.
+
+
+*4)* *Whats the trend in crime over various seasons in Boston? How do the different years compare to each other? *
+
+```{r}
+crime_season <- crime_dataset %>%
+  mutate(Season = case_when(
+    month(OCCURRED_ON_DATE) %in% c(3, 4, 5) ~ "Spring",
+    month(OCCURRED_ON_DATE) %in% c(6, 7, 8) ~ "Summer",
+    month(OCCURRED_ON_DATE) %in% c(9, 10, 11) ~ "Autumn",
+    TRUE ~ "Winter"
+  )) %>%
+  group_by(Season) %>%
+  summarise(Count = n())
+```
+
+Bar plot of crime distribution across seasons:
+
+```{r}
+ggplot(crime_season, aes(x = Season, y = Count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Season", y = "Number of Crimes", title = "Crime Counts by Season") 
+```
+
+```{r}
+# Filter data for each year and create separate plots
+plots <- list()
+unique_years <- unique(crime_dataset$YEAR)
+
+for (year in unique_years) {
+  filtered_data <- crime_dataset %>% filter(YEAR == year)
+  
+  # Calculate crime counts by season for each year
+  crime_season <- filtered_data %>%
+    mutate(Season = case_when(
+      month(OCCURRED_ON_DATE) %in% c(3, 4, 5) ~ "Spring",
+      month(OCCURRED_ON_DATE) %in% c(6, 7, 8) ~ "Summer",
+      month(OCCURRED_ON_DATE) %in% c(9, 10, 11) ~ "Autumn",
+      TRUE ~ "Winter"
+    )) %>%
+    group_by(Season) %>%
+    summarise(Count = n())
+  
+  # Create a bar plot for each year
+  plot <- ggplot(crime_season, aes(x = Season, y = Count)) +
+    geom_bar(stat = "identity", fill = "skyblue") +
+        geom_text(aes(label = Count), vjust = -0.5, color = "black", size = 2) +  # Add total count labels on each bar
+    labs(x = "Season", y = "Number of Crimes", title = paste("Crime Counts by Season -", year))
+  
+  plots[[as.character(year)]] <- plot
+}
+
+# Combine and display the plots next to each other
+library(gridExtra)
+grid.arrange(grobs = plots, nrows = length(plots))
+
+```
+
+*Interpretation:* 
+If we look at the overall data, we see that Summer has the most crimes. When we look at the individual years, we again see that summer is when most of the crimes happen. Crimes seem to happen more often during Summer than Spring,Winter and Autumn. This can be due to various reasons like Increased Outdoor Activities. During summer, people tend to spend more time outdoors, engaging in various activities. This higher level of outdoor presence can create more opportunities for crimes to occur. Another reason is that it is Vacation Season. Many people take vacations during the summer months, leaving their homes unattended. This can increase the likelihood of burglaries and property-related crimes.
+
+*5)* *Which streets was the has the most number of crimes in Boston. Where do most of the  VANDALISM,ASSAULT and Robbery crimes happen in Boston? *
+
+```{r}
+crimes_by_street <- crime_dataset %>%
+  group_by(STREET) %>%
+  summarize(TotalCrimes = n()) %>%
+  top_n(10, TotalCrimes) 
+
+crimes_by_street <- crimes_by_street %>%
+  arrange(desc(TotalCrimes))
+
+ggplot(crimes_by_street, aes(x = reorder(STREET, -TotalCrimes), y = TotalCrimes)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Top 10 Streets with the Most Crimes in Boston",
+       x = "Street",
+       y = "Total Number of Crimes") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_flip()
+```
+
+```{r}
+washington_st_crimes <- crime_dataset %>% filter(STREET == "WASHINGTON ST")
+crime_counts <- washington_st_crimes %>% count(OFFENCE_NAME)
+top_10_crimes <- crime_counts %>%
+  arrange(desc(n)) %>%
+  head(10)
+top_10_crimes
+ggplot(top_10_crimes, aes(x = OFFENCE_NAME, y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  xlab("Crime Type") +
+  ylab("Number of Crimes") +
+  ggtitle("Top 10 Crimes on Washington St") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+crime_map <- crime_dataset %>%
+  mutate(offense_group = case_when(
+    str_detect(OFFENCE_NAME, regex("VANDALISM", ignore_case = TRUE)) ~ "Vandalism",
+    str_detect(OFFENCE_NAME, regex("MURDER", ignore_case = TRUE)) ~ "Murder",
+    str_detect(OFFENCE_NAME, regex("ROBBERY", ignore_case = TRUE)) ~ "Robbery",
+    TRUE ~ "Other"
+  ))
+crime_map <- crime_map %>%
+  filter(str_detect(OFFENCE_NAME, regex("VANDALISM|MURDER|ROBBERY", ignore_case = TRUE)))
+offense_counts <- count(crime_map, offense_group)
+ggplot(offense_counts, aes(x = offense_group, y = n)) +
+  geom_bar(stat = "identity", fill = "lightgray") +
+  labs(title = "Crime Offenses", x = "Offense Group", y = "Count")
+
+```
+
+```{r}
+crimes_map <- crime_dataset %>%
+  filter(str_detect(OFFENCE_NAME, regex("VANDALISM|MURDER|ROBBERY", ignore_case = TRUE)))
+basemap <- addTiles(leaflet())
+colors = c('Red', 'Green', 'Blue')
+i = 1
+crimes <- basemap
+for (crime in c('VANDALISM', 'MURDER', 'ROBBERY'))
+{
+  c <- crimes_map[grepl(crime, crimes_map$OFFENCE_NAME, ignore.case = TRUE), ]
+  crimes <- addCircleMarkers(setView(crimes, lng = -71.08, lat = 42.33, zoom = 12), lng = c$Long, lat = c$Lat, radius = 1, fillOpacity = 6, color = colors[i])
+  i <- i + 1
+}
+crimes
+```
+
+*Interpretation:*
+We see that Washington St has the highest number of crimes committed. We can dig deeper and see that the highest type of crimes committed in Washington St is PROPERTY - LOST. Possible that there are a lof of thefts or people are just misplacing things in the metro area. While comparing crimes like Vandalism,Murder and Robbery, we see that Vandalism has the highest number of committed crimes and Murder the lowest. From the map we can get hotspots of where the crimes are occurring and we also see that most areas seem to have both Vandalism and Robberies happening in the same place.Finally, another interesting thing we can find out from the map is that as we start to move away from the main areas of Boston, there seems to be more vandalism than robberies. We can also clearly see that the number of Murders are very less sine there are hardy any green points compared to the red and blue points on the map. 
+
+*6)* *Are there any significant differences in crime rates between weekdays and weekends in Boston?*
+
+```{r}
+crime_counts <- crime_dataset %>%
+  group_by(DAY_OF_WEEK) %>%
+  summarize(TotalCrimes = n()) %>%
+  mutate(Weekend = ifelse(DAY_OF_WEEK %in% c("Saturday", "Sunday"), "Weekend", "Weekday"))
+
+crime_counts$DAY_OF_WEEK <- factor(crime_counts$DAY_OF_WEEK,
+                                   levels = c("Monday", "Tuesday", "Wednesday", "Thursday",
+                                              "Friday", "Saturday", "Sunday"))
+
+ggplot(crime_counts, aes(x = DAY_OF_WEEK, y = TotalCrimes, fill = Weekend)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Crime Rates: Weekdays vs. Weekends",
+       x = "Day of the Week",
+       y = "Total Number of Crimes",
+       fill = "Weekend") +
+  scale_fill_manual(values = c("Weekday" = "steelblue", "Weekend" = "darkorange")) 
+```
+
+*Interpretation:*
+From the graph we see that there is more crime during the weekdays than during the weekends. This might be due to a number of reasons like Increased Target Availability. On weekdays, residential areas and commercial establishments are often more populated and active, making them potential targets for crimes such as burglaries, thefts, or robberies. Additionally, weekdays may see more foot traffic, leading to higher chances of crimes like pick pocketing or street-level thefts.Also, during weekdays people typically follow a more predictable and structured routine, including going to work, school, or other regular activities. Criminals may take advantage of these patterns and target individuals or properties during weekdays when there may be fewer people around or when they can exploit vulnerabilities.
+
+## Conclusion and Discussion
+In conclusion, the Boston Crime Dataset provides useful insights into crime patterns and trends in Boston. Researchers, analysts, and data enthusiasts have widely used the dataset to study crime categories, analyze trends over time, examine crime occurrence by hour and season, identify high-crime areas, and compare crime rates on weekdays versus weekends.
+According to the data analysis, the most commonly committed types of crimes in Boston are Vandalism, Towed Motor Vehicle, Property Damage, Assault, and Larceny Shoplifting. Among the various crime categories, these crimes have the highest frequency.
+The trend in crime over the years shows a decrease in crime beginning in 2019, with an anomaly in 2020, most likely influenced by the COVID-19 pandemic. Since 2020, the crime rate has gradually increased, but at a slower rate than in 2019. This implies that increased law enforcement and social programs may have contributed to the slower increase in crime.
+When the hourly distribution of crimes is examined, it is discovered that the majority of crimes occur at 12 a.m., and this pattern appears to be consistent over time. However, crimes tend to decrease after 12 a.m., which can be attributed to factors such as reduced foot traffic and fewer potential victims or witnesses.
+When crime rates are examined by season, it is discovered that Summer has the highest overall number of crimes. This is due to an increase in outdoor activities and the vacation season, which creates more opportunities for crime to occur.
+According to an analysis of crime occurrence on different streets, Washington St has the highest number of crimes committed. Further investigation into specific crime types reveals that Vandalism has the most committed crimes, while Murder has the fewer compared to others. Vandalism and robberies occur in close proximity in certain areas of Boston. Furthermore, as one moves away from Boston's main areas, the incidence of vandalism tends to outnumber robberies.
+When comparing weekdays and weekends, it is discovered that crime rates are higher on weekdays than on weekends. This is due to increased target availability, predictable routines, and higher foot traffic during the week. When there are fewer people around or vulnerabilities can be exploited, criminals may take advantage of these factors to target individuals or properties.
+Overall, the Boston Crime Dataset provides researchers, policymakers, and law enforcement agencies with a comprehensive understanding of crime in the city, assisting them in their efforts to address and mitigate criminal activity. This dataset's insights can be used to inform strategies for crime prevention, resource allocation, and the development of proactive measures to ensure the safety and well-being of the Boston community.
+
+## Bibliography
+
+[1] https://data.boston.gov/dataset/crime-incident-reports-august-2015-to-date-source-new-system
+
+[2] Posit team (2022). RStudio: Integrated Development Environment for R. Posit Software, PBC, Boston, MA. URL http://www.posit.co/.
+
+[3] R Core Team (2022). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+

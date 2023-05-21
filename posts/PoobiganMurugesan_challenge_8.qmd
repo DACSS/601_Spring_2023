@@ -1,0 +1,116 @@
+---
+title: "Challenge 8"
+author: "Poobigan Murugesan"
+description: "Joining Data"
+date: "20/5/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - snl
+  - poobigan murugesan
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Reading in the snl datasets:
+```{r}
+snl_actors <- read.csv("_data/snl_actors.csv")
+snl_casts <- read.csv("_data/snl_casts.csv")
+snl_seasons <- read.csv("_data/snl_seasons.csv")
+```
+
+```{r}
+
+head(snl_actors)
+```
+```{r}
+
+dim(snl_actors)
+```
+```{r}
+
+head(snl_casts)
+```
+```{r}
+
+dim(snl_casts)
+```
+```{r}
+
+head(snl_seasons)
+```
+```{r}
+
+dim(snl_seasons)
+```
+
+### Briefly describe the data
+These three datasets contain information pertaining to actors, casts, and seasons associated with the television program "Saturday Night Live." From the dimensions of these dataframes we can observe that  Saturday Night Live featured a total of 2306 actors and spanned across 46 seasons. The dataset named "snl_actors" contains specific actor-related information, while the "snl_casts" dataset comprises information about the cast members' appearances on the show, including details such as their featured episodes, number of appearances, and other relevant data. Lastly, the "snl_seasons" dataset has information related to each season of the show, such as the initial and final episodes, the year of airing, and the total number of episodes within each respective season.
+
+## Tidy Data (as needed)
+
+The data is already tidy.
+
+
+## Join Data
+Joining actors and casts dataframes with the aid column and using select to keep useful columns, followed by joining the snl_casts_actors dataframe with the seasons dataframe with the sid column.
+The resulting dataframe can be used to explore the relationship between the various variables.
+```{r}
+snl_casts_actors <- snl_casts %>%
+  left_join(snl_actors, by = "aid") %>%
+  select(sid, type, gender, n_episodes, featured)
+
+snl_join <- snl_seasons %>%
+  left_join(snl_casts_actors, by = "sid")
+head(snl_join)
+```
+
+```{r}
+dim(snl_join)
+```
+Since ours is a left_join no. of columns must be same as snl_join which is 614.
+
+## Visualization
+Plotting the number of actors on snl shows based on gender over the years.
+```{r}
+snl_join<-snl_join %>%
+  group_by(sid, year, gender) %>%
+  summarise(count = n(), groups = 'drop')
+```
+```{r}
+snl_join %>%
+  ggplot(aes(year, count, col = gender)) +
+  geom_line() +
+  ylab("Count") +
+  xlab("Year")+
+  ggtitle("Yearwise actor count by gender")+
+  scale_colour_manual(values= c("#0000FF","#FF0000", "#000000"
+))
+```
+

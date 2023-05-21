@@ -1,0 +1,281 @@
+---
+title: "Final Project Assignment: Megan Galarneau"
+author: "Megan Galarneau"
+description: "Energy Consumption & Economic GDP of Countries"
+date: "05/21/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    css: "style.css"
+categories:
+  - final_Project_assignment
+  - final_project_world_energy_consumption
+  - Megan Galarneau
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(scales)
+library(lmtest)
+library(readxl)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+#read & reorder the raw data set
+library(readr)
+raw_world_energy <- read_csv("MeganGalarneau_FinalProjectData/World_Energy_Consumption.csv")%>%
+  select(iso_code, country, year, gdp, population, everything())
+
+```
+
+## Abstract {#describe-the-data-sets}
+
+Modern technological, social, economic growth, and development would not be possible without the birth of fossil fuels (coal, oil, & gas). It plays a dominant role in our global energy systems. However, continued reliance on fossil fuel energy is the main driver of climate change today, causing detrimental planetary-scale changes to the atmosphere. While non-fossil fuel energy sources (solar, wind, & nuclear) are slowly becoming more affordable in high-income countries, it is not always a viable option for lower-income countries seeking rapid economic growth (Thunberg, G., & Peters, G., 2022).
+
+In this paper, I ask: do local and global energy use trends vary over time by economic GDP of a country? Additionally, I seek to uncover which energy source types are more closely correlated to a country's economic GDP than others. To answer these research questions, I will analyze the dataset, "*World Energy Consumption*" (2020). A case represents a country, year with corresponding economic GDP, population, fossil, non-fossil fuel energy consumption and production information.
+
+The purpose of this paper is to analyze how different stages of economic growth and development in a country affects the types of energy consumption (fossil v. non-fossil fuel).
+
+## Data
+
+### Introduction
+
+The dataset I will analyze is titled "*World Energy Consumption*" (2020). There are 223 unique countries represented with 11 types of fossil and non-fossil fuel energy sources reported on from 1965 to 2019. It contains data from 1900-2020, but energy consumption data is only available between 1965-2019. A case represents a country, year with corresponding economic GDP, population, fossil, non-fossil fuel energy consumption, and production information (17,432 rows).
+
+**Fossil Fuel**
+
+-   Oil, Gas, Coal
+
+**Non-Fossil Fuel**
+
+-   Biofuel, Hydro, Low Carbon, Nuclear, Solar, Wind, Renewables, & Other Renewables
+
+The data was collected, aggregated, and documented by Hannah Ritchie, Pablo Rosado, and Max Roser. Primary data sources include [BP Statistical Review of World Energy](https://www.bp.com/en/global/corporate/energy-economics/statistical-review-of-world-energy.html), [SHIFT Data Portal](https://www.theshiftdataportal.org/energy), and [EMBER - Global Electricity Dashboard](https://ember.shinyapps.io/GlobalElectricityDashboard/). Other data sources include United Nations, World Bank, Gapminder, and Maddison Project Database. The complete [codebook is available here](https://github.com/owid/energy-data/blob/master/owid-energy-codebook.csv). It is published and regularly updated by [*Our World In Data*](https://ourworldindata.org/energy#introduction), an organization whose mission is to "make data and research on the world's largest problems understandable and accessible". They make data produced by third parties available and open access. I originally found this data set on [Kaggle.com](https://www.kaggle.com/datasets/pralabhpoudel/world-energy-consumption) by collaborator Pralabh Poudel. It was altered to standardize the names of countries and regions according to *Our World in Data*, recalculate primary energy in terawatt-hours, and calculate per capita figures (which are calculated from the population metric). Population figures are sourced from [Gapminder](https://www.gapminder.org/) and [UN World Population Prospects (UNWPP](https://population.un.org/wpp/)).
+
+##### **Basic description of the data set**
+
+```{r}
+#tidy the dataset by excluding non-countries and pivoting longer energy consumption metrics
+unique_world_energy <- raw_world_energy %>%
+  filter(!country %in% c("Africa", "Asia Pacific", "Australia", "Eastern Africa", "Europe", "Middle Africa", "Middle East", "North America", "South & Central America", "Western Africa"))%>%
+  filter(!grepl("other", country, ignore.case = TRUE)) %>%
+  filter(year >= 1965 & year <= 2019) %>%
+  group_by(year) %>%
+  select(-contains("primary"))%>%
+  pivot_longer(cols = contains("consumption"),
+               names_to = "energy_source",
+               values_to = "energy_consumption") %>%
+  mutate(energy_source = case_when(
+    energy_source == "biofuel_consumption" ~ "Biofuel",
+    energy_source == "coal_consumption" ~ "Coal",
+    energy_source == "gas_consumption" ~ "Gas",
+    energy_source == "hydro_consumption" ~ "Hydro",
+    energy_source == "low_carbon_consumption" ~ "Low Carbon",
+    energy_source == "nuclear_consumption" ~ "Nuclear",
+    energy_source == "oil_consumption" ~ "Oil",
+    energy_source == "other_renewable_consumption" ~ "Other Renewables",
+    energy_source == "renewables_consumption" ~ "Renewables",
+    energy_source == "solar_consumption" ~ "Solar",
+    energy_source == "wind_consumption" ~ "Wind",
+    energy_source == "fossil_fuel_consumption" ~ "Fossil Fuel",
+    TRUE ~ energy_source
+  ))
+
+#dataset dimensions by rows and columns
+dim(raw_world_energy)
+
+#preview of the tidy dataset
+unique_world_energy
+```
+
+### Understanding the Data
+
+Throughout this paper, I will focus on the following variables of interest by country.
+
+-   **GDP** - total real gross domestic product, inflation-adjusted in U.S. Dollars (\$)
+
+-   **Energy Consumption Metrics**
+
+    -   **Energy consumption source types** - biofuel, coal, fossil fuel, gas, hydro, low carbon, nuclear, oil, other renewables, renewables, solar, and wind
+    -   **Primary energy consumption** - primary energy consumption, measured in terawatt-hours (twh)
+
+Energy consumption is measured in terawatt-hours. A terawatt-hour is "a unit of energy equal to outputting one trillion watts for one hour" (*Watt-hour,* n.d.). It is often used to describe energy production and consumption for entire countries (*Watt-hour,* n.d.). Let's look at a general visualization to gain a basic understanding of the dataset.
+
+This graph depicts average energy consumption in the world and the United States from 1965-2019. The United States is one of the top energy consumers in the world. It generates a lot of energy to run, with oil being it's dominant energy source at over 9000 terawatt-hours! Globally, the average terawatt-hours jump to the tens of thousands. In this case, each type of energy source is increasing over time except for nuclear and biofuel.
+
+Note: any null or NA values in the energy consumption column have been filtered out and broad energy source categories are omitted: renewables, other renewables, and fossil fuel
+
+```{r}
+#filter by World & USA and visualize energy consumption per year
+unique_world_energy %>%
+  filter(country %in% c("World", "United States") & !grepl("Renewables|Fossil", energy_source) & !is.na(energy_consumption))%>%
+  ggplot(mapping = aes(x = year, y = energy_consumption, color = energy_source)) +
+  geom_line() +
+  labs(title = "Figure 1: Energy Consumption Over Time",
+       x = "Year",
+       y = "Energy (Terawatt-hours, TWh)",
+       caption = "Energy consumption calculated from 1965-2019\nSource: World Energy Consumption (2020)",
+       color = "Energy Source") +
+  scale_x_continuous(breaks = seq(1965, 2019, 10)) +
+  facet_wrap(~ country, nrow = 1, scales = "free") +
+  theme(plot.title = element_text(hjust = 0.5, margin = margin(0, 0, 20, 0)))
+```
+
+These primary energy consumption visualizations provide a general sense of the range of terrawatt-hours in the dataset and helps orient the reader as I dive deeper into my research questions.
+
+## Analyses & Visualization
+
+**Energy Trends by Economic GDP**
+
+Let's start with the first research question: do local and global energy use trends vary over time by economic GDP of a country? To answer this question, I will analyze 45 countries: 15 each in the high, upper middle, and lower middle GDP bracket. The low GDP bracket is omitted because there is not enough energy consumption data available to show meaningful data patterns.
+
+The GDP brackets are determined by:
+
+1.  Calculate the average GDP of each country over ten years (2009-2019)
+2.  Divide the data into four quartiles and assign labels: high, upper middle, lower middle, and low GDP
+3.  Select the top 15 countries in each quartile
+
+Due to data availability, the most recent years are 2009-2019. For each group of countries, I will graph the average primary energy consumption (in terawatt-hours) between 1965-2019 on a line graph. The graph includes fossil and non fossil fuel energy sources: coal, gas, oil, biofuel, hydro, low carbon, nuclear, solar, and wind. I chose a line graph because it is the best visualization for time bound data compared to a pie or bar graph. Note: any null or NA values in the energy consumption and gdp column have been filtered out during calculation.
+
+The following graph shows the countries for each GDP bracket. The high GDP bracket ranges from \$16-\$1.5 trillion, the upper middle GDP bracket ranges from \$397-\$245 billion, and the lower middle bracket ranges from \$93-\$57 billion. In the high GDP bracket, the top 8 world powers are represented including the United States, China, United Kingdom, Russia, France, Germany, Japan, and South Korea (*Most Powerful Countries 2023*, n.d.). The other brackets contain a diverse spread of countries across Africa, Asia, South America, and Europe.
+
+```{r}
+#find the top 15 countries in each gdp bracket
+gdp_brackets <- unique_world_energy %>%
+  filter(year >= 2009 & year <= 2019) %>%
+  group_by(country) %>%
+  summarize(mean_gdp = mean(gdp, na.rm = TRUE)) %>%
+  mutate(gdp_brackets = cut(mean_gdp, breaks = quantile(mean_gdp, probs = c(0, 0.25, 0.5, 0.75, 1), na.rm = TRUE), labels = c("Low GDP", "Lower Middle GDP", "Upper Middle GDP", "High GDP")))%>%
+  group_by(gdp_brackets) %>%
+  top_n(n = 15, wt = mean_gdp) %>%
+  ungroup()
+
+#filter + reorder by GDP brackets, then visualize countries by GDP bracket
+gdp_brackets %>%
+  filter(country != "World", gdp_brackets != "Low GDP")%>%
+  mutate(gdp_brackets = factor(gdp_brackets, levels = c("High GDP", "Upper Middle GDP", "Lower Middle GDP")))%>%
+  ggplot(gdp_brackets,  mapping = aes(y = mean_gdp, x = reorder(country, -mean_gdp), fill = country)) +
+  geom_bar(width = 0.9, stat = "identity") +
+  labs(x = "Country", y = "GDP (billions & trillions, U.S Dollars)",
+       title = "Figure 2: Countries by GDP Bracket",
+       caption = "Average GDP calculated from 2009-2019\nSource: World Energy Consumption (2020)") +
+  facet_wrap(~ gdp_brackets, nrow = 2, scales = "free") +
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+       plot.title = element_text(hjust = 0.5, margin = margin(0, 0, 20, 0)))
+```
+
+For each of these GDP brackets, the average energy consumption in terwatt-hours (TWh) per energy source over time is graphed. Firstly, the range of energy consumption is vastly different from the high GDP to lower middle GDP countries. While high GDP countries use the most energy at thousands of terrwatt-hours per year, the lower middle GDP countries barely reach 100. However, there is a common trend among all countries: low energy consumption of renewable energy sources (solar, wind, biofuel). Although there is a small increase in renewable energies in the high GDP bracket after 2015, it is still incomparable to its fossil fuel counter parts. Oil, coal and gas are prominent over time, especially in high and upper middle GDP brackets.
+
+Additionally, energy consumption rates are the most consistent in the high GDP bracket. Almost every energy source is increasing over time. Compared to the upper and lower middle GDP countries, their energy consumption rates fluctuate often and do not have a clear upward trend.
+
+```{r}
+#filter by gdp bracket lists + calculate average energy consumption per year, then visualize energy consumption by GDP bracket
+unique_world_energy %>%
+  inner_join(gdp_brackets, by = "country") %>%
+  filter(!grepl("Renewables|Fossil", energy_source),
+         !is.na(energy_consumption),
+         gdp_brackets != "Low GDP",
+         (!is.na(gdp_brackets) & gdp_brackets != "Lower Middle GDP") | (gdp_brackets == "Lower Middle GDP" & year >= 1985 & year <= 2019)) %>%
+  mutate(gdp_brackets = factor(gdp_brackets, levels = c("High GDP", "Upper Middle GDP", "Lower Middle GDP"))) %>%
+  group_by(gdp_brackets, year, energy_source) %>%
+  summarize(energy_consumption = mean(energy_consumption, na.rm = TRUE)) %>%
+  ggplot(mapping = aes(x = year, y = energy_consumption, color = energy_source)) +
+  geom_line() +
+  labs(title = "Figure 3: Energy Consumption Over Time",
+       x = "Year",
+       y = "Energy (Terawatt-hours, TWh)",
+       caption = "Average energy consumption (TWh) calculated by year and energy source\nSource: World Energy Consumption (2020)", color = "Energy Source") +
+  scale_x_continuous(breaks = seq(1965, 2019, 10)) +
+  theme(plot.title = element_text(hjust = 0.5, margin = margin(0, 0, 20, 0))) +
+  facet_wrap(~ gdp_brackets, nrow = 2, scales = "free")
+```
+
+##### **Energy & Economic GDP Correlation**
+
+My second research question is: which type of energy source is more closely correlated to a country's economic GDP than others? To answer this question, I chose to analyze six countries GDP against three energy source types, fossil fuel (coal, oil, gas), renewables, and other renewables, from 1965-2019. The countries are China, United States, Germany, Norway, Brazil, and New Zealand. I selected these countries because I wanted to show variety in energy consumption trends. For example, a manufacturing giant like China compared to a historically renewable energy focused country like Norway.
+
+For this analysis, I graphed energy consumption by country GDP on a scatter plot with trend line indicators. A scatter plot is the best way to show correlation between two variables because "the closer the data points are to forming a straight line when plotted, the higher the correlation between the two variables, or the stronger the relationship" (*Interpreting scatterplots*, n.d.).
+
+The first set of graphs represents China and the United States with the highest energy consumption rates. Fossil fuel energy is the major energy source type for these nations at more than 20k terawatt-hours. Across all countries, the strongest GDP correlation with fossil fuel energy is China. On the other side of the spectrum, the strongest GDP correlation with renewable energy sources is Norway. In Brazil and New Zealand, renewable energy is beginning to compete with fossil fuels. The only country without a positive correlation to an energy source type is Germany. In this graph, Germany has a negative correlation to fossil fuels with a slowly increasing renewable consumption rate.
+
+```{r}
+#create scatter plot of energy consumption and gpd of a country to show correlation
+scatter_energy_vs_gdp <- function(data, countries) {
+  data %>%
+    filter(grepl("Renewables|Fossil", energy_source)) %>%
+    filter(country %in% countries) %>%
+    ggplot(mapping = aes(x = gdp, color = energy_source)) +
+    geom_point(aes(y = energy_consumption)) +
+    geom_smooth(aes(y = energy_consumption), method = "lm") +
+    ylab("Energy (Terawatt-hours, TWh)") +
+    xlab("GDP (billions & trillions, U.S Dollars)") +
+    facet_wrap(~country, nrow = 1, scales = "free") +
+    theme(plot.title = element_text(hjust = 0.5, margin = margin(0, 0, 20, 0))) +
+    labs(caption = "Source: World Energy Consumption",
+         color = "Energy Source")
+}
+
+scatter_energy_vs_gdp(unique_world_energy, c("China", "United States")) +
+  labs(title = "Figure 4: Energy Consumption by Country GDP")
+
+scatter_energy_vs_gdp(unique_world_energy, c("Norway", "Germany"))
+
+scatter_energy_vs_gdp(unique_world_energy, c("Brazil", "New Zealand"))
+
+
+```
+
+## Conclusion & Discussion
+
+##### **Results**
+
+In my paper, I found local and global energy use trends do vary over time by economic GDP of a country. The data in Figure 3 shows that energy consumption trends are not the same across all the GDP brackets. In the high GDP bracket, almost every energy source is increasing over time. This is not true for the upper middle GDP bracket in which coal use has been decreasing since 1985 and nuclear remains below 25 TWh. Compare these to the lower middle GDP bracket, which has no upward trends in energy use at all.
+
+These energy use trends tell a story about old and new energy systems. Old energy systems that have been developing for hundreds of years like world power countries in the high GDP bracket have more variety in energy use. They are not forced to only rely on cheaper forms of energy such as coal and oil to run the nation (Thunberg, G., & Peters, G., 2022). Instead, renewable energy sources are slowly becoming affordable for residents. This can be seen in Figure 3, in which solar and wind energy consumption is starting to rise after 2005 for the high GDP bracket. Lower GDP bracket countries cannot switch to renewable energy as quickly because it is not sustainable in newer energy systems. For these countries, achieving rapid growth means turning to cheap energy sources (Thunberg, G., & Peters, G., 2022).
+
+For my next research question, I did find that some energy sources are more closely correlated to a country's economic GDP than others. I analyzed six countries in Figure 4.
+
+1.  China and the United States - fossil fuels are more positively correlated to GDP than renewables
+2.  Norway - renewables are more positively correlated to GDP than fossil fuels
+3.  Germany - fossil fuels are negatively correlated and renewables are positively correlated to GDP
+4.  Brazil and New Zealand - fossil fuels are more positively correlated to GDP than renewables. However, not as strongly as China and the United States
+
+Countries with strong manufacturing infrastructures such as China and the United States have strong positive fossil fuel correlations with GDP. For smaller countries that are not manufacturing giants like Norway and New Zealand, renewable energy consumption is competing, if not more plentiful than fossil fuels.
+
+##### **Limitations & Reflection**
+
+There were limitations with this data set. First, I found some areas were incomplete. I could not analyze the low GDP bracket countries and energy consumption rates due to lack of data input. Also, the last ten years available were 2009-2019 instead of up to 2022.
+
+Aside from choosing a better data set, if I could complete this project again, I would focus on a wider range of variables instead of only energy consumption in terwatt-hours. There were many variables available such as annual percentage change in consumption, share of energy consumption, and energy per capita/GDP. With these variables, I think I could have included more visualizations to answer my research questions.
+
+Overall, I am thrilled with my experience completing this project. Learning R programming has been a challenge but rewarding in the end. As my first coding project, I struggled with time management but I learned many new skills. I am excited to look back at this paper and reflect on how much I've grown.
+
+## Bibliography
+
+*Four key climate change indicators break records in 2021*. World Meteorological Organization. (2022, May 18). https://public.wmo.int/en/media/press-release/four-key-climate-change-indicators-break-records-2021
+
+Hannah Ritchie, Max Roser and Pablo Rosado (2022) - "Energy". Published online at OurWorldInData.org. Retrieved from: 'https://ourworldindata.org/energy' \[Online Resource\]
+
+*Interpreting scatterplots*. Interpreting Scatterplots \| Texas Gateway. (n.d.). https://www.texasgateway.org/resource/interpreting-scatterplots#:\~:text=The%20closer%20the%20data%20points,to%20have%20a%20positive%20correlation.
+
+*Most Powerful Countries 2023*. Most powerful countries 2023. (n.d.). https://worldpopulationreview.com/country-rankings/most-powerful-countries
+
+R Core Team (2021). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+
+Thunberg, G., & Peters, G. (2022). 'We are not moving in the right direction'. In *The Climate Book*. essay, Penguin Press.
+
+*Watt-hour*. Watt-hour - Energy Education. (n.d.). https://energyeducation.ca/encyclopedia/Watt-hour

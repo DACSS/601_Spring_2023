@@ -1,0 +1,151 @@
+---
+title: "Challenge 7"
+author: "Rahul Somu"
+description: "Visualizing Multiple Dimensions"
+date: "16/24/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - hotel_bookings
+  - australian_marriage
+  - air_bnb
+  - eggs
+  - abc_poll
+  - faostat
+  - usa_households
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+```{r}
+library(tidyverse)
+library(zoo)
+hotel_bookings <- read_csv("_data/hotel_bookings.csv")
+```
+
+### Briefly describe the data
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+#str(hotel_bookings)
+
+hotel_bookings <- hotel_bookings %>%
+mutate(arrival_date = paste(arrival_date_year, arrival_date_month, arrival_date_day_of_month, sep="-"))
+
+hotel_bookings <- hotel_bookings %>%
+mutate(total_nights_stayed = stays_in_weekend_nights + stays_in_week_nights)
+
+hotel_bookings <- hotel_bookings %>%
+mutate(average_daily_rate = adr / total_nights_stayed)
+
+hotel_bookings <- hotel_bookings %>%
+mutate(total_cost = adr * total_nights_stayed)
+
+hotel_bookings <- hotel_bookings %>%
+  mutate(is_canceled = factor(is_canceled, levels = c("TRUE", "FALSE")))
+
+hotel_bookings <- hotel_bookings %>%
+mutate(total_nights_stayed = na.locf(total_nights_stayed))
+
+hotel_bookings %>%
+  filter(arrival_date_year >= 2023)
+
+```
+
+
+
+```{r}
+#colnames(hotel_bookings)
+#Split the data into separate tables
+hotel_information <- hotel_bookings %>%
+select(hotel, country)
+
+booking_information <- hotel_bookings %>%
+select(arrival_date_year, arrival_date_month, arrival_date_day_of_month, total_nights_stayed, adr)
+```
+
+## Visualization with Multiple Dimensions
+```{r}
+ggplot(hotel_bookings, aes(x = arrival_date_year, y = arrival_date_month, color = adr)) +
+geom_point() +
+facet_wrap(~ hotel)
+
+ggplot(hotel_bookings, aes(x = arrival_date_year, y = arrival_date_month, size = total_nights_stayed, color = adr)) +
+geom_point() +
+facet_wrap(~ hotel)
+
+ggplot(hotel_bookings, aes(x = arrival_date_year, y = arrival_date_month, fill = adr)) +
+geom_tile() +
+facet_wrap(~ hotel)
+
+ggplot(hotel_bookings, aes(x = hotel, y = adr)) +
+geom_boxplot()
+
+adr_by_market_segment <- hotel_bookings %>%
+group_by(market_segment) %>%
+summarize(adr = mean(adr))
+
+ggplot(adr_by_market_segment, aes(x = market_segment, y = adr)) +
+geom_boxplot() +
+ggtitle("ADR by Market Segment") +
+xlab("Market Segment") +
+ylab("ADR")
+
+number_of_bookings_by_month_and_market_segment <- hotel_bookings %>%
+group_by(arrival_date_month, market_segment) %>%
+summarize(count = n())
+
+ggplot(number_of_bookings_by_month_and_market_segment, aes(x = arrival_date_month, y = market_segment, fill = count)) +
+geom_tile() +
+ggtitle("Number of Bookings by Month and Market Segment") +
+xlab("Month") +
+ylab("Market Segment")
+```
+

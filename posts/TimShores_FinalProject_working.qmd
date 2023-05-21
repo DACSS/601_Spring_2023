@@ -85,7 +85,7 @@ The request was approved by the Leverett and Wendell Police Services Oversight c
 
 ::: {.callout-tip icon=false}
 
-## Questions of public interest
+## Questions voiced by the public
 
 a. What types of calls are increasing? 
 b. What is the change in personnel time needed per call and per type of call?
@@ -94,7 +94,7 @@ d. Why do we need another officer when the populations and number of properties 
 
 :::
 
-Chief Minckler's response to these questions was informed by his administrative experience, but not by call data analysis. Due to difficulties generating reports from the administrative software used by many emergency response departments, the Chief was not able to speak to call data beyond call volume and call type. At public meetings, I heard Leverett residents express curiosity about the nature of increased call volume: How much was due to violent crime, domestic violence, interpersonal conflict, fraud, property rights violations, traffic violations, medical emergencies, mental health emergencies, fires? 
+Chief Minckler's response to these questions was informed by his administrative experience, but not by thorough call data analysis. Due to difficulties generating reports from the administrative software used by many emergency response departments, the Chief was not able to speak to call data beyond call volume and call type. At public meetings, I heard Leverett residents express curiosity about the nature of increased call volume: How much was due to violent crime, domestic violence, interpersonal conflict, fraud, property rights violations, traffic violations, medical emergencies, mental health emergencies, fires? 
 
 Although people had multiple concerns and interests in the matter, most meeting participants had this basic question in common: 
 
@@ -161,7 +161,7 @@ Chief Minckler sent me 10 PDF files: one for each town and year, from 2018 to 20
 
 1. **Call Reason Breakdown** shows the number of calls for each call reason, average time per call per call reason, and the type and number of actions taken in response to each call reason.
 2. **Call Action Breakdown** shows summaries of call actions.
-3. **Operator Race and Sex Breakdown** shows demographics of vehicle operators involved in traffic stops and violations.
+3. **Operator Race and Sex Breakdown** shows summary demographics of vehicle operators involved in traffic stops and violations.
 :::
 
 **Call Reason Breakdown** is the the only object of this analysis. CSV exports of all three data frames are available in the bibliography.
@@ -195,8 +195,8 @@ I took the following general steps to parse this list:
 1. Mutated each row with information about the town, year, and source page number.
 2. Flattened the nested list of data frames into a single data frame.
 3. Used `pivot_wider` to create columns based on PDF page x coordinates coordinates recorded for each observation by `pdf_data`. The x coordinates help identify column boundaries in the original report: each column had a minimum and maximum value for x.
-4. Plyered apart the tables into their atomistic meanings: call reasons, call actions, and operator demographics.
-6. Removed all NA values. Every observation in the original reports had values for every variable. Plyering into separate data frames leaes blanks or NAs where the original report format staggers. Therefore, I interpret NA to indicate that I must remove the row or fill in the variable with a sub-heading value. The end result is three data frames with no NAs.
+4. Plyered apart the tables according to their distinct meanings into separate data frames: call reasons, call actions, and operator demographics.
+6. Filtered out or filled in all NA values. Every observation in the original reports had values for every variable. Plyering into separate data frames leaes blanks or NAs where the original report format staggers. Therefore, I interpret NA to indicate that I must remove the row or fill in the variable with a sub-heading value. The end result is three data frames with no NAs.
 :::
 
 See my comments in the code block below for details.
@@ -463,11 +463,9 @@ My analysis plan is to answer the following more specific questions for both tow
 
 ## Results: Analysis and Visualization
 
-### Total hours working on calls
+To prepare my data for presentation of growth trends compared between call reasons and themes over time, the first code chunk uses grouping and linear regression to calculate estimates of correlation coefficients, and joins and a tribble to package the results together in data frames that make for easier presentation.
 
-Three key metrics are the number of calls (call volume), average hours worked, and total hours worked. The first question for a municipal department is about what impacts the budget. The change in total hours worked over time shows the big picture:
-
-```{r chunkTotalHours, fig.width=10, fig.height=5}
+```{r chunkGetCorrelations, fig.width=10, fig.height=5}
 
 # creating summary DFs, first step is to estimate change in hours per year
 # will do this for each factor: call_reason, town, call_theme
@@ -647,6 +645,19 @@ crtyGrowthDF <- tribble(
   "Both Towns", crYeargrowthPct, crYeargrowthLM, crYeargrowthLMweek, crYeargrowthFTE
 )
 
+```
+
+### Total hours working on calls
+
+The first question for a municipal department is about what impacts the budget. For this, three key metrics are call volume, average hours worked per call reason, and total hours worked. I took these steps to create the first plot:
+
+1. Grouped by call reason and town to summarize hours.
+2. Constructed an area plot with an lm trend line.
+
+The change in total hours worked over time shows the big picture:
+
+```{r chunkTotalHours, fig.width=10, fig.height=5}
+
 ### first plot shows the big picture: change in total hours
 
 callReasonsDF %>%
@@ -773,7 +784,7 @@ Anecdotally, I learned from LPD Chief Minckler that the previous Wendell police 
 
 ### Comparing call reasons
 
-With `r as.character(length(levels(callReasonsDF$call_reason))[1])` factor levels, the plot of total hours by call reason is a blur and the legend would take up the whole page.
+With `r as.character(length(levels(callReasonsDF$call_reason))[1])` factor levels, the plot of total hours by call reason is a blur and the legend would take up the whole page. This plot is only useful to show the complication of grouping by call reasons: 
 
 ```{r chunkByReason1, fig.width=10, fig.height=4}
 
@@ -803,6 +814,8 @@ grandTotalHoursChar = as.character(format(grandTotalHours, big.mark = ",", scien
 #### Top level-of-effort call reasons
 
 Grouping by `call_reason` and summing total hours allows me to learn which types of calls take the most time. This lollipop plot shows the top 30 call reasons in terms of hours worked in both towns over the 5-year period. From 2018 to 2022, there was **a grand total of `r grandTotalHoursChar` hours** for all calls in both towns. Each lollipop in the plot shows the absolute number of hours and the percentage of the grand total.
+
+I used factors ordered by linear regression estimates made in a previous code chunk to find the top N call reasons by rate of growth.
 
 ```{r chunkByReason2, fig.width=10, fig.height=10}
 
@@ -841,7 +854,7 @@ callReasonsDF %>%
   labs(title = "Top level-of-effort",
         subtitle = "Top 30 call reasons 2018-2022 (# of hours, % of all hours)",
         x = "Level-of-effort: Total hours worked",
-        y = "Reasons") +
+        y = "Reasons (top to bottom: most to least LOE)") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() 
 
@@ -906,15 +919,6 @@ crTopHours %>%
   theme(strip.text.x = 
           element_text(size = 9, color = "gray40", face = "bold"))
 
-
-#define function to calculate mode
-find_mode <- function(x) {
-  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
-  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
-  u[tab == max(tab)] #  the max occurrence is the mode
-  mean(u) # return mean in case the data is multimodal
-}
-
 ```
 
 
@@ -964,7 +968,7 @@ callReasonsDF %>%
   labs(title = "Top growth",
         subtitle = "Top 30 call reasons by growth",
         x = "Level-of-effort: Total hours worked",
-        y = "Reasons") +
+        y = "Reasons (top to bottom: most to least growth)") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() 
 
@@ -1021,7 +1025,7 @@ Or -- an important reminder that volume and rate are independent from each other
 
 #### Top impact call reasons
 
-Let's combine total hours with top growth to get a better sense of call reasons with the greatest impact.  
+Let's combine total hours with top growth to get a better sense of call reasons with the most impact.  
 
 ```{r chunkByReason7, fig.width=10, fig.height=10}
 
@@ -1071,7 +1075,7 @@ callReasonsDF %>%
   labs(title = "Top impact",
         subtitle = "30 call reasons with top level-of-effort and top growth",
         x = "Level-of-effort: Total hours worked",
-        y = "Reasons") +
+        y = "Reasons (top to bottom: most to least impact)") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() 
 
@@ -1188,10 +1192,10 @@ callReasonsDF %>%
     position = "bottom"
   ) +
   labs(title = "Bottom impact",
-        subtitle = "30 call reasons with greatest negative growth 
-and greatest level-of-effort",
+        subtitle = "30 call reasons with the most negative growth 
+and most level-of-effort",
         x = "Level-of-effort: Total hours worked",
-        y = "Reasons") +
+        y = "Reasons (top to bottom: least to most negative impact") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() 
 
@@ -1294,7 +1298,7 @@ callReasonsDF %>%
   labs(title = "Thematic impact",
         subtitle = "Call themes by level-of-effort and growth",
         x = "Level-of-effort: Total hours worked",
-        y = "Themes") +
+        y = "Themes (top to bottom: most to least impact)") +
   theme_ipsum() 
 
 callReasonsDF %>%
@@ -1437,11 +1441,20 @@ Each data frame includes the following variables that identify when and where th
 I can join reason and action data by using town, year, and call_reason as a compound key.
 :::
 
-### Sample summary of each data frame
+### Sample summaries of the call reasons data frame
 
 To get a sense of the scale of time spent on calls, these 3 tables show (1) a summary of time per call by the top 5 call reason mean times; (2) a summary of time per call by town; and (3) a summary of time per call by year.
 
 ```{r}
+
+#define function to calculate mode
+find_mode <- function(x) {
+  u <- unique(x[!is.na(x)]) # unique list as an index, without NA
+  tab <- tabulate(match(x[!is.na(x)], u))  # count how many times each index member occurs
+  u[tab == max(tab)] #  the max occurrence is the mode
+  mean(u) # return mean in case the data is multimodal
+}
+
 
 callReasonsDF_ReasonSummary <- callReasonsDF %>% 
   group_by(call_reason) %>% 

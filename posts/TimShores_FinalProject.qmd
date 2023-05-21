@@ -20,7 +20,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r}
+```{r chunkGearUp}
 #| label: setup
 #| warning: false
 #| message: false
@@ -169,9 +169,12 @@ Chief Minckler sent me 10 PDF files: one for each town and year, from 2018 to 20
 I used the R libraries `purrr` and `pdf_tools` to read-in the data to a list of 10 lists of data frames: one data frame for each page, one list for each file, in a collection of 10 files.
 
 
-```{r}
+```{r chunkConsumeFiles}
 
-projectFiles <- dir_ls('../posts/TimShores_FinalProject_Data') # creates fs_path vector of each file in that directory
+    # creates fs_path vector of each file in that directory
+projectFiles <- dir_ls('../posts/TimShores_FinalProject_Data') 
+    # I have csv files in that folder for public sharing ... remove them from vector.
+projectFiles <- projectFiles[grepl('\\.pdf$', projectFiles)]
 
 projectFiles_list <- projectFiles %>%
   map(pdf_data) # purrr function that applies pdf_data reading function to each file element of fs_path vector
@@ -202,7 +205,7 @@ I took the following general steps to parse this list:
 See my comments in the code block below for details.
 
 
-```{r}
+```{r chunkParseFiles}
 
   # This next part took a couple days of searching for a tidy solution. 
   # Then I just decided to use a good old-fashioned nested for loop.
@@ -415,7 +418,7 @@ The LPD call data does not show when police response is required or optional. Th
 
 :::
 
-```{r}
+```{r chunkMapThemes}
 
 # a vector of all the factors, because I need to create a simpler taxonomy
 
@@ -579,17 +582,17 @@ crTownYearThemeDF <- callReasonsDF %>%
 
   # Calculate growth percentage of hours worked
 
-crYeargrowthPct <- paste0(round(
+crYeargrowthPct <- as.character(paste0(round(
   (crYearDF[5,3] - crYearDF[1,3]) / crYearDF[1,3] * 100, 1)[[1]],
-  "%")
+  "%"))
 
-crLevgrowthPct <- paste0(round(
+crLevgrowthPct <- as.character(paste0(round(
   (crTownYearDF[5,4] - crTownYearDF[1,4]) / crTownYearDF[1,4] * 100, 1)[[1]],
-  "%")
+  "%"))
 
-crWengrowthPct <- paste0(round(
+crWengrowthPct <- as.character(paste0(round(
   (crTownYearDF[10,4] - crTownYearDF[6,4]) / crTownYearDF[6,4] * 100, 1)[[1]],
-  "%")
+  "%"))
 
   # calculate linear model coefficient estimate of x (hour increase by year)
 
@@ -762,7 +765,7 @@ crtyGrowthDF
 
 This reveals that Wendell, despite their low proportion of calls and hours, has driven most growth in calls compared with Leverett. 
 
-It's more accurate and fair to say that missing data from Wendell has driven the appearance of call growth in the data. As described earlier, I learned from my discussion with LPD Chief Minckler that Wendell's former police chief didn't log calls consistently. Improved data input by LPD officers has created a more accurate record of policing in Wendell. It's possible to use this data set to estimate Wendell's past police call data, but that's beyond the scope of this analysis.
+It's more accurate and fair to say that missing data from Wendell has driven the appearance of more than half of the rate of growth in the data. As described earlier, I learned from my discussion with LPD Chief Minckler that Wendell's former police chief didn't log calls consistently. Improved data input by LPD officers has created a more accurate record of policing in Wendell. It's possible to use this data set to estimate Wendell's past police call data, but that's beyond the scope of this analysis.
 
 ::: {.callout-warning icon=false}
 
@@ -1274,7 +1277,7 @@ I would still find it helpful to paint with a broader brush. As I described earl
 Let's find out impact in terms of theme.
 
 
-```{r chunkByTheme1, fig.width=10, fig.height=10}
+```{r chunkByTheme1, fig.width=10, fig.height=6}
 
 callReasonsDF %>%
   group_by(call_theme) %>%
@@ -1300,6 +1303,10 @@ callReasonsDF %>%
         x = "Level-of-effort: Total hours worked",
         y = "Themes (top to bottom: most to least impact)") +
   theme_ipsum() 
+
+```
+
+```{r chunkByTheme2, fig.width=10, fig.height=10}
 
 callReasonsDF %>%
   group_by(call_theme, year) %>%
@@ -1445,7 +1452,7 @@ I can join reason and action data by using town, year, and call_reason as a comp
 
 To get a sense of the scale of time spent on calls, these 3 tables show (1) a summary of time per call by the top 5 call reason mean times; (2) a summary of time per call by town; and (3) a summary of time per call by year.
 
-```{r}
+```{r chunkAppendix}
 
 #define function to calculate mode
 find_mode <- function(x) {

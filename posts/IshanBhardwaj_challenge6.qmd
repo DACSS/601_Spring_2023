@@ -1,0 +1,126 @@
+---
+title: "Challenge 6"
+author: "Ishan Bhardwaj"
+description: "Time and Group Relationship visualizations"
+date: "05/21/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - Ishan Bhardwaj
+  - fed_rate
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+5)  Create at least one graph depicting part-whole or flow relationships
+   - try to make them "publication" ready (optional)
+   - Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - debt  ⭐
+  - fed_rate ⭐⭐
+  - abc_poll ⭐⭐⭐
+  - usa_hh ⭐⭐⭐
+  - hotel_bookings ⭐⭐⭐⭐
+  - AB_NYC ⭐⭐⭐⭐⭐
+
+```{r}
+fed_funds <- read_csv("_data/FedFundsRate.csv")
+fed_funds
+```
+
+### Briefly describe the data
+
+```{r}
+table(select(fed_funds, "Year"))
+normal_obsv <- filter(fed_funds, `Year` == 1955)
+normal_obsv
+diff_obsv <- filter(fed_funds, `Year` == 1988)
+diff_obsv
+```
+
+This dataset provides federal funds rate targets with an upper and lower boundary, the actual federal funds rate for a specified year + month + day, and general economic info from 1954 to 2017. As seen from the tables, these values are usually entered on the first day of every month. In certain cases, these values are also entered either halfway through the month or at random dates. These irregular entries may hint at periods of economic fluctuation during those months.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+This dataset is not tidy because the year, month, and day are in separate columns. These are all observances of one variable: the date, and hence they should be compressed into one column. I have done this below.
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+fed_funds_tidy <- fed_funds %>%
+  mutate(Date = ymd(str_c(Year, Month, Day, sep="-"))) %>%
+  select(11, 4:10)
+fed_funds_tidy
+```
+
+In the original dataset, the year, month, and day were in separate columns, which is incorrect. These should all be collapsed into one variable "Date", which is what I have done. I first concatenated each year, month, and day into a string delimited by `-` and then used ymd() from lubridate to convert it to proper date format. These new dates were added into a new column "Date" and finally, the relevant columns were selected from the transformed dataset.
+
+## Time Dependent Visualization
+
+```{r}
+ggplot(fed_funds_tidy, aes(Date)) +
+  geom_line(aes(y = `Effective Federal Funds Rate`, color = "EFFR")) +
+  geom_line(aes(y = `Unemployment Rate`, color = "Unemployment Rates")) +
+  scale_x_date(date_labels = "%b %Y") +
+  theme_minimal() +
+  labs(title = "Line Plots", subtitle = "Date vs Unemployment Rates and EFFR", x = "Date", y = "Unemployment Rates and EFFR")
+```
+
+This graph depicts the general trend of the EFFR (Effective Federal Funds Rate) and unemployment rate from 1954 to 2017. This is an important relationship to consider because we can get insights as to how EFFR has affected unemployment and vice-versa historically. This could be used to make predictions about both in the future if a relationship between them is found. As we can see from the plots, although the EFFR shows more dramatic spikes than the unemployment rate, it is usually observed that as the unemployment peaks, the EFFR peaks as well. The maximas of these plots are both observed at the start of the 1980-1990 decade. These similar trends hint at a correlation between these variables. I chose line plots for this visualization because I can easily see rate fluctuations, peaks, and dips.
+
+## Visualizing Part-Whole Relationships
+
+```{r}
+compress_rates <- fed_funds_tidy %>%
+  select(1, 2, 5) %>%
+  pivot_longer(2:3, names_to = "Target and Effective Rates", values_to = "Rate")
+compress_rates
+```
+
+For this analysis, the groups we are trying to locate relationships between are the EFFR and target rates, so I have compressed them into one column.
+
+```{r}
+ggplot(compress_rates, aes(x = Date, y = Rate, fill = `Target and Effective Rates`)) +
+  geom_bar(position="dodge", stat="identity", width = 3.0) +
+  scale_x_date(date_labels = "%b %Y", limits = as.Date(c("1984-01-01", "1984-12-31")), date_breaks = "1 month") +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  labs(title = "Bar Plots", subtitle = "Date vs Federal Funds Rates", x = "Date", y = "Rates")
+```
+
+Since we know that there was a major EFFR spike at the start of the 1980-1990 decade, we can do a group analysis of the target rates and the EFFR to see if there were any major differences between them during this period. I have chosen the year 1984 as a sample, and contrary to what I expected, the target rates and EFFR remain relatively similar throughout the whole year. However, in the second half of this year, there are more frequent changes to these rates, which could hint at increased economic fluctuation during this time. I chose a grouped bar chart for this visualization because I can easily note rate differences by observing the heights of different groups.

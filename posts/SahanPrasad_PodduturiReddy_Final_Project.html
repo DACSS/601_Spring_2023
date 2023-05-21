@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Sahan Prasad Podduturi Reddy">
+<meta name="dcterms.date" content="2023-05-19">
+<meta name="description" content="Flight Delay Analysis">
+
+<title>DACSS601: Data Science Fundamentals Final Paper</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../images/DACSS_Round_Network.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+<link href="../site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="../site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta name="twitter:title" content="DACSS601: Data Science Fundamentals Final Paper">
+<meta name="twitter:description" content="Flight Delay Analysis">
+<meta name="twitter:image" content="https://dacss.github.io/601_Spring_2023/posts/SahanPrasad_PodduturiReddy_Final_Project_files/figure-html/TotalAverageDelay-1.png">
+<meta name="twitter:creator" content="@UMassDACSS">
+<meta name="twitter:site" content="@UMassDACSS">
+<meta name="twitter:image-height" content="960">
+<meta name="twitter:image-width" content="1344">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../images/UMass White Wordmark Horiz.png" alt="" class="navbar-logo">
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="true"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/DACSS" rel="" target="">
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../about.html" rel="" target="">
+ <span class="menu-text">Contributors</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://umass.edu/sbs/dacss" rel="" target="">
+ <span class="menu-text">DACSS</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/DACSS" rel="" target=""><i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#abstract" id="toc-abstract" class="nav-link active" data-scroll-target="#abstract">Abstract</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#analysis" id="toc-analysis" class="nav-link" data-scroll-target="#analysis">Analysis</a></li>
+  <li><a href="#visualizations" id="toc-visualizations" class="nav-link" data-scroll-target="#visualizations">Visualizations</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
+  <li><a href="#bibliography" id="toc-bibliography" class="nav-link" data-scroll-target="#bibliography">Bibliography</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">DACSS601: Data Science Fundamentals Final Paper</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+  <div class="quarto-categories">
+    <div class="quarto-category">final_project</div>
+  </div>
+  </div>
+
+<div>
+  <div class="description">
+    Flight Delay Analysis
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Sahan Prasad Podduturi Reddy </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">May 19, 2023</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="abstract" class="level2">
+<h2 class="anchored" data-anchor-id="abstract">Abstract</h2>
+<p>The overall goal of this project is go through Flight Delay Data over the course of an entire year to find patterns of when flight delays are more prone to happens. Airline delays can cause unnecessary disruptions in people’s lives. The problems caused by flight delays include missing important business meetings or failing to catch another connecting flight which can lead to further delays. This could result in additional costs as people are stuck at the airport for an extended period of time and have to make more purchases at the airport as a result. Moreover, it is not a commonly known fact that airlines are actually obliged to post flight delay data on their website. Many airlines fail to meet this obligation which could easily help passengers avoid flights with a history of delays and cancellations. Through this project, I aim to analyze flight delays for different airline carriers over the course of the year and find patterns of flight delays.</p>
+</section>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>I used the <code>DelayedFlight.csv</code> file which contains data about local airline carriers making flight trips all over the US from Jan 2008 to Jan 2009. This version of the dataset was compiled from the Statistical Computing Statistical Graphics 2009 Data Expo. The original dataset contains 30 columns with information regarding daily flight trips by different airline carriers all over the US for every day of the year. The information captured by this dataset includes - the departure and arrival times of all flights making trips on a particular day, flight carrier name and flight number information, the origin and the destination airports, and 5 columns marking delays - <code>CarrierDelay</code>, <code>WeatherDelay</code>, <code>NASDelay</code> - Delays and cancellations attributable to the National Aviation System(non-extreme weather conditions, airport operations, heavy traffic volume etc), <code>SecurityDelay</code> and <code>LateAircraftDelay</code>. Our goal is to find patterns in these delay columns and figure out times of peak delays. To go about this, we process the data accordingly -</p>
+<ol type="1">
+<li>Remove a lot of redundant columns which do not offer any information relevant to the problem we are trying to analyze.</li>
+<li>Combine the <code>Year</code>, <code>Month</code> and <code>DayofMonth</code> columns into a single <code>arrival_date</code> column.</li>
+<li>We remove any columns with N/A values present.</li>
+</ol>
+<p>Doing this eliminates 17 columns immediately from our dataframe which significantly speeds up our computation and eliminates around 500,000 rows from our massive dataset.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data"</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>flights <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"DelayedFlights.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">"Cancelled"</span>, <span class="sc">-</span><span class="st">"CancellationCode"</span>, <span class="sc">-</span><span class="st">"Diverted"</span>, <span class="sc">-</span><span class="st">"DepTime"</span>, <span class="sc">-</span><span class="st">"CRSDepTime"</span>, <span class="sc">-</span><span class="st">"ArrTime"</span>, <span class="sc">-</span><span class="st">"CRSArrTime"</span>, <span class="sc">-</span><span class="st">"ActualElapsedTime"</span>, <span class="sc">-</span><span class="st">"CRSElapsedTime"</span>, <span class="sc">-</span><span class="st">"X"</span>, <span class="sc">-</span><span class="st">"AirTime"</span>, <span class="sc">-</span><span class="st">"ArrDelay"</span>, <span class="sc">-</span><span class="st">"DepDelay"</span>, <span class="sc">-</span><span class="st">"FlightNum"</span>, <span class="sc">-</span><span class="st">"TailNum"</span>, <span class="sc">-</span><span class="st">"TaxiIn"</span>, <span class="sc">-</span><span class="st">"TaxiOut"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">FlightDate =</span> <span class="fu">as.Date</span>(<span class="fu">paste</span>(<span class="st">`</span><span class="at">Year</span><span class="st">`</span>, <span class="st">`</span><span class="at">Month</span><span class="st">`</span>, <span class="st">`</span><span class="at">DayofMonth</span><span class="st">`</span>, <span class="at">sep =</span> <span class="st">"-"</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">"Year"</span>, <span class="sc">-</span><span class="st">"DayofMonth"</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>flights <span class="ot">&lt;-</span> flights[<span class="sc">!</span><span class="fu">is.na</span>(flights<span class="sc">$</span>LateAircraftDelay), ]</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Month"],"name":[1],"type":["int"],"align":["right"]},{"label":["DayOfWeek"],"name":[2],"type":["int"],"align":["right"]},{"label":["UniqueCarrier"],"name":[3],"type":["chr"],"align":["left"]},{"label":["Origin"],"name":[4],"type":["chr"],"align":["left"]},{"label":["Dest"],"name":[5],"type":["chr"],"align":["left"]},{"label":["Distance"],"name":[6],"type":["int"],"align":["right"]},{"label":["CarrierDelay"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["WeatherDelay"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["NASDelay"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["SecurityDelay"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["LateAircraftDelay"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["FlightDate"],"name":[12],"type":["date"],"align":["right"]}],"data":[{"1":"1","2":"4","3":"WN","4":"IND","5":"BWI","6":"515","7":"2","8":"0","9":"0","10":"0","11":"32","12":"2008-01-03","_rn_":"4"},{"1":"1","2":"4","3":"WN","4":"IND","5":"LAS","6":"1591","7":"10","8":"0","9":"0","10":"0","11":"47","12":"2008-01-03","_rn_":"6"},{"1":"1","2":"4","3":"WN","4":"IND","5":"MCO","6":"828","7":"8","8":"0","9":"0","10":"0","11":"72","12":"2008-01-03","_rn_":"8"},{"1":"1","2":"4","3":"WN","4":"IND","5":"PHX","6":"1489","7":"3","8":"0","9":"0","10":"0","11":"12","12":"2008-01-03","_rn_":"10"},{"1":"1","2":"4","3":"WN","4":"IND","5":"TPA","6":"838","7":"0","8":"0","9":"0","10":"0","11":"16","12":"2008-01-03","_rn_":"12"},{"1":"1","2":"4","3":"WN","4":"ISP","5":"BWI","6":"220","7":"12","8":"0","9":"0","10":"0","11":"25","12":"2008-01-03","_rn_":"13"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+</section>
+<section id="analysis" class="level2">
+<h2 class="anchored" data-anchor-id="analysis">Analysis</h2>
+<p>In order to solve our problem, we need to find the following information -</p>
+<ol type="1">
+<li>Delay values per Month.</li>
+<li>Delay values per DayOfWeek.</li>
+<li>Delay values grouped by different airline carriers.</li>
+</ol>
+<p>We are planning on using univariate boxplots which help us visualize not only the range of values around which the data for each column is centralized but also the outliers for each of the Delay columns in our dataset. We then plan to use facet_wrap() to give us individual graphs for each of the Delay columns in the dataset. We will also use Bar graphs which are useful in visualizing Bivariate data with a single graph in a neat and concise manner.</p>
+</section>
+<section id="visualizations" class="level2">
+<h2 class="anchored" data-anchor-id="visualizations">Visualizations</h2>
+<p>Based on the delay values from our 5 columns, we first compute a separate column depicting <code>TotalDelay</code>. We then plot a Time-Series graph in order to get a quick view of periods of time where we see spikes in flight delays. We expect that flights delays would generally be higher during peaks flying periods such as holiday seasons when airports are crowded and there is increased demand for flights or in the case of severe weather conditions. Apart from this, we draw boxplots for each of the Delay columns to see the spread and variability of data in each column. We notice that magnitude of <code>SecurityDelay</code> and <code>WeatherDelay</code> values are much lesser compared to all the other delay columns in our dataframe indicating that these columns will have lesser impact on the <code>TotalDelay</code> compared to other columns.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(FlightDate) <span class="sc">%&gt;%</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"WeatherDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">WeatherDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"NASDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">NASDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"SecurityDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">SecurityDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>(<span class="at">TotalDelay =</span> CarrierDelay<span class="sc">+</span>WeatherDelay<span class="sc">+</span>NASDelay<span class="sc">+</span>SecurityDelay<span class="sc">+</span>LateAircraftDelay)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["FlightDate"],"name":[1],"type":["date"],"align":["right"]},{"label":["CarrierDelay"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["WeatherDelay"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["NASDelay"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["SecurityDelay"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["LateAircraftDelay"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["TotalDelay"],"name":[7],"type":["dbl"],"align":["right"]}],"data":[{"1":"2008-01-01","2":"20.16860","3":"3.456811","4":"12.300329","5":"0.2072010","6":"28.01869","7":"64.15164"},{"1":"2008-01-02","2":"20.41804","3":"1.622807","4":"9.207908","5":"0.3404032","6":"25.26054","7":"56.84970"},{"1":"2008-01-03","2":"21.09264","3":"1.080580","4":"9.016256","5":"0.1643069","6":"22.28107","7":"53.63485"},{"1":"2008-01-04","2":"18.59996","3":"6.365307","4":"11.709996","5":"0.1163156","6":"27.78104","7":"64.57261"},{"1":"2008-01-05","2":"22.62907","3":"2.783450","4":"10.749485","5":"0.1292713","6":"29.66818","7":"65.95945"},{"1":"2008-01-06","2":"20.48570","3":"3.674294","4":"9.914744","5":"0.1489205","6":"25.32644","7":"59.55010"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>flights2 <span class="sc">%&gt;%</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> FlightDate)) <span class="sc">+</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> <span class="st">`</span><span class="at">TotalDelay</span><span class="st">`</span>), <span class="at">color=</span><span class="st">"lightgreen"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="SahanPrasad_PodduturiReddy_Final_Project_files/figure-html/TotalAverageDelay-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>data1 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>CarrierDelay</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>WeatherDelay</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>data3 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>NASDelay</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>data4 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>SecurityDelay</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>data5 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>LateAircraftDelay</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data1, <span class="at">main =</span> <span class="st">"CarrierDelay"</span>, <span class="at">yaxt =</span> <span class="st">"n"</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data1)))</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data2, <span class="at">main =</span> <span class="st">"WeatherDelay"</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data2)))</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data3, <span class="at">main =</span> <span class="st">"NASDelay"</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data3)))</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data4, <span class="at">main =</span> <span class="st">"SecurityDelay"</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data4)))</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data5, <span class="at">main =</span> <span class="st">"LateAircraftDelay"</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data5)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="SahanPrasad_PodduturiReddy_Final_Project_files/figure-html/TotalAverageDelay-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>To get a clearer picture, we can group by month and get an estimate of <code>TotalDelay</code>. We construct a point graph and then smooth it to get an estimate of how <code>TotalDelay</code> rises and falls. This geom_smooth() functions gives a line which shows how the Delay values fluctuate over the months. From the graph, we notice that flight delays decrease during the stating months of the year upto May before there is a sharp spike in delays around the months of Jun, July before declining until the month of October where delays are lowest. Afterwards, as expected we see a spike in Delays around the time of Christmas and New Year.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Month) <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"WeatherDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">WeatherDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"NASDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">NASDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"SecurityDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">SecurityDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>(<span class="at">TotalDelay =</span> CarrierDelay<span class="sc">+</span>WeatherDelay<span class="sc">+</span>NASDelay<span class="sc">+</span>SecurityDelay<span class="sc">+</span>LateAircraftDelay)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["Month"],"name":[1],"type":["int"],"align":["right"]},{"label":["CarrierDelay"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["WeatherDelay"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["NASDelay"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["SecurityDelay"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["LateAircraftDelay"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["TotalDelay"],"name":[7],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"19.35447","3":"3.530053","4":"14.40730","5":"0.10271058","6":"25.65260","7":"63.04713"},{"1":"2","2":"18.50742","3":"4.207895","4":"14.53205","5":"0.08602409","6":"26.83740","7":"64.17079"},{"1":"3","2":"19.18841","3":"3.610672","4":"13.66419","5":"0.11183969","6":"25.50648","7":"62.08160"},{"1":"4","2":"19.65730","3":"2.748136","4":"13.61651","5":"0.07758338","6":"23.31506","7":"59.41458"},{"1":"5","2":"18.06872","3":"2.523910","4":"14.00978","5":"0.10234035","6":"23.66695","7":"58.37170"},{"1":"6","2":"18.12459","3":"4.179695","4":"17.56822","5":"0.07726623","6":"26.21779","7":"66.16755"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>flights2 <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> Month)) <span class="sc">+</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">y =</span> <span class="st">`</span><span class="at">TotalDelay</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> <span class="st">`</span><span class="at">TotalDelay</span><span class="st">`</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="SahanPrasad_PodduturiReddy_Final_Project_files/figure-html/MonthlyDelay-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We can also check which days of the week people have the most delay when flying. We are expecting that weekends would have higher flight delays as opposed to weekdays. We first create a pie-chart which shows percentage of total delays that occur on a particular day of the week. The days of the week are labeled starting from Monday-Sunday in the range 1-7. We notice that there isn’t a significant difference in the delay period between the different days of the week. The weekend delay values are still slightly more. We further analyze why this is the case by plotting separate line graphs for each type of delay and measuring delay trends as we go through the days of the week. We notice that there is higher CarrierDelays and LateAircraftDelays around the time of the weekend as predicted. However, higher WeatherDelays and NASDelays were recorded during the weekdays. Thus, the overall delay values over the course of the week balances out.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DayOfWeek) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"WeatherDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">WeatherDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"NASDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">NASDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"SecurityDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">SecurityDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(CarrierDelay, WeatherDelay, NASDelay, SecurityDelay, LateAircraftDelay), <span class="at">names_to =</span> <span class="st">"DelayType"</span>, <span class="at">values_to =</span> <span class="st">"DelayTime"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DayOfWeek) <span class="sc">%&gt;%</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"DelayTime"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">DelayTime</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>label_colors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"red"</span>, <span class="st">"blue"</span>, <span class="st">"green"</span>, <span class="st">"orange"</span>, <span class="st">"violet"</span>, <span class="st">"yellow"</span>, <span class="st">"brown"</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>flights2<span class="sc">$</span>percent <span class="ot">&lt;-</span> flights2<span class="sc">$</span>DelayTime <span class="sc">/</span> <span class="fu">sum</span>(flights2<span class="sc">$</span>DelayTime) <span class="sc">*</span> <span class="dv">100</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["DayOfWeek"],"name":[1],"type":["int"],"align":["right"]},{"label":["DelayTime"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["percent"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"12.55041","3":"14.17569"},{"1":"2","2":"13.01124","3":"14.69620"},{"1":"3","2":"12.20827","3":"13.78924"},{"1":"4","2":"12.26961","3":"13.85853"},{"1":"5","2":"12.68677","3":"14.32971"},{"1":"6","2":"12.43028","3":"14.04000"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(flights2, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">""</span>, <span class="at">y =</span> DelayTime, <span class="at">fill =</span> <span class="fu">factor</span>(flights2<span class="sc">$</span>DayOfWeek))) <span class="sc">+</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>, <span class="at">width =</span> <span class="dv">1</span>, <span class="at">color =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_polar</span>(<span class="st">"y"</span>, <span class="at">start =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span> </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste0</span>(<span class="fu">round</span>(percent, <span class="dv">1</span>), <span class="st">"%"</span>)), <span class="at">position =</span> <span class="fu">position_stack</span>(<span class="at">vjust =</span> <span class="fl">0.5</span>)) <span class="sc">+</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> label_colors) <span class="sc">+</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">fill =</span> <span class="st">"Days Of The Week"</span>, <span class="at">x=</span><span class="st">"Days Of The Week"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="SahanPrasad_PodduturiReddy_Final_Project_files/figure-html/DailyFlightDelay-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DayOfWeek) <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"WeatherDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">WeatherDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"NASDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">NASDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"SecurityDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">SecurityDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(CarrierDelay, WeatherDelay, NASDelay, SecurityDelay, LateAircraftDelay), <span class="at">names_to =</span> <span class="st">"DelayType"</span>, <span class="at">values_to =</span> <span class="st">"DelayTime"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["DayOfWeek"],"name":[1],"type":["int"],"align":["right"]},{"label":["DelayType"],"name":[2],"type":["chr"],"align":["left"]},{"label":["DelayTime"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"CarrierDelay","3":"19.37667238"},{"1":"1","2":"WeatherDelay","3":"3.34669271"},{"1":"1","2":"NASDelay","3":"14.47606229"},{"1":"1","2":"SecurityDelay","3":"0.07968533"},{"1":"1","2":"LateAircraftDelay","3":"25.47293696"},{"1":"2","2":"CarrierDelay","3":"18.36798894"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(flights2, <span class="fu">aes</span>(<span class="at">y=</span><span class="st">`</span><span class="at">DelayTime</span><span class="st">`</span>, <span class="at">x=</span>DayOfWeek)) <span class="sc">+</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(DelayType), <span class="at">scales =</span> <span class="st">"free"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="SahanPrasad_PodduturiReddy_Final_Project_files/figure-html/DailyFlightDelay-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Next we look at Airline Delays grouped by different local airline carriers in the US. In my analysis, I exclude <code>SecurityDelay</code> and <code>WeatherDelay</code> because I want to analyze delays that the airlines are directly responsible for. I also exclude <code>NASDelay</code> because they are beyond the control of individual airlines, and they are managed by air traffic control authorities and airport authorities. We first plot a point graph which shows which individual airlines have the highest Carrier and LateAircraft delays. Then we plot a stacked bar graph which helps gauge which airlines have the most and least overall airline related flight delays. We notice that Frontier and PSA Airlines come near the bottom of the table meanwhile Hawaiian and Mesa Airlines have the most delays.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(UniqueCarrier) <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(CarrierDelay, LateAircraftDelay), <span class="at">names_to =</span> <span class="st">"DelayType"</span>, <span class="at">values_to =</span> <span class="st">"DelayTime"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(flights2, <span class="fu">aes</span>(<span class="at">y=</span><span class="st">`</span><span class="at">DelayTime</span><span class="st">`</span>, <span class="at">x=</span>UniqueCarrier, <span class="at">color=</span>DelayType, <span class="at">shape=</span>DelayType)) <span class="sc">+</span> <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Airline Carrier vs Delay Time"</span>, <span class="at">x =</span> <span class="st">"Airline Carrier"</span>, <span class="at">y =</span> <span class="st">"Delay Time"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="SahanPrasad_PodduturiReddy_Final_Project_files/figure-html/AirlineFlightDelay-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(flights2, <span class="fu">aes</span>(<span class="at">fill=</span>DelayType, <span class="at">y=</span><span class="st">`</span><span class="at">DelayTime</span><span class="st">`</span>, <span class="at">x=</span>UniqueCarrier)) <span class="sc">+</span> </span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">position=</span><span class="st">"stack"</span>, <span class="at">stat=</span><span class="st">"identity"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="SahanPrasad_PodduturiReddy_Final_Project_files/figure-html/AirlineFlightDelay-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>Overall, this project was designed to analyze and successfully predict future flight delays based on the information that is available to us. This is very useful for future customers who are planning on leveraging such results when booking flights in the future. We noticed that the peak travel months coincide with periods of peak flight delays. We notice from the Month/TotalDelay graph that June, July and December have higher flight delays so people travelling during those months should anticipate more travel setbacks beforehand. The months of May, September and October have the least delays as expected because they don’t coincide with any holiday seasons or seasons with inclement weather conditions. We then check whether the Day of the Week when we travel affects the DelayTime. Although the pie chart numbers shows that delay values are same over the entire week, we notice that this was because Weather and NAS Delays happened to fall on the weekdays during this particular year and might not follow the same pattern in a different year. CarrierDelay and LateAircraftDelay values are more on the weekends than on the weekdays showing that weekends are more delay prone. Finally, we also check which airlines are more prone to delays to ensure that customers know which airlines are more prone to flight delays. This information is important because customers can choose between different available airline options when booking their flights, or in the worst case anticipate delays in their travel plans beforehand which helps them if they want to make any additional plans in their destination location after their flight.</p>
+<p>One thing to consider however is that the Origin and Destination locations are not considered in our calculations which could slightly affect customer decisions. Flights travelling to and from larger airports are more likely to have more delays. Different airline carriers have locations that they fly to and this could also be one of the reasons for some carriers to have higher delays.</p>
+</section>
+<section id="bibliography" class="level2">
+<h2 class="anchored" data-anchor-id="bibliography">Bibliography</h2>
+<ol type="1">
+<li>Dataset - Giovanni Gonzalez. 2019. Airlines delay. (November 2019). Retrieved May 20, 2023 from https://www.kaggle.com/datasets/giovamata/airlinedelaycauses.</li>
+<li>R Programming was used to tidy the dataset and present the necessary visualizations.</li>
+</ol>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  let localAlternateSentinel = 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  const viewSource = window.document.getElementById('quarto-view-source') ||
+                     window.document.getElementById('quarto-code-tools-source');
+  if (viewSource) {
+    const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+    viewSource.addEventListener("click", function(e) {
+      if (sourceUrl) {
+        // rstudio viewer pane
+        if (/\bcapabilities=\b/.test(window.location)) {
+          window.open(sourceUrl);
+        } else {
+          window.location.href = sourceUrl;
+        }
+      } else {
+        const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+        modal.show();
+      }
+      return false;
+    });
+  }
+  function toggleCodeHandler(show) {
+    return function(e) {
+      const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+      for (let i=0; i<detailsSrc.length; i++) {
+        const details = detailsSrc[i].parentElement;
+        if (show) {
+          details.open = true;
+        } else {
+          details.removeAttribute("open");
+        }
+      }
+      const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+      const fromCls = show ? "hidden" : "unhidden";
+      const toCls = show ? "unhidden" : "hidden";
+      for (let i=0; i<cellCodeDivs.length; i++) {
+        const codeDiv = cellCodeDivs[i];
+        if (codeDiv.classList.contains(fromCls)) {
+          codeDiv.classList.remove(fromCls);
+          codeDiv.classList.add(toCls);
+        } 
+      }
+      return false;
+    }
+  }
+  const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+  if (hideAllCode) {
+    hideAllCode.addEventListener("click", toggleCodeHandler(false));
+  }
+  const showAllCode = window.document.getElementById("quarto-show-all-code");
+  if (showAllCode) {
+    showAllCode.addEventListener("click", toggleCodeHandler(true));
+  }
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<script src="https://giscus.app/client.js" data-repo="DACSS/601_Spring_2023" data-repo-id="R_kgDOI4JcJA" data-category="Announcements" data-category-id="" data-mapping="title" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="en" crossorigin="anonymous" async="">
+</script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="sourceCode" id="cb13" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "DACSS601: Data Science Fundamentals Final Paper"</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Sahan Prasad Podduturi Reddy"</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "Flight Delay Analysis"</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> "05/19/2023"</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co">    df-print: paged</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co">    code-copy: true</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-tools: true</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co">    css: styles.css</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="an">categories:</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="co">  - final_project</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="an">editor_options:</span><span class="co"> </span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="co">  chunk_output_type: console</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a><span class="fu">## Abstract</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>The overall goal of this project is go through Flight Delay Data over the course of an entire year to find patterns of when flight delays are more prone to happens. Airline delays can cause unnecessary disruptions in people's lives. The problems caused by flight delays include missing important business meetings or failing to catch another connecting flight which can lead to further delays. This could result in additional costs as people are stuck at the airport for an extended period of time and have to make more purchases at the airport as a result. Moreover, it is not a commonly known fact that airlines are actually obliged to post flight delay data on their website. Many airlines fail to meet this obligation which could easily help passengers avoid flights with a history of delays and cancellations. Through this project, I aim to analyze flight delays for different airline carriers over the course of the year and find patterns of flight delays.</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="fu">## Introduction</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>I used the <span class="in">`DelayedFlight.csv`</span> file which contains data about local airline carriers making flight trips all over the US from Jan 2008 to Jan 2009. This version of the dataset was compiled from the Statistical Computing Statistical Graphics 2009 Data Expo. The original dataset contains 30 columns with information regarding daily flight trips by different airline carriers all over the US for every day of the year. The information captured by this dataset includes - the departure and arrival times of all flights making trips on a particular day, flight carrier name and flight number information, the origin and the destination airports, and 5 columns marking delays - <span class="in">`CarrierDelay`</span>, <span class="in">`WeatherDelay`</span>, <span class="in">`NASDelay`</span> - Delays and cancellations attributable to the National Aviation System(non-extreme weather conditions, airport operations, heavy traffic volume etc), <span class="in">`SecurityDelay`</span> and <span class="in">`LateAircraftDelay`</span>. Our goal is to find patterns in these delay columns and figure out times of peak delays. To go about this, we process the data accordingly -</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>1)  Remove a lot of redundant columns which do not offer any information relevant to the problem we are trying to analyze.</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>2)  Combine the <span class="in">`Year`</span>, <span class="in">`Month`</span> and <span class="in">`DayofMonth`</span> columns into a single <span class="in">`arrival_date`</span> column.</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>3)  We remove any columns with N/A values present.</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>Doing this eliminates 17 columns immediately from our dataframe which significantly speeds up our computation and eliminates around 500,000 rows from our massive dataset.</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: Setup</span></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning=</span><span class="cn">FALSE</span>, <span class="at">message=</span><span class="cn">FALSE</span>)</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"D:/MyDocs/Class Slides/DACSS601/601_Spring_2023/posts/_data"</span>)</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>flights <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"DelayedFlights.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">"Cancelled"</span>, <span class="sc">-</span><span class="st">"CancellationCode"</span>, <span class="sc">-</span><span class="st">"Diverted"</span>, <span class="sc">-</span><span class="st">"DepTime"</span>, <span class="sc">-</span><span class="st">"CRSDepTime"</span>, <span class="sc">-</span><span class="st">"ArrTime"</span>, <span class="sc">-</span><span class="st">"CRSArrTime"</span>, <span class="sc">-</span><span class="st">"ActualElapsedTime"</span>, <span class="sc">-</span><span class="st">"CRSElapsedTime"</span>, <span class="sc">-</span><span class="st">"X"</span>, <span class="sc">-</span><span class="st">"AirTime"</span>, <span class="sc">-</span><span class="st">"ArrDelay"</span>, <span class="sc">-</span><span class="st">"DepDelay"</span>, <span class="sc">-</span><span class="st">"FlightNum"</span>, <span class="sc">-</span><span class="st">"TailNum"</span>, <span class="sc">-</span><span class="st">"TaxiIn"</span>, <span class="sc">-</span><span class="st">"TaxiOut"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">FlightDate =</span> <span class="fu">as.Date</span>(<span class="fu">paste</span>(<span class="st">`</span><span class="at">Year</span><span class="st">`</span>, <span class="st">`</span><span class="at">Month</span><span class="st">`</span>, <span class="st">`</span><span class="at">DayofMonth</span><span class="st">`</span>, <span class="at">sep =</span> <span class="st">"-"</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">"Year"</span>, <span class="sc">-</span><span class="st">"DayofMonth"</span>)</span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>flights <span class="ot">&lt;-</span> flights[<span class="sc">!</span><span class="fu">is.na</span>(flights<span class="sc">$</span>LateAircraftDelay), ]</span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights)</span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a><span class="fu">## Analysis </span></span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>In order to solve our problem, we need to find the following information -</span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>1) Delay values per Month.</span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>2) Delay values per DayOfWeek.</span>
+<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>3) Delay values grouped by different airline carriers.</span>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>We are planning on using univariate boxplots which help us visualize not only the range of values around which the data for each column is centralized but also the outliers for each of the Delay columns in our dataset. We then plan to use facet_wrap() to give us individual graphs for each of the Delay columns in the dataset. We will also use Bar graphs which are useful in visualizing Bivariate data with a single graph in a neat and concise manner. </span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a><span class="fu">## Visualizations</span></span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>Based on the delay values from our 5 columns, we first compute a separate column depicting <span class="in">`TotalDelay`</span>. We then plot a Time-Series graph in order to get a quick view of periods of time where we see spikes in flight delays. We expect that flights delays would generally be higher during peaks flying periods such as holiday seasons when airports are crowded and there is increased demand for flights or in the case of severe weather conditions. Apart from this, we draw boxplots for each of the Delay columns to see the spread and variability of data in each column. We notice that magnitude of <span class="in">`SecurityDelay`</span> and <span class="in">`WeatherDelay`</span> values are much lesser compared to all the other delay columns in our dataframe indicating that these columns will have lesser impact on the <span class="in">`TotalDelay`</span> compared to other columns.</span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: TotalAverageDelay</span></span>
+<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(FlightDate) <span class="sc">%&gt;%</span></span>
+<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"WeatherDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">WeatherDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"NASDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">NASDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"SecurityDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">SecurityDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>(<span class="at">TotalDelay =</span> CarrierDelay<span class="sc">+</span>WeatherDelay<span class="sc">+</span>NASDelay<span class="sc">+</span>SecurityDelay<span class="sc">+</span>LateAircraftDelay)</span>
+<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights2)</span>
+<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a>flights2 <span class="sc">%&gt;%</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> FlightDate)) <span class="sc">+</span></span>
+<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> <span class="st">`</span><span class="at">TotalDelay</span><span class="st">`</span>), <span class="at">color=</span><span class="st">"lightgreen"</span>)</span>
+<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>))</span>
+<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-83"><a href="#cb13-83" aria-hidden="true" tabindex="-1"></a>data1 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>CarrierDelay</span>
+<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>WeatherDelay</span>
+<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a>data3 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>NASDelay</span>
+<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a>data4 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>SecurityDelay</span>
+<span id="cb13-87"><a href="#cb13-87" aria-hidden="true" tabindex="-1"></a>data5 <span class="ot">&lt;-</span> flights2<span class="sc">$</span>LateAircraftDelay</span>
+<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data1, <span class="at">main =</span> <span class="st">"CarrierDelay"</span>, <span class="at">yaxt =</span> <span class="st">"n"</span>)</span>
+<span id="cb13-90"><a href="#cb13-90" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data1)))</span>
+<span id="cb13-91"><a href="#cb13-91" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data2, <span class="at">main =</span> <span class="st">"WeatherDelay"</span>)</span>
+<span id="cb13-92"><a href="#cb13-92" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data2)))</span>
+<span id="cb13-93"><a href="#cb13-93" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data3, <span class="at">main =</span> <span class="st">"NASDelay"</span>)</span>
+<span id="cb13-94"><a href="#cb13-94" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data3)))</span>
+<span id="cb13-95"><a href="#cb13-95" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data4, <span class="at">main =</span> <span class="st">"SecurityDelay"</span>)</span>
+<span id="cb13-96"><a href="#cb13-96" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data4)))</span>
+<span id="cb13-97"><a href="#cb13-97" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(data5, <span class="at">main =</span> <span class="st">"LateAircraftDelay"</span>)</span>
+<span id="cb13-98"><a href="#cb13-98" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="at">side =</span> <span class="dv">2</span>, <span class="at">at =</span> <span class="fu">pretty</span>(<span class="fu">range</span>(data5)))</span>
+<span id="cb13-99"><a href="#cb13-99" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-100"><a href="#cb13-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-101"><a href="#cb13-101" aria-hidden="true" tabindex="-1"></a>To get a clearer picture, we can group by month and get an estimate of <span class="in">`TotalDelay`</span>. We construct a point graph and then smooth it to get an estimate of how <span class="in">`TotalDelay`</span> rises and falls. This geom_smooth() functions gives a line which shows how the Delay values fluctuate over the months. From the graph, we notice that flight delays decrease during the stating months of the year upto May before there is a sharp spike in delays around the months of Jun, July before declining until the month of October where delays are lowest. Afterwards, as expected we see a spike in Delays around the time of Christmas and New Year.</span>
+<span id="cb13-102"><a href="#cb13-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-105"><a href="#cb13-105" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-106"><a href="#cb13-106" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: MonthlyDelay</span></span>
+<span id="cb13-107"><a href="#cb13-107" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb13-108"><a href="#cb13-108" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb13-109"><a href="#cb13-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-110"><a href="#cb13-110" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb13-111"><a href="#cb13-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(Month) <span class="sc">%&gt;%</span></span>
+<span id="cb13-112"><a href="#cb13-112" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"WeatherDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">WeatherDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"NASDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">NASDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"SecurityDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">SecurityDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-113"><a href="#cb13-113" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>(<span class="at">TotalDelay =</span> CarrierDelay<span class="sc">+</span>WeatherDelay<span class="sc">+</span>NASDelay<span class="sc">+</span>SecurityDelay<span class="sc">+</span>LateAircraftDelay)</span>
+<span id="cb13-114"><a href="#cb13-114" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights2)</span>
+<span id="cb13-115"><a href="#cb13-115" aria-hidden="true" tabindex="-1"></a>flights2 <span class="sc">%&gt;%</span></span>
+<span id="cb13-116"><a href="#cb13-116" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> Month)) <span class="sc">+</span></span>
+<span id="cb13-117"><a href="#cb13-117" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">y =</span> <span class="st">`</span><span class="at">TotalDelay</span><span class="st">`</span>)) <span class="sc">+</span></span>
+<span id="cb13-118"><a href="#cb13-118" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">y =</span> <span class="st">`</span><span class="at">TotalDelay</span><span class="st">`</span>))</span>
+<span id="cb13-119"><a href="#cb13-119" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-120"><a href="#cb13-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-121"><a href="#cb13-121" aria-hidden="true" tabindex="-1"></a>We can also check which days of the week people have the most delay when flying. We are expecting that weekends would have higher flight delays as opposed to weekdays. We first create a pie-chart which shows percentage of total delays that occur on a particular day of the week. The days of the week are labeled starting from Monday-Sunday in the range 1-7. We notice that there isn't a significant difference in the delay period between the different days of the week. The weekend delay values are still slightly more. We further analyze why this is the case by plotting separate line graphs for each type of delay and measuring delay trends as we go through the days of the week. We notice that there is higher CarrierDelays and LateAircraftDelays around the time of the weekend as predicted. However, higher WeatherDelays and NASDelays were recorded during the weekdays. Thus, the overall delay values over the course of the week balances out.</span>
+<span id="cb13-122"><a href="#cb13-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-125"><a href="#cb13-125" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-126"><a href="#cb13-126" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: DailyFlightDelay</span></span>
+<span id="cb13-127"><a href="#cb13-127" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb13-128"><a href="#cb13-128" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb13-129"><a href="#cb13-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-130"><a href="#cb13-130" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb13-131"><a href="#cb13-131" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DayOfWeek) <span class="sc">%&gt;%</span></span>
+<span id="cb13-132"><a href="#cb13-132" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"WeatherDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">WeatherDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"NASDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">NASDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"SecurityDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">SecurityDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-133"><a href="#cb13-133" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(CarrierDelay, WeatherDelay, NASDelay, SecurityDelay, LateAircraftDelay), <span class="at">names_to =</span> <span class="st">"DelayType"</span>, <span class="at">values_to =</span> <span class="st">"DelayTime"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-134"><a href="#cb13-134" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb13-135"><a href="#cb13-135" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DayOfWeek) <span class="sc">%&gt;%</span></span>
+<span id="cb13-136"><a href="#cb13-136" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"DelayTime"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">DelayTime</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb13-137"><a href="#cb13-137" aria-hidden="true" tabindex="-1"></a>label_colors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"red"</span>, <span class="st">"blue"</span>, <span class="st">"green"</span>, <span class="st">"orange"</span>, <span class="st">"violet"</span>, <span class="st">"yellow"</span>, <span class="st">"brown"</span>)</span>
+<span id="cb13-138"><a href="#cb13-138" aria-hidden="true" tabindex="-1"></a>flights2<span class="sc">$</span>percent <span class="ot">&lt;-</span> flights2<span class="sc">$</span>DelayTime <span class="sc">/</span> <span class="fu">sum</span>(flights2<span class="sc">$</span>DelayTime) <span class="sc">*</span> <span class="dv">100</span></span>
+<span id="cb13-139"><a href="#cb13-139" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights2)</span>
+<span id="cb13-140"><a href="#cb13-140" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(flights2, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">""</span>, <span class="at">y =</span> DelayTime, <span class="at">fill =</span> <span class="fu">factor</span>(flights2<span class="sc">$</span>DayOfWeek))) <span class="sc">+</span></span>
+<span id="cb13-141"><a href="#cb13-141" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>, <span class="at">width =</span> <span class="dv">1</span>, <span class="at">color =</span> <span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb13-142"><a href="#cb13-142" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_polar</span>(<span class="st">"y"</span>, <span class="at">start =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb13-143"><a href="#cb13-143" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span> </span>
+<span id="cb13-144"><a href="#cb13-144" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste0</span>(<span class="fu">round</span>(percent, <span class="dv">1</span>), <span class="st">"%"</span>)), <span class="at">position =</span> <span class="fu">position_stack</span>(<span class="at">vjust =</span> <span class="fl">0.5</span>)) <span class="sc">+</span></span>
+<span id="cb13-145"><a href="#cb13-145" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> label_colors) <span class="sc">+</span></span>
+<span id="cb13-146"><a href="#cb13-146" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">fill =</span> <span class="st">"Days Of The Week"</span>, <span class="at">x=</span><span class="st">"Days Of The Week"</span>)</span>
+<span id="cb13-147"><a href="#cb13-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-148"><a href="#cb13-148" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb13-149"><a href="#cb13-149" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DayOfWeek) <span class="sc">%&gt;%</span></span>
+<span id="cb13-150"><a href="#cb13-150" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"WeatherDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">WeatherDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"NASDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">NASDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"SecurityDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">SecurityDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-151"><a href="#cb13-151" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(CarrierDelay, WeatherDelay, NASDelay, SecurityDelay, LateAircraftDelay), <span class="at">names_to =</span> <span class="st">"DelayType"</span>, <span class="at">values_to =</span> <span class="st">"DelayTime"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-152"><a href="#cb13-152" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb13-153"><a href="#cb13-153" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(flights2)</span>
+<span id="cb13-154"><a href="#cb13-154" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(flights2, <span class="fu">aes</span>(<span class="at">y=</span><span class="st">`</span><span class="at">DelayTime</span><span class="st">`</span>, <span class="at">x=</span>DayOfWeek)) <span class="sc">+</span></span>
+<span id="cb13-155"><a href="#cb13-155" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb13-156"><a href="#cb13-156" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(DelayType), <span class="at">scales =</span> <span class="st">"free"</span>)</span>
+<span id="cb13-157"><a href="#cb13-157" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-158"><a href="#cb13-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-159"><a href="#cb13-159" aria-hidden="true" tabindex="-1"></a>Next we look at Airline Delays grouped by different local airline carriers in the US. In my analysis, I exclude <span class="in">`SecurityDelay`</span> and <span class="in">`WeatherDelay`</span> because I want to analyze delays that the airlines are directly responsible for. I also exclude <span class="in">`NASDelay`</span> because they are beyond the control of individual airlines, and they are managed by air traffic control authorities and airport authorities. We first plot a point graph which shows which individual airlines have the highest Carrier and LateAircraft delays. Then we plot a stacked bar graph which helps gauge which airlines have the most and least overall airline related flight delays. We notice that Frontier and PSA Airlines come near the bottom of the table meanwhile Hawaiian and Mesa Airlines have the most delays.</span>
+<span id="cb13-160"><a href="#cb13-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-163"><a href="#cb13-163" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb13-164"><a href="#cb13-164" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: AirlineFlightDelay</span></span>
+<span id="cb13-165"><a href="#cb13-165" aria-hidden="true" tabindex="-1"></a><span class="co">#| warning: false</span></span>
+<span id="cb13-166"><a href="#cb13-166" aria-hidden="true" tabindex="-1"></a><span class="co">#| message: false</span></span>
+<span id="cb13-167"><a href="#cb13-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-168"><a href="#cb13-168" aria-hidden="true" tabindex="-1"></a>flights2 <span class="ot">&lt;-</span> flights <span class="sc">%&gt;%</span></span>
+<span id="cb13-169"><a href="#cb13-169" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(UniqueCarrier) <span class="sc">%&gt;%</span></span>
+<span id="cb13-170"><a href="#cb13-170" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="st">"CarrierDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">CarrierDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="st">"LateAircraftDelay"</span> <span class="ot">=</span> <span class="fu">mean</span>(<span class="st">`</span><span class="at">LateAircraftDelay</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-171"><a href="#cb13-171" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(CarrierDelay, LateAircraftDelay), <span class="at">names_to =</span> <span class="st">"DelayType"</span>, <span class="at">values_to =</span> <span class="st">"DelayTime"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-172"><a href="#cb13-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb13-173"><a href="#cb13-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-174"><a href="#cb13-174" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(flights2, <span class="fu">aes</span>(<span class="at">y=</span><span class="st">`</span><span class="at">DelayTime</span><span class="st">`</span>, <span class="at">x=</span>UniqueCarrier, <span class="at">color=</span>DelayType, <span class="at">shape=</span>DelayType)) <span class="sc">+</span> <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb13-175"><a href="#cb13-175" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb13-176"><a href="#cb13-176" aria-hidden="true" tabindex="-1"></a><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Airline Carrier vs Delay Time"</span>, <span class="at">x =</span> <span class="st">"Airline Carrier"</span>, <span class="at">y =</span> <span class="st">"Delay Time"</span>)</span>
+<span id="cb13-177"><a href="#cb13-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-178"><a href="#cb13-178" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(flights2, <span class="fu">aes</span>(<span class="at">fill=</span>DelayType, <span class="at">y=</span><span class="st">`</span><span class="at">DelayTime</span><span class="st">`</span>, <span class="at">x=</span>UniqueCarrier)) <span class="sc">+</span> </span>
+<span id="cb13-179"><a href="#cb13-179" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">position=</span><span class="st">"stack"</span>, <span class="at">stat=</span><span class="st">"identity"</span>)</span>
+<span id="cb13-180"><a href="#cb13-180" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-181"><a href="#cb13-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-182"><a href="#cb13-182" aria-hidden="true" tabindex="-1"></a><span class="fu">## Conclusion</span></span>
+<span id="cb13-183"><a href="#cb13-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-184"><a href="#cb13-184" aria-hidden="true" tabindex="-1"></a>Overall, this project was designed to analyze and successfully predict future flight delays based on the information that is available to us. This is very useful for future</span>
+<span id="cb13-185"><a href="#cb13-185" aria-hidden="true" tabindex="-1"></a>customers who are planning on leveraging such results when booking flights in the future. We noticed that the peak travel months coincide with periods of peak flight delays. We notice from the Month/TotalDelay graph that June, July and December have higher flight delays so people travelling during those months should anticipate more travel setbacks beforehand. The months of May, September and October have the least delays as expected because they don't coincide with any holiday seasons or seasons with inclement weather conditions. We then check whether the Day of the Week when we travel affects the DelayTime. Although the pie chart numbers shows that delay values are same over the entire week, we notice that this was because Weather and NAS Delays happened to fall on the weekdays during this particular year and might not follow the same pattern in a different year. CarrierDelay and LateAircraftDelay values are more on the weekends than on the weekdays showing that weekends are more delay prone. Finally, we also check which airlines are more prone to delays to ensure that customers know which airlines are more prone to flight delays. This information is important because customers can choose between different available airline options when booking their flights, or in the worst case anticipate delays in their travel plans beforehand which helps them if they want to make any additional plans in their destination location after their flight.</span>
+<span id="cb13-186"><a href="#cb13-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-187"><a href="#cb13-187" aria-hidden="true" tabindex="-1"></a>One thing to consider however is that the Origin and Destination locations are not considered in our calculations which could slightly affect customer decisions. Flights travelling to and from larger airports are more likely to have more delays. Different airline carriers have locations that they fly to and this could also be one of the reasons for some carriers to have higher delays.</span>
+<span id="cb13-188"><a href="#cb13-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-189"><a href="#cb13-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-190"><a href="#cb13-190" aria-hidden="true" tabindex="-1"></a><span class="fu">## Bibliography</span></span>
+<span id="cb13-191"><a href="#cb13-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-192"><a href="#cb13-192" aria-hidden="true" tabindex="-1"></a>1) Dataset - Giovanni Gonzalez. 2019. Airlines delay. (November 2019). Retrieved May 20, 2023 from https://www.kaggle.com/datasets/giovamata/airlinedelaycauses.</span>
+<span id="cb13-193"><a href="#cb13-193" aria-hidden="true" tabindex="-1"></a>2) R Programming was used to tidy the dataset and present the necessary visualizations.</span>
+</code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+</body></html>

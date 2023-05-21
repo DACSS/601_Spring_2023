@@ -1,0 +1,202 @@
+---
+title: "Challenge 8"
+author: "Khadijat Adeleye"
+description: "Joining Data"
+date: "05/21/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - railroads
+  - snl
+  - faostat
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(summarytools)
+library(readxl)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - military marriages ⭐⭐
+  - faostat ⭐⭐
+  - railroads  ⭐⭐⭐
+  - fed_rate ⭐⭐⭐
+  - debt ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - snl ⭐⭐⭐⭐⭐
+
+```{r}
+# read in snl actors dataset
+Actors <- read_csv("_data/snl_actors.csv")
+# read in snl casts dataset
+Cast <- read_csv("_data/snl_casts.csv")
+# read in snl seasons dataset
+Season <- read_csv("_data/snl_seasons.csv")
+# view datasets
+Actors
+```
+
+```{r}
+
+# view summaries of datasets
+dfSummary(Actors)
+dfSummary(Cast)
+dfSummary(Season)
+print(summarytools::dfSummary(Actors),
+      varnumbers = FALSE,
+      plain.ascii  = FALSE,
+      style        = "grid",
+      graph.magnif = 0.80,
+      valid.col    = FALSE,
+      method = 'render',
+      table.classes = 'table-condensed')
+```
+
+### Briefly describe the data
+The three datasets related to SNL(Saturday Night Live)consist of the actors, casts, and seasons of Saturday Night Live (SNL) from 1975 to 2020.
+
+The snl_seasons dataset. It describes when the season started and ended and how many episodes each season consisted of. The snl_casts dataset describes the number of episodes each cast member was there for and their name. 
+These Actor datasets consist of 2,306 observations and 4 variables  (aid, url, type, gender) describing  the actors  in the dataset.The ‘aid’ column serves as a primary key for the data set, the ‘type’ column describes what type of actor. The values in this column are categorical and take on one four possible values: ‘cast’, ‘crew’, ‘guest’, and ‘unknown’. The ‘url’ column appears to be a combination of the ‘type’ column followed by an additional identifier for the actor.
+
+The cast dataset has 614 observations and 8 variables (aid, sid, featured, first_epid, last_epid, update_anchor, n_episodes, season_fraction) 
+ The seasons dataset consists of 46 observations and 5 variables (sid, year, first_epid, last_epid, n_episodes)  Within 46 seasons, there are records of the date of each actor’s (aid) first episode (first_epid) and last episode (last_epid) along with the date of the beginning (first_epid) and ending (last_epid) of each season. There is also sid which represents the season ID and featured which says whether the cast member was featured or not.
+
+The mean number of episodes from the n_episodes variable is 19.7 per season and 18.7 per cast member. Out of all the cast members in the casts dataset, Kenan Thompson was involved in SNL the most often at 18 times with Darrell Hammond (14 times) and Seth Meyers (13 times) following after him.
+
+###filtering the Actor dataset for gender
+```{r}
+Actors %>%
+  filter(gender == "female")
+```
+####For gender column, there are 4 possible categories, “male”, “female”, “unknown”, and “andy”. The values “female” had 674 observations  for their gender value. 
+
+###TIDY THE DATASET
+```{r}
+# convert type and gender variables into factors
+actors1 <- Actors%>% 
+  mutate(across(3:4, factor))
+# create a new data frame named casts
+casts1 <- Cast
+# convert first_epid into date format
+casts1$first_epid <- ymd(casts1$first_epid)
+# convert last_epid into date format
+casts1$last_epid <- ymd(casts1$last_epid)
+# create a new data frame named seasons
+seasons1 <- Season
+# convert first_epid into date format
+seasons1$first_epid <- ymd(seasons1$first_epid)
+# convert last_epid into date format
+seasons1$last_epid <- ymd(seasons1$last_epid)
+
+seasons1
+```
+```{r}
+casts1
+```
+
+
+```{r}
+actors1
+```
+
+##The data variable in the actor set will be mutated.The gender and Type categories is mutated to remove unknown gender and include a layer of data.
+```{r}
+Actor_mutate <-  actors1%>%
+              mutate(Type = 
+                       case_when(`gender` == 'unknown' ~ 'Musician/Celeb',
+                                 `type` == 'guest' ~ 'Guest',
+                               `type` == 'cast' ~ 'Cast',
+                               `type` == 'crew' ~ 'Crew',
+                               ),
+                     gender=
+                       case_when(`gender` == 'male' ~ 'M',
+                                 `gender` == 'female' ~ 'F',
+                                 `gender` == 'unknown' ~ 'NA',
+                                 `gender` == 'andy' ~ 'NA'))
+
+Actor_mutate
+```
+
+```{r}
+snl_seasons1_casts1 <- casts1 %>% 
+  inner_join(seasons1, by = "sid")
+snl_seasons1_casts1
+```
+
+####The values of first and last episode of the seasons1 and cast1 datasets into readable dates. So the format of these dates are year-month-day. For the casts dataset, since a lot of the rows have N/A for both first and last episode date. I deleted those conditions and only kept the ones in which at least one value( first episode or last episode) doesn’t have N/A as the value.
+```{r}
+snl2 <- snl_seasons1_casts1 %>% 
+  inner_join(actors1, by = "aid")
+snl2
+```
+
+## Joining the Data
+
+```{r}
+###to join the actor 
+actorCasts <- cross_join(df, casts1)
+actorCasts
+
+```
+
+```{r}
+join_snl2_casts2 <- casts1 %>% 
+  inner_join(seasons1, by = "sid")
+
+join_snl2_casts2$first_epid.x[is.na(join_snl2_casts2$first_epid.x)] <- join_snl2_casts2$first_epid.y
+join_snl2_casts2$last_epid.x[is.na(join_snl2_casts2$last_epid.x)] <- join_snl2_casts2$last_epid.y
+  
+colnames(join_snl2_casts2) <- c("aid", "sid", "featured", "first_epid_actor", "last_epid_actor", "upload_anchor", "n_episodes_actor", "%_apperance", "year", "first_epid_season", "last_epid_season", "n_episodes_season")
+
+join_snl2_casts2
+
+```
+
+```{r}
+actorCasts %>% 
+  filter(featured==TRUE) %>%
+  group_by(n_episodes, race_eth2) %>%
+  summarize(
+    number = n()
+  ) %>%
+  ggplot(aes(fill=race_eth2, y=number, x=n_episodes)) + geom_bar(stat="identity")+
+  labs(title = "Change in the number of episodes featured actors by race_eth
+      however since 1986 the number of Black actors featured in Cast increased")
+```
+ I wanted to see  how different race has increased in cast performance. It is evident that the Black race has  increased over the years.
+ 
+```{r}
+snl2 %>%
+   ggplot(aes(n_episodes.y, gender, color = featured)) + 
+   geom_point() 
+
+```
+ ### Majority of gender  specified as “unknown”with Only one female was featured on the show. The other males and females were all cast members and not just features.
+

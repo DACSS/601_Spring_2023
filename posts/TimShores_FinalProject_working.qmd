@@ -1,14 +1,13 @@
 ---
 title: "Final Project: Tim Shores"
 author: "Tim Shores"
-description: "Project & Data Description"
+description: "Local police department call data analysis for two small rural towns"
 date: "05/20/2023"
 format:
   html:
     df-print: paged
     toc: true
     toc-depth: 4
-    toc-expand: 4
     toc-location: left
     code-copy: true
     code-tools: true
@@ -26,7 +25,7 @@ editor_options:
 #| warning: false
 #| message: false
 
-my_packages <- c("tidyverse", "broom", "fs", "pdftools", "knitr", "ggplot2", "viridis", "hrbrthemes", "gridExtra") # create vector of packages
+my_packages <- c("tidyverse", "broom", "fs", "pdftools", "knitr", "ggplot2", "viridis", "hrbrthemes", "gridExtra", "tidytext") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
@@ -36,7 +35,7 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 
 ### Summary
 
-This is the story of two small, rural Massachusetts towns that have made an agreement to combine their local police departments The goal of this regionalization agreement, initiated in 2020, is to reduce cost by sharing a service. However, regionalization has made it more challenging for the towns to assess personnel needs of their police in balance with other public safety services. 
+This is the story of two small, rural Massachusetts towns that have made an agreement to combine their local police departments. The goal of the regionalization agreement initiated in 2020 has been to reduce cost by sharing a service. However, regionalization has made it more challenging for the towns to assess public safety expenses. 
 
 For example, if demand for first responders has increased, is it because a single police department is now responding to crime from both towns? Or is it for reasons unrelated to regionalization, such as increased police response to medical calls or other calls for which police response is not required?
 
@@ -95,7 +94,7 @@ d. Why do we need another officer when the populations and number of properties 
 
 :::
 
-Chief Minckler's response to these questions was informed by his administrative experience, but not by call data analysis. Due to difficulties generating reports from the administrative software used by many emergency response departments, the Chief was not able to speak to call data beyond call volume and call type. Residents expressed curiosity about nature of increased call volume: How much was due to  violent crime, domestic violence, interpersonal conflict, fraud, property rights violations, traffic violations, medical emergencies, mental health emergencies, fires? 
+Chief Minckler's response to these questions was informed by his administrative experience, but not by call data analysis. Due to difficulties generating reports from the administrative software used by many emergency response departments, the Chief was not able to speak to call data beyond call volume and call type. At public meetings, I heard Leverett residents express curiosity about the nature of increased call volume: How much was due to violent crime, domestic violence, interpersonal conflict, fraud, property rights violations, traffic violations, medical emergencies, mental health emergencies, fires? 
 
 Although people had multiple concerns and interests in the matter, most meeting participants had this basic question in common: 
 
@@ -107,7 +106,7 @@ Although people had multiple concerns and interests in the matter, most meeting 
 
 :::
 
-In other words, if we hired another police officer, would that meet the public safety needs that drive increased call volume? If our increased needs are by nature medical, mental health, fire, or community health and well-being, then **we risk misallocating public resources in a solution to the wrong problem**.
+In other words, if we hired another police officer, would that meet the public safety needs that drive increased call volume? If our increased needs are by nature medical, mental health, fire, or community health and well-being, **then we risk misallocating public resources in a solution to the wrong problem**.
 
 
 ### Dataset Introduction
@@ -165,7 +164,7 @@ Chief Minckler sent me 10 PDF files: one for each town and year, from 2018 to 20
 3. **Operator Race and Sex Breakdown** shows demographics of vehicle operators involved in traffic stops and violations.
 :::
 
-**Call Reason Breakdown** is the primary object of this analysis.
+**Call Reason Breakdown** is the the only object of this analysis. CSV exports of all three data frames are available in the bibliography.
 
 I used the R libraries `purrr` and `pdf_tools` to read-in the data to a list of 10 lists of data frames: one data frame for each page, one list for each file, in a collection of 10 files.
 
@@ -265,7 +264,7 @@ numcols = sort(as.numeric(names(allYearsDF_wide)[!grepl("[a-z]", names(allYearsD
 allYearsDF_wide <- select(allYearsDF_wide, outerpageid, filename, innerpageid, y, match(numcols, names(allYearsDF_wide))) 
 
   # now we have a df that is simply x:y coordinates of the page
-  # time to smush cols together!
+  # time to smush cols together, yay smush!
 
 allYearsDF_wide <- allYearsDF_wide %>% 
   unite("x5to52", c("5":"47"), sep = " ", na.rm = TRUE, remove = TRUE) %>%
@@ -340,7 +339,7 @@ allYearsDF_wide <- allYearsDF_wide %>%                              # tidy colum
   select(-c(total, "___%")) %>%                                           # this is a total column - don't need it
   mutate(across(call_reason:avg_hours_at_scene, ~na_if(., "")))
 
-  # First and second df achievement unlocked: Call Reasons
+  # First df achievement unlocked: Call Reasons
 
 callReasonsDF <- allYearsDF_wide %>% 
   filter(is.na(action)) %>% 
@@ -355,17 +354,12 @@ callReasonsDF <- allYearsDF_wide %>%
     avg_hours_per_call = avg_hours_per_call / 60,    # convert times to hours
     totalCalls = self + disp,
     totalHours = totalCalls * avg_hours_per_call) %>%
-  select(-c(avg_hours_to_arrive, avg_hours_at_scene))
+  select(-c(avg_hours_to_arrive, avg_hours_at_scene)) %>%
+  filter(!grepl("total", call_reason, ignore.case = TRUE)) # Final step, get rid of of rows with call_reason = TOTAL
 
-  # Total reasons for sanity check: keeps only rows with call_reason = TOTAL
-totalReasonsDF <- callReasonsDF %>% 
-  filter(grepl("^TOTAL$", call_reason, ignore.case = FALSE))
-
-  # Final step, get rid of of rows with call_reason = TOTAL
-callReasonsDF <- callReasonsDF %>%
-  filter(!grepl("total", call_reason, ignore.case = TRUE))
-
-  # Third df achievement unlocked: Call Actions (each call reason has 1+ actions)
+  # Second df achievement unlocked: Call Actions (each call reason has 1+ actions)
+  # (note: not used in the current version of the analysis, 
+  # but a link to the file is made available in the bibliography
 
 callActionsDF <- allYearsDF_wide %>% 
   filter(!is.na(action)) %>%
@@ -377,20 +371,10 @@ callActionsDF <- allYearsDF_wide %>%
          actioncount = str_squish(actioncount),
          actioncount = as.integer(actioncount))
 
-  # Fourth df achievement unlocked: Total of Actions for sanity checking
-
-totalActionsDF <- allYearsDF_wide %>%
-  filter(is.na(action), is.na(self)) %>%
-  filter(!grepl("total", call_reason, ignore.case = TRUE)) %>%
-  select(c(town, year, call_reason, disp)) %>%
-  separate_wider_regex(call_reason, c(actionname = "[A-Za-z/()\\-\\s]+", self = "\\s[0-9]{1,4}", ".*")) %>%
-  mutate(actionname = factor(actionname),
-         self = str_squish(self),
-         disp = str_squish(disp)) %>%
-  mutate_at(c("self", "disp"), as.integer)
-
-  # Fifth and final df achievement unlocked: Operator demographics, not explicitly related to call reasons/actions,
+  # Third and final df achievement unlocked: Operator demographics, not explicitly related to call reasons/actions,
   # But we can confidently assume that "operator" means "driver of vehicle"
+  # (note: not used in the current version of the analysis, 
+  # but a link to the file is made available in the bibliography
 
 operatorSummaryDF <- allYearsDF_wide %>% 
   filter(!is.na(action)) %>%
@@ -412,7 +396,7 @@ operatorSummaryDF <- allYearsDF_wide %>%
 
 See the appendix for a data dictionary and sample summaries of each data frame.
 
-The LPD call data does not show when police response is required or optional. There are also 121 call reasons. To make analysis simpler and yield insights about public safety need, I created 11 "public safety themes" and mapped one to each call reason. This is my interpretation of call reasons to create a taxonomy that permits interpretations of calls according to when police response is required in comparison with the calls that a police officer responds to because another type of first responder is not available. I will remain open to feedback and referrals to standard taxonomies, if any exist. One of the dilemmas of analyzing police data is a lack of clear policing data standards.
+The LPD call data does not show when police response is required or optional. There are also 121 call reasons. To make analysis simpler and yield insights about public safety need, I created 10 "public safety themes" and mapped one to each call reason. This is my interpretation of call reasons to create a taxonomy that permits interpretations of calls according to when police response is required in comparison with the calls that a police officer responds to because another type of first responder is not available. I will remain open to feedback and referrals to standard taxonomies, if any exist. One of the dilemmas of analyzing police data is a lack of clear policing data standards.
 
 ::: {.callout-note icon=false}
 
@@ -433,7 +417,11 @@ The LPD call data does not show when police response is required or optional. Th
 
 ```{r}
 
+# a vector of all the factors, because I need to create a simpler taxonomy
+
 callReasonNameFactors = c("209A SERVICE", "209A VIOLATION", "911 CALL", "911 HANG UP", "911 MIS DIAL", "911 Text to 911", "ABANDONED 911 CALL", "ABANDONED MV", "ADMINISTRATIVE", "ALARM BURGLAR OR HOLDUP", "ANIMAL COMPLAINT", "ANNOYING PHONE CALLS", "ARTICLES LOST", "ARTICLES RECOVERED", "ASSAULT", "ASSIST CITIZEN", "ASSIST OTHER AGENCY", "BE ON THE LOOK OUT", "BREAKING & ENTERING AUTO", "BREAKING & ENTERING PAST", "BREAKING AND ENTERING", "BRUSH FIRE", "BUILDING/LOCATION CHECK", "BURN/AGRI PERMIT", "BYLAW VIOLATION", "Car vs. Deer", "CARBON MONOXIDE HAZARD", "CHECK WELFARE", "CHIMNEY FIRE", "Civil Issue", "COMMUNITY POLICING", "COMPLAINT", "COURT", "CRUISER MAINTENANCE", "CSO FOLLOW UP", "CSO OUTREACH", "CUSTODY ISSUE", "DEATH", "DETAIL REQUEST", "DISABLED MV", "DISTURBANCE", "DOMESTIC", "Drill/Testing", "DRUG OFFENSE", "DRUNK", "EMS ALARM - LIFELINE ACTIVATED", "ESCORT/TRANSPORT", "EXPLOSION", "FIGHT", "FIRE ALARM", "FIRE WORKS", "FIRE, OTHER NON-SPECIFIC", "FIREARMS LICENSING", "FOLLOW UP INVESTIGATION", "FRAUD/SCAM", "GAS LEAK", "GENERAL INFO", "HARASSMENT", "HIT AND RUN", "ILLEGAL BURN", "ILLEGAL DUMPING", "INVESTIGATION", "JUVENILE OFFENSES", "KEEP THE PEACE", "LARCENY", "LINE DOWN, POWER,PHONE OR CABL", "LOCKOUT", "MEDICAL EMERGENCY", "MISCELLANEOUS", "MISSING PERSON", "MOTOR VEHICLE - STOLEN", "MOTOR VEHICLE ACCIDE W/INJURY", "MOTOR VEHICLE ACCIDENT NO INJU", "MOTOR VEHICLE COMPLAINT", "MOTOR VEHICLE RECOVERED", "MOTOR VEHICLE VIOLATION", "NOISE COMPLAINT", "NOTIFICATION", "ODOR INVESTIGATION", "OFFICER WANTED", "OPEN DOOR", "Paid Detail", "PAPERWORK SERVICE", "PARKING COMPLAINT", "PATROL AREA", "POWER OUTAGE/FAILURE", "RADAR/TRAFFIC ENFORCEMENT", "RAPE", "REPOSSESSION", "RESCUE CALL", "ROLLING 9", "ROLLING Q2-1", "RUNAWAY", "SAFETY HAZARD", "SCHOOL RESOURCE OFFICER DUTIES", "SEARCH", "Section 12", "SERVE WARRANT", "SERVICE CALL", "SEX OFFENDER REGISTRATION", "SHOPLIFTING", "SHOTS FIRED", "SMOKE INVESTIGATION", "SOLICITING", "STRUCTURE FIRE", "SUICIDE COMMITTED", "SUICIDE THREAT", "SUMMONS SERVICE", "SUSPICIOUS ACTIVITY", "SUSPICIOUS PACKAGE", "SUSPICIOUS PERSON", "SUSPICIOUS VEHICLE", "SWATTING", "THREAT", "TRAFFIC CONTROL", "TRAFFIC HAZARD", "TRESPASS", "TRUANT", "UNWANTED PERSON", "VANDALISM", "VEHICLE FIRE")
+
+# here is that simpler taxonomy!
 
 callReasonNameThemes = c("Mental Health or Social Work", "Mental Health or Social Work", "Other Safety", "Administration", "Administration", "Administration", "Administration", "Vehicular", "Administration", "Violent Crime", "Other Safety", "Other Safety", "Other Safety", "Administration", "Violent Crime", "Other Safety", "Other Safety", "Other Safety", "Nonviolent Crime", "Nonviolent Crime", "Violent Crime", "Fire", "Prevention", "Fire", "Nonviolent Crime", "Vehicular", "Fire", "Prevention", "Fire", "Mental Health or Social Work", "Prevention", "Other Safety", "Administration", "Administration", "Mental Health or Social Work", "Mental Health or Social Work", "Mental Health or Social Work", "Other Safety", "Administration", "Vehicular", "Other Safety", "Violent Crime", "Administration", "Mental Health or Social Work", "Mental Health or Social Work", "Medical", "Other Safety", "Fire", "Violent Crime", "Fire", "Fire", "Fire", "Administration", "Administration", "Nonviolent Crime", "Utility", "Administration", "Nonviolent Crime", "Violent Crime", "Fire", "Nonviolent Crime", "Administration", "Mental Health or Social Work", "Prevention", "Nonviolent Crime", "Utility", "Other Safety", "Medical", "Other Safety", "Other Safety", "Nonviolent Crime", "Medical", "Vehicular", "Vehicular", "Vehicular", "Vehicular", "Nonviolent Crime", "Administration", "Other Safety", "Other Safety", "Prevention", "Administration", "Administration", "Vehicular", "Prevention", "Utility", "Vehicular", "Violent Crime", "Other Safety", "Other Safety", "Vehicular", "Vehicular", "Mental Health or Social Work", "Other Safety", "Administration", "Other Safety", "Mental Health or Social Work", "Administration", "Administration", "Prevention", "Nonviolent Crime", "Violent Crime", "Fire", "Nonviolent Crime", "Fire", "Mental Health or Social Work", "Mental Health or Social Work", "Administration", "Prevention", "Prevention", "Prevention", "Prevention", "Violent Crime", "Nonviolent Crime", "Vehicular", "Vehicular", "Nonviolent Crime", "Mental Health or Social Work", "Other Safety", "Nonviolent Crime", "Fire")
 
@@ -469,7 +457,7 @@ My analysis plan is to answer the following more specific questions for both tow
 3. Which call reasons require the most personnel time?
 4. What call reasons have grown the most over time, in terms of personnel time?
 5. What call reasons have decreased the most in terms of personnel time?
-6. What can we learn about public safety need in terms of broad themes?
+6. What can we learn about the public safety impact of change in calls in terms of broad themes?
 :::
 
 
@@ -527,41 +515,6 @@ tempGroupDF <- callReasonsDF %>%
 callReasonsDF <- callReasonsDF %>%
   inner_join(tempGroupDF, by = join_by(call_reason))
 
-
-########## do that again for town
-
-# initialize df for reasons: group by town
-tempGroupDF <- callReasonsDF %>%
-  group_by(town) %>%
-  mutate(year = as.integer(year(year)))
-
-crHoursEstByYear <- do(tempGroupDF, 
-   tidy(
-     lm(totalHours ~ year, data = .))) %>%      
-  filter(term == "year") %>%                    
-  mutate(estYearlyHourChange_Town = round(estimate, 1)) %>%
-  arrange(desc(estimate)) %>%
-  select(c(town, estYearlyHourChange_Town))
-
-callReasonsDF <- callReasonsDF %>%
-  inner_join(crHoursEstByYear, by = join_by(town))
-
-callReasonsDF <- callReasonsDF %>%
-  filter(!is.na(estYearlyHourChange_Town))
-
-rm(tempGroupDF)
-rm(crHoursEstByYear)
-
-tempGroupDF <- callReasonsDF %>%
-  group_by(town) %>%
-  summarize(
-    totalCalls_Town = sum(totalCalls),
-    totalHours_Town = sum(totalHours)
-  ) 
-
-callReasonsDF <- callReasonsDF %>%
-  inner_join(tempGroupDF, by = join_by(town))
-
 ########## do that again for theme
 
 
@@ -587,6 +540,7 @@ rm(tempGroupDF)
 rm(crHoursEstByYear)
 
 # initialize df for theme: group by year
+
 tempGroupDF <- callReasonsDF %>%
   group_by(call_theme) %>%
   summarise(
@@ -625,7 +579,7 @@ crTownYearThemeDF <- callReasonsDF %>%
   )
 
 
-# Calculate growth percentage of hours worked
+  # Calculate growth percentage of hours worked
 
 crYeargrowthPct <- paste0(round(
   (crYearDF[5,3] - crYearDF[1,3]) / crYearDF[1,3] * 100, 1)[[1]],
@@ -639,7 +593,7 @@ crWengrowthPct <- paste0(round(
   (crTownYearDF[10,4] - crTownYearDF[6,4]) / crTownYearDF[6,4] * 100, 1)[[1]],
   "%")
 
-# calculate linear model coefficient estimate of x (hour increase by year)
+  # calculate linear model coefficient estimate of x (hour increase by year)
 
 crYeargrowthLM <- round(lm(totalHours ~ year(year), 
                            data = crYearDF)$coefficients[2], 1)
@@ -656,7 +610,7 @@ crWengrowthLM <- round(lm(totalHours ~ year(year),
                                         town == "Wendell")
                           )$coefficients[2], 1)
 
-# calculate weekly hour increase per lm
+  # calculate weekly hour increase per lm
 
 crYeargrowthLMweekChar <- as.character(round(crYeargrowthLM / 52, 1))
 
@@ -666,11 +620,11 @@ crLevgrowthLMweek <- round(crLevgrowthLM / 52, 1)
 
 crWengrowthLMweek <- round(crWengrowthLM / 52, 1)
 
-# assumed standard 40-hour work week
+  # assume standard 40-hour work week
 
 assumedFTE <- 40
 
-# calculate hour increase per lm in terms of weekly FTE
+  # calculate hour increase per lm in terms of weekly FTE
 
 crYeargrowthFTE <- round(crYeargrowthLM / 52 / assumedFTE, 2)
 
@@ -747,7 +701,7 @@ Call hour workload is an important factor in public safety personnel management.
 
 What else could we learn from this data set about what drives this growth in policing?
 
-A simple next step is to compare the towns. Faceting the 3 key metrics by town lets us compare the change in calls and hours worked over the 5-year period:
+A simple next step is to compare the towns. Faceting by town lets us compare the change in calls and hours worked over the 5-year period:
 
 ```{r chunkByTown, fig.width=10, fig.height=10}
 
@@ -813,7 +767,7 @@ It's more accurate and fair to say that missing data from Wendell has driven the
 
 By taking responsibility for policing in Wendell, LPD officers have improved call data about Wendell policing, bringing it up to LPD quality. When summarizing data inclusively before and after regionalization, Wendell shows **`r as.character(crtyGrowthDF[2,2])` growth** in hours on calls from 2018 to 2022 -- or what appears to be **`r as.character(crtyGrowthDF[2,4])` additional hours** of police work every week. 
 
-Anecdotally, I learned from LPD Chief Minckler that the previous Wendell police chief did not log all calls. With Leverett trends flat, this is likely enough to explain Wendell's high rate. Two to three years from now, LPD will have enough data to make a more confident assessment of Wendell's policing needs.
+Anecdotally, I learned from LPD Chief Minckler that the previous Wendell police chief did not log all calls. This probably explains Wendell's high rate. Two to three years from now, LPD will have more data and experience to support a confident assessment of Wendell's true policing needs.
 
 :::
 
@@ -848,7 +802,7 @@ grandTotalHoursChar = as.character(format(grandTotalHours, big.mark = ",", scien
 
 #### Top level-of-effort call reasons
 
-Grouping by `call_reason` and summing total hours allows me to learn which types of calls take the most time. This lollipop plot shows the top 30 call reasons in terms of hours worked in both towns over the 5-year period. From 2018 to 2022, there was **a grand total of `r grandTotalHoursChar` hours** for all calls in both towns. Each lollipop in the plot shows the absolute number of hours and the percentage of the grant total.
+Grouping by `call_reason` and summing total hours allows me to learn which types of calls take the most time. This lollipop plot shows the top 30 call reasons in terms of hours worked in both towns over the 5-year period. From 2018 to 2022, there was **a grand total of `r grandTotalHoursChar` hours** for all calls in both towns. Each lollipop in the plot shows the absolute number of hours and the percentage of the grand total.
 
 ```{r chunkByReason2, fig.width=10, fig.height=10}
 
@@ -886,7 +840,7 @@ callReasonsDF %>%
   ) +
   labs(title = "Top level-of-effort",
         subtitle = "Top 30 call reasons 2018-2022 (# of hours, % of all hours)",
-        x = "Hours",
+        x = "Level-of-effort: Total hours worked",
         y = "Reasons") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() 
@@ -966,7 +920,7 @@ find_mode <- function(x) {
 
 #### Top growth call reasons
 
-Since we can calculate a trend line for each call reason, we can identify the call reasons with the steepest trend lines as a representation of call level-of-effort that has grown the most since 2018. The next lollipop plot shows the top 30 call reasons by growth. In parity with the previous plot, the <span style="color:dodgerblue4;">blue</span> and <span style="color:orangered;">orange</span> lollipops still represent total hours worked.
+Since we can calculate a trend line for each call reason, we can identify the call reasons with the steepest trend lines as a representation of call level-of-effort that has grown the most since 2018. The next lollipop plot shows the top 30 call reasons by growth. In parity with the previous plot, the <span style="color:blue;">blue</span> and <span style="color:orangered;">orange</span> lollipops still represent total hours worked.
 
 ```{r chunkByReason5, fig.width=10, fig.height=10}
 
@@ -1008,8 +962,8 @@ callReasonsDF %>%
     position = "top"
   ) +
   labs(title = "Top growth",
-        subtitle = "Top 30 call reasons by growth (Hours worked + growth)",
-        x = "Hours",
+        subtitle = "Top 30 call reasons by growth",
+        x = "Level-of-effort: Total hours worked",
         y = "Reasons") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() 
@@ -1052,7 +1006,7 @@ crTopGrowthHours %>%
               color = "orangered",
               show.legend = FALSE) + 
   labs(title = "Leaderboard: Top growth",
-       subtitle = "9 call reasons growing the most",
+       subtitle = "9 call reasons that have grown the most",
        y = "Hours") +
   scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() +
@@ -1063,11 +1017,11 @@ crTopGrowthHours %>%
 
 ```
 
-Or -- an important reminder that volume and rate are independent from each other -- we may have revealed a mix of public safety needs with other causes. For example, do these rates of change reflect administrative changes in record keeping? Do 'assist citizen' and 'officer wanted' call trends represent change in public safety needs, or change in how calls are logged?  Has the incidence of death been so infrequent, or were calls about a person's death coded differently during 2019 and 2020? This data won't answer these questions, but my hope is that people can use this analysis will help prompt and clarify questions like these.
+Or -- an important reminder that volume and rate are independent from each other -- we may have a set of public safety needs with a mixture of causes. For example, do these rates of change reflect administrative changes in record keeping? Do 'assist citizen' and 'officer wanted' call trends represent change in public safety needs, or change in how calls are logged?  Has the incidence of death been so infrequent, or were calls about a person's death coded differently during 2019 and 2020? This data won't answer these questions, but my hope is that people can use this analysis will help prompt and clarify questions like these.
 
 #### Top impact call reasons
 
-Let's combine total hours with top growth to get a better sense of call reasons with the greatest impact.
+Let's combine total hours with top growth to get a better sense of call reasons with the greatest impact.  
 
 ```{r chunkByReason7, fig.width=10, fig.height=10}
 
@@ -1080,13 +1034,13 @@ crFactorTotals2 <- callReasonsDF %>%
     summarise(
     totalHours = sum(totalHours),
     estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
-    productTopHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+    productImpact = mean(estYearlyHourChange_Reason) * sum(totalHours)
   ) 
 
 rm(topHourFactors) # clear the previous df
 
 topHourFactors <- crFactorTotals2 %>%
-  arrange(desc(productTopHours)) %>%
+  arrange(desc(productImpact)) %>%
   head(n = 30) %>%
   droplevels.data.frame() # discard the empty factor levels
 
@@ -1096,9 +1050,9 @@ callReasonsDF %>%
     totalHours = sum(totalHours),
     percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
     estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
-    productTopHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+    productImpact = mean(estYearlyHourChange_Reason) * sum(totalHours)
   ) %>%
-  mutate(call_reason = fct_reorder(call_reason, productTopHours)) %>% 
+  mutate(call_reason = fct_reorder(call_reason, productImpact)) %>% 
   filter(call_reason %in% c(levels(topHourFactors[[1]]))) %>%    
       # this uses topHourFactors to target factors for removal
       # does it work in this plot?
@@ -1116,22 +1070,21 @@ callReasonsDF %>%
   ) +
   labs(title = "Top impact",
         subtitle = "30 call reasons with top level-of-effort and top growth",
-        x = "Hours",
+        x = "Level-of-effort: Total hours worked",
         y = "Reasons") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() 
 
 ```
 
-Now can examine the 9 facets of the most impactful call reasons:
+Now we can examine the 9 facets of the most impactful call reasons:
 
 ```{r chunkByReason8, fig.width=10, fig.height=10}
 
 topHourFactors <- topHourFactors %>%
-  arrange(desc(productTopHours)) %>%
+  arrange(desc(productImpact)) %>%
   head(n = 9) %>%
   droplevels.data.frame() # discard the empty factor levels
-
 
 crTopGrowthHours <- callReasonsDF %>%
   group_by(call_reason, year) %>%
@@ -1139,11 +1092,11 @@ crTopGrowthHours <- callReasonsDF %>%
     totalHours = sum(totalHours),
     percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
     estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
-    productTopHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+    productImpact = mean(estYearlyHourChange_Reason) * sum(totalHours)
   ) %>%
   filter(call_reason %in% c(levels(topHourFactors[[1]]))) %>%
   droplevels.data.frame() %>% 
-  mutate(call_reason = fct_reorder(call_reason, productTopHours)) 
+  mutate(call_reason = fct_reorder(call_reason, productImpact)) 
         # this fct_reorder isn't working to reorder the facets
 
 crTopGrowthHours %>%
@@ -1157,7 +1110,7 @@ crTopGrowthHours %>%
               color = "orangered",
               show.legend = FALSE) + 
   labs(title = "Leaderboard: Top impact",
-       subtitle = "9 call reasons with top hours and top growth",
+       subtitle = "9 call reasons with the most hours that have grown the most",
        y = "Hours") +
   scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() +
@@ -1165,6 +1118,9 @@ crTopGrowthHours %>%
   facet_wrap(~call_reason) +
   theme(strip.text.x = 
           element_text(size = 9, color = "gray40", face = "bold"))
+
+topHourFactors <- topHourFactors %>%
+  select(c(call_reason, totalHours, estYearlyHourChange_Reason))
 
 ```
 
@@ -1199,11 +1155,11 @@ crFactorTotals2 <- callReasonsDF %>%
     summarise(
     totalHours = sum(totalHours),
     estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
-    productBottomHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+    productLeastImpact = mean(estYearlyHourChange_Reason) * sum(totalHours)
   ) 
 
 bottomHourFactors <- crFactorTotals2 %>%
-  arrange(desc(productBottomHours)) %>%
+  arrange(desc(productLeastImpact)) %>%
   tail(n = 30) %>%
   droplevels.data.frame() # discard the empty factor levels
 
@@ -1213,9 +1169,9 @@ callReasonsDF %>%
     totalHours = sum(totalHours),
     percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
     estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
-    productBottomHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+    productLeastImpact = mean(estYearlyHourChange_Reason) * sum(totalHours)
   ) %>%
-  mutate(call_reason = fct_reorder(call_reason, productBottomHours)) %>% 
+  mutate(call_reason = fct_reorder(call_reason, productLeastImpact)) %>% 
   filter(call_reason %in% c(levels(bottomHourFactors[[1]]))) %>%    
       # this uses topHourFactors to target factors for removal
       # does it work in this plot?
@@ -1234,22 +1190,15 @@ callReasonsDF %>%
   labs(title = "Bottom impact",
         subtitle = "30 call reasons with greatest negative growth 
 and greatest level-of-effort",
-        x = "Hours",
+        x = "Level-of-effort: Total hours worked",
         y = "Reasons") +
   #scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() 
 
-```
-
-The 9 facets of the least impactful call reasons:
-
-```{r chunkByReason10, fig.width=10, fig.height=10}
-
 bottomHourFactors <- bottomHourFactors %>%
-  arrange(desc(productBottomHours)) %>%
+  arrange(desc(productLeastImpact)) %>%
   tail(n = 9) %>%
   droplevels.data.frame() # discard the empty factor levels
-
 
 crBottomGrowthHours <- callReasonsDF %>%
   group_by(call_reason, year) %>%
@@ -1257,11 +1206,11 @@ crBottomGrowthHours <- callReasonsDF %>%
     totalHours = sum(totalHours),
     percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
     estYearlyHourChange_Reason = mean(estYearlyHourChange_Reason),
-    productBottomHours = mean(estYearlyHourChange_Reason) * sum(totalHours)
+    productLeastImpact = mean(estYearlyHourChange_Reason) * sum(totalHours)
   ) %>%
   filter(call_reason %in% c(levels(bottomHourFactors[[1]]))) %>%
   droplevels.data.frame() %>% 
-  mutate(call_reason = fct_reorder(call_reason, productBottomHours)) 
+  mutate(call_reason = fct_reorder(call_reason, productLeastImpact)) 
         # this fct_reorder isn't working to reorder the facets
 
 crBottomGrowthHours %>%
@@ -1275,7 +1224,7 @@ crBottomGrowthHours %>%
               color = "orangered",
               show.legend = FALSE) + 
   labs(title = "Leaderboard: Bottom impact",
-       subtitle = "9 call reasons with top hours and top decrease",
+       subtitle = "9 call reasons with the most hours that have decreased the most",
        y = "Hours") +
   scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() +
@@ -1283,6 +1232,9 @@ crBottomGrowthHours %>%
   facet_wrap(~call_reason) +
   theme(strip.text.x = 
           element_text(size = 9, color = "gray40", face = "bold"))
+
+bottomHourFactors <- bottomHourFactors %>%
+  select(c(call_reason, totalHours, estYearlyHourChange_Reason))
 
 ```
 
@@ -1302,195 +1254,143 @@ crBottomGrowthHours %>%
 
 :::
 
+## Comparing themes
 
-```{r chunkByReason11, fig.width=10, fig.height=4}
-
-
-### HERE
-### double check that lm stuff
-### #2 - theme/reason
-### #3 - nix the year and town group_by LM code? why did I even do that? Maybe it'll be useful later.
+I would still find it helpful to paint with a broader brush. As I described earlier, I interpreted each of the `r as.character(length(levels(callReasonsDF$call_reason))[1])` call reasons according to `r as.character(length(levels(callReasonsDF$call_theme))[1])` call themes:
 
 
- # set a quantile boundary to variable so I can use it in a plot label
-# quantileBoundary = 0.5
-  # we only want reasons with the most total call hours
-# top9factors <- topHourFactors %>%
-#   arrange(desc(totalHours)) %>%
-#   head(n = 9)
-#   #subset(totalHours > quantile(topHourFactors$totalHours, quantileBoundary)) %>% 
-#   droplevels.data.frame() # discard the empty factor levels
+::: {.callout-note icon=false}
+
+## Public safety themes
+
+`r levels(callReasonsDF$call_theme)`
+
+:::
+
+Let's find out impact in terms of theme.
 
 
-# a boxplot that doesn't serve a clear purpose yet
+```{r chunkByTheme1, fig.width=10, fig.height=10}
+
 callReasonsDF %>%
-  ggplot(aes(town, totalHours)) +
-  geom_boxplot() +
-  scale_fill_viridis(discrete = T, option = "cividis") +
-  theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  scale_y_continuous(limits = quantile(callReasonsDF$totalHours, c(0.05, 0.95)))
-
-# a pie chart I will probably remove
-
-callReasonsDF %>% 
-    group_by(call_reason) %>%
+  group_by(call_theme) %>%
     summarize(
-    totalHours = sum(totalHours)
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
+    estYear_HoursByTheme = mean(estYear_HoursByTheme),
+    productImpact = mean(estYear_HoursByTheme) * sum(totalHours)
   ) %>%
-  mutate(call_reason = fct_reorder(call_reason, totalHours)) %>%
-  ggplot(aes(x = "", y = totalHours, fill = call_reason)) +
-  geom_bar(stat = "identity", width = 1, color = "lavenderblush", show.legend = FALSE) +
-  coord_polar("y", start = 0) +
-  #geom_text(aes(y = ypos, label = group), color = "white", size=6) +
-  scale_fill_viridis(discrete = T, option = "cividis") +
-  theme_ipsum()
+  mutate(call_theme = fct_reorder(call_theme, productImpact)) %>% 
+  ggplot(aes(x = totalHours, y = call_theme)) +
+  geom_bar(stat = "identity", fill = "purple4", alpha = .6, width = 0.1) +  
+  geom_point(size = 4, color = "orangered") + 
+  geom_text(aes(label = paste0(estYear_HoursByTheme, " hrs/yr"), hjust = -0.2)) +
+  scale_x_continuous(
+    limits = c(0,2900),
+    breaks = seq(0, 2900, 500),
+    minor_breaks = seq(0, 2900, 250),
+    position = "bottom"
+  ) +
+  labs(title = "Thematic impact",
+        subtitle = "Call themes by level-of-effort and growth",
+        x = "Level-of-effort: Total hours worked",
+        y = "Themes") +
+  theme_ipsum() 
 
-# this shows relationship between reason and theme
-callReasonsDF  %>%
-  group_by(call_reason, call_theme, town) %>%
-    summarise(
-    totalHours = sum(totalHours)
-  ) %>%
-  arrange(desc(totalHours)) %>%
-  head(20) %>%
-  ggplot(aes(x = call_theme, y = totalHours, fill = call_reason)) +
-  theme(axis.text.x = element_text(angle = 90)) +
-  geom_bar(stat = "identity") +  
-  labs(title = "Top 20 call reasons by total hours",
-       subtitle = "Both towns and all years (2018 to 2022)",
-       y = "Hours") +
-  scale_fill_viridis(discrete = T, option = "cividis") +
-  theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  facet_wrap(vars(town))
-
-
-# group by year and theme
-crThemeYear <- callReasonsDF %>%
+callReasonsDF %>%
   group_by(call_theme, year) %>%
-    summarise(
-      totalCalls = sum(totalCalls),
-      totalHours = sum(totalHours) 
-  ) 
-
-crThemeYear %>%
-  ggplot(aes(x = year, y = totalHours, fill = call_theme)) + 
-    geom_area(alpha = 0.5, show.legend = TRUE, color = "lavenderblush") +
-    labs(title = "Total hours by call theme",
-         y = "Hours") +
-    scale_fill_viridis(discrete = T, option = "cividis") +
-    theme_ipsum() +
-    theme(axis.text.x = element_text(angle = 90))
-
-```
-
-
-
-```{r chunkByThemeMAYBE, fig.width=10, fig.height=10}
-
-
-# order themes by totalCalls  
-crTownYearThemeDF %>% 
-  mutate(call_theme = fct_reorder(call_theme, totalCalls, .fun = 'sum')) %>%
-  ggplot(aes(x = year, y = totalCalls, fill = call_theme)) +
-  geom_area(alpha = 0.5, color = "white") +
-  labs(title = "Total police call volume by call theme", 
-       y = "Calls") + 
-  scale_fill_viridis(discrete = T, option = "cividis") +
-  theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90))
-
-crTownYearThemeDF %>% 
-  slice_max(order_by = totalCalls, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, totalCalls, .fun = 'sum')) %>%
-  ggplot(aes(x = year, y = totalCalls, fill = call_theme)) +
-  geom_area() +
-  labs(title = "Call volume, zoom in on top 5 call themes", 
-       y = "Calls") +
-  scale_fill_viridis(discrete = T, option = "cividis") +
-  theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90))
-
-crTownYearThemeDF %>% 
-  slice_min(order_by = totalCalls, n = 5) %>%
-  mutate(call_theme = fct_reorder(call_theme, totalCalls, .fun = 'sum')) %>%    
-  ggplot(aes(x = year, y = totalCalls, fill = call_theme)) +
-  geom_area() +
-  labs(title = "Call volume, zoom in on bottom 5 call themes", 
-       subtitle = "Y-axis at 1/10 scale of top 5 call themes",
-       y = "Calls") +
-  ylim(0, 400) + 
-  scale_fill_viridis(discrete = T, option = "cividis") +
-  theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90))
-
-
-```
-
-# Officer hours on calls 
-
-```{r}
-
-  # totalHours over time by themes, facets
-crTownYearThemeDF %>% 
-  ggplot(aes(x = year, y = totalHours, fill = call_theme)) +
-  geom_area() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  labs(title = "Total hours", 
-       y = "Hours") + 
-  scale_fill_viridis(discrete = T, option = "cividis") +
-  theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90)) +
-  facet_wrap(~call_theme, nrow = 2)
-
-  # totalHours by top 6 themes
-crTownYearThemeDF %>% 
-  slice_max(order_by = totalHours, n = 6) %>%
-  mutate(call_theme = fct_reorder(call_theme, totalHours, .fun = 'sum')) %>%
-  ggplot(aes(x = year, y = totalHours, fill = call_theme)) +
-  geom_area() +
-  labs(title = "Total hours: Zoom in on top 6 call themes", 
+    summarize(
+    totalHours = sum(totalHours),
+    percentOfAllHours = round(totalHours / grandTotalHours * 100, 1),
+    estYear_HoursByTheme = mean(estYear_HoursByTheme),
+    productImpact = mean(estYear_HoursByTheme) * sum(totalHours)
+  ) %>% 
+  mutate(call_theme = fct_reorder(call_theme, productImpact)) %>%
+  ggplot(aes(x = year, 
+             y = totalHours, 
+             fill = call_theme)) +
+  geom_area(alpha = 0.5, color = "lavenderblush") +
+  geom_smooth(method = lm,
+              se = FALSE, 
+              linewidth = .8,
+              color = "orangered",
+              show.legend = FALSE) + 
+  labs(title = "Leaderboard: Theme impact",
        y = "Hours") +
   scale_fill_viridis(discrete = T, option = "cividis") +
   theme_ipsum() +
-  theme(axis.text.x = element_text(angle = 90))
-
+  theme(axis.text.x = element_text(angle = 90)) +
+  facet_wrap(~call_theme) +
+  theme(strip.text.x = 
+          element_text(size = 9, color = "gray40", face = "bold"))
 
 ```
 
 
-Visualization will include: 
+::: {.callout-warning icon=false}
 
-- The change in average and total time on call response over the years, between the two towns. 
-- Call reasons by volume and time over the years, between the two towns. 
-- Call actions by call reason volume and time over the years, between the two towns.
-- Call volume and time over the years, between the two towns, grouped by public safety themes.
+## Specific questions for analysis
 
+6. What can we learn about the public safety impact of change in calls in terms of broad themes?
 
+:::
 
+::: {.callout-tip icon=false}
 
-(STORY) Any additional analysis details, and perhaps a backreference to your analysis plan from section 5. (not needed if section 6 is collapsed with sections 2-4)
-(CODE-Optional) Statistical Analyses: see “Role of Statistics”
-(CODE) Visualization
-You should organize your graphs and pictures by a small set of topics/questions
-There is no strict requirement on the number of graphs/figures you should make. However, we expect you to present sufficient graphs that are necessary to answer the question.
-(STORY) Interpret your analyses and visualization results for the reader
-What information do the analysis results or graphs tell you?
-You should describe the information of graphs comprehensively and detailed enough for readers to picture or envision the graphs in their brains.
+## An answer!
+Call themes with substantial growth are, from most to least impact: Administration, Other Safety, Medical, Utility, and Prevention.
 
-https://dacss.github.io/601_Fall_2022_final_posts/posts/final_project_Guanhua_Tan.html#painting-a-global-map
+Call themes with small growth and impact: Nonviolent Crime, Fire, and Mental Health or Social Work.
+
+One call theme has negative growth and small impact: Violent Crime.
+
+One call theme has negative growth and enormous impact: Vehicular.
+:::
 
 ### Conclusion and Discussion
-(STORY) Conclusion and Discussion 
-A brief summary of your work and your findings. What is (are) the answer(s) to your question?
-(optional) Discuss the limitation of your analyses and visualization; and what further analyses or visualizations you would conduct in the future
+
+This was the story of two small, rural Massachusetts towns that have made an agreement to combine their local police departments. By collecting, transforming, and analyzing 5 years of police call data, I've uncovered details about the share of call volume and level-of-effort between the towns, comparison of the level-of-effort of call reasons and how that effort has grown or decreased in the 5-year period, and more broadly, the comparison of level-of-effort growth and decrease observed in 10 public safety themes.
+
+By pursuing 6 lines of specific inquiry, my goal was to answer the following general research question:
+
+::: {.callout-warning icon=false}
+
+## Research question
+
+**What is the nature of public safety need behind the increase in calls that police respond to?**
+
+:::
+
+The nature of increased public safety need in Leverett and Wendell appears to be primarily administrative in nature, followed by a variety of 'other safety' calls, medical first response, support of utility service providers, and preventive policing. 
+
+My research was prompted by the LPD request to the town to create a 4th full-time police officer position to overcome these problems:
+
+1. Decreased supply of police officer human resources due to state criminal justice reform.
+2. Increased demand for police officer human resources due to increased call volume in the towns of Leverett and Wendell.
+
+Human resource and scheduling needs are important and the problems of POST reform are significant, however the first question is not within the scope of my research question. 
+
+For the second question, I propose that my analysis shows the inadequacy of a rationale for hiring based on increased call volume without consideration of how level-of-effort (hours per call) has changed. Police hours on calls in Leverett and Wendell, with a department of 3 full-time officers, have not exceeded 1 FTE in the 5-year period 2018-2022. At a growth rate of +0.04 FTE/year it will take 25 years to justify LPD personnel growth by 1 FTE. In addition, I propose that the cause of emergency calls that police respond to is important: If these towns are dealing primarily with unmet medical needs and increased utility work along with administrative tasks, I find it difficult to understand how more police officers will help meet these needs. Since most our increased needs appear to be about administration, medical emergency, and utility service support, hiring additional police officers seems like the wrong move. 
+
+More officers would likely help with preventive policing and 'other safety' calls, and the case can be made that the efforts of preventive policing have contributed to the low growth rate of nonviolent crime and the negative rate of violent crime. Setting aside that this data doesn't verify a causal relationship between prevention work and crime rates, the low crime numbers throughout the 5-year period makes me want to find out how much more reduction is possible, and whether the amount of work done on preventive police activities is proportional. 
+
+If I could recommend a course of action to Leverett and Wendell, it would be to take a closer look at administration, 'other safety', medical, utility, and prevention calls: ask if policing is the efficacious public response to the needs that drive these calls, or whether there are alternatives to policing that could better meet needs and ease the challenge of public administration. It so happens that I can make this recommendation, because I live here and I have been active in my town's government.
+
+My analysis is limited by assumptions made about the call data as an accurate representation of public safety incidents and police response -- when in fact we've learned that Wendell call data is very poor quality before 2020. My attempt to classify call reasons by themes is not well-informed by criminal justice standards, and I'd need to address this before others could adopt the methodology. My plots reflect my inexperience with linear regression modeling, and my aesthetic deficits.
+
+If I continue my research of this topic, I'd like to search for data that supports analysis about: 
+
+- The relationship between level-of-effort and change over time to call actions taken by officers, details of which are included in this data set.
+- Demographics of people involved in calls (responding officers, suspects, victims and other affected parties), which is only partially included in this data set.
+- Police work details not included in this data, such as time of year, day of week, and time of day patterns; geographic information; officer call notes; and relationships between different calls reasons.
+
+I hope that my data and thematic analysis demonstrates an approach to examining police work in a rural small town setting that's useful to municipal administrators responsible for police oversight, personnel budgets, public safety decision-making, and data-driven community dialogue.
 
 
 ### Bibliography
-Hint: at minimum, you should cite the source of the dataset and R as a programming language.
-	- Any citation style is appropriate since students come from diverse academic backgrounds. Please use whichever style is appropriate for your work.
+I received the data for this analysis by email directly from LPD Chief Scott Minckler in late March, 2023. The original format of the data was 10 PDF reports exported from the police department's software application [IMC-Central Square](https://www.centralsquare.com/). Follow this link for copies of the original reports, as well as CSV exports from this analysis of the call reason, call action, and operator demographic data parsed from the source reports: 
 
+<https://github.com/timshores/601_Spring_2023/tree/template/posts/TimShores_FinalProject_Data>
 
 ## Appendix 
 
@@ -1510,30 +1410,11 @@ These are the final data frame variables:
 
 ::: {.callout-note icon=false}
 
-## totalReasonsDF
-
-Fetches totals of numeric variables from the report. This is only for quality-assurance comparison with calculated totals of **callReasonsDF** variables.
-
-:::
-
-::: {.callout-note icon=false}
-
 ## callActionsDF
 
 - **`r colnames(callActionsDF)[3]`**: Factor with 121 levels, same as in callReasonsDF
 - **`r colnames(callActionsDF)[4]`**: Factor with 47 levels, one for each action outcome for a call
 - **`r colnames(callActionsDF)[5]`**: Count of actionnames for each call_reason
-:::
-
-::: {.callout-note icon=false}
-
-## totalActionsDF
-
-Fetches totals from the **Call Action Breakdown** table. This supports quality-assurance comparison with calculated totals of **callActionsDF** variables. However the **Call Action Breakdown** table also attributes action counts to calls directly to the local police department and to Shelburne Dispatch. This information is not available in the **Call Reason Breakdown** table.
-
-- **`r colnames(totalActionsDF)[4]`**: Count of actionnames for calls made directly to LPD (or WPD before 2021).
-- **`r colnames(totalActionsDF)[5]`**: Count of actionnames for calls made to Shelburne Dispatch.
-
 :::
 
 ::: {.callout-note icon=false}

@@ -135,14 +135,12 @@ position_Countgroup <- c("1-5", "6-10", "11-15", "16-20", "21-25", "26-30", "31-
 
 #### Handling Unknown, Not Reported, NA or Missing data
 
-**Unknown/Not Reported Data**
+**Unknown/Not Reported Data:** 
 There were 45,980 crashes reported from 2012 to 2022. Of those crashes 4,002 (8.7%) were reported with a Crash Severity of "Unknown" or "Not Reported" the majority are reported as resulting in property damage only with no injuries reported. Ranking second is non-fatal injuries, and finally a small portion are rated as fatal injuries. 
 
   + For the purpose of this report, and for the category of "Crash Severity" only, I have combined these into "Unknown/Not Reported". 
 
-**Why are some crashes reported as Unknown or Not Reported?**
-Possibilities: 
-
+**Why are some crashes reported as Unknown or Not Reported? Possibilities include:**
   + internal clerical errors
   
   + reports must be completed within 5 days of crash (leading to rushed answers)
@@ -151,7 +149,7 @@ Possibilities:
   
   + data missing due to personal choice in managing insurance claims
 
-**Unknown/Not Reported Over Time**
+**Unknown/Not Reported Over Time:** 
 The category "Unknown" was used more so in later years, with a peak in 2021. Whereas "Not Reported" had peaks in 2012 and 2017 and very low numbers in 2020-2022.
 ```{r}
 pUnknown <- mydataog %>%
@@ -166,7 +164,7 @@ ppUN <- (pUnknown + pNotReported)
 ppUN + plot_annotation(title = "Reports of 'Unknown' and 'Not Reported' for category Crash Severity")
 ```
 
-**Unknown/Not Reported Data Inconsistencies**
+**Unknown/Not Reported Data Inconsistencies:**
 Crashes that were reported under Crash Severity as being "Unknown" or "Not Reported" had 50 inconsistently reported injuries in another column of the data. All 50 reporting inconsistencies occurred between May 2018 and October 2019:
 
   * Crash Severity "Not Reported" has 42 reports of maximum injury reports across 6 categories that suggest a possible injury.
@@ -180,7 +178,8 @@ mydatainconsistencies <- mydataog %>%
   filter(between(Crash_Date, as.Date('2018-05-01'), as.Date('2019-10-31'))) 
 ```
 
-**Missing data/NAs and outliers** 
+**Missing data/NAs and outliers:** 
+
 Road Surface Condition has an NA count of n=368. For the purpose of this report I am considering this sort of NA to be comparable with "Not Reported" or "Unknown" and leave the data in the dataset as I am only looking at a few indicators of Road Surface Condition and not analyzing it in depth. 
 
 Manner of Collision also has an NA count of n=5. I will leave that data alone as well.
@@ -210,7 +209,12 @@ mydatacountsall <- mydata %>%
 mydatacountsall%>%
   kbl() %>%
   kable_classic()
+```
 
+By viewing daily crash counts in intervals of 5 we can see that on most days there are 11-15 crashes in Boston, with some days having 6-10 or 16-20 crashes. 
+
+Very few days have 5 or less crashes.
+```{r}
 ggplot(mydata, aes(Crash_Countgroup, stat="count")) + geom_bar() + scale_x_discrete(limit =position_Countgroup) + labs(title = "Crashes by Daily Crash Count Groups", x = "Count Groups")
 ```
 The following graph shows the density of crashes with crash counts per day. As opposed to the bargraph charting all crashes by total counts in the Overview, this graph lets us see outliers not only in the top portion of the graph with the most counts, but also in the lowest counts. We can now see the pockets of time when there were, for instance, more than 6 crashes per day everyday, like in 2017, or the time when in 2020 there were many instances of having only a 1-3 crashes per day.
@@ -240,7 +244,7 @@ ggplot(aes(Weekday, fill = Weekday)) +
 
 October is the month with the most crashes and the highest average crash rate in Boston (2012-2022), averaging 15 crashes per day. 
 
-Buckle up, this tab is a longer analysis section.
+Buckle up, this tab has a longer analysis section.
 
 
 ```{r} 
@@ -367,8 +371,6 @@ mydata %>%
 ## Year
 2017 was the year with the most crashes in Boston (2012-2022).
 
-The data shows 2017 as a peak with a sharp drop off in 2020 (due to the pandemic and reduced traffic flow) then a climb back up in 2021 almost matching crash reports from 2019. Of course this data shows that post-pandemic rates of car crashes have gone back up, but it is not as high as crashes in 2017.
-
 ```{r} 
 #Crash Count per Day by Year
 mydatasum <- mydata %>% 
@@ -377,13 +379,17 @@ mydatasum <- mydata %>%
             "max" = max(Crash_Count, na.rm = TRUE),
             "mean" = mean(Crash_Count, na.rm = TRUE), 
             "median" = median(Crash_Count, na.rm = TRUE),
-            "standard_deviation" = sd(Crash_Count, na.rm = TRUE)) %>% 
+            "standard deviation" = sd(Crash_Count, na.rm = TRUE)) %>% 
   arrange(Year)
 
 mydatasum %>%
-print(n=11)
+  kbl(caption = "Crash Statistic by Year") %>%
+  kable_classic() %>%
+  row_spec(6, bold = T) 
+
 ```
 
+The data shows 2017 as a peak with a sharp drop off in 2020 (due to the pandemic and reduced traffic flow) then a climb back up in 2021 almost matching crash reports from 2019. Of course this data shows that post-pandemic rates of car crashes have gone back up, but it is not as high as crashes in 2017.
 ```{r}
 ggplot(mydata, aes(year(Crash_Date))) + geom_histogram(binwidth = .50) + scale_x_continuous(breaks=pretty_breaks()) + labs(title = "All Crashes by Year", x = "Year",)
 ```
@@ -451,7 +457,7 @@ ggplot(mydata, aes(Crash_Hour)) + geom_histogram(stat="count") + labs(title = "C
 ```
 While Non-fatal, Property damage, Unknown/Not Reported all follow the same pattern of peaks in the afternoon, crashes resulting in Fatal injury peak at late night.
 
-Time occurrence of crash (defined by time intervals: (Overnight = 2AM-5:59AM; Morning = 6AM-9:59AM; Midday = 10AM-1:59PM; Afternoon = 2PM-5:59PM; Evening = 6PM-9:59PM; Late Night = 10PM-1:59AM)
+*Time occurrence of crash (defined by time intervals: (Overnight = 2AM-5:59AM; Morning = 6AM-9:59AM; Midday = 10AM-1:59PM; Afternoon = 2PM-5:59PM; Evening = 6PM-9:59PM; Late Night = 10PM-1:59AM)*
 
 ```{r}
 tgroup <- ggplot(mydata, aes(Crash_Timegroup, stat="count", fill = Crash_Severity)) + geom_bar() + scale_x_discrete(limits = positions) + labs(title = "Crashes by Time Group", x = "Time Group", fill = "Crash Severity") + theme(legend.position = "none")

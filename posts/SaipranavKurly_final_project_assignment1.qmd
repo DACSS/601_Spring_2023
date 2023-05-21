@@ -1,0 +1,148 @@
+---
+title: "Final Project Assignment#1: Sai Pranav Kurly"
+author: "Sai Pranav Kurly"
+description: "Project & Data Description"
+date: "05/12/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+
+1.  Dataset(s) Introduction:
+
+The Boston Crime Dataset, also known as the Boston Crime Incident Reports, is a dataset that contains information about reported incidents of crime in the city of Boston, Massachusetts, USA. It provides a detailed record of criminal activities and incidents that have occurred within the city.
+The dataset includes various attributes related to each reported crime, such as the type of offense, location, date and time of occurrence, and other relevant details. The information is collected and maintained by the Boston Police Department, which aims to promote transparency and public awareness regarding crime trends and patterns in the city.
+Researchers, analysts, and data enthusiasts often utilize the Boston Crime Dataset to study crime patterns, develop predictive models, and gain insights into criminal activities within the city. It can be used for various purposes, such as identifying high-crime areas, evaluating the effectiveness of law enforcement strategies, or understanding the impact of crime on different neighborhoods.
+
+2.  What questions do you like to answer with this dataset(s)?
+
+Some of the questions that I would like to answer and figure out are:
+
+*How have crime rates changed over the years in different districts of Boston?
+*Is there a correlation between certain types of crimes and specific days of the week or months of the year?
+*Are there any noticeable spatial patterns or hotspots of crime in Boston?
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+This part contains both a coding and a storytelling component.
+
+In the coding component, you should:
+
+1.  read the dataset;
+
+I want the latest data which can only be found on the Boston PD website, hence I am combining all the data that I downloaded from the website first. 
+
+```{r}
+folder_path <- "SaipranavKurly_FinalProjectData/"
+file_list <- list.files(folder_path)
+file_list <- sort(file_list)
+combined_data <- data.frame()
+for (file_name in file_list) {
+    if(file_name != 'Offense_Codes.csv' & file_name != 'Combined_Dataset.csv'){
+          file_path <- file.path(folder_path, file_name)
+    file_data <- read.csv(file_path)
+    combined_data <- rbind(combined_data, file_data)
+    }
+}
+combined_file_path <- file.path(folder_path, "Combined_Dataset.csv")
+write.csv(combined_data, combined_file_path, row.names = FALSE)
+```
+    -   (optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step.
+
+    -   (optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns.
+
+```{r}
+crime_dataset <- read.csv("SaipranavKurly_FinalProjectData/Combined_Dataset.csv")
+```
+
+2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;
+
+    -   for examples: dim(), length(unique()), head();
+
+    ```{r}
+dim(crime_dataset)
+    ```
+
+    ```{r}
+length(unique(crime_dataset))
+    ```
+
+    ```{r}
+head(crime_dataset)
+    ```
+
+3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
+
+```{r}
+summary(crime_dataset)
+```
+
+Storytelling:
+
+The Dataset contains the following columns and below are the descriptions:
+
+- Incident Number: Internal report number for each incident, non-null value.
+- Offense Code: Numerical code representing the offense description.
+- Offense Code Group: High-level group name for the offense code.
+- Offense Description: Detailed description and internal categorization of the offense.
+- District: District where the crime occurred.
+- Reporting Area: Number of the reporting area where the crime occurred.
+- Shooting: Numerical value indicating if a shooting took place.
+- Occurred on Date: Date and time of when the crime occurred.
+- Year: Year when the crime occurred.
+- Month: Month when the crime occurred.
+- Day of Week: Day of the week when the crime occurred.
+- Hour: Hour when the crime occurred.
+- UCR Part: Universal Crime Reporting Part Number.
+- Street: Street name where the crime occurred.
+- Lat: Latitude coordinate of the crime location.
+- Long: Longitude coordinate of the crime location.
+- Location - Gives the location of where the crime has taken place.
+
+It consists of crimes from 2019 to 2022 and has about 303651 crimes in total. 
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+1.  Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above.
+
+Currently, I am planning to to analyze the following using the dataset:
+
+* Crime Distribution and Frequency: Create a bar or pie chart to depict the distribution of crime types in Boston.
+Determine the most and least common crime categories.
+Calculate and display the relative frequency of each type of crime.
+* Temporal Patterns and Trends: Using line graphs or time series plots, plot the number of reported crimes over time (monthly or yearly).
+Identify any notable trends or patterns in crime rates over time.
+* Seasonal Variation in Crime: Aggregate the data by month or season to see if there are seasonal variations in crime rates.
+To compare the distribution of crimes across seasons, create box plots or violin plots.
+* Geographic Crime Hotspots: Identify high-crime areas in Boston using geospatial visualization techniques. To visualize crime density, plot crime incidents on a map with markers or heatmaps. To identify statistically significant crime clusters, use spatial analysis techniques such as hotspot analysis or cluster analysis.
+* Temporal Patterns by Crime Type: Examine temporal patterns associated with various types of crimes. To compare the temporal patterns of various crimes, create stacked line graphs or small multiples. Identify patterns and seasonality within crime types using statistical techniques such as time series decomposition or autocorrelation analysis.
+
+2.  Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?
+
+The distribution of crime types can be represented visually using bar charts or pie charts. They give a clear overview of the most common and least common crime categories, making it simple to identify major crime trends. Line graphs and time series plots are useful for examining how crime rates change over time. In crime data, they reveal trends, patterns, and cyclical behavior. These visualizations aid in the identification of long-term trends, seasonal patterns, and unexpected changes in crime rates.Box plots and violin plots allow for the comparison of crime rates across seasons. They provide insights into the distribution of crime incidents during specific periods and aid in determining whether there are significant seasonal differences in crime rates.
+
+3.  If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.
+
+Convert date and time variables to appropriate formats using date/time functions.Handle missing data and outliers by applying appropriate techniques (e.g., imputation, removal, robust statistics).

@@ -263,25 +263,37 @@ bfro <- bfro %>%
 ::: panel-tabset
 #### Historical Trends by Region
 
-Now that our dataset has been narrowed down to only reports associated with specific dates, we can create a time series to see any spikes in report activity. We can also color-code the time series by region to see if the number of reports suddenly went up in a particular part of the country. The earliest report in our dataset is from 1869, but there are only 14 reports total before 1950, so I'm going to begin my time series at 1950. I'm also going to make the graph interactive so that it's easier to hover over and see specific values for the regions.
+Now that our dataset has been narrowed down to only reports associated with specific dates, we can create a time series to see any spikes in report activity. We can also color-code the time series by region to see if the number of reports suddenly went up in a particular part of the country. The earliest report in our dataset is from 1869, but there are only 14 reports total before 1950, so I'm going to begin my time series at 1950.
 
 ```{r}
-# Load plotly from library for graph interactivity
-library(plotly)
-
 # Create time series chart from 1950, color-coded by region
-region_time_series <- ggplot(bfro %>%
+ggplot(bfro %>%
          filter(year > 1949) %>%
          group_by(region) %>% 
          count(year), 
        aes(x=year, y=n, group=region, color=region)) + 
-  geom_line() + 
-  xlab("Year") + 
-  ylab("Number of Bigfoot Reports") 
-
-region_time_series <- ggplotly(region_time_series)
-
-region_time_series
+  geom_line(size=0.75) + 
+  labs(x="Year", y="Number of Bigfoot Reports", title="Bigfoot Reports Over Time, 1950-2021", color="Region") + 
+  geom_label(
+    label="South Central 2004: 80 reports",
+    x=2004,
+    y=75,
+    label.padding = unit(0.55, "lines"),
+    label.size = 0.35,
+    color = "black",
+    fill = "lavender"
+  ) + 
+  geom_label(
+    label="New England 2016: 13 reports",
+    x=2010,
+    y=16,
+    label.padding = unit(0.55, "lines"),
+    label.size = 0.35,
+    color = "black",
+    fill = "turquoise"
+  ) + 
+  theme(legend.position = c(.1, .73)) +
+  scale_x_continuous(n.breaks=10)
 ```
 
 This time series shows a modest spike in reports during the late 1970s in all regions, and a particularly high spike for most regions in 2004. The year 2013 also looks a bit exciting for the Midwest and the Southeast. Reports appear to have dipped everywhere in the last 10 years, with the exception of New England showing a rare spike in 2016.

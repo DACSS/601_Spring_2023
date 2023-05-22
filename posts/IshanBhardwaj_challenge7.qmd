@@ -1,0 +1,101 @@
+---
+title: "Challenge 7"
+author: "Ishan Bhardwaj"
+description: "Adding dimensions to plots"
+date: "05/21/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_7
+  - Ishan Bhardwaj
+  - air_bnb
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  Recreate at least two graphs from previous exercises, but introduce at least one additional dimension that you omitted before using ggplot functionality (color, shape, line, facet, etc) The goal is not to create unneeded [chart ink (Tufte)](https://www.edwardtufte.com/tufte/), but to concisely capture variation in additional dimensions that were collapsed in your earlier 2 or 3 dimensional graphs.
+   - Explain why you choose the specific graph type
+5) If you haven't tried in previous weeks, work this week to make your graphs "publication" ready with titles, captions, and pretty axis labels and other viewer-friendly features
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point for thinking about what information is conveyed in standard graph types, and includes example R code. And anyone not familiar with Edward Tufte should check out his [fantastic books](https://www.edwardtufte.com/tufte/books_vdqi) and [courses on data visualizaton.](https://www.edwardtufte.com/tufte/courses)
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - eggs ⭐
+  - abc_poll ⭐⭐
+  - australian_marriage ⭐⭐
+  - hotel_bookings ⭐⭐⭐
+  - air_bnb  ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - faostat ⭐⭐⭐⭐⭐
+
+```{r}
+ab_nyc <- read_csv("_data/AB_NYC_2019.csv")
+ab_nyc
+```
+
+### Briefly describe the data
+
+```{r}
+latest_dates <- select(arrange(ab_nyc, desc(last_review)), "last_review")
+latest_dates
+```
+
+This dataset provides location, lodging, and review information for Airbnb residences in New York. The data seems to be relatively recent because the latest date of last review for an Airbnb was in the middle of 2019. I will be recreating two of my graphs made from this dataset in Challenge 5.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+This data is already tidy because each relevant variable has its own column, each case its own row, and each value its own cell.
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+For my analysis, all the required variables have the right data type and format, so there is no need for recoding or mutation.
+
+## Visualization with Multiple Dimensions
+
+```{r}
+ggplot(ab_nyc, aes(neighbourhood_group, fill = room_type)) +
+  geom_bar() +
+  theme_minimal() +
+  labs(title = "Bar Plot", subtitle = "Airbnb count by neighborhood groups", x = "Area", y = "Airbnb residence count", fill = "Room Type")
+```
+
+This graph tells us which neighborhood groups in New York have the highest number of Airbnb residences. As seen, Manhattan and Brooklyn far outweigh the other locations with respect to this variable. This is useful as it can hint us to which areas of New York are more tourist-centric. I added the dimension of bar colors for the room types to this plot. I chose a bar graph here because I am measuring one categorical variable.
+
+```{r}
+ggplot(ab_nyc, aes(neighbourhood_group, number_of_reviews)) +
+  geom_boxplot() +
+  facet_wrap(~ neighbourhood_group, nrow = 2) +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  labs(title = "Box Plot Facets", subtitle = "Area vs No. of reviews", x = "Area", y = "No. of reviews")
+```
+
+This plot tells us the trend of leaving reviews for each area, which indirectly tells us which areas had the most number of visits, as one review corresponds to a single stay at a residence. From here, we can see that Brooklyn, Manhattan, and Queens are all popular spots for stay as their range of review counts has the most population and variation. Their box plots are quite populated till the 400 reviews barrier, which is a considerably higher ceiling than that of The Bronx or Staten Island. I added the dimension of facets to this plot. I chose a box plot here because I am comparing a categorical and continuous variable.

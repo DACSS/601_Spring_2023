@@ -1,0 +1,101 @@
+---
+title: "Challenge 4"
+author: "Ishan Bhardwaj"
+description: "Data cleaning and mutations"
+date: "05/20/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_4
+  - Ishan Bhardwaj
+  - fed_rates
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  identify variables that need to be mutated
+4)  mutate variables and sanity check all mutations
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+-   abc_poll.csv ⭐
+-   poultry_tidy.xlsx or organiceggpoultry.xls⭐⭐
+-   FedFundsRate.csv⭐⭐⭐
+-   hotel_bookings.csv⭐⭐⭐⭐
+-   debt_in_trillions.xlsx ⭐⭐⭐⭐⭐
+
+```{r}
+fed_funds <- read_csv("_data/FedFundsRate.csv")
+fed_funds
+```
+
+### Briefly describe the data
+
+```{r}
+table(select(fed_funds, "Year"))
+normal_obsv <- filter(fed_funds, `Year` == 1955)
+normal_obsv
+diff_obsv <- filter(fed_funds, `Year` == 1988)
+diff_obsv
+```
+
+This dataset provides federal funds rate targets with an upper and lower boundary, the actual federal funds rate for a specified year + month + day, and general economic info from 1954 to 2017. As seen from the tables, these values are usually entered on the first day of every month. In certain cases, these values are also entered either halfway through the month or at random dates. These irregular entries may hint at periods of economic fluctuation during those months.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+dim(fed_funds)
+new_rows <- nrow(fed_funds) * 4
+new_cols <- ncol(fed_funds) - 4 + 2
+# Expected number of rows
+new_rows
+# Expected number of columns
+new_cols
+```
+
+This dataset is not tidy because the federal funds target rate, upper and lower targets, and effective values are all observances of one variable: the federal funds rate type. We can compress these four columns into one, whose values are in a new column titled "Rate". Hence, as a sanity check, I have calculated the expected dimensions of the transformed dataset.
+
+```{r}
+fed_funds_tidy <- pivot_longer(fed_funds, 4:7, names_to = "Federal Funds Rate Type", values_to = "Rate")
+fed_funds_tidy
+dim(fed_funds_tidy)
+```
+
+As expected, we end up with a dataset with 3616 rows and 8 columns. Each date will now be observed across four types of federal funds rates.
+
+## Identify variables that need to be mutated
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, are all time variables correctly coded as dates? Are all string variables reduced and cleaned to sensible categories? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+fed_funds_tidy <- fed_funds_tidy %>%
+  mutate(Date = ymd(str_c(Year, Month, Day, sep="-"))) %>%
+  select(Date, 7:8, 4:6)
+fed_funds_tidy
+```
+
+In the original dataset, the year, month, and day were in separate columns, which is incorrect. These should all be collapsed into one variable "Date", which is what I have done. I first concatenated each year, month, and day into a string delimited by `-` and then used ymd() from lubridate to convert it to proper date format. These new dates were added into a new column "Date" and finally, the relevant columns were selected from the tidy dataset.

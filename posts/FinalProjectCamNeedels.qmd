@@ -1,0 +1,249 @@
+---
+title: "DACCS 601 Final Project"
+author: "Cam Needels"
+description: "Analyzing YouTube Analytics in the US"
+date: "05/22/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment
+  - final_project
+  - CamNeedels
+  - YouTube
+  - youtube
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+library(ggplot2)
+library(summarytools)
+library(lubridate)
+library(GGally)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Introduction
+
+  YouTube is the most popular website in the world and we go to YouTube for nearly everything. Whether it's entertainment, tutorials, or music there are a wide variety of reasons people use the platform. That leads to me to the ultimate question, what types of videos are the most popular? What is the biggest indicator of a higher view video?
+
+  I obtained my data set from Kaggle.com which was created by Rishav Sharma and is trending videos from August 11th, 2020 until April 10th, 2023 in the United States. It has the view counts of every video and it has separate cases for duplicate videos if it trended on multiple dates. Each row is essentially a given video trending on a certain date. It also has the category of the listed in numerical form and it has the amount of likes, dislikes, and the amount of comments it receives. When I mean this data set is huge I'm talking about 280.2 megabytes of data. So for the portion where we show off the top trending videos, we keep it to only the top performing videos so loading the dataset doesn't crash R or make my computer explode.
+
+  YouTube has an algorithm on which videos should show up on your trending page so I was curious to see what variables correlate with the most successful YouTube videos. We will assume the most successful YouTube videos trend on the most days and have the highest amount of views.
+
+## Data
+
+Let's load up the data set
+
+```{r}
+#loading my data set and naming it YouTube
+YouTube <- read.csv("B:/Needels/Documents/DACCS 601/DACSS_601_New/posts/CamNeedels_FinalProjectData/US_youtube_trending_data.csv")
+YouTube
+```
+
+Now this is a lot of data and it's going to be hard to view in one file. Let's figure out the dimensions of our data set
+
+```{r}
+#the dimensions of the YouTube data set
+dim(YouTube)
+```
+
+Now let's figure out how many YouTube videos are in this data set. Keep in mind there are repeated cases in this data set because of the separate dates so let's use the unique function to find our answer.
+
+```{r}
+#the amount of unique videos by finding the title names
+length(unique(YouTube$title))
+```
+
+Now let's figure out some statistics for the variables that apply such as the mean, median, mode, IQR, and etc.
+
+```{r}
+#provides descriptive statistics for my data set YouTube
+descr(YouTube)
+```
+
+As stated above this data set takes the trending YouTube videos from August 11th, 2020 until April 10th, 2023 in the US. It contains 195390 trending videos on different dates (with duplicates). There are 36572 unique videos in this data set. This data set has 16 columns including the view count, title, publish date, channel name, category id (instead of the name it makes each category a specific number, this actually makes it easier for my statistical analysis section), youtube channel id, likes, dislikes, comment count, the date the video was trending, the tags on the YouTube video, the thumbnail link, if comments were disabled or not, if ratings were disabled or not, and description. Luckily for me there are no duplicate NA values in the data set. I will primarily be focusing on view count because it has the most to do with the questions I want to answer. 
+
+## Analysis Plan
+
+  Okay so I briefly mentioned the questions in the introduction but I'll be more specific on the questions I want answered. 
+
+  Which topics have the most amount of videos trending? Which variables strongly relate to higher view count? Which channels trended the most? Which videos were the most viewed in this time period?
+  
+  So here's what I planned for my analysis. I planned on using a heat map to show how closely related the view count is to the comment_count, dislikes, likes. I want to see which of those have the greatest correlation. However I found, and was recommended, to use a correlogram which shows something similar and it only includes the variables I'm looking for. For the trending video/channel analysis I decided to use a line graph so it shows the increase of views for multiple dates and because there will be overlap between other videos trending on the same dates. With dates on the x axis and the view count on the y axis. On the specific categories I plan to change the category ID's into names because YouTube has videos sorted by numbers that represent categories. After I fit the corresponding number to the proper category, I'll simply make a bar graph with the amount of trending videos per category. Lastly I'll do another bar graph with the view count on y and with the trending date on x to figure out which dates had the most amount of total trending views.
+
+## Visualization
+
+I will start off by showing off the seperate categories, but before I'm able to do that I need to recode the categoryID into a new column called category with the correct name that corresponds. Fun fact about the YouTube category Id system it just randomly skips 3-9 and 11-15 so those numbers are missing on purpose.
+
+```{r}
+#assigning the correct names to the categoryId values by
+#creating a new column via mutating and recoding
+YouTube <- mutate(YouTube, category = recode(categoryId, '1' = "Film/Animation",
+                                             '2' = "Auto/Vehicles",
+                                             '10' = "Music",
+                                             '15' = "Pets/Animals",
+                                             '17' = "Sports",
+                                             '18' = "Short_Movies",
+                                             '19' = "Travel/Events",
+                                             '20' = "Gaming",
+                                             '21' = "Videoblogging",
+                                             '22' = "People/Blogs",
+                                             '23' = "Comedy",
+                                             '24' = "Entertainment",
+                                             '25' = "News/Politics",
+                                             '26' = "Howto/Style",
+                                             '27' = "Education",
+                                             '28' = "Science/Technology",
+                                             '29' = "Nonprofits/Activism",
+                                             '30' = "Movies",
+                                             '31' = "Anime/Animation",
+                                             '32' = "Action/Adventure", 
+                                             '33' = "Classics",
+                                             '34' = "Comedy",
+                                             '35' = "Documentary",
+                                             '36' = "Drama",
+                                             '37' = "Family",
+                                             '38' = "Foreign",
+                                             '39' = "Horror",
+                                             '40' = "SciFi/Fantasy",
+                                             '41' = "Thriller",
+                                             '42' = "Shorts",
+                                             '43' = "Shows",
+                                             '44' = "Trailers"))
+```
+
+From here we can now create our bar graph except the names are harder to see normally so we are going to flip it so we can see it sideways.
+
+```{r}
+#we simply make a plot with our newly made column
+#called category and we use coord_flip() to flip it
+YouTube%>%
+  ggplot(aes(category, fill = category)) +
+  geom_bar()+
+  coord_flip()+
+  labs(title = "Number of YouTube Categories That Trended", x = "Amount of trending videos", y = "Category")
+
+```
+
+Next up is the correlogram so we can figure out what has the highest correlation with view_count. The pearson style seemed to be the most simple and efficient way to display what I was looking for.
+
+```{r}
+#the correlation matrix being created and covering all variables 
+# and making it in a pearson style
+ggcorr(select(YouTube, -categoryId) , method = c("everything", "pearson")) +
+labs(title = "View Count Correlogram")
+```
+
+Finally the trending dates, I grouped them by their trending date then grouped them by their view count and created a bar graph by descending view count. This makes it clear which date has the highest view count as well.
+
+```{r}
+#sorting our YouTube data set by the trending dates
+#and then grouping them together by view_count and
+#then taking only the top 15 so it can be fit onto our graph
+top_dates<-YouTube%>%
+  group_by(trending_date)%>%
+  summarise(view_count=sum(view_count))%>%
+  ungroup()%>%
+  slice_max(view_count,n=15)
+
+#with our new object that organizes our dates,
+#we create our bar graph with descending view count
+top_dates%>%
+  arrange(desc(view_count))%>%
+  ggplot(aes(y = view_count, x = reorder(trending_date, -view_count))) + 
+  geom_bar(position = "stack", stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Trending Dates with the most views", x = "Trending Date", y = "Amount of Views")
+```
+
+We will now group our top trending channels and see how much they trend by and by how many days. This line graph can show some overlap as well.
+
+```{r}
+#first we group the videos by the channel title
+#and the video ID. From there we group it by
+#view count and then slice then slice the top 10
+
+top_channel<-YouTube%>%
+  group_by(channelTitle,video_id)%>%
+  summarise(view_count=sum(view_count))%>%
+  ungroup()%>%
+  slice_max(view_count,n=10)
+
+#this makes it so it makes it descending for our views
+#and get all the rows from the left data regardless if
+#it matches on the right. This should group it together
+temp<-select(top_channel, -view_count)%>%
+  left_join(., YouTube, multiple="all")
+ 
+#this is our line graph that is created with all of 
+#this data combined using "temp" 
+  ggplot(data=temp, aes(y = view_count, x =trending_date, color = channelTitle, group=title)) + 
+  geom_line() +
+  labs(title = "Top trending channels", x = "Trending Date", y = "Amount of Views")
+```
+
+Lastly, we will group by the top trending videos via a line graph and make the data set smaller so it's easier to render
+
+```{r}
+#first we group the videos by the video title. From there
+#we group it by view count and then slice then slice the top 10
+
+top_vid<-YouTube%>%
+  group_by(title)%>%
+  summarise(view_count=sum(view_count))%>%
+  ungroup()%>%
+  slice_max(view_count,n=10)
+
+
+#we do the same thing as the last graph by selecting them
+#by descending view count and having them left join, however
+#this time one of the titles made the graph look bad because
+#it was too long so we changed the name of the specific title
+#so its shorter.
+temp2<-select(top_vid, -view_count)%>%
+  left_join(., YouTube, multiple="all")%>%
+  mutate(., title = recode(title, 'Watch the uncensored moment Will Smith smacks Chris Rock on stage at the Oscars, drops F-bomb' = "Will Smith Smacking Chris Rock at Oscars"))
+
+
+#this is our line graph with y as our view count
+#and x as our trending date that is created with all
+#of this data combined using "temp2" we also made
+#the legend smaller so the graph was easier to view
+  ggplot(data=temp2, aes(y = view_count, x =trending_date, color = title, group=channelTitle)) + 
+  geom_line() + theme(legend.key.size = unit(.25, 'cm')) +
+  theme(legend.text = element_text(size=6)) +
+  labs(title = "Top trending videos", x = "Trending Date", y = "Amount of Views")
+```
+
+## Reflection
+
+  In hindsight I used a very difficult data set but I'm glad I challenged myself in R studio. Despite being a beginner. I use YouTube a ton in my daily life and I actually analyze my own YouTube analytics in my free time so I thought it would be a perfect time to merge this with R studio.
+
+  The bar graph with the different categories showed that Entertainment had the most amount of trending videos with Gaming in Second and Music in Third. I was going to anticipate Music as first because so many of the top trending videos ended up being music. In hindsight it makes sense because music in general takes a while to make. While gaming and entertainment videos (which can take a while) but are easier to mass produce and provide lots of value. More videos being produced means more opportunities to trend hypothetically.
+
+  From the correlogram I gathered that the amount of likes and view count have the highest correlation to each other.The comment count is also the second most related variable to view count which also makes sense because likes and comments, from my experience, tell the YouTube algorithm to recommend certain videos more. The biggest lack of indicator for views is dislikes as well. One surprising thing is that likes and comment count have a strong correlation which I find fascinating.
+
+  From the most popular channels and video line graph, I've concluded that music tends to trend for the longest amount of time. BLACKPINK,a Korean singing group, was the highest for both days trending on the channel and video level. This makes sense because music has repetitive value that you can come back to giving it extra long term value. Korean music groups have a large fan base in the United States as well. However we can see a couple of entertainment videos that graze the top such as Spider-Man No Way Home and Will Smith Smacking Chris Rock at the Oscars. However the videos seem to be primarily dominated by music.
+  
+  The date that had the highest amount of views was on June 10th, 2021. In fact nearly all of the top 15 was in the month of June. However a pattern I noticed is that it tends to be towards the weekends mostly which makes sense. Thursday-Sunday is some of YouTube's most popular days from my experience and from my own videos performances and it lines up. June was a big month for pop culture such as several movie trailer coming out combines into some of the most traffic the website has seen in that time period.
+
+## Conclusion
+
+  In conclusion, I found that the category which trended the most was entertainment and gaming videos. The amount of likes seems to have the highest correlation with the amount of views a video gets. The trending date that had the most views was on June 10th, 2021. The channel that trended the most was BLACKPINK. The top trending video was Pink Venom by BLACKPINK as well. 
+
+  I wish that I was able to find a way to make the dates labeled in the trending videos/channel graph because there are so many that it layers on top of each other into a black square. If I could figure out a way to fix that issue, I would love to go back and clean it up. At the very least its easy to see if videos trended on more dates by how how wide it spans but it would be cool to see specific dates. My analyses with the correlogram could be flawed because the high view count could potentially cause the higher amounts of likes, dislikes, and comments so the correlogram could certainly be biased.I would also love to go into specific months and see why some months were more successful than others. Maybe if I wanted to do more visualization taking the average views for months in the data frame and then comparing it overall would be a cool visualization.
+

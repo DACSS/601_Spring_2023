@@ -2,7 +2,7 @@
 title: "Final Project Assignment#1: Cam Needels"
 author: "Cam Needels"
 description: "Project & Data Description"
-date: "04/12/2023"
+date: "05/3/2023"
 format:
   html:
     df-print: paged
@@ -27,6 +27,8 @@ library(readr)
 library(ggplot2)
 library(summarytools)
 library(lubridate)
+library(GGally)
+library(dplyr)
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
@@ -69,3 +71,50 @@ descr(YouTube)
 
 1. I plan on using a heat map to show how closely related the view count is to the comment_count, dislikes, likes. I want to see which of those have the greatest correlation. We haven't learned how to make a heat map, but I'll do some research and figure it out because that seems to make the most sense. If I leave the variables as is and make essentially a battleship map of how much they relate on a scale from 0% to 100%, depending on the color. For all the other questions I will most likely use a bar graph to show the highest amount of views and take only the top ten sample for the trending topics, channels, and videos. Such as the video on the x axis and the view count on the y axis to figure out the trending videos. I will most likely need to lubridate the current dates that are inserted so they can be created separately and fortunately for me there are no missing data points. I also plan on using the uniqe function so I don't get repeats of the same video in the top 10 because I feel like it's redundant to have the same video twice in that analysis.
 
+
+```{r}
+YouTube <- mutate(YouTube, category = recode(categoryId, '1' = "Film/Animation", '2' = "Auto/Vehicles", '10' = "Music", '15' = "Pets/Animals", '17' = "Sports", '18' = "Short_Movies", '19' = "Travel/Events", '20' = "Gaming", '21' = "Videoblogging", '22' = "People/Blogs", '23' = "Comedy", '24' = "Entertainment", '25' = "News/Politics", '26' = "Howto/Style", '27' = "Education", '28' = "Science/Technology", '29' = "Nonprofits/Activism", '30' = "Movies", '31' = "Anime/Animation", '32' = "Action/Adventure", '33' = "Classics", '34' = "Comedy", '35' = "Documentary", '36' = "Drama", '37' = "Family", '38' = "Foreign", '39' = "Horror", '40' = "SciFi/Fantasy", '41' = "Thriller", '42' = "Shorts", '43' = "Shows", '44' = "Trailers"))
+```
+
+```{r}
+YouTube%>%
+  ggplot(aes(category, fill = category)) +
+  geom_bar()+
+  coord_flip()
+
+```
+
+
+
+```{r}
+#the correlation matrix being created and covering all variables and making it in a pearson style via color
+ggcorr(select(YouTube, -categoryId) , method = c("everything", "pearson"))
+```
+
+```{r}
+YouTube%>%
+  arrange(desc(view_count))%>%
+  slice(1:30)%>%
+  ggplot(aes(y = view_count, x = reorder(title, -view_count), fill = trending_date)) + 
+  geom_bar(position = "stack", stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+#line graph x = trending date, y = view_count, color = channel. group_by(channel)  mutate(maxview= Max(view_count)) then slice
+YouTube%>%
+  arrange(desc(view_count))%>%
+  slice(1:30)%>%
+  ggplot(aes(y = view_count, x = channelTitle, fill = trending_date)) + 
+  geom_bar(position = "stack", stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+
+## 4. Analysis
+
+From the heat map I gathered that the amount of likes and have the highest correlation to each other.The comment count is also the most related variable to view count which also makes sense because likes and comments tell the YouTube algorithm to recommend certain videos more. The biggest lack of indicator for views is dislikes as well. One surprising thing is that likes and comment count have a strong correlation which I find facinating.
+
+From both the video trends and channel trends graphs I found that BLACKPINK (a music group) had the most amount of views in the time period. It trended as a channel and it's video Pink Venom trended 17 days. It was crazy to see that when I let the values only have the top 10 videos, it was 9 of the top 10 trending videos for different days.
+
+The bar graph with the different categories showed that Entertainment had the most amount of trending videos with Gaming in Second and Music in Third. I was going to anticipate Music as first because so many of the top trending videos was music. In hindsight it makes sense because music tends to be replayed giving it more replayable value. However making music takes a lot of time as opposed to gaming and entertainment videos (which can take a while) but are easier to create and provide lots of value. 

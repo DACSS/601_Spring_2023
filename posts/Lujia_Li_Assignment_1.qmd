@@ -1,0 +1,107 @@
+---
+title: "Real Estate Data Analysis"
+author: "Lujia Li"
+desription: "601 Assigment #1"
+date: "05/03/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - Assignment 1
+  - Lujia Li
+  - NeighborhoodSales Summary
+  - ggplot2
+---
+
+```{r}
+# read dataset
+library(readxl)
+library(dbplyr)
+library(tidyverse)
+brooklyn2019 <- read_excel('Assignment_1_LujiaLi_folder/2019_brooklyn.xlsx', skip = 6)
+head(brooklyn2019)
+
+# dimension of dataset
+dim(brooklyn2019)
+
+# variables/column names
+colnames(brooklyn2019)
+# remove the special characters in variables
+colnames(brooklyn2019) <- colnames(brooklyn2019) %>% 
+  gsub("\r", "", .) %>%    # delete the special character "\r" in variables
+  gsub("\n", " ", .) %>%   # replace the special character "\n" with space in variables
+  gsub(" $", "",. , perl = T) %>%  # delete the space at the end of variables
+  gsub("  ", " ",. , perl = T)  # replace the double spaces with single space in variables
+colnames(brooklyn2019)
+
+# remove duplicated rows in dataset
+brooklyn2019 <- distinct(brooklyn2019)
+str(brooklyn2019)
+
+# subset dataset
+# c('BOROUGH','RESIDENTIAL UNITS','COMMERCIAL UNITS','TOTAL UNITS','LAND SQUARE FEET','GROSS SQUARE FEET',
+#   'YEAR BUILT','BUILDING CLASS AT TIME OF SALE','SALE PRICE','SALE DATE') %>%
+#    subset(brooklyn2019, select = .) -> selected_brooklyn2019
+
+selected_brooklyn2019 <- subset(brooklyn2019, select = c('BOROUGH','RESIDENTIAL UNITS','COMMERCIAL UNITS','TOTAL UNITS','LAND SQUARE FEET','GROSS SQUARE FEET',
+  'YEAR BUILT','BUILDING CLASS AT TIME OF SALE','SALE PRICE','SALE DATE'))
+
+str(selected_brooklyn2019)
+
+# count the number and calculate the percentage of NA values
+NumNA_column <- function(x){sum(is.na(x))} # function to count the number of NA values
+apply(selected_brooklyn2019, 2, NumNA_column)   # number of NA in each column
+PercentageNA_column <- function(x){sum(is.na(x))/length(x)*100}
+apply(selected_brooklyn2019, 2, PercentageNA_column) # percentage of NA in each column
+
+# count the number of 0 sales price
+# 0 sale price means that a transfer of ownership without a cash consideration
+table(selected_brooklyn2019$`SALE PRICE` == 0)
+prop.table(table(selected_brooklyn2019$`SALE PRICE` == 0))
+
+# remove rows with NA values and 0 sale price
+# 0 sale price means that a transfer of ownership without a cash consideration
+new_brooklyn2019 <- na.omit(selected_brooklyn2019) %>% # delete rows with NA values
+  filter(., 'SALE PRICE' != 0)     # select rows with non-zero sale price
+str(new_brooklyn2019)
+
+# statics of dataset
+summary(new_brooklyn2019)
+
+
+# merge all sub-datasets
+final_dataframe <- data.frame()  # define a dataframe
+filename <- list.files("Assignment_1_LujiaLi_folder")   # names of all .xlsx files
+for (i in filename){
+  dataframe <- read_excel(gsub(" ", "", paste("Assignment_1_LujiaLi_folder/", i)), skip = 6)
+  colnames(dataframe) <- colnames(dataframe) %>% 
+    gsub("\r", "", .) %>%    # delete the special character "\r" in column names
+    gsub("\n", " ", .) %>%   # replace the special character "\n" with space in column names
+    gsub(" $","",. ,perl = T) %>%  # delete the space at the tail of column names
+    gsub("  "," ",. ,perl = T)  # replace the double spaces with single space in column names
+  
+  # remove duplicated rows in dataset
+  dataframe <- distinct(dataframe)
+  
+  # subset dataset
+  # c('BOROUGH','RESIDENTIAL UNITS','COMMERCIAL UNITS','TOTAL UNITS','LAND SQUARE FEET','GROSS SQUARE FEET',
+  #   'YEAR BUILT','BUILDING CLASS AT TIME OF SALE','SALE PRICE','SALE DATE') %>%
+  #   subset(dataframe, select = .) -> selected_dataframe
+  
+  selected_dataframe <- subset(dataframe, select = c('BOROUGH','RESIDENTIAL UNITS','COMMERCIAL UNITS','TOTAL UNITS','LAND SQUARE FEET','GROSS SQUARE FEET',
+    'YEAR BUILT','BUILDING CLASS AT TIME OF SALE','SALE PRICE','SALE DATE'))
+  
+  # remove rows with NA values and 0 sale price
+  # 0 sale price means that a transfer of ownership without a cash consideration
+  new_dataframe <- na.omit(selected_dataframe) %>%
+    filter(., `SALE PRICE` != 0)
+  # merge dataframe
+  final_dataframe <- rbind(final_dataframe, new_dataframe)   
+}
+str(final_dataframe)
+
+```
+

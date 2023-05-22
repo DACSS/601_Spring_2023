@@ -1,8 +1,8 @@
 ---
-title: "Final Project Assignment#1: Aditya Salveru"
+title: "Final Project : Aditya Salveru"
 author: "Aditya Salveru"
 description: "Project & Data Description"
-date: "05/10/2023"
+date: "05/22/2023"
 format:
   html:
     df-print: paged
@@ -59,6 +59,9 @@ editor_options:
 #| message: false
 
 library(tidyverse)
+library(readr)
+library(ggplot2)
+library(cowplot)
 
 knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
@@ -70,7 +73,7 @@ My projects aims to analyze the heart disease data and explore the causes and ge
 
 ### 1.  Dataset(s) Introduction:
 
-I have chosedn the 2020 annual CDC survey data of 400k adults related to their health status collected by Behavioral Risk Factor Surveillance System (BRFSS). For people of the majority of racial groups in the US (African Americans, American Indians and Alaska Natives, and white people), heart disease is one of the leading causes of death, according to the CDC. High blood pressure, high cholesterol, and smoking are the three main risk factors for heart disease that at least half of all Americans (47%) have. Other key factors are diabetic status, obesity (high BMI), not obtaining enough physical activity or drinking too much alcohol. In the field of medicine, it is crucial to identify and combat the causes that have the biggest influence on heart disease.
+I have chosen the 2020 annual CDC survey data of 400k adults related to their health status collected by Behavioral Risk Factor Surveillance System (BRFSS). For people of the majority of racial groups in the US (African Americans, American Indians and Alaska Natives, and white people), heart disease is one of the leading causes of death, according to the CDC. In the field of medicine, it is crucial to identify and combat the causes that have the biggest influence on heart disease.
 
 The Behavioral Risk Factor Surveillance System (BRFSS) is a collaborative project between all the states in the
 United States and participating US territories and the Centers for Disease Control and Prevention (CDC). The
@@ -81,14 +84,14 @@ behaviors, chronic health conditions, health-care access, and use of preventive 
 non institutionalized adult population (≥ 18 years) residing in the United States and participating areas.
 
 
-The original dataset contains over 300 columns and over 400k individual's responses as rows. However, I have chosen a condensed version of the dataset available at Kaggle which has the attributes that we are really interested in and ignoring the rest of the columns.
-
 
 ### 2.  What questions do you like to answer with this dataset(s)?
 
-- How is heart disease related to lifesyle habits such as sleep time, alcohol consumption, BMI etc.
+- How is heart disease related to physical attributes such as Gender, sleep time, BMI etc.
     
-- Is there any particular group of people(Race, region) who are at high risk compared to the other people
+- Is there any particular group of people who are at high risk?
+
+- What changes should the high risk people incorporate to reduce the risk of heart disease.
     
 
 ## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
@@ -99,65 +102,262 @@ The original dataset contains over 300 columns and over 400k individual's respon
 
 1.  read the dataset;
 
-    <!-- -   (optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step. -->
+```{r}
+columns = read.csv("/home/aditya/Desktop/HealthData/2020/2020-column-layout.csv")
 
-    <!-- -   (optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns. -->
+columns$File_Width = sapply(1:nrow(columns), function(y) ifelse(y < nrow(columns),
+	columns$Starting_Column[y + 1] - columns$Starting_Column[y], 1))
+
+columns = columns[columns$File_Width > 0,]
+
+responses = read.fwf("/home/aditya/Desktop/HealthData/2020/LLCP2020.ASC ", widths = columns$File_Width, col.names = columns$Variable_Name)
+```
+
+<!-- ```{r} -->
+<!-- responses = read_csv('/home/aditya/Desktop/HealthData/2020/filtered.csv') -->
+<!-- ``` -->
 
 ```{r}
-data <- read.csv('./AdityaSalveru_FinalProjectData/heart_2020.csv')
+nrow(responses)
+ncol(responses)
+```
 
-data %>%
+*   There are 401958 rows in the data set
+*   There are 277 columns in the data set
+
+```{r}
+responses %>%
   colnames() %>%
   sort()
 ```
 
-
-
-The following are the coulmns in the dataset:
-
-
-- AgeCategory : Age category of the subject(divided into 14 categories)
-
-- AlcoholDrinking : Is the subject a heavy drinker(Men > 14 drinks/Week, Women > 7 drinks/Week)
-
-- Asthma: Does the subject have asthma
-
-- BMI: Body mass index of the subject
-
-- Diabetic: Is the subject diabetic
-
-- DiffWalking: Does the subject feel difficulty walking
-
-- GenHealth: What would the subject perceive his general health as?
-
-- HeartDisease: Does the Subject has coronary heart disease (CHD) or myocardial infarction (MI).
-
-- KidneyDisease: Does the subject have a kidney disease excluding stones, bladder infection.
-
-- MentalHealth: How many days in the past 30 days is the subject mentally ill.
-
-- PhysicalActivity: Has the subject 
-
-- PhysicalHealth:How many days in the past 30 days is the subject physically ill.
-
-- Race: Race/ethenicity of the subject
-
-- Sex: Is the subject male or female
-
-- SkinCancer:Has the subject ever had skin cancer
-
-- SleepTime: On average how many hours does the subject sleep everyday.
-
-- Smoking: Does the subject smoke( atleast 100 cigaretts in the past)
-
-- Stroke: Has the subject ever had a stroke
-
+<!-- ```{r} -->
+<!-- # write_csv(responses, "/home/aditya/Desktop/HealthData/2020/filtered.csv") -->
+<!-- ``` -->
+Out of the 277 columns in the data set, for our study of the heart disease and the factors of the same, we use only a subset of all the columns in the dataset.
 
 ```{r}
+responses <- responses %>% 
+  select(
+    X_SEX,
+    SLEPTIM1,
+    WEIGHT2,
+    HEIGHT3,
+    X_AGE80,
+    SMOKE100,
+    EXERANY2,
+    VETERAN3,
+    X_MICHD
+  )
+```
+
+<!-- ```{r} -->
+<!-- responses <- responses %>%  -->
+<!--   select( -->
+<!--     X_SEX, -->
+<!--     SLEPTIM1, -->
+<!--     WEIGHT2, -->
+<!--     HEIGHT3, -->
+<!--     X_AGE80, -->
+<!--     DIFFWALK, -->
+<!--     SMOKE100, -->
+<!--     EXERANY2, -->
+<!--     VETERAN3, -->
+<!--     X_LTASTH1, -->
+<!--     X_MICHD, -->
+<!--     CVDSTRK3, -->
+<!--     EMPLOY1, -->
+<!--     INCOME2, -->
+<!--     X_RACE -->
+<!--   ) -->
+<!-- ``` -->
+Out of around the three hundred columns, the following are the columns of interest:
+
+* X_SEX : The sex of the subject,
+Possible Values : 1(Male),2(Female)
+
+* SLEPTIM1 : On average, how many hours of sleep does the subject get in a 24-hour period?
+Possible Values : 1-24(Number of hours), 77(Not Sure), 99(Refused), Blank(Missing)
+
+* WEIGHT2 : About how much does the subject weigh without shoes in pounds
+Possible Values : 50 -776(Weight in pounds), 7777(Don't know), 9023-9352(Weight in KG without '9'), 9999 (Missing)
+
+* HEIGHT3 : About how tall is the subject without shoes
+Possible Values : 200 to 711(FeetInchInch format), 7777(Not Sure), 9061-9998(MeterCmCm format without leading '9'),9999(Missing)
+
+* X_AGE80 : Imputed Age value collapsed above 80
+Possible Values : 18-99
+
+
+* SMOKE100 : smoked at least 100 cigarettes in your entire life?
+Possible Values : 1(Yest), 2(No), 7(Not Sure), 9(Refused), Blank(Missing)
+
+* EXERANY2 : During the past month, other than your regular job, has the subject participated in any exercises
+such as running, calisthenics, golf, gardening, or walking for exercise?
+Possible Values : 1(Yes), 2(No), 7(Don't know, Not Sure)
+
+* VETERAN3 : ever served on active duty in the United States Armed Forces, either in the regular military or in a
+National Guard or military reserve unit?
+Possible Values : 1(Yes), 2(No), 7(Don't know, Not Sure), 9(Refused), Blank(Missing)
+
+
+* X_MICHD : Ever reported having coronary heart disease (CHD) or myocardial infarction(MI)
+Possible Values : 1(Yes), 2(No), Blank(Missing)
+
+
+
+### Clean the Data
+
+The raw data from the survey is not directly usable for our analysis. It need to be converted to a representation and units that will help us visualize the data and the trends.
+
+
+First, we will rename the column names so that they will make more sense and represent the features they refer to.
+
+```{r}
+responses <- responses %>%
+  rename(
+    Sex = X_SEX, 
+    Age = X_AGE80,
+    SleepTime = SLEPTIM1,
+    Weight = WEIGHT2,
+    Height = HEIGHT3,
+    Veteran = VETERAN3,
+    Exercise = EXERANY2,
+    HeartDisease = X_MICHD,
+    Smoke = SMOKE100
+    ) 
+  
+data <- responses %>%
+    select(
+      Sex, 
+      Age,
+      SleepTime,
+      Weight,
+      Height,
+      Veteran,
+      Exercise,
+      HeartDisease,
+      Smoke
+    )
+  
+```
+
+
+The raw Sex values are numerical where 1 represents male and 2 represents female. We would like to convert them into "Male" and "Female". There are other values which Sex column can take(Such as missing, refused etc.) we mark all of them as NA.
+
+```{r}
+
+# Convert the Sex to "Male" and "Female"
+data <- data %>% 
+  mutate(Sex = ifelse(Sex == 1, "Male", ifelse(Sex == 2,"Female",NA)))
+
+```
+
+The height column has some values in Feet-Inch format and others in Meter-Centimeter format. We will clean it up and convert all of the values in Centimeters.
+
+```{r}
+# Convert the heights in Feet,Inches and Meter,Centimeter format to centimeters
+data$Height <- replace_na(data$Height,0)
+convert_height <- function(height) {
+  # if the height is invalid due to any reason, return NA
+  if(is.na(height) | height == 7777 | height == 9999){
+    return(NA)
+  } else if (height >= 1000 && height <= 9999) {
+    # Convert MeterCmCm format to centimeters
+    cms <- height %% 100
+    meters <- (height %/% 100) %% 10
+    centimeters <- (meters * 100) + cms
+    return(centimeters)
+  } else if (height >= 200 && height <= 711) {
+    # Convert FeetInchInch format to centimeters
+    inches <- height %% 100
+    feet <- height %/% 100
+    centimeters <- (feet * 30.48) + (inches * 2.54)
+    return(centimeters)
+  } else {
+    return(NA)
+  }
+}
+
+data$Height <- sapply(data$Height, convert_height)
+
+```
+
+The weight also has values in both Pounds and Kgs, we clean it up  and convert all the values into Kgs.
+
+```{r}
+# Convert the Weights in different formats to Kgs
+
+convert_weight <- function(weight) {
+  # if the height is invalid due to any reason, return NA
+  if(is.na(weight) | weight == 7777 | weight == 9999){
+    return(NA)
+  } else if (weight >= 50 && weight <= 0776) {
+    # Convert pounds to Kg
+    kgs <- weight / 2.2
+    return(kgs)
+  } else if (weight >= 9000 && weight <= 10000) {
+    # Extract Kilograms
+    kgs = weight %% 1000
+    return(kgs)
+  } else {
+    return(NA)
+  }
+}
+
+data$Weight <- sapply(data$Weight, convert_weight)
+```
+
+Similar to Sex, we convert veteran status, smoking, Exercise and Heart Disease columns into corresponding strings from numerical values.
+
+```{r}
+### Convert veteran status, Smoking, Exercise and  Heart Disease to strings
+data <- data %>%
+  mutate(Veteran = ifelse(Veteran == 1, "Yes", ifelse(Veteran == 2,"No",NA)),HeartDisease = ifelse(HeartDisease == 1, "Yes", ifelse(HeartDisease == 2, "No", "0")), Smoke = ifelse(Smoke == 1, "Yes", ifelse(Smoke == 2,"No",NA)),Exercise = ifelse(Exercise == 1, "Yes", ifelse(Exercise == 2,"No",NA)))
+```
+
+Convert Sleep time to 1-24H
+```{r}
+data <- data %>%
+  mutate(SleepTime = ifelse(SleepTime < 25, SleepTime, NA))
+```
+
+```{r}
+
+data <- na.omit(data)
+
+data %>% head(15)
+
+str(data)
+
 summary(data)
 ```
 
+We have shown the final columns and summary of the data above after cleaning and remapping the data.
+
+
+## Part 3: Visualization
+
+#### Tentative plan for visualization
+
+*   We will first visualize the distribution of samples with respect to age and gender.
+
+*   Then we will study the impact of the following factors on heart disease using Bar plots, Histograms and pie charts.
+
+  1.    Gender
+  2.    Age
+  3.    Veteran Status
+  4.    Somking
+  5.    BMI
+  6.    Exercise
+  7.    Sleeping time
+  
+*   Finally, We will analyze the most vulnerable population and find out which changes if made in lifestyle could help in reduce the risk of heart disease using Pie Charts.
+
 #### Distribution of Male and Female subjects for the data
+
+One of the major factor which we want to study with respect to the heart disease is the gender of the person. Therefore, we first try see the distribution of the male and female proportion in the data set.
+
 ```{r}
 # Create a table with the number of males and females
 sex_table <- data %>%
@@ -175,100 +375,393 @@ text(1:2, sex_table + 0.2, paste0(sex_percent, "%"), col = "black", cex = 1.5)
 
 ```
 
-#### Distribution of Subjects across age groups
-```{r}
-age_table <- data %>%
-  select(AgeCategory) %>%
-  table()
-
-# Add percentages to the pie chart
-percent <- round(100*age_table/sum(age_table), 2)
-percent_str <- paste(percent, "%", sep="")
-labels <- paste(names(age_table), " (", percent_str, ")", sep="")
-pie(age_table, main="Age Category Distribution", labels=labels, col=rainbow(length(age_table)))
-
-
-```
-
+As we can see the number of samples of both genders is fairly equal and none of the gender dominate the dataset.
 
 #### Distribution of Subjects across age groups
 
-```{r}
-ggplot(data, aes(x = Race)) +
-  geom_bar(fill = "lightblue") +
-  xlab("Race") +
-  ylab("Count") +
-  ggtitle("Count of Race") +
-  geom_text(stat='count', aes(label=..count..), vjust=-0.5) 
-```
-
-#### Overview of BMI of the individuals as a Histogram
+Another important factor that we take into our study is the age of the people in the dataset. We divide the people into buckets with a range of 5 and plot a bar chart to see the distribution of the people in different age groups.
 
 ```{r}
-# create a histogram of the BMI data
-ggplot(data = data, aes(x = BMI)) +
-  geom_histogram(binwidth = 5, fill = "darkgray", color = "white") +
-  labs(title = "BMI Distribution", x = "BMI", y = "Count")
+ages <- data %>% 
+  select(Age)
 
+# Define the age groups
+ages$AgeGroup <- cut(ages$Age, breaks = seq(15, 90, by = 10))
+
+# Create a bar plot
+ggplot(ages, aes(x = AgeGroup)) +
+  geom_bar(fill = "skyblue", color = "black", stat = "count") +
+  labs(x = "Age", y = "Count", title = "Age Distribution") +
+  theme_minimal()
 ```
 
+Though there are a little higher people in the range 40-60, there are good number samples of other ages too. Therefore again the results will not be skewed towards any particular age groups.
 
-<!-- 2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3; -->
 
-<!--     -   for examples: dim(), length(unique()), head(); -->
-
-<!--     ```{r} -->
-
-<!--     ``` -->
-
-<!-- 3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in. -->
+<!-- #### Distribution of Subjects across Race -->
 
 <!-- ```{r} -->
-
+<!-- ggplot(data, aes(x = Race)) + -->
+<!--   geom_bar(fill = "lightblue") + -->
+<!--   xlab("Race") + -->
+<!--   ylab("Count") + -->
+<!--   ggtitle("Count of Race") + -->
+<!--   geom_text(stat='count', aes(label=..count..), vjust=-0.5)  -->
 <!-- ``` -->
 
-<!-- In the storytelling component, you should describe the basic information of the dataset(s) and the variables in a way that corresponds to your descriptive and summary statistics in the above coding component. **DO NOT** simply report the number of rows. Instead, describe the dataset(s) fully by **specifying what each row and column mean.** In other words, your description should be comprehensive and detailed enough for readers to picture or envision the dataset(s) in their brains. -->
-
-<!-- -   For example, suppose I use a dataset of all the athletes who participated in the Olympic Games. Here is how I describe the basic information of the data: "the case of this dataset is ab individual athlete, represented by each row in the dataset. The dataset includes individual (e.g., gender, age, height, weight, race) and event performance (e.g., final placement) information for all athletes (22,398) competing in all events (e.g., Male 400m Free, Female ...) in all Olympics Games since 1922 (24 Winter and 28 Summer Games. Athletes appearing in the dataset competed in anywhere from 1-11 distinct events (of 198 possible) during 1-5 distinct Olympic competitions, for a total of XXX, XXX athlete-event-Olympic-year observations. XXX Countries are represented, etc)." -->
-
-<!-- -   Erico's hint: as I mentioned above, sometimes a dataset is too large, and it is difficult to present and explain all the variables/columns (especially if you run summary statistics for the whole dataset). In this case, you will have to make a decision to select the most important variables/columns to discuss. For example, the Olympic dataset I mentioned above as an example contains more than 50 columns. For clarity of data presentation, I may just focus on 6 items/columns of individual athletes (gender, age, weight, height, race, nationality) and the column of final placement that are most relevant to answer my specific research questions. By doing so, you can just present the tables of the summary statistics of these 7 variables/columns without showing too much information and confusing the readers. -->
-
-<!-- -   A good example is to can check out [the Data Description section of the above student's final project](https://dacss.github.io/601_Fall_2022_final_posts/posts/final_project_Guanhua_Tan.html#briefly-describe-the-dataset.). As you can see, the student describes the dataset after he runs a few descriptive statistics. You can also see the weekly challenge solutions by Professor Rolfe for other examples of clear, concise data descriptions. -->
-
-## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
-
-<!-- 1.  Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above. -->
-
-One of the main factor that I would to study the relationship with heart disease the BMI of the people. Therefore I will create a box plot to analyze the BMIs of the people with and without heart disease. This Box plot would give an idea on how the BMIs of the people are distributed across the two classes of the people(with and without heart disease). I chose this box plot because the BMIs are continous numbers.
+### Analysis of various factors and the probability of heart disease
+We now have a look at some factors and check what percentages of people have heart disease with these factors.
 
 
-I would also like to study how age effects the possiblilt of heart diseases. specifically we need to find out what what is the age distribution of the people with heart disease and are there any age groups that are more likely to have heart disease as compared to other groups. Therefore I will be using histograms of number of people with heart disease with different ages.
+#### How is heart disease related to the gender of the person
 
-One more important relation that I would like to study is how likely are people who smoke are to get a Heart Disease as compared to the people who does not smoke. For this I would like to careate a stacked bar plot with fill as Heart Disease. This we we can compare the percentage of people with heart disease for both the bars(Yes and No) for smoking.
+We now study the relation of gender to the likeliness of getting a heart disease. We plot a bar graph of male and female and fill it with the proportion of people with heart disease to study the impact of gender on heart disease.
+
+```{r}
+Sex_HeartDisease <- data %>%
+  select(`Sex`,`HeartDisease`)
+# Filter the N/A values
+Sex_HeartDisease <- Sex_HeartDisease %>%
+  filter(!is.na(HeartDisease))
 
 
-<!-- 2.  Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development? -->
+# Calculate the proportions
+proportions <- Sex_HeartDisease %>%
+  group_by(Sex, HeartDisease) %>%
+  summarise(count = n()) %>%
+  group_by(Sex) %>%
+  mutate(proportion = count / sum(count))
 
-<!-- 3.  If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data. -->
+# Create a bar plot
+ggplot(proportions, aes(x = Sex, y = proportion, fill = HeartDisease)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = scales::percent(proportion, accuracy = 0.1)),
+            position = position_fill(vjust = 0.5)) +
+  labs(x = "Sex", y = "Proportion", fill = "Heart Disease") +
+  scale_fill_manual(values = c("No" = "lightblue", "Yes" = "orange", "NA" = "gray"), na.value = "gray") +
+  theme_minimal()
 
-<!--     -   What do you need to do to mutate the datasets (convert date data, create a new variable, pivot the data format, etc.)? -->
+```
+Among men, 10.7% have heart disease, while 89.3% do not. Among women, 6.8% have heart disease, while 93.2% do not.
 
-<!--     -   How are you going to deal with the missing data/NAs and outliers? And why do you choose this way to deal with NAs? -->
+From these figures, we can infer that both men and women are susceptible to heart disease, but there is a slightly higher prevalence among men compared to women. The data suggests that men have a higher risk of developing heart disease than women, with a 10.7% prevalence compared to 6.8%. This aligns with existing research indicating that men are generally more prone to heart disease.
 
-<!-- 4.  (Optional) It is encouraged, **but optional**, to include a coding component of tidy data in this part. -->
+#### How is heart disease releated to the age of the person?
+
+```{r}
+# Remove rows with missing values
+df <- data %>% select(Age,HeartDisease)
+
+# Calculate the ratio of people with and without heart disease for each age group, handling NA values
+ratio_data <- tapply(data$HeartDisease, data$Age, function(x) {
+  n_yes <- sum(x == "Yes", na.rm = TRUE)
+  n_no <- sum(x == "No", na.rm = TRUE)
+  if (is.na(n_yes) || is.na(n_no))
+    return(NA)
+  else
+    return(n_yes / (n_yes+n_no))
+})
+
+
+# Create a bar plot of the ratio, excluding NA values
+barplot(ratio_data[!is.na(ratio_data)], col = "#4D4D4D", xlab = "Age", ylab = "Ratio of People", main = "Ratio of People with Heart Disease by Age")
+```
+
+The provided data represents the ratio of people with heart disease to people without heart disease across different age groups. The data shows that the prevalence of heart disease tends to increase with age. In the younger age groups (18-29), the ratios range from 0.005562914 to 0.010360138, indicating a relatively low proportion of individuals with heart disease. However, as the age increases, the ratios gradually rise. From ages 30 to 47, the ratios range from 0.012141280 to 0.037837838, suggesting a notable increase in the prevalence of heart disease. This trend continues in the subsequent age groups, with ratios ranging from 0.042045868 to 0.290657149 in the age range of 48-80.
+    
+The data implies that as individuals grow older, they are more likely to develop heart disease. This inference aligns with the widely recognized understanding that age is a significant risk factor for heart disease. The progressive increase in the ratio of individuals with heart disease across the age groups highlights the importance of preventive measures and regular cardiovascular health monitoring, especially as individuals approach and surpass middle age. These findings underscore the need for early detection, lifestyle modifications, and appropriate medical interventions to mitigate the risk and impact of heart disease, particularly in older populations.
+
+
+#### Veterans Vs Non Veterans
+
+We now study the probability of heart disease on veterans and non veterans by using a similar bar plot.
+```{r}
+VeteranHeartDisease <- data %>%
+   select(Veteran, HeartDisease)
+
+proportions <- VeteranHeartDisease %>%
+  group_by(Veteran, HeartDisease) %>%
+  summarise(count = n()) %>%
+  group_by(Veteran) %>%
+  mutate(proportion = count / sum(count))
+
+proportions
+
+# Create a bar plot
+ggplot(proportions, aes(x = Veteran, y = proportion, fill = HeartDisease)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = scales::percent(proportion, accuracy = 0.1)),
+            position = position_fill(vjust = 0.5)) +
+  labs(x = "Veteran", y = "Proportion", fill = "Heart Disease") +
+  scale_fill_manual(values = c("No" = "lightblue", "Yes" = "orange", "NA" = "gray"), na.value = "gray") +
+  theme_minimal()
+```
+These statistics suggest that there is a notable difference in the prevalence of heart disease between veterans and non-veterans. Veterans appear to have a higher percentage of individuals with heart disease compared to non-veterans. This finding may indicate that veteran status is associated with a higher risk or susceptibility to heart disease.
+
+
+#### How is heart disease related to Smoking status?
+```{r}
+SmokingHeartDisease <- data %>%
+   select(Smoke, HeartDisease)
+
+
+proportions <- SmokingHeartDisease %>%
+  group_by(Smoke, HeartDisease) %>%
+  summarise(count = n()) %>%
+  group_by(Smoke) %>%
+  mutate(proportion = count / sum(count))
+
+# Create a bar plot
+ggplot(proportions, aes(x = Smoke, y = proportion, fill = HeartDisease)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = scales::percent(proportion, accuracy = 0.1)),
+            position = position_fill(vjust = 0.5)) +
+  labs(x = "Smoke", y = "Proportion", fill = "Heart Disease") +
+  scale_fill_manual(values = c("No" = "lightblue", "Yes" = "orange", "NA" = "gray"), na.value = "gray") +
+  theme_minimal()
+```
+
+The data presented sheds light on the prevalence of heart disease among smokers and non-smokers, providing valuable insights into the impact of smoking on cardiovascular health. Among smokers, 12.3% are affected by heart disease, while the vast majority, accounting for 87.7%, remain free from this condition. This stark contrast between the two groups underscores the profound influence of smoking on heart health. The statistics reveal that smoking significantly increases the risk of developing heart disease.
+
+On the other hand, among non-smokers, the prevalence of heart disease is considerably lower, with only 6.1% of individuals being affected. This finding emphasizes the importance of maintaining a smoke-free lifestyle in mitigating the risk of heart disease. It highlights the fact that non-smokers have a significantly reduced likelihood of developing heart issues, further emphasizing the bad impact of smoking on heart health.
+
+
+<!-- ### How is weight of the individuals affecting the heart disease? -->
+
+<!-- ```{r} -->
+<!-- WeightHeartDisease <- data %>% -->
+<!--   select(Weight, HeartDisease) %>% -->
+<!--   filter(!is.na(Weight) & !is.na(HeartDisease)) -->
+
+<!-- # Create the scatter plot -->
+<!-- ggplot(WeightHeartDisease, aes(x = Weight, y = HeartDisease)) + -->
+<!--   geom_point(size = 3, shape = 16, color = "blue") + -->
+<!--   labs(x = "Weight (kg)", y = "Heart Disease") + -->
+<!--   ggtitle("Weight vs. Heart Disease") + -->
+<!--   theme_minimal() -->
+
+
+<!-- # Create the box plot -->
+<!-- ggplot(WeightHeartDisease , aes(x = HeartDisease, y = Weight, fill = HeartDisease)) + -->
+<!--   geom_boxplot() + -->
+<!--   labs(x = "Heart Disease", y = "Weight (kg)") + -->
+<!--   ggtitle("Weight Distribution by Heart Disease") + -->
+<!--   theme_minimal() -->
+
+<!-- ``` -->
+#### How is heart disease releated to whether a person exercises?
+
+```{r}
+proportions <- data %>%
+   select(Exercise, HeartDisease)%>%
+  filter(!is.na(Exercise) & !is.na(HeartDisease))%>%
+  group_by(Exercise, HeartDisease) %>%
+  summarise(count = n()) %>%
+  group_by(Exercise) %>%
+  mutate(proportion = count / sum(count))
+
+proportions
+```
+
+It can be clearly seen that people who exercise are less likely to have the heart disease.
+
+#### How is BMI of the individuals affecting the heart disease?
+
+We compute the BMI of the individuals from the height and weight information available and segregate them into five standard BMI categories and plot the percentage of people having the heart diseases in the respective categories.
+
+```{r}
+
+data$BMI <- round(data$Weight / ((data$Height / 100) ^ 2))
+
+# Create a new column for BMI categories
+data$BMICategory <- cut(data$BMI, breaks = c(0, 18.5, 24.9, 29.9, 34.9, 39.9, Inf),
+                      labels = c("Underweight", "Normal weight", "Overweight", "Obesity (Class I)",
+                                 "Obesity (Class II)", "Obesity (Class III)"))
+BMICategoryHeartDisease <- data %>% select(BMICategory,HeartDisease)
+
+# Calculate the percentage of people with heart disease for each BMI category
+percent <- aggregate(HeartDisease ~ BMICategory, BMICategoryHeartDisease, function(x) mean(x == "Yes") * 100)
+percent
+
+# Create the bar plot using ggplot2
+ggplot(percent, aes(x = BMICategory, y = HeartDisease)) +
+  geom_bar(stat = "identity") +
+  xlab("BMI Category") +
+  ylab("Percentage of People with Heart Disease") +
+  scale_fill_manual(values = c("steelblue", "lightgray")) +
+  theme_minimal()
+```
+
+Analyzing the data, it can be observed that the heart disease percentage varies across different BMI categories. The lowest heart disease percentage is associated with the "Normal weight" category, which stands at 6.661403. The "Underweight" category follows closely with a slightly higher heart disease percentage of 8.388409. Moving towards higher BMI categories, the heart disease percentages gradually increase. The "Overweight" category has a percentage of 8.742972, while "Obesity (Class I)" records a higher percentage of 10.245310.
+
+As the BMI categories progress to higher levels of obesity, the heart disease percentages continue to rise. "Obesity (Class II)" displays a percentage of 10.934172, and the highest heart disease percentage is observed in the "Obesity (Class III)" category, standing at 11.441625.
+
+These findings suggest a positive correlation between BMI categories and the likelihood of heart disease. Individuals with higher BMI categories, especially those classified as obese, have a higher risk of developing heart disease. These observations emphasize the importance of maintaining a healthy weight and highlight the potential health risks associated with obesity.
+
+
+#### Heart Disease relation with sleep time:
+```{r}
+df <- data %>% select(SleepTime,HeartDisease)
+
+# Calculate frequency
+frequency <- table(df$SleepTime)
+
+# Pie chart
+a <- ggplot(data, aes(x = "", fill = as.factor(SleepTime))) +
+  geom_bar(width = 1) +
+  coord_polar("y", start = 0) +
+  labs(fill = "Sleep Time", title = "Pie Chart of Sleep Time") +
+  scale_fill_discrete(name = "Sleep Time") +
+  theme_minimal()
+print(a)
+
+filtered <- data %>%
+  select(SleepTime,HeartDisease) %>%
+  filter(SleepTime>2 & SleepTime<13) 
+
+# Calculate the percentage of people with heart disease for each sleep time
+percentage <- filtered %>%
+  group_by(SleepTime) %>%
+  summarise(HeartDiseasePercentage = sum(HeartDisease == "Yes") / n() * 100)
+
+percentage
+
+# Bar plot
+plot <- ggplot(percentage, aes(x = factor(SleepTime), y = HeartDiseasePercentage)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(x = "Sleep Time", y = "Percentage of People with Heart Disease",
+       title = "Percentage of People with Heart Disease by Sleep Time") +
+  theme_minimal() +
+  scale_x_discrete(drop = FALSE)  # To include all sleep times on the x-axis
+
+# Display the plot
+print(plot)
+```
+
+Upon analyzing the data, it can be observed that individuals who sleep for shorter durations tend to have higher percentages of heart disease. For instance, those who sleep for 3 or 4 hours have a relatively higher percentage of heart disease at 17.07% and 15.36%, respectively. As sleep duration increases to 5, 6, and 7 hours, the percentage of heart disease decreases to 10.52%, 8.11%, and 6.41%, respectively. The trend continues, with the lowest percentage of heart disease observed at 7 hours of sleep. However, as sleep time increases beyond 7 hours, the percentage of heart disease starts to rise again, reaching its peak at 12 hours with 18.38%. This dataset suggests a potential association between sleep duration and the prevalence of heart disease, with an optimal sleep duration of around 7 hours for maintaining heart health.
+
+
+### Analyzing the most vulnerable population
+
+From the above analysis we can suspect that the most vulnerable population has the following characteristics:
+1. Male
+2. Older
+3. Smoke
+4. Bad sleeping habits
+5. High BMI
+6. No Exercise
+
+Let us see what percentage of people with these characteristics have heart disease.
+
+```{r}
+filtered_data <- data %>%
+  filter(Sex=="Male" & Veteran == "Yes" & (SleepTime>9 | SleepTime<6) & Smoke == "Yes" & BMI>30 & Age>60 & Exercise == "No") %>% 
+  select(HeartDisease)
+
+# Calculate the percentage of heart disease
+original_percentage <- filtered_data %>%
+  group_by(HeartDisease) %>%
+  summarise(HeartDiseasePercentage = n() / nrow(filtered_data) * 100)
+original_percentage
+```
+
+A whopping 38 % of the people with above characteristics have the disease.
+
+Let us now analyze the benefit of giving up bad habits for these population:
+
+#### 1. Exercise and Reduce the BMI below the Obesity levels
+```{r}
+filtered_data <- data %>%
+  filter(Sex=="Male" & Veteran == "Yes" & (SleepTime>9 | SleepTime<6) & Smoke == "Yes" & BMI<30 & Age>60 & Exercise == "Yes") %>% 
+  select(HeartDisease)
+
+filtered_data <- na.omit(filtered_data)
+
+# Calculate the percentage of heart disease
+percentage <- filtered_data %>%
+  group_by(HeartDisease) %>%
+  summarise(HeartDiseasePercentage = n() / nrow(filtered_data) * 100)
+percentage
+
+```
+
+Exercising and getting the BMI below 30 has reduced the probability of having the heart disease by over 10%.
+
+#### 2. Having the right amount of sleep
+
+```{r}
+filtered_data <- data %>%
+  filter(Sex=="Male" & Veteran == "Yes" & (SleepTime>=6 & SleepTime<=9) & Smoke == "Yes" & BMI<30 & Age>60 & Exercise == "Yes") %>% 
+  select(HeartDisease)
+
+filtered_data <- na.omit(filtered_data)
+
+# Calculate the percentage of heart disease
+percentage <- filtered_data %>%
+  group_by(HeartDisease) %>%
+  summarise(HeartDiseasePercentage = n() / nrow(filtered_data) * 100)
+percentage
+
+```
+
+Sleeping for 6-9 hours a day reduces the heart disease probability of the vulnerable population further by around 4 percent.
+
+#### 2. No Smoking
+
+```{r}
+filtered_data <- data %>%
+  filter(Sex=="Male" & Veteran == "Yes" & (SleepTime>=6 & SleepTime<=9) & Smoke == "No" & BMI<30 & Age>60 & Exercise == "Yes") %>% 
+  select(HeartDisease)
+
+filtered_data <- na.omit(filtered_data)
+
+# Calculate the percentage of heart disease
+percentage <- filtered_data %>%
+  group_by(HeartDisease) %>%
+  summarise(HeartDiseasePercentage = n() / nrow(filtered_data) * 100)
+percentage
+```
+
+The people who do not smoke in these population have over 6 percent less chance of heart disease.
 
 
 
 ```{r}
 
+plot_heart_disease_percent <- function(percentage, title_str){
+  plot <- ggplot(percentage, aes(x = "", y = HeartDiseasePercentage, fill = HeartDisease)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  labs(fill = "Heart Disease", x = "", y = "", title = title_str) +
+  theme_void() +
+  theme(legend.position = "right") +
+  geom_text(aes(label = paste0(round(HeartDiseasePercentage,2), "%")), position = position_stack(vjust = 0.5))
+  return(plot)
+}
+
+orig = plot_heart_disease_percent(original_percentage,"Probability of heart disease")
+new  = plot_heart_disease_percent(percentage, "Probability with suggestions")
+plot_grid(orig, new)
 ```
+Overall with the above three changes in the lifestyle, our vulnerable population can actually reduce the risk of heart disease by more than 20%.
 
-<!-- ## Special Note on the role of statistics {#special-note-on-the-role-of-statistics} -->
+## Part 4 : Conclusion
 
-<!-- Statistical analyses **are not required**, but any students who wish to include these may do so. However, your primary analysis should center around visualization rather than inferential statistics. Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. Do not run a multiple regression with numerous predictors and report which predictors are significant!! -->
+*   When it comes to the heart disease, males are more susceptible than females. Males are 57% more likely to get effected as compare to females.
+*   The age of a person is also a very important factor of being affected by the heart disease. Older people(>65 years) are more than 10 times prone to the heart disease as compared to young people(25 years)
+*   We can also conclude that people with High BMI(higher than Obese category) are also more likely to get  heart disease than people with low BMI.
+*   Veterans are affected by the heart disease twice as compare to the non-veterans, there could be multiple reasons for this such as stress.
+*   Similarly people who smoke are twice as likely to get affected by heart disease.
+*   People who exercise and have the right amount of sleep are also less likely to get a heart disease.
 
-<!-- **Remember: The goal is to tell a story about the data**. For example, you might identify sports where winning athletes are younger or older than average and then try to see if you can find some sort of pattern that accounts for this difference. Or perhaps you might compare a country's performance to GDP and see if this changes over time. The goal is not to get a significant statistical result but to identify an interesting pattern in the data and then extract some sort of meaningful recommendation or information from it. -->
 
-<!-- ## Evaluation {#evaluation} -->
+*   Therefore the old male veterans who smoke, do not exercise and do not get a proper sleep are the most at risk population. Our analysis showed that around 40% of the people belonging to this category has the heart disease.
 
-<!-- You will be evaluated on both the quality of your source code and your written report, with a greater emphasis on the clarity and details of the description of your dataset(s) and your research questions. -->
+*   We have also shown that by following lifestyle changes such as exercising, appropriate sleep, reducing the BMI can drastically reduce the risk for this population.
+
+
+## Part 5 : Bibliography
+*   R: A language and environment for statistical computing. - https://www.R-project.org/
+*   R Studio IDE. - https://posit.co/products/open-source/rstudio/
+*   CDC - BRFSS - https://www.cdc.gov/brfss/index.html
+

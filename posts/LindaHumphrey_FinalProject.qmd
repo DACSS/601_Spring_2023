@@ -1,0 +1,215 @@
+---
+title: "Final Project"
+author: "Linda Humphrey"
+desription: "Malaria"
+date: "05/22/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+    
+categories:
+  - Final Project: Malaria Incidence Worldwide
+  - data: Incidence of Malaria Worldwide
+  - name: Linda Humphrey
+---
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Introduction
+Malaria is a life-threatening disease spread to humans by some types of mosquitoes. It can be prevented and curable by avoiding mosquito bites and medicines, and can progress to severe illness and death within 24 hours if left untreated. There are 5 Plasmodium parasite species that cause malaria in humans, with P. falciparum and P. vivax being the most prevalent.
+
+## Dataset Description
+Entity: This column lists all countries in the world that have reported malaria incidence
+
+Code: This column indicates each country code
+
+Year: This column indicates the incidences reported in each year
+
+Incidence of Malaria(per 1,000 population at risk): This column indicates the risk of Malaria per 1,000 population at risk in every country.
+
+## Reading dataset
+
+```{R}
+library(tidyverse)
+library(tidyr)
+
+# Read in the csv file
+df <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/incidence-of-malaria.csv", sep = ",", header = T)
+
+# view data
+head(df, 20)
+
+```
+# Inspecting Dataset
+
+```{R}
+str(df)
+```
+
+```{R}
+summary(df)
+```
+
+# Tidy Malaria_imported data.
+
+```{R}
+library(tidyverse)
+library(tidyr)
+
+# Read in the csv file
+MALARIA_IMPORTED <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/MALARIA_IMPORTED.csv")
+
+MALARIA_IMPORTED <- MALARIA_IMPORTED %>%
+  select(X, Number.of.imported.malaria.cases, Number.of.imported.malaria.cases.1, Number.of.imported.malaria.cases.2, Number.of.imported.malaria.cases.3 ) %>%
+  rename('Country' = X, 'Number.of.imported.malaria.cases' = 2020, 'Number.of.imported.malaria.cases.1' = 2019, 'Number.of.imported.malaria.cases.2' = 2018, 'Number.of.imported.malaria.cases.3' = 2017)
+
+```
+
+# EXPLORE DATA
+
+Data visualizations can help us understand the extent of the problem. For instance, the World Health Organization (WHO) provides data on the number of confirmed malaria cases in different regions of the world. The visualization below shows the number of cases in sub-Saharan Africa over time:
+
+```{R}
+library(ggplot2)
+
+# Read in the csv file
+MALARIA_IMPORTED <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/MALARIA_IMPORTED.csv")
+
+ggplot(data = MALARIA_IMPORTED, aes(x = , y = Cases)) +
+  geom_line() +
+  labs(title = "Malaria Cases in Sub-Saharan Africa",
+       x = "X",
+       y = "Number of Cases")
+
+```
+
+# Exploratory Data Analysis
+As we can see from the graph, although the number of deaths due to malaria has decreased over the past decade, it still remains a significant public health issue in the region.
+One of the challenges in fighting malaria in sub-Saharan Africa is the high incidence of drug-resistant strains of the malaria parasite. The visualization below shows the percentage of confirmed malaria cases in sub-Saharan Africa that were resistant to antimalarial drugs:
+
+```{R}
+# Load required packages
+library(tidyverse)
+library(ggplot2)
+
+#Read data file incidence-of-malaria
+MALARIA_IMPORTED <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/MALARIA_IMPORTED.csv")
+
+# View data using head() function to display first few rows
+head(MALARIA_IMPORTED)
+
+# Check the structure of the data using the str() function.
+str(MALARIA_IMPORTED)
+
+# Check for missing values using the summary() function. 
+summary(MALARIA_IMPORTED)
+
+# Plot the distribution of the Incidence variable using a histogram with the ggplot() function.
+ggplot(MALARIA_IMPORTED, aes(x = Incidence.of.malaria..per.1.000.population.at.risk.)) +
+  geom_histogram()
+
+#Plot the incidence of malaria over time using a line chart with the ggplot() function. 
+ggplot(MALARIA_IMPORTED, aes(x = Year, y = Incidence.of.malaria..per.1.000.population.at.risk., color = Entity)) +
+  geom_line()
+
+# Calculate the mean and standard deviation of the incidence of malaria for each country using the group_by() and summarize() functions from the dplyr package, which is part of the tidyverse.
+incidence_of_malaria_summary <- MALARIA_IMPORTED %>%
+  group_by(Entity) %>%
+  summarize(mean_Incidence.of.malaria..per.1.000.population.at.risk. = mean(Incidence.of.malaria..per.1.000.population.at.risk.), 
+            sd_Incidence.of.malaria..per.1.000.population.at.risk. = sd(Incidence.of.malaria..per.1.000.population.at.risk.))
+
+# Plot the mean incidence of malaria for each country using a bar chart with error bars showing the standard deviation
+ggplot(incidence_of_malaria_summary, aes(x = Entity, y = mean_Incidence.of.malaria..per.1.000.population.at.risk., fill = Entity )) +
+  geom_bar(stat = "Identity") +
+  geom_errorbar(aes(ymin = mean_Incidence.of.malaria..per.1.000.population.at.risk. - sd_Incidence.of.malaria..per.1.000.population.at.risk., ymax = mean_Incidence.of.malaria..per.1.000.population.at.risk. + sd_Incidence.of.malaria..per.1.000.population.at.risk.), width = 0.4, position = position_dodge(width = 0.9)) +
+  coord_flip() +
+  labs(x = "", y = "Mean Incidence of Malaria", title = "Mean Incidence of malaria by Entity")
+
+```
+
+
+
+# Graph of Malaria drug resistance.
+As we can see from the graph, drug resistance is a significant problem in many countries in the region. This highlights the need for ongoing research and development of new antimalarial drugs that can effectively treat drug-resistant strains of the malaria parasite.
+In conclusion, while progress has been made in the fight against malaria in sub-Saharan Africa, there is still much work to be done. Data visualizations can help us understand the extent of the problem and identify areas where additional resources and interventions are needed. With continued efforts and investment, we can hope to see further reductions in the burden of malaria in the region.
+
+
+```{R}
+library(ggplot2)
+
+# #Read data file incidence-of-malaria
+MALARIA_IMPORTED <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/MALARIA_IMPORTED.csv", stringsAsFactors = FALSE)
+
+ggplot(MALARIA_IMPORTED, aes(x = Year)) +
+  geom_histogram(binwidth = 5, color = "black", fill = "steelblue") +
+  labs(x = "Incidence", y = "Count", 
+       title = "Histogram of Malaria Incidence")
+
+
+```
+
+# Line Graph of Malaria Prevalence
+To create a line graph of malaria prevalence over time, we need to calculate the prevalence of malaria for each survey year. In this case, we only have data for 2017-2018, so we can just calculate the prevalence for those two years. We can use the aggregate() function to calculate the mean prevalence of malaria for each survey year:
+```{R}
+library(ggplot2)
+library(hrbrthemes)
+
+#Read data file incidence-of-malaria
+MALARIA_IMPORTED <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/MALARIA_IMPORTED.csv", stringsAsFactors = FALSE)
+
+# a line graph of the incidence of malaria over time for each country
+ggplot(MALARIA_IMPORTED, aes(x = Year, y = Incidence.of.malaria..per.1.000.population.at.risk.)) +
+  geom_line() +
+  geom_point() +
+  viridis::scale_color_viridis(discrete = TRUE) +
+  labs(title = "Incidence of Malaria Over Time",
+       x = "Year",
+       y = "Incidence")
+ 
+
+```
+
+# Data  modeling
+This code reads the incidence-of-malaria.csv file, fits a linear regression model to the data, and obtains a summary of the model, including coefficients and p-values. Interpret the results with caution.
+```{R}
+#Read data file incidence-of-malaria
+MALARIA_IMPORTED <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/MALARIA_IMPORTED.csv", stringsAsFactors = FALSE)
+
+
+model <- lm(Incidence.of.malaria..per.1.000.population.at.risk. ~ Year + Entity, data = MALARIA_IMPORTED)
+
+summary(model)
+
+```
+
+# Evaluation and Visualization
+Finally, we can evaluate the performance of our model and visualize. For example, we can use the following commands to create a confusion matrix and visualize the ROC curve
+```{R}
+
+
+
+```
+
+# Data Visualization
+Data visualization of malaria prevalence in Tanzania, using the ggplot2 package to create a bar chart
+```{R}
+
+
+```
+
+# Data Variations
+```{R}
+
+
+```

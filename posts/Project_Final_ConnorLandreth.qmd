@@ -2,7 +2,7 @@
 title: "Final Project: Connor Landreth"
 author: "Connor Landreth"
 description: "Determinants of Sleep Efficiency"
-date: "05-18-2023"
+date: "05-21-2023"
 format:
   html:
     df-print: paged
@@ -27,6 +27,7 @@ editor:
 #| message: false
 
 #load in relevant packages
+library(psych)
 library(tidyverse)
 library(ggplot2)
 library(ggthemes)
@@ -130,7 +131,7 @@ length(unique(sleep$ID))
 length(unique(sleep$Age))
 length(unique(sleep$Gender))
 
-#I am going to remove bedtime and wakeup time, as the information is irrelevant for this analysis and is encapsulated in the sleep duration column. Then I will recode variables to make them numeric to summarize. 
+#I am going to remove bedtime and wakeup time, as the information is irrelevant for this analysis and is encapsulated in the sleep duration column. Then I will recode variables to make them numeric to summarize.
 
 # delete columns 4 & 5
 sleep <- sleep[, -c(4:5)] 
@@ -140,9 +141,17 @@ sleep$Gender[sleep$Gender=="Male"] <- "0"
 sleep$Gender[sleep$Gender=="Female"] <- "1"
 sleep$Smoking.status[sleep$Smoking.status=="No"] <- "0"
 sleep$Smoking.status[sleep$Smoking.status=="Yes"] <- "1"
+sleep$Gender <- as.numeric(sleep$Gender)
+sleep$Smoking.status <- as.numeric(sleep$Smoking.status)
+
+#sleep <- n_gender = as.numeric(sleep$Gender)
 
 #use summarytools to view summary of each variable (More aesthetically pleasing/organized than base R)
-summarytools::dfSummary(sleep)
+```
+
+```{r}
+describe(sleep)
+
 ```
 
 There are 452 unique IDs, so each row is an individual. Ages 9-69 are
@@ -158,7 +167,6 @@ using kable that will break down these variables by meaning and
 measurement . I'll do this by creating a data frame.
 
 ```{r Index}
-data.frame(data.frame, stringsAsFactors = TRUE)
 
 # Create variables
 Variables <- c('Age', 'Gender', 'Sleep Duration', 'Sleep Efficiency', 'REM Sleep percentage', 'Deep Sleep Percentage', 'Light Sleep Percentage', 'Awakenings', 'Caffeine Consumption', 'Alcohol Consumption', 'Smoking Status', 'Exercise Frequency')
@@ -169,7 +177,7 @@ Measurement.Scale <- c('Continuous', 'Binary(male and female)', 'Continuous','Co
 
 # Join the variables to create a data frame
 Index <- data.frame(Variables, Meaning, Measurement.Scale)
-View(Index)
+#View(Index)
 
 ```
 
@@ -313,15 +321,13 @@ again, facet wrapped by gender.
 
 # Analysis & Visualizations
 
-
-
 I will look at the comparison between high sleep efficiency/duration and
 alcohol/caffeine/exercise/smoking. I'll start by filtering sleep
 efficiency to be greater than the mean and look at consumption levels
 for those high efficiency sleepers.
 
 ::: {#Alcohol .panel-tabset}
-### Question 1: Alcohol
+# Question 1: Alcohol
 
 This section will answer question 1, 'Does moderate alcohol consumption
 (2-3 standard drinks) improve sleep efficiency?'
@@ -336,7 +342,8 @@ n_sleep %>%
   geom_jitter(size=2, alpha = 0.5)+
   #add range
   geom_smooth()+
-  #facet wrap by gender will allow us to look at each gender seprately 
+  #facet wrap by gender will allow us to look at each gender separately tabset
+ 
   facet_wrap(~Gender)+
   labs(x='Alcohol Consumption', y='Age') +
   theme_linedraw()+
@@ -388,16 +395,10 @@ drunk and relaxed), efficiency goes back up, but still not as high as it
 would be with no drinks. So in conclusion, 3 drinks doesn't see the
 worst sleep efficiency, but the highest efficiency comes from no alcohol
 at all.
-:::
-
-[^2]: Leadem, Rose. "11 Ways Drinking Alcohol Can Make You Smarter,
-    Healthier and More Creative." Entrepreneur, 25 Oct. 2017,
-    www.entrepreneur.com/living/11-ways-drinking-alcohol-can-make-you-smarter-healthier/303584
 
 Now we will look at the other variables below.
 
-::: {#AllOtherVariables .panel-tabset}
-### Question 2: Other Variables
+# Question 2: Other Variables
 
 This section will answer my second question, 'What are the main
 inhibitors of sleep efficiency?'
@@ -460,10 +461,18 @@ see if the trends change. I would imagine those who smoke wake up more
 often and sleep less efficiently because their body is craving
 nicotine/. We will look at two sets of boxplots. First is derived from
 the original raw data and includes all 452 subjects. It splits up by
-gender again and looks at smokers vs. non-smokers sleep efficiency.
+gender again and looks at smokers vs. non-smokers sleep efficiency. The
+firm horizontal line shows the mean overall, while the fluid, curved
+line shows the mean sleep efficiency for non-smokers on the left side
+and the mean efficiency for smokers on the right side. They all show
+decreasing trends.
 
 ```{r S.E._Smoking_OG}
 #For the binary smoking, boxplots will help us see the mean sleep efficiency between smokers and non-smokers mroe easily. 
+sleep$Gender[sleep$Gender=="0"] <- "Male"
+sleep$Gender[sleep$Gender=="1"] <- "Female"
+sleep$Gender <- as.character(sleep$Gender)
+
 sleep %>% 
   ggplot(aes(Smoking.status,Sleep.efficiency, color=Gender, fill = Gender))+
   geom_boxplot(size=2, alpha = 0.5)+
@@ -478,6 +487,11 @@ The following set of boxplots references n_sleep, and therefor
 specifically 21-35 year old individuals.
 
 ```{r S.E._Smoking_new}
+
+n_sleep$Gender[n_sleep$Gender=="0"] <- "Male"
+n_sleep$Gender[n_sleep$Gender=="1"] <- "Female"
+n_sleep$Gender <- as.character(n_sleep$Gender)
+
 n_sleep %>% 
   ggplot(aes(Smoking.status,Sleep.efficiency, color=Gender, fill = Gender))+
   geom_boxplot(size=2, alpha = 0.5)+
@@ -488,6 +502,10 @@ n_sleep %>%
   labs(title="Smoking Status & Sleep Efficiency by Gender (21-35)")
 ```
 :::
+
+[^2]: Leadem, Rose. "11 Ways Drinking Alcohol Can Make You Smarter,
+    Healthier and More Creative." Entrepreneur, 25 Oct. 2017,
+    www.entrepreneur.com/living/11-ways-drinking-alcohol-can-make-you-smarter-healthier/303584
 
 # Conclusion
 

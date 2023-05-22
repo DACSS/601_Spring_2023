@@ -1,0 +1,229 @@
+---
+title: "Final Project Assignment#1: Priyanka Thatikonda"
+author: "Priyanka Thatikonda"
+description: "Project & Data Description"
+date: "05/22/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+## Important Formatting & Submission Notes: {#important-formatting-submission-notes}
+
+1.  **Use this file as the template to work on: start your own writing from Section "Part.1"**
+
+2.  **Please make the following changes to the above YAML header:**
+
+    -   Change the "title" to "Final Project Assignment#1: First Name Last Name";
+
+    -   Change the "author" to your name;
+
+    -   Change the "date" to the current date in the "MM-DD-YYYY" format;
+
+3.  **Submission:**
+
+    -   Delete the unnecessary sections ("Overview", "Tasks", "Special Note", and "Evaluation").
+    -   **In the posts folder of your local 601_Spring_2023 project, create a folder named "FirstNameLastName_FinalProjectData", and save your final project dataset(s) in this folder. DO NOT save the dataset(s) to the \_data folder which stores the dataset(s) for challenges.**
+    -   Render and submit the file to the blog post like a regular challenge.
+
+## Overview of the Final Project {#overview-of-the-final-project}
+
+The goal is to tell a coherent and focused story with your data, which answers a question (or questions) that a researcher, or current or future employer, might want to have answered. The goal might be to understand a source of covariance, make a recommendation, or understand change over time. We don't expect you to reach a definitive conclusion in this analysis. Still, you are expected to tell a data-driven story using evidence to support the claims you are making on the basis of the exploratory analysis conducted over the past term.
+
+In this final project, statistical analyses **are not required**, but any students who wish to include these may do so. However, **your primary analysis should center around visualization rather than inferential statistics.** Many scientists only compute statistics after a careful process of exploratory data analysis and data visualization. Statistics are a way to gauge your certainty in your results - **NOT A WAY TO DISCOVER MEANINGFUL DATA PATTERNS**. **Do not run a multiple regression with numerous predictors and report which predictors are significant!!**
+
+## Tasks of Assignment#1 {#Tasks-of-assignment1}
+
+This assignment is the first component of your final project. Together with the later assignments, it make up a short paper/report. In this assignment, you should introduce a dataset(s) and how you plan to present this dataset(s). This assignment should include the following components:
+
+1.  **A clear description of the dataset(s) that you are using.**
+
+2.  **What "story" do you want to present to the audience? In other words, what "question(s)" do you like to answer with this dataset(s)?**
+
+3.  **The Plan for Further Analysis and Visualization.**
+
+We will have a special class meeting on April 12 to review and discuss students' proposed datasets for the final project. **If you want your project being discussed in the class, please submit this assignment before April 12.**
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+In this part, you should introduce the dataset(s) and your research questions.
+
+1.  Dataset(s) Introduction:
+
+The National Basketball Association (NBA) is a professional basketball league in North America composed of 30 teams (29 in the United States and 1 in Canada). It is one of the major professional sports leagues in the United States and Canada and is considered the premier professional basketball league in the world. It changed its name to the National Basketball Association on August 3, 1949, after merging with the competing National Basketball League (NBL). The NBA's regular season runs from October to April, with each team playing 82 games. The league's playoff tournament extends into June. As of 2020, NBA players are the world's best paid athletes by average annual salary per player.
+
+The dataset I chose was from Kaggle (https://www.kaggle.com/mamadoudiallo/nba-players-stats-19802017). It is a list of player statistics from the NBA from 1980 to 2017.It depicts the stats of players of specific years on the teams they played. I chose this dataset because its very robust as it has a lot of data from a wide range of years which allows for a lot to explore and understand the trends in NBA over the years and make future predictions.
+
+In the NBA dataset I have, which includes data from 1980 to 2017, there are various player statistics available. Each row represents a player's performance in a specific year, indicating their position, age, team, games played, minutes played (MP), player efficiency rating (PER), true shooting percentage (TS%), offensive win shares (OWS), defensive win shares (DWS), win shares (WS), win shares per 48 minutes (WS/48), box plus/minus (BPM), value over replacement player (VORP), field goals made (FG), field goals attempted (FGA), field goal percentage (FG%), three-pointers made (3P), three-pointers attempted (3PA), three-point percentage (3P%), two-pointers made (2P), two-pointers attempted (2PA), two-point percentage (2P%), effective field goal percentage (eFG%), free throws made (FT), free throws attempted (FTA), free throw percentage (FT%), offensive rebounds (ORB), defensive rebounds (DRB), total rebounds (TRB), assists (AST), steals (STL), blocks (BLK), turnovers (TOV), personal fouls (PF), and points scored (PTS). Each player's performance is recorded for a specific year, allowing us to analyze their progress and explore trends over time.
+
+The final part will reflect the limits of dataset and the process as the project unfolds along with a preliminary conclusion on the project.
+
+2.  What questions do you like to answer with this dataset(s)?
+
+-   How has player performance evolved over the years? You can analyze trends in key metrics such as player efficiency rating (PER), true shooting percentage (TS%), win shares (WS), or points scored (PTS) to understand how players' skills and productivity have changed over time.
+
+-   Which players have consistently performed at a high level throughout their careers? By examining metrics like PER, WS, or VORP, you can identify players who have consistently been valuable contributors to their teams over multiple seasons.
+
+-   How does performance vary based on player position? You can compare statistics across different positions (e.g., centers, guards, forwards) to understand the unique roles and contributions of each position on the court.
+
+-   How do players' shooting percentages (FG%, 3P%, FT%) affect their overall performance? You can analyze the impact of shooting efficiency on player effectiveness by examining metrics such as PER, WS, or points scored.
+
+-   Which teams have had the most successful players in terms of win shares? By aggregating win shares by team, you can identify the teams that have consistently had high-performing players throughout the dataset's time range.
+
+-   Can we predict a player's performance based on their age? Analyzing how player statistics change as they age can provide insights into the typical career trajectory and identify any patterns or outliers.
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+This part contains both a coding and a storytelling component.
+
+In the coding component, you should:
+
+1.  read the dataset;
+
+    -   (optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step.
+
+    -   (optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns.
+
+```{r}
+  df <- read_csv("player_df.csv")
+  df
+```
+
+2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;
+
+    -   for examples: dim(), length(unique()), head();
+
+    ```{r}
+    # Display the structure of the dataset
+    str(df)
+
+    #head
+    head(df)
+
+    #tail
+    tail(df)
+
+    #dimension
+    dim(df)
+
+    #check for missing values
+    sum(is.na(df))
+
+      
+    ```
+
+3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
+
+```{r}
+
+
+# Calculate summary statistics for numeric variables
+summary(df[, c("PER", "TS%", "WS", "PTS")])
+
+# Calculate the mean of numeric variables
+colMeans(df[, c("PER", "TS%", "WS", "PTS")], na.rm = TRUE)
+
+# Calculate the median of numeric variables
+sapply(df[, c("PER", "TS%", "WS", "PTS")], median, na.rm = TRUE)
+
+# Calculate the standard deviation of numeric variables
+sapply(df[, c("PER", "TS%", "WS", "PTS")], sd, na.rm = TRUE)
+
+# Calculate the minimum of numeric variables
+sapply(df[, c("PER", "TS%", "WS", "PTS")], min, na.rm = TRUE)
+
+# Calculate the maximum of numeric variables
+sapply(df[, c("PER", "TS%", "WS", "PTS")], max, na.rm = TRUE)
+
+# Calculate the quartiles of numeric variables
+sapply(df[, c("PER", "TS%", "WS", "PTS")], quantile, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+
+
+```
+
+Based on the given dataset, here is a brief description of each column:
+
+-   Year: The year in which the data corresponds to.
+-   Player: The name of the player.
+-   Pos: The position of the player (C for center, PF for power forward, PG for point guard, SG for shooting guard, SF for small forward).
+-   Age: The age of the player at the time of data recording.
+-   Tm: The team abbreviation or code for the team the player belongs to.
+-   G: The number of games played by the player.
+-   MP: The total minutes played by the player.
+-   PER: Player Efficiency Rating, a measure of a player's overall performance.
+-   TS%: True Shooting Percentage, a measure of shooting efficiency that accounts for field goals, three-pointers, and free throws.
+-   OWS: Offensive Win Shares, an estimate of the number of wins contributed by a player's offense.
+-   DWS: Defensive Win Shares, an estimate of the number of wins contributed by a player's defense.
+-   WS: Win Shares, the sum of offensive and defensive win shares, estimating the number of wins contributed by a player.
+-   WS/48: Win Shares per 48 minutes, a rate statistic that estimates the number of wins contributed by a player per 48 minutes.
+-   BPM: Box Plus/Minus, a measure of a player's overall contribution per 100 possessions.
+-   VORP: Value Over Replacement Player, an estimate of the points per 100 team possessions a player contributes above a replacement-level player.
+-   FG: Field Goals made by the player.
+-   FGA: Field Goals attempted by the player.
+-   FG%: Field Goal Percentage, the ratio of successful field goals made to field goals attempted.
+-   3P: Three-Point Field Goals made by the player.
+-   3PA: Three-Point Field Goals attempted by the player.
+-   3P%: Three-Point Field Goal Percentage, the ratio of successful three-point field goals made to three-point field goals attempted.
+-   2P: Two-Point Field Goals made by the player.
+-   2PA: Two-Point Field Goals attempted by the player.
+-   2P%: Two-Point Field Goal Percentage, the ratio of successful two-point field goals made to two-point field goals attempted.
+-   eFG%: Effective Field Goal Percentage, a modified field goal percentage that adjusts for the added value of three-point field goals.
+-   FT: Free Throws made by the player.
+-   FTA: Free Throws attempted by the player.
+-   FT%: Free Throw Percentage, the ratio of successful free throws made to free throws attempted.
+-   ORB: Offensive Rebounds grabbed by the player.
+-   DRB: Defensive Rebounds grabbed by the player.
+-   TRB: Total Rebounds grabbed by the player.
+-   AST: Assists made by the player.
+-   STL: Steals made by the player.
+-   BLK: Blocks made by the player.
+-   TOV: Turnovers committed by the player.
+-   PF: Personal Fouls committed by the player.
+-   PTS: Total points scored by the player.
+
+These columns represent various statistics and metrics related to player performance in basketball.
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+1.  The data analyses and visualizations that can be conducted to answer the research questions proposed above include:
+
+    -   Trend analysis over time: Visualize the trends in key metrics such as PER, TS%, WS, or PTS over the years to understand how player performance has evolved. This can be done using line plots or bar plots with the years on the x-axis and the corresponding metric values on the y-axis.
+
+    -   Descriptive statistics: Calculate summary statistics such as mean, median, standard deviation, minimum, maximum, and quartiles for the key metrics to gain insights into the distribution and variability of player performance.
+
+2.  The choice of specific data analyses and visualizations is driven by their ability to provide meaningful insights and answer the research questions effectively. Here's how some types of statistics and graphs can help:
+
+    -   Bivariate visualization: Scatter plots or correlation matrices can reveal the relationship between two variables. For example, plotting PER against PTS can help determine if there is a strong correlation between a player's efficiency and scoring ability.
+
+    -   Time-series analysis: Line plots or bar plots over time can showcase the pattern of development and identify any notable trends or changes in player performance. This can help understand how the NBA has evolved over the years.
+
+    -   Summary statistics: Descriptive statistics provide a concise summary of the data, allowing for comparisons between different metrics and understanding the central tendency, dispersion, and shape of the distributions.
+
+3.  To process and prepare the tidy data for the analysis, the following steps can be taken:
+
+    -   Create new variables: If additional variables are required for analysis, create them using functions like `mutate()` to calculate derived metrics or calculate player statistics ratios.
+
+    -   Dealing with missing data/NAs: Handle missing data appropriately based on the nature and extent of missingness. This can include removing rows with missing values (`na.omit()`), imputing missing values using methods like mean or regression imputation (`na.mean()`, `na.glm()`), or considering specific missing data handling techniques based on domain knowledge.
+
+    -   Outlier treatment: Identify and handle outliers based on the context of the analysis. This can involve removing outliers, transforming variables to mitigate the impact of outliers, or using robust statistical methods.
+
+The specific data processing and preparation steps may vary depending on the dataset and the research questions at hand.

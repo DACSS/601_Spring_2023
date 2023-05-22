@@ -1,0 +1,140 @@
+---
+title: "Challenge 8_PriyankaThatikonda"
+author: "Meredith Rolfe"
+description: "Joining Data"
+date: "08/25/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - railroads
+  - snl
+  - faostat
+  - debt
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both
+    words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined
+    data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R
+package and command.
+
+-   military marriages ⭐⭐
+-   faostat ⭐⭐
+-   railroads ⭐⭐⭐
+-   fed_rate ⭐⭐⭐
+-   debt ⭐⭐⭐
+-   us_hh ⭐⭐⭐⭐
+-   snl ⭐⭐⭐⭐⭐
+
+```{r}
+actors <- read_csv("_data/snl_actors.csv")
+casts <- read_csv("_data/snl_casts.csv")
+seasons <- read_csv("_data/snl_seasons.csv")
+head(actors)
+colnames(actors)
+head(casts)
+colnames(casts)
+head(seasons)
+colnames(seasons)
+dim(actors)
+dim(casts)
+dim(seasons)
+```
+
+### Briefly describe the data
+
+The datasets provided contain comprehensive information about the
+popular television program - Saturday Night Live (SNL). The snl_casts
+dataset focuses on the casting details of actors across different
+episodes and seasons. On the other hand, the snl_seasons dataset
+provides specific information about each season, including episode
+counts, air dates, and start years. Lastly, the snl_actors dataset
+offers insights into individual actors' roles and appearance types in
+SNL. The actors dataset comprises 2306 rows and 4 columns, while the
+casts dataset consists of 614 rows and 8 columns. In contrast, the
+seasons dataset has 46 rows and 5 columns, offering a concise overview
+of each season's key details.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to
+anticipate your end result to provide a sanity check, and document your
+work here.
+
+```{r}
+#check for any missing data in the datasets
+
+sum(is.na(actors))
+sum(is.na(casts))
+sum(is.na(seasons))
+
+
+seasons <- mutate(seasons,first_epid = as.Date(as.character(first_epid),format="%Y%m%d"), last_epid = as.Date(as.character(last_epid), format = "%Y%m%d"))
+table(seasons$first_epid)
+
+casts <- mutate(casts,first_epid = as.Date(as.character(first_epid),format="%Y%m%d"), last_epid = as.Date(as.character(last_epid), format = "%Y%m%d"))
+table(casts$first_epid)
+
+
+```
+
+Are there any variables that require mutation to be usable in your
+analysis stream? For example, do you need to calculate new values in
+order to graph them? Can string values be represented numerically? Do
+you need to turn any variables into factors and reorder for ease of
+graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+```
+
+## Join Data
+
+Be sure to include a sanity check, and double-check that case count is
+correct!
+
+```{r}
+seasons_casts <- seasons %>% left_join(casts,by="sid")
+#sanity check
+seasons_casts
+colnames(seasons_casts)
+seasons_casts_actors <- seasons_casts %>% left_join(actors, by = "aid")
+
+#sanity check seasons_casts_actors
+ggplot(data = seasons_casts_actors, aes(x = year, y = n_episodes.y, fill = gender)) + geom_bar(stat = "identity") + labs(x = "Year", y = "Number of Episodes", title = "Number of Episodes per Season") + theme_minimal()
+
+```

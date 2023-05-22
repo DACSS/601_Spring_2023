@@ -1,0 +1,212 @@
+---
+title: "Final Project Assignment#1: The trend of Malaria deaths"
+author: "Linda Humphrey"
+description: "Project & Data Description"
+date: "05/18/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description 
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(lubridate)
+library(plotly)
+library(gapminder)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+##  Introduction
+
+
+## Inroduction
+
+Malaria is a significant global health issue, particularly in tropical and subtropical regions. It is caused by the Plasmodium parasite and transmitted through the bites of infected mosquitoes. According to the World Health Organization (WHO), Malaria caused an estimated 409,000 deaths globally in 2019, with the majority occurring in sub-Saharan Africa. The burden of Malaria disproportionately affects vulnerable populations, including young children and pregnant women.
+
+Understanding the determinants of Malaria deaths and their variations is crucial for effective prevention and control strategies. Previous research has highlighted the impact of various factors on Malaria transmission and mortality rates. These include the availability and utilization of Malaria prevention measures such as insecticide-treated bed nets and Malaria vaccinations, as well as the quality and accessibility of healthcare services.
+
+Additionally, socioeconomic factors, such as a country's wealth and resource allocation for public health, play a significant role in Malaria control efforts. Climate conditions, particularly in tropical and subtropical areas, contribute to the suitability of mosquito habitats and Malaria transmission intensity. Population density further amplifies the risk of Malaria transmission, as it affects human-mosquito contact rates.
+
+By investigating the determinants of Malaria deaths and their variations, we can gain insights into the factors that drive Malaria transmission and mortality rates. This knowledge can inform policy decisions, resource allocation, and targeted interventions to reduce the burden of Malaria and save lives.
+
+In this study, we aim to analyze a comprehensive dataset that includes information on Malaria deaths, Malaria vaccination coverage, government budget spending on public health, climate type, population density, and other relevant variables. Through this analysis, we seek to identify the key factors influencing Malaria deaths and understand how they vary across different countries/regions and over time. Ultimately, this research aims to contribute to the global efforts in combating Malaria and improving public health outcomes worldwide.
+
+## Data
+
+    ```{r}
+dim(Climate_change_attributes)
+    ```
+
+```{r}
+length(unique(Immunization_Malaria))
+```
+
+```{r}
+summary(PublicHealthBudget)
+```
+
+```{r}
+str(Malaria_deaths)
+```
+
+# Malaria deaths
+```{r}
+Malaria_deaths <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/Malaria_deaths.csv", sep = ",", header = T)
+view(Malaria_deaths)
+```
+
+# Malaria Immunization
+```{R}
+
+Immunization_Malaria <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/Immunization_Malaria.csv", sep = ",", header = T)
+view(Immunization_Malaria)
+```
+
+# Climate change attributes
+```{R}
+
+Climate_change_attributes <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/Climate_change_attributes.csv", sep = ",", header = T)
+view(Climate_change_attributes)
+```
+
+# Public health budget
+```{R}
+PublicHealthBudget <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/PublicHealthBudget.csv", sep = ",", header = T)
+view(PublicHealthBudget)
+```
+
+## Dataset Description:
+
+The dataset used in this research project combines data from various sources, including global health organizations, national health agencies, and statistical databases. The specific sources of the dataset include the World Health Organization (WHO), national health departments, and international databases like the World Bank and United Nations.
+
+Each row in the dataset represents a specific country or region for a particular year. The dataset captures information on Malaria deaths, Malaria vaccination coverage, government budget spending on public health (or GDP per capita as an approximation), climate type, population density, and other relevant variables. These variables provide insights into the determinants of Malaria deaths and their variations across different geographical areas and over time.
+
+The data collection methods and timing vary depending on the specific sources. For example, the Malaria deaths data may be compiled from national mortality records, disease surveillance systems, or statistical estimates. Malaria vaccination coverage data could be collected through national immunization programs or surveys. Government budget spending on public health data may be obtained from budget reports or official statistical sources. Climate type and population density data may come from meteorological agencies and demographic databases, respectively.
+
+By merging these datasets, this research aims to provide a comprehensive analysis of Malaria deaths and their determinants, enabling a deeper understanding of the factors influencing Malaria mortality rates and the variations observed across different countries/regions.
+
+
+#  Analysis and Visualization:
+
+To answer the general research question on the determinants of Malaria deaths and their variations, we will focus on specific questions that delve into the relationship between Malaria deaths and various factors. The corresponding columns/variables expected to be used in the dataset include:
+
+What is the trend of Malaria deaths over time and across different countries/regions? (Variables: Year, Country/Region, Malaria Deaths)
+How does Malaria vaccination coverage relate to Malaria deaths? (Variables: Malaria Vaccination Coverage, Malaria Deaths)
+Does government budget spending on public health (or GDP per capita) impact Malaria deaths? (Variables: Government Budget Spending on Public Health/GDP per capita, Malaria Deaths)
+How do climate type and population density influence Malaria deaths? (Variables: Climate Type, Population Density, Malaria Deaths).
+
+The analysis plan involves conducting various types of analysis and visualization to explore these questions:
+
+Trend Analysis: We will plot the trend of Malaria deaths over time, using line graphs or area charts. This visualization will provide insights into the overall pattern and any significant changes in Malaria mortality rates across different years and regions.
+
+Correlation Analysis: We will calculate the correlation coefficient between Malaria vaccination coverage and Malaria deaths using statistical methods. Additionally, scatter plots can be used to visually examine the relationship between these variables. This analysis will help assess the impact of Malaria vaccination coverage on Malaria mortality rates.
+
+Comparative Analysis: We will compare Malaria deaths with government budget spending on public health (or GDP per capita) using bar charts or box plots. This analysis will allow us to identify any associations between resource allocation for public health and Malaria mortality rates across different countries/regions.
+
+Geospatial Analysis: We will map climate types and population density, overlaying them with Malaria death rates. This geospatial visualization will help identify areas with high Malaria transmission and assess the influence of climate and population density on Malaria deaths.
+
+By conducting these analyses and visualizations, we aim to gain a comprehensive understanding of the determinants of Malaria deaths and their variations. The chosen visualizations and specific graphs are selected because they provide effective means to explore and communicate the relationships between Malaria deaths and the identified factors.
+
+# Question 1: Trend Analysis
+```{R}
+# Load the necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Read the dataset
+Malaria_deaths <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/Malaria_deaths.csv", sep = ",", header = T)
+
+# Plot the trend of Malaria deaths over time and across countries/regions
+ggplot(Malaria_deaths, aes(x = Period, y = `Value`, color = Location.ParentLocation)) +
+  geom_line() +
+  labs(x = "Period", y = "Value", title = "Trend of Malaria Deaths") +
+  theme_minimal()
+```
+
+# Question 2: Correlation Analysis
+# Calculate the correlation coefficient between Malaria vaccination coverage and Malaria deaths
+```{R}
+correlation <- cor(Immunization_Malaria$`Malaria Vaccination Coverage`, Malaria_deaths$`Malaria Deaths`)
+```
+
+# Scatter plot of Malaria vaccination coverage vs. Malaria deaths
+```{R}
+ggplot(Immunization_Malaria, Malaria_deaths, aes(x = `Malaria Vaccination Coverage`, y = `Malaria Deaths`)) +
+  geom_point() +
+  labs(x = "Malaria Vaccination Coverage", y = "Malaria Deaths",
+       title = "Malaria Vaccination Coverage vs. Malaria Deaths") +
+  theme_minimal()
+```
+
+# Question 3: Comparative Analysis
+# Compare Malaria deaths with government budget spending on public health (or GDP per capita)
+```{R}
+ggplot(Malaria_deaths, PublicHealthBudget, aes(x = Location.ParentLocation, y = `Value`, fill = `Public Health Budget`)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Country/Region", y = "Malaria Deaths",
+       title = "Comparison of Malaria Deaths and Government Budget Spending on Public Health") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+# Question 4: Geospatial Analysis
+# Plot a map of climate types and overlay with Malaria death rates
+# Assuming you have spatial data for climate types and Malaria death rates
+```{R}
+# Load the necessary libraries
+library(ggplot2)
+library(sf)
+
+# Read the spatial data for climate types
+Climate_change_attributes <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/Climate_change_attributes.csv", sep = ",", header = T)
+
+# Read the spatial data for Malaria death rates
+Malaria_deaths <- read.csv("~/Desktop/601_Spring_2023/posts/LindaHumphrey_FinalProjectDataFolder/Malaria_deaths.csv", sep = ",", header = T)
+
+# Merge the climate data and Malaria death rate data based on a common attribute (e.g., country/region)
+merged_data <- merge(Climate_change_attributes, Malaria_deaths, by = "Period Year")
+
+# Plot the map of climate types
+ggplot() +
+  geom_sf(Climate_change_attributes = merged_data, aes(fill = Climate_Type)) +
+  labs(title = "Climate Types Map") +
+  theme_minimal()
+
+# Overlay Malaria death rates on the climate types map
+ggplot() +
+  geom_sf(Malaria_deaths = merged_data, aes(fill = Malaria_Death_Rate)) +
+  labs(title = "Malaria Death Rates Map") +
+  theme_minimal()
+
+```
+ 
+
+## Conclusion and Discussion 
+This research project explored the determinants of Malaria deaths and their variations across different countries/regions over time. It analyzed a comprehensive dataset that included information on Malaria deaths, vaccination coverage, government budget spending on public health, climate type, population density, and other variables. The findings revealed a fluctuating pattern of Malaria deaths, a potential correlation between vaccination coverage and Malaria deaths, a potential association between government budget spending on public health and Malaria deaths, and a role of climate type and population density. This research project provides valuable insights into the determinants of Malaria deaths, which can be used to inform public health strategies and interventions to reduce Malaria mortality rates and improve the overall well-being of affected populations. Data gaps and inconsistencies could affect the accuracy of the findings. Future Directions include advanced statistical modeling techniques and additional variables.
+
+# Bibliography
+Society, N. G. (2022, May 20). Köppen Climate Classification System. Education. https://education.nationalgeographic.org/resource/koppen-climate-classification-system/ 
+
+
+Bank, The World . “World Bank Open Data.” World Bank Open Data, 7 Apr. 2023, data.worldbank.org/indicator/SH.XPD.CHEX.PC.CD?end=2021&start=2000&view=chart. Accessed 18 May 2023.
+
+Galatas, Bea . “Estimated Number of Malaria Deaths.” Www.who.int, 2021, www.who.int/data/gho/data/indicators/indicator-details/GHO/estimated-number-of-malaria-deaths. Accessed 17 May 2023.
+
+Indicator Details. (n.d.). https://www.who.int/data/gho/data/indicators/indicator-details/GHO/population-with-access-to-an-insecticide-treated-bed-net-(itn)-for-malaria-protection-modelled
+

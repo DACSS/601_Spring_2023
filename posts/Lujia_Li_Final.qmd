@@ -1,0 +1,203 @@
+---
+title: "Real Estate Data Analysis"
+author: "Lujia Li"
+desription: "601 Assigment #1"
+date: "05/03/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - Assignment 1
+  - Lujia Li
+  - NeighborhoodSales Summary
+  - ggplot2
+---
+
+```{r}
+# read dataset
+library(readxl)
+library(dbplyr)
+library(tidyverse)
+brooklyn2019 <- read_excel('Assignment_1_LujiaLi_folder/2019_brooklyn.xlsx', skip = 6)
+head(brooklyn2019)
+
+# dimension of dataset
+dim(brooklyn2019)
+
+# variables/column names
+colnames(brooklyn2019)
+# remove the special characters in variables
+colnames(brooklyn2019) <- colnames(brooklyn2019) %>% 
+  gsub("\r", "", .) %>%    # delete the special character "\r" in variables
+  gsub("\n", " ", .) %>%   # replace the special character "\n" with space in variables
+  gsub(" $", "",. , perl = T) %>%  # delete the space at the end of variables
+  gsub("  ", " ",. , perl = T)  # replace the double spaces with single space in variables
+colnames(brooklyn2019)
+
+# remove duplicated rows in dataset
+brooklyn2019 <- distinct(brooklyn2019)
+str(brooklyn2019)
+
+# subset dataset
+# c('BOROUGH','RESIDENTIAL UNITS','COMMERCIAL UNITS','TOTAL UNITS','LAND SQUARE FEET','GROSS SQUARE FEET',
+#   'YEAR BUILT','BUILDING CLASS AT TIME OF SALE','SALE PRICE','SALE DATE') %>%
+#    subset(brooklyn2019, select = .) -> selected_brooklyn2019
+
+selected_brooklyn2019 <- subset(brooklyn2019, select = c('BOROUGH','RESIDENTIAL UNITS','COMMERCIAL UNITS','TOTAL UNITS','LAND SQUARE FEET','GROSS SQUARE FEET',
+  'YEAR BUILT','BUILDING CLASS AT TIME OF SALE','SALE PRICE','SALE DATE'))
+
+str(selected_brooklyn2019)
+
+# count the number and calculate the percentage of NA values
+NumNA_column <- function(x){sum(is.na(x))} # function to count the number of NA values
+apply(selected_brooklyn2019, 2, NumNA_column)   # number of NA in each column
+PercentageNA_column <- function(x){sum(is.na(x))/length(x)*100}
+apply(selected_brooklyn2019, 2, PercentageNA_column) # percentage of NA in each column
+
+# count the number of 0 sales price
+# 0 sale price means that a transfer of ownership without a cash consideration
+table(selected_brooklyn2019$`SALE PRICE` == 0)
+prop.table(table(selected_brooklyn2019$`SALE PRICE` == 0))
+
+# remove rows with NA values and 0 sale price
+# 0 sale price means that a transfer of ownership without a cash consideration
+new_brooklyn2019 <- na.omit(selected_brooklyn2019) %>% # delete rows with NA values
+  filter(., 'SALE PRICE' != 0)     # select rows with non-zero sale price
+str(new_brooklyn2019)
+
+# statics of dataset
+summary(new_brooklyn2019)
+
+
+# merge all sub-datasets
+final_dataframe <- data.frame()  # define a dataframe
+filename <- list.files("Assignment_1_LujiaLi_folder")   # names of all .xlsx files
+for (i in filename){
+  dataframe <- read_excel(gsub(" ", "", paste("Assignment_1_LujiaLi_folder/", i)), skip = 6)
+  colnames(dataframe) <- colnames(dataframe) %>% 
+    gsub("\r", "", .) %>%    # delete the special character "\r" in column names
+    gsub("\n", " ", .) %>%   # replace the special character "\n" with space in column names
+    gsub(" $","",. ,perl = T) %>%  # delete the space at the tail of column names
+    gsub("  "," ",. ,perl = T)  # replace the double spaces with single space in column names
+  
+  # remove duplicated rows in dataset
+  dataframe <- distinct(dataframe)
+  
+  # subset dataset
+  # c('BOROUGH','RESIDENTIAL UNITS','COMMERCIAL UNITS','TOTAL UNITS','LAND SQUARE FEET','GROSS SQUARE FEET',
+  #   'YEAR BUILT','BUILDING CLASS AT TIME OF SALE','SALE PRICE','SALE DATE') %>%
+  #   subset(dataframe, select = .) -> selected_dataframe
+  
+  selected_dataframe <- subset(dataframe, select = c('BOROUGH','RESIDENTIAL UNITS','COMMERCIAL UNITS','TOTAL UNITS','LAND SQUARE FEET','GROSS SQUARE FEET',
+    'YEAR BUILT','BUILDING CLASS AT TIME OF SALE','SALE PRICE','SALE DATE'))
+  
+  # remove rows with NA values and 0 sale price
+  # 0 sale price means that a transfer of ownership without a cash consideration
+  new_dataframe <- na.omit(selected_dataframe) %>%
+    filter(., `SALE PRICE` != 0)
+  # merge dataframe
+  final_dataframe <- rbind(final_dataframe, new_dataframe)   
+}
+str(final_dataframe)
+
+# ========Assignment 2=============
+# count the number of 0 land square feet
+table(final_dataframe$`LAND SQUARE FEET` == 0)
+prop.table(table(final_dataframe$`LAND SQUARE FEET` == 0))
+
+# remove rows with 0 land square feet
+final_dataframe <- filter(final_dataframe, `LAND SQUARE FEET` != 0)
+str(final_dataframe)
+
+# add a new column which gives the sale price per land square feet
+final_dataframe$`SALE PRICE PER LAND SQUARE FEET` = final_dataframe$`SALE PRICE`/final_dataframe$`LAND SQUARE FEET`
+str(final_dataframe)
+
+
+# replace the numeric value in the column BOROUGH with borough name
+final_dataframe$BOROUGH
+final_dataframe$BOROUGH[final_dataframe$BOROUGH == 3] <- "Brooklyn"
+final_dataframe$BOROUGH[final_dataframe$BOROUGH == 4] <- "Queens"
+final_dataframe$BOROUGH[final_dataframe$BOROUGH == 5] <- "Staten Island"
+final_dataframe$BOROUGH
+
+# statics of dataset
+summary(final_dataframe)
+
+
+# extract the properties of classification A2
+#final_dataframe %>%
+#  filter(., if_any(`BUILDING CLASS AT TIME OF SALE`, ~ str_detect(.x, "A1"))) -> ClassA2_dataframe
+
+# extract the properties of classification A1, A2, B1 and B2
+final_dataframe %>%
+  filter(., `BUILDING CLASS AT TIME OF SALE` %in% c("A1","A2","B1","B2")) -> Class_dataframe
+str(Class_dataframe)
+
+
+# load ggplot2 library for visualization
+library(ggplot2)
+
+# SALE PRICE PER LAND SQUARE FEET vs. LAND SQUARE FEET for A1, A2, B1 and B2 properties in three boroughs
+ggplot(Class_dataframe, aes(x = `LAND SQUARE FEET`, y = `SALE PRICE PER LAND SQUARE FEET`)) +
+  geom_point(color = "red", size = 2, alpha = 0.3) +
+  facet_grid(`BOROUGH` ~ `BUILDING CLASS AT TIME OF SALE`) 
+# save figure 
+ggsave(filename = "UnitPrice_LandSquare.jpeg", # file name
+       width = 8,      # width
+       height = 6,     # height
+       units = "in",  # unit
+       dpi = 1000)     # resolution
+
+# SALE PRICE PER LAND SQUARE FEET vs. SALE DATE for A1, A2, B1 and B2 properties in three boroughs
+ggplot(Class_dataframe, aes(x = `SALE DATE`, y = `SALE PRICE PER LAND SQUARE FEET`)) +
+  geom_point(color = "red", size = 2, alpha = 0.3) +
+  facet_grid(`BOROUGH` ~ `BUILDING CLASS AT TIME OF SALE`) 
+# save figure
+ggsave(filename = "UnitPrice_SaleDate.jpeg", # file name
+       width = 10,      # width
+       height = 6,     # height
+       units = "in",  # unit
+       dpi = 1000)     # resolution
+
+# histograms of SALE DATE for A1, A2, B1 and B2 properties in three boroughs
+ggplot(Class_dataframe, aes(`SALE DATE`)) +
+  geom_histogram() +
+  facet_grid(`BOROUGH` ~ `BUILDING CLASS AT TIME OF SALE`) 
+# save figure
+ggsave(filename = "hist_SaleDate.jpeg", # file name
+       width = 10,      # width
+       height = 6,     # height
+       units = "in",  # unit
+       dpi = 1000)     # resolution
+
+# histograms of YEAR BUILT for A1, A2, B1 and B2 properties in three boroughs
+ggplot(Class_dataframe, aes(x = `LAND SQUARE FEET`, y = ..density..)) +
+  geom_histogram() +
+  facet_grid(`BOROUGH` ~ `BUILDING CLASS AT TIME OF SALE`) 
+# save figure
+ggsave(filename = "hist_LandSquare.jpeg", # file name
+       width = 10,      # width
+       height = 6,     # height
+       units = "in",  # unit
+       dpi = 1000)     # resolution
+
+# From Fig. 2, 3, 4 and 5, several significant differences between Brooklyn, Queens and Staten Island can be observed. 
+# (1) From Fig. 2 and 3, the unit sale price of all classifications of properties in Brooklyn is the highest, and that in Staten Island is the lowest among three boroughs.
+# (2) From Fig. 2 and 3, the unit price of B1 is the highest among four classifications in Brooklyn and Queens, and that of A2 is the lowest. In Staten Island, however, four classifications of properties have similar unit prices.
+# (3) From Fig. 4, one can see that the sales volume of Queens is much higher than Brooklyn and Staten Island. In Brooklyn, the sales volume of A2 properties is very small, and the same also applies to B1 in Staten Island; while in Queens, the A1 property has the highest sales volume among four classifications of properties. 
+# (4) From Fig.5, for each classification of real property, the land square feet in Brooklyn is the smallest, while that in Staten Island is much larger than other two boroughs. 
+
+#Conclusion
+#In this work, the yearly sales information of properties sold in three boroughs of New York City, including Brooklyn, Queens and Staten Island, from 2019 to 2022 is analyzed. A detailed description of the considered datasets is given first in Section 2, where the variables of interest, the meaning of each column and row in datasets and the statistical properties of datasets are given, and also the necessary data cleaning and multiple datasets merging are presented. In Section 3, the tidy and merged dataset is further processed to extract four classifications, i.e., A1, A2, B1 and B2, of properties, and the reserved observations are used for visualization. Through data visualization, the influences of land square feet and sale date on unit sale price (i.e., sale price per land square feet), as well as the difference between three boroughs, are investigated. 
+# In summary, some interesting results can be made.
+# (1) The unit sale price tends to decrease as the land square feet increases for all classifications of properties in three boroughs, which implies “the more area you buy, the lower unit sale price you pay”.
+# (2) The sales volume of real properties in three boroughs significantly decreased in March and April, 2020, when the first peak of COVID-19 infection approached. 
+# (3) The unit sale price in Staten Island is the lowest among three considered boroughs, and meanwhile the land square feet of all four classifications of properties in Staten Island is the largest.
+# (4) The total sales volume of four classifications of properties in Queens is the largest, which may relates to its large population and thriving economy.
+# Although some interesting phenomena can be observed from the analysis in this work, the economic, political and social-cultural factors that explain these phenomena are worth studying in the future work. 
+```
+

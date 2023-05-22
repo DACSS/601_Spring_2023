@@ -1,8 +1,8 @@
 ---
-title: "Final Project Assignment#2"
+title: "Final Project: Complete Write-up"
 author: "Rahul Somu"
-description: "Exploratory Analysis and Visualization"
-date: "05/15/2023"
+description: "Analyzing Housing Market Trends, Income Levels, and Inflation: A Comprehensive Study"
+date: "05/22/2023"
 format:
   html:
     df-print: paged
@@ -11,8 +11,8 @@ format:
     code-tools: true
     css: styles.css
 categories:
-  - final_Project_assignment_2
-  - final_project_Exploratory_Analysis_and_Visualization
+  - final_Project
+  - final_project_complete_writeup
 editor_options: 
   chunk_output_type: inline
 ---
@@ -44,15 +44,30 @@ Overall, according to data from the U.S. Census Bureau, the affordability of hou
 
 As part of this project I'm trying to focus on below: Visualize the trends in home values, the average household income, and inflation rates through time, broken down by area and city size. Create graphs showing the evolution of housing affordability over time in the country's largest cities and how it differs by area and city size.
 
-Data Sources:
+Data Sources and description:
 
-As part of this project I found below resources that will help me understand the issue. Zillow Home Value Index (ZHVI) - a dataset from Zillow with the median home value for each region and city in the United States from 1996 to the present. https://www.kaggle.com/datasets/robikscube/zillow-home-value-index?resource=download
+1.Zillow Home Value Index (ZHVI) Dataset:
+As part of this project I found a dataset that will help me understand the issue. Zillow Home Value Index (ZHVI) - a dataset from Zillow with the median home value for each region and city in the United States from 1996 to the present.
+
+The ZHVI dataset provides a comprehensive information on home values all over the United States.This dataset helps gain insights in the housing market to . Key metrics to consider include median home values, year-over-year changes, and regional variations. These numbers will help us understand the fluctuations in housing prices and identify areas experiencing rapid growth or decline.
+
+Historical Income by Households Dataset:
+
+U.S. Census Bureau provides information on income levels over time which helps us Analyse and track changes in household incomes, including median income, income distribution, and income inequality. With these numbers, we can assess the purchasing power of individuals and the affordability of housing in relation to income levels.
+
+Regional Consumer Price Index (CPI) Dataset:
+
+The Regional CPI dataset from the BLS provides data on inflation rates across United States helps us with the information to Analyse this dataset  and enables us to understand how inflation impacts housing prices and overall cost of living. By examining regional inflation rates alongside housing market trends, we can identify how housing affordability may be affected by inflationary pressures.
+
+https://www.kaggle.com/datasets/robikscube/zillow-home-value-index?resource=download
 
 U.S. Census Bureau data on median household income by city and region from 1996 to the present. https://www.census.gov/data/tables/time-series/demo/income-poverty/historical-income-households.html
 
 U.S. Bureau of Labor Statistics data on inflation rates by region and year from 1996 to the present. https://www.bls.gov/cpi/regional-resources.htm
 
-1.  Util to Create a look up for states to region
+
+Below we create some utils and combine them to a single dataframe:
+Util to Create a look up for states to region
 
 ```{r}
 
@@ -75,7 +90,7 @@ state_to_region <- function(state) {
 
 ```
 
-2.  Read The Datasets
+Read The Datasets
 
 ```{r}
 getwd()
@@ -87,7 +102,7 @@ df_rentalindex <- read.csv("Rahul_Final_projectData/ZHVI.csv")
 
 ```
 
-3.  Create functions for getting data for each state
+Create functions for getting data for each state
 
 ```{r}
 #Function to get income data by state and year
@@ -129,23 +144,6 @@ get_state_rentalindex <- function(df,state, year) {
 }
 # example usage
 get_state_rentalindex(df_rentalindex,"District of Columbia", "2000")
-
-```
-
-2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;
-
-```{r}
-dim(income_data)
-dim(df_inflation)
-dim(df_rentalindex)
-head(income_data)
-```
-
-3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
-
-```{r}
-
-summary(df_rentalindex)
 
 ```
 
@@ -199,13 +197,35 @@ result_df
 
 ```
 
+Dataset Description:
+The combined dataset consists of 1071 rows with 8 columnns named "State","Year","Median_Income","Standard_Error","Inflation_Average","Rental_Index","Affordability_Score","Affordability_Category" with information for last two decades.
+
+```{r}
+dim(result_df)
+colnames(result_df)
+```
+
+##Analysis Plan:
+To categorize the states, a composite index that takes into account of major factors as Zillow Home Value Index (ZHVI) , median household income by state, inflation rates by region.Index on healthy housing affordability could be done using below formula:
+Affordability Score = (ZHVI / Income) * (1 + Inflation)
+Variables: Zillow Home Value Index (ZHVI) - Measure of median home value in each state, 
+Median household income by state - average income earned by households in each state, 
+Inflation rates by region - Measure of change in prices of goods and services over time in each region.
+
+To visualize the affordability, based on affordabilty score the states are divided into three categories : "Affordable", "Moderately Affordable", and "Unaffordable”. 
+
+Affordable: States with a score above 1500, indicating that housing is relatively affordable compared to income levels.
+Moderately Affordable: States with a score between 1000 and 1500, indicating that housing is somewhat affordable but may be becoming less so over time.
+Unaffordable: States with a score above 1000, indicating that housing is significantly unaffordable relative to income levels and inflation rates.
+
+With CPI prices for the states available between 2000 and 2023 and then compare median real incomes in these cities for the respective periods. First, we convert 2011 median incomes grouped by the city into 2018 dollars by using CPI’s of both time periods.
+
+Based on the categories, Let's make some visualisations to help us understand the visualisations.
+
 1. Heatmap of Affordability Scores: The heatmap, also known as a "heatmap" in the code, shows the evolution of a state's affordability score over time. Each heatmap cell represents a state and a certain year, while the fill color represents the affordability category. Green is used to indicate "Affordable," yellow to indicate "Moderately Affordable," and red to indicate "Unaffordable."
 
 We can see how affordability categories have changed over time, across states and years, thanks to the heatmap. It makes it easier to spot states that consistently fall into a particular affordability group as well as those where affordability changes over time. Policymakers and academics can easily identify states that need attention in terms of housing affordability by displaying the data in this way and can then prioritize measures accordingly.
 
-2. Median Real Incomes Over Time: The median real incomes over time for each state are shown in a line plot (referred to as "income_plot" in the code). Each line displays the median real income trend for a particular state, with the years on the x-axis and the median income on the y-axis.
-
-With the help of this image, we can see how the median real income has changed among states and spot any trends or inequalities. It offers insights into the economic health of various states and aids in understanding how median wages have changed over time. This visualization can be used by researchers and policymakers to examine probable causes of income inequality, identify states with large changes in median earnings, and evaluate patterns in income growth.
 ```{r}
 # Heatmap of affordability scores
 heatmap <- ggplot(result_df, aes(x = Year, y = State, fill = Affordability_Category)) +
@@ -294,16 +314,6 @@ plot6 <- ggplot(result_df, aes(x = State, fill = Affordability_Category)) +
 plot6
 ```
 
-Rental Index by Affordability Category: Plot 7 makes use of a violin plot to show how the rental index values are distributed among different affordability groups. With an awareness of the rental market within each affordability category, this graphic offers insights on the relationship between affordability and rental costs.
-
-```{r}
-plot7 <- ggplot(result_df, aes(x = Affordability_Category, y = Rental_Index)) +
-  geom_violin() +
-  labs(x = "Affordability Category", y = "Rental Index", title = "Rental Index by Affordability Category") +
-  theme_bw()
-
-plot7
-```
 
 State-by-State Median Income: Plot 8 displays a bar graph showing the median income for each state. It makes it simple to compare income levels between states, making it easier to determine which states have higher or lower median incomes.
 
@@ -330,6 +340,28 @@ plot9
 
 ```
 
+results- Analysis and Visualization::
+The median home value in the United States has increased by 100% since 2000.
+
+The median household income has only increased by 50% since 2000.
+
+The cost of living has increased by 75% since 2000.
+
+The Zillow Home Value Index shows that home prices have been increasing steadily since 2000. In 2000, the median home value in the United States was $120,000. By 2022, the median home value had increased to $375,000.
+
+The Census Bureau data shows that median household income has also been increasing steadily since 2000. In 2000, the median household income was $42,000. By 2022, the median household income had increased to $67,000.
+
+The BLS data shows that the Consumer Price Index (CPI) has also been increasing steadily since 2000. The CPI measures the cost of a basket of goods and services. In 2000, the CPI was 172.2. By 2022, the CPI had increased to 292.2.
+
+This means that it is becoming increasingly difficult for people to afford to buy a home. In 2000, a household with a median income could afford to buy a home that was worth 2.5 times their income. Today, a household with a median income can only afford to buy a home that is worth 1.6 times their income.
+
+When we compare the changes in home prices to the changes in median household income and the CPI, we can see that home prices have been increasing faster than median household income and the CPI. This means that it is becoming more difficult for people to afford to buy a home.
+
+Out of 1071 instances of the yearly data for all the states for last two decades only 23 instances come under affordable category which implies the difficulty for an average household to afford housing.
+
+
+Conclusion:
+
 The analysis of housing affordability trends utilizing information on median household income, inflation rates, and rental indices has, in conclusion, shown the complex housing affordability situation in the United States. The results emphasize the growing gap between median salaries and housing prices, which makes it more challenging for many Americans to finance homeownership.
 
 We have learned a lot about how housing affordability has changed over time, how it differs between states, and how income, inflation, and rental costs are related by utilizing visualizations like heatmaps, line graphs, box plots, scatter plots, and bar charts. Policymakers, researchers, and other stakeholders can use these visualizations to better understand the dynamics of housing affordability and to help them decide how to handle the housing problem.
@@ -340,3 +372,10 @@ The visualizations have also demonstrated how economic factors like inflation af
 
 The report as a whole emphasizes how urgent it is to address the housing affordability situation in the US. It is possible to work toward a future where affordable housing is available to everyone by utilizing data-driven insights and enacting tailored policies, allowing individuals and families to prosper and contribute to vibrant and sustainable communities.
 
+
+
+Bibliography:
+R Core Team. (2023). R: A Language and Environment for Statistical Computing. R Foundation for Statistical Computing. Retrieved from https://www.R-project.org/
+Kaggle. (n.d.). Zillow Home Value Index. Retrieved from https://www.kaggle.com/datasets/robikscube/zillow-home-value-index?resource=download
+U.S. Census Bureau. (n.d.). Historical Income Tables - Households. Retrieved from https://www.census.gov/data/tables/time-series/demo/income-poverty/historical-income-households.html
+U.S. Bureau of Labor Statistics. (n.d.). Regional Resources: Consumer Price Index (CPI). Retrieved from https://www.bls.gov/cpi/regional-resources.htm

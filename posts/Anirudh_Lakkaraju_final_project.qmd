@@ -1,0 +1,374 @@
+---
+title: "Final Project Report"
+author: "Anirudh Lakkaraju"
+description: "Project & Data Description"
+date: "05/21/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - Final Project
+  - Anirudh Lakkaraju
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Abstract {#overview-of-the-final-project}
+
+Pokémon games are video games where players take on the role of trainers who capture and train creatures called Pokémon. The objective is to become a Pokémon Master by collecting a variety of Pokémon and battling other trainers. Each Pokémon has unique abilities and can evolve into more powerful forms through experience gained in battles. Battles take place between trainers and their Pokémon, where they strategically choose moves to defeat their opponents. Pokémon have different types, such as fire, water, grass, and electric, which determine their strengths and weaknesses in battles.
+
+As a long-time fan of Pokémon and someone who has played all the games, I am interested in exploring the idea of building the "best" team of six Pokémon. With over 800 Pokemon across seven generations, selecting the optimal team is a daunting task. My project does this by understanding how the moves, types, and stats of each of the 801 Pokémon determine their value in a playthrough. Each Pokémon type has its strengths and weaknesses against other types, so I explore the idea of creating a "best" team with the least amount of weaknesses. Additionally, this project explored which type is the strongest and weakest type, and also which type has the highest likelihood of being legendary, which are rare and have the highest base stats in the game.
+
+## Data Introduction {#Tasks-of-assignment1}
+
+This dataset is sourced from Kaggle and contains information on all 802 Pokemon from all Seven Generations of Pokemon. The information contained in this dataset include Base Stats, Performance against Other Types, Height, Weight, Classification, Egg Steps, Experience Points, Abilities, etc. The information was scraped from <http://serebii.net/>.
+
+Each row contains the complete information of one Pokemon and the following are the meanings of each column -
+
+-   **name:** The English name of the Pokemon
+
+-   **japanese_name:** The Original Japanese name of the Pokemon
+
+-   **pokedex_number:** The entry number of the Pokemon in the National Pokedex
+
+-   **percentage_male:** The percentage of the species that are male. Blank if the Pokemon is genderless.
+
+-   **type1:** The Primary Type of the Pokemon
+
+-   **type2:** The Secondary Type of the Pokemon
+
+-   **classification:** The Classification of the Pokemon as described by the Sun and Moon Pokedex
+
+-   **height_m:** Height of the Pokemon in metres
+
+-   **weight_kg:** The Weight of the Pokemon in kilograms
+
+-   **capture_rate:** Capture Rate of the Pokemon
+
+-   **base_egg_steps:** The number of steps required to hatch an egg of the Pokemon
+
+-   **abilities:** A stringified list of abilities that the Pokemon is capable of having
+
+-   **experience_growth:** The Experience Growth of the Pokemon
+
+-   **base_happiness:** Base Happiness of the Pokemon
+
+-   **against\_?:** Eighteen features that denote the amount of damage taken against an attack of a particular type
+
+-   **hp:** The Base HP of the Pokemon
+
+-   **attack:** The Base Attack of the Pokemon
+
+-   **defense:** The Base Defense of the Pokemon
+
+-   **sp_attack:** The Base Special Attack of the Pokemon
+
+-   **sp_defense:** The Base Special Defense of the Pokemon
+
+-   **speed:** The Base Speed of the Pokemon
+
+-   **generation:** The numbered generation which the Pokemon was first introduced
+
+-   **is_legendary:** Denotes if the Pokemon is legendary.\
+
+### Basic data description {#describe-the-data-sets-1}
+
+```{r}
+pkmn <- read_csv("AnirudhLakkaraju_FinalProjectData/pokemon.csv")
+```
+
+```{r}
+dim(pkmn)
+```
+
+```{r}
+head(pkmn)
+```
+
+```{r}
+summary(pkmn)
+```
+
+## Analysis and Visualization
+
+### **Which type is the strongest overall? Which is the weakest?**
+
+In the world of Pokémon, the concept of strength is not defined in a fixed manner, but there are certain indicators that provide insight into a Pokémon's perceived strength within the game:
+
+1.  Base stats: Pokémon with higher base stats are generally considered stronger, as these stats determine their overall power, defenses, and abilities.
+
+2.  Resistance: Pokémon that possess resistance to a wide range of attack types are generally regarded as more durable and formidable. Their ability to withstand various attacks contributes to their perceived strength.
+
+```{r}
+pkmn %>% 
+  group_by(type1) %>%
+  summarise(
+    avg_hp = mean(hp),
+    avg_att = mean(attack),
+    avg_def = mean(defense),
+    avg_satt = mean(sp_attack),
+    avg_sdef = mean(sp_defense),
+    avg_spd = mean(speed)
+  ) %>%
+  gather(`avg_hp`,`avg_att`,`avg_def`,`avg_satt`,`avg_sdef`,`avg_spd`, key="attribute", value="value") %>%
+  ggplot() +
+      geom_col(aes(x=type1, fill=attribute, y=value), position='dodge', width=0.5)
+```
+
+```{r}
+pkmn %>% 
+  group_by(type1) %>%
+  summarise(
+    avg_base = mean(base_total),
+  ) %>%
+    ggplot() +
+      geom_col(aes(x=type1, y=avg_base), width=0.7)
+```
+
+To obtain a simplified measure of resistance for each Pokémon, we can sum up the values across the 18 columns labeled "against_X." As there are a total of 18 different attack types, a Pokémon that receives neutral damage from all attacks would have a total resistance score of 18. Consequently, a lower total resistance value indicates a more defensive Pokémon, as it will sustain less damage from attacks in general.
+
+```{r}
+pkmn = pkmn %>% 
+  mutate(tot_resist = against_bug+against_dark+against_dragon+against_electric+against_fairy+against_fight+against_fire+against_flying+against_ghost+against_grass+against_ground+against_ice+against_normal+against_poison+against_psychic+against_rock+against_steel+against_water)
+```
+
+Analysing resistance is a little more complex as we are unable to aggregate by type, since pokemon typing can synergise with each other to confer different resistances to a pokemon. We can however perform some other analyses to have a rough sense.
+
+```{r}
+pkmn %>%
+  arrange(min_rank(tot_resist)) %>% 
+  dplyr::select(name, tot_resist, type1, type2) %>%
+  print(n=20)
+```
+
+```{r}
+pkmn %>%
+  arrange(min_rank(desc(tot_resist))) %>% 
+  dplyr::select(name, tot_resist, type1, type2) %>%
+  print(n=20)
+```
+
+### **Which type is the most likely to be a legendary Pokemon?**
+
+```{r}
+table_1 = table(pkmn$is_legendary, pkmn$type1)
+table_2 = table(pkmn$is_legendary, pkmn$type2)
+```
+
+```{r}
+table_1
+```
+
+```{r}
+table_2
+```
+
+```{r}
+table_3 = table_1 + table_2
+```
+
+```{r}
+table_3
+```
+
+To interpret table_3, we can say that a Bug type pokemon has 3/77 chance to be legendary. Let\'s do this visually:
+
+```{r}
+table_3 = as.data.frame(table_1 + table_2)
+colnames(table_3) = c("is_legendary", "type", "freq")
+
+table_3 = table_3%>%
+  mutate(is_legendary = ifelse(is_legendary==0, "no", "yes")) %>%
+  spread(key=is_legendary, value=freq) %>%
+  mutate(proportion=yes/no)
+table_3
+```
+
+```{r}
+ggplot(table_3) + 
+  geom_col(aes(type, proportion))
+```
+
+The diagram makes it clear that Psychic and Dragon types are the mostly likely to be legendary. In other words, if a pokemon has Psychic as one of its types, it has a 34% chance to be legendary.
+
+### **Can you build a Pokemon dream team? A team of 6 Pokemon that inflicts the most damage while remaining relatively impervious to damage.**
+
+\
+In the realm of Pokémon, constructing a "dream team" extends beyond simply assembling a group of six highly regarded Pokémon. There are numerous additional factors that influence the team's performance. Factors such as abilities and movesets can significantly impact a Pokémon's effectiveness. Some Pokémon are specifically designed to fulfill particular roles within a team, such as being a damage dealer, a support Pokémon, or a defensive shield. Additionally, certain Pokémon synergize with each other, resulting in a combined effect that surpasses their individual capabilities.
+
+However, for the purpose of analysis, we will focus solely on the individual attributes of each Pokémon. Our aim is to identify Pokémon that possess well-rounded qualities. By examining the available columns, particularly the `base_total` and `tot_resist`, we can conduct a scatter plot to obtain the following results:
+
+```{r}
+ggplot(pkmn) +
+  geom_point(aes(base_total, tot_resist, color=is_legendary))
+```
+
+```{r}
+pkmn %>%
+  filter(base_total>=600, tot_resist<17)%>%
+  arrange(desc(base_total))%>%
+  dplyr::select(name, base_total, type1, type2, tot_resist)
+```
+
+A well-constructed team should ideally consist of Pokémon that can cover each other's weaknesses. Therefore, for every potential attack type, the team should include at least one Pokémon capable of resisting it. We will employ a trial-and-error approach to achieve this:
+
+1.  Select a random team of six Pokémon.
+
+2.  Calculate the average base_total of the team (higher values are preferred).
+
+3.  Ensure that for each against_type, the team includes at least one Pokémon that can resist it.
+
+4.  Initialize a counter that increments by one for each against_type that the team is unable to resist (assuming normal damage is acceptable).
+
+5.  Sum the counter for the team (lower values are preferred; a score of 0 indicates that the team is resistant to all attacking types).
+
+6.  Store the six Pokémon, along with the team's average base_total and counter, in a dataframe.
+
+7.  Repeat steps 1-6 to identify the best team configuration.
+
+```{r}
+teams = data.frame(
+  p1 = 0,
+  p2 = 0,
+  p3 = 0,
+  p4 = 0,
+  p5 = 0,
+  p6 = 0,
+  resist = 0,
+  stat = 0)
+
+set.seed(565)
+for (i in 1:10000) {
+  team = pkmn %>%
+    dplyr::select(33, 2:19, 23) %>%
+    sample_n(6)
+  
+  team_resist = team %>% 
+    dplyr::select(2:19) %>%
+    t() %>%
+    as.data.frame() %>%
+    mutate(V7 = ifelse(
+      V1 < 1, 0, ifelse(
+        V2 < 1, 0, ifelse(
+          V3 < 1, 0, ifelse(
+            V4 < 1, 0, ifelse(
+              V5 < 1, 0, ifelse(
+                V6 < 1, 0, ifelse(
+                  V1 == 1 & V2 == 1 & V3 == 1 & V4 == 1 & V5 == 1 & V6 == 1, 0, 1
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+    )
+  team_resist = sum(team_resist$V7)
+  team_stat = mean(team$base_total)
+  
+  new = c(team$pokedex_number[1],
+    team$pokedex_number[2],
+    team$pokedex_number[3],
+    team$pokedex_number[4],
+    team$pokedex_number[5],
+    team$pokedex_number[6],
+    team_resist,
+    team_stat
+  )
+  
+  teams = rbind(teams, new)
+}
+
+plot(teams$resist, teams$stat)
+
+```
+
+```{r}
+teams %>%
+  filter(resist == 0, stat > 0) %>%
+  arrange(desc(stat)) %>%
+  top_n(10)
+```
+
+```{r}
+pkmn %>%
+  slice(612, 635, 681, 254, 485, 382) %>%
+  dplyr::select(name, type1, type2, base_total, tot_resist, is_legendary)
+```
+
+To gain further insight, let's examine one of the top teams from the Masters Division of the 2017 World Pokémon Championships.
+
+```{r}
+pkmn %>%
+  slice(373,445,787,186,785,376) %>%
+  dplyr::select(name, type1, type2, base_total, tot_resist, is_legendary)
+```
+
+A pretty solid team indeed! While the described analysis will definitely not outperform a professional team, it serves as a good starting point for a novice looking to try out different combinations.
+
+## Observations and Conclusions
+
+Let's address each of the research questions that this project aims to explore:
+
+1.  **Which type is the strongest overall? Which is the weakest?**
+
+    The initial graph reveals that Dragon types possess the greatest offensive strength, Flying types exhibit the highest speed, and Steel types showcase exceptional defense. Moving on to the second graph, which takes into account all stats, we observe that Dragon and Steel types boast the highest average base stats, while Bug types have the lowest.
+
+    When the Pokémon are sorted based on their total resistance scores, it becomes evident that the top 20 Pokémon with the highest resistance (corresponding to the lowest `tot_resist` values) predominantly include Steel types. Conversely, Pokémon with Rock, Ground, Bug, Ice, or Grass types tend to take increased damage and are consequently considered weaker.
+
+    In summary, based on the three indicators discussed, it can be concluded that Dragon and Steel types are generally stronger, while Bug types are comparatively weaker.
+
+2.  **Which type is the most likely to be a legendary Pokemon?**
+
+    Another way to look at the question will be - which typing has the highest proportion of legendary pokemon? To answer this we will need to consider both the primary and secondary typing of the pokemon.
+
+    From table 3 we can say that a Bug type pokemon has 3/77 chance to be legendary. By visualizing this, it is clear that Psychic and Dragon types are the mostly likely to be legendary. In other words, if a pokemon has Psychic as one of its types, it has a 34% chance to be legendary.
+
+3.  **Can you build a Pokemon dream team? A team of 6 Pokemon that inflicts the most damage while remaining relatively impervious to damage.**
+
+    Creating a Pokémon "dream team" goes beyond selecting highly regarded Pokémon. Abilities, movesets, and team roles impact a Pokémon's effectiveness. Synergy between Pokémon enhances their collective strength. For analysis, we'll focus on individual attributes like base_total and tot_resist. A scatter plot will reveal insights.
+
+    Upon observing the first scatter plot, we can see that the data points roughly create a circular pattern. The points of interest lie around the lower-right corner, where the base_total is high and tot_resist is low. It is worth noting that while many legendary Pokémon exhibit high base_total stats, their resistances to different attack types vary significantly. Building upon our previous analysis of Pokémon types, we have determined that Steel types possess a notable advantage in terms of resistance against attacks.
+
+    Based on our criteria of selecting Pokémon from the lower-right corner, we can visually identify six Pokémon: **Metagross, Dialga, Solgaleo, Magearna, Lucario,** and **Steelix/Genesect**. Once again, it is notable that all six of these Pokémon have the Steel type as one of their typings.
+
+    However, it is important to recognize that this selection approach disregards team synergy. While these Pokémon may be individually strong, experienced Pokémon players would quickly point out that such a team would be easily defeated. This is due to the fact that all of these Pokémon share the Steel typing, making them collectively weak against Fire, Ground, and Fighting attacks.
+
+    On applying the proposed algorithm, we arrive at a much more balanced team that possesses the ability to resist attacks from all types. The team consists of - **Haxorus, Hydriegon, Aegishash, Sceptile, Heatran,** and **Kyogre**.
+
+    It includes two legendary Pokémon and exhibits diversity in terms of typing, stats, and resistances. However, it is essential to recognize that this selection method is quite basic and overlooks various other aspects of synergy, such as items, abilities, natures, and movesets, which can significantly impact a team's effectiveness. Additionally, it's worth noting that the sample space considered in this analysis is relatively small compared to the vast number of potential team combinations available.
+
+    For reference we also look at the team used at the Master's Division of 2017 World Pokemon Championship.
+
+## Future Directions 
+
+Pokemon is a game with lot of in depth strategy and chess like thought process. This project holds lot of potential for further analysis. Some further avenues we can explore are -
+
+1.  Advanced Synergy Analysis: Explore the incorporation of additional factors like items, abilities, natures, and movesets to assess the synergy and effectiveness of Pokémon teams. These elements can greatly impact battle strategies and team dynamics.
+
+2.  Statistical Modeling: Utilize statistical modeling techniques, such as machine learning algorithms, to predict and optimize team compositions based on various criteria like offensive power, defensive capabilities, and resistances. This could involve training models on existing competitive battle data to identify optimal team combinations.
+
+3.  Competitive Analysis: Conduct an in-depth analysis of competitive battles and team compositions from official Pokémon tournaments or online battle communities. Analyze winning strategies, team synergies, and popular Pokémon choices to gain insights into successful team-building approaches.
+
+4.  User Interface and Visualization: Build an interactive user interface or a web application that allows users to input their desired team criteria and preferences, and generates optimized team suggestions based on the analysis. Visualize team compositions, resistances, and other relevant information to aid in decision-making.
+
+By exploring these future directions, the project can evolve into a comprehensive tool for Pokémon trainers to optimize their team compositions, make informed strategic decisions, and enhance their competitive gameplay.
+
+## References
+
+1.  R Programming
+2.  Kaggle

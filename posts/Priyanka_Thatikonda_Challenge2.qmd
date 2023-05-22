@@ -1,0 +1,140 @@
+---
+title: "Challenge 2_PriyankaThatikonda"
+author: "Meredith Rolfe"
+description: "Data wrangling: using group() and summarise()"
+date: "08/16/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - faostat
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+data <- read_csv("_data/birds.csv")
+print(data,show_col_types = FALSE)
+head(data)
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+#| label: summary
+summary(data)
+
+dim(data)
+
+colnames(data)
+
+nrow(data)
+
+num_unique_items <- length(unique(data$Item))
+message(sprintf("There are %d unique varieties of animals present in the dataset\n", num_unique_items))
+cat(paste(num_unique_items, collapse = ", "))
+
+num_unique_items <- length(unique(data$Area))
+message("Total number of areas present in the dataset:\n", num_unique_items)
+cat(paste(num_unique_items, collapse = ", "))
+```
+
+## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+
+data%>%
+  select(`Area`) %>%
+  n_distinct(.)
+  cat("The above shows the numbeer of distinct areas\n")
+  
+data%>%
+  select(`Year`) %>%
+  n_distinct(.)
+  cat("The above shows the numbeer of distinct years\n")
+  
+library(dplyr)
+BirdsGrouped <- data %>%
+  group_by(Year)
+print("Data grouped by year:")
+view(BirdsGrouped)
+
+ChickenOnly <- BirdsGrouped %>%
+  filter(Item == "Chickens")
+cat("Data filtered to include only chickens:\n")
+view(ChickenOnly)
+
+ChickenSummary <- ChickensOnly %>%
+  summarise(
+    mean_stocks = mean(Value, na.rm = TRUE),
+    median_stocks = median(Value, na.rm = TRUE),
+    mode_stocks = Value[which.max(tabulate(match(Value, unique(Value))))])
+cat("Mean and Median Valyes of the chicken stocks\n")
+view(ChickenSummary)
+
+GroupByArea <- data %>%
+  group_by(`Area`) %>%
+  summarise(mean_stock_value = mean(Value, na.rm=TRUE),
+            median_stock_value = median(Value, na.rm=TRUE),
+            stock_value_sd = sd(Value, na.rm=TRUE),
+            min_stock_value = min(Value, na.rm=TRUE),
+            max_stock_value = max(Value, na.rm=TRUE),
+            first_quartile_stock_value = quantile(Value, 0.25, na.rm=TRUE),
+            third_quartile_stock_value = quantile(Value, 0.75, na.rm=TRUE))
+print(GroupByArea)
+view(GroupByArea)
+
+GroupByYear <- data %>%
+  group_by(`Year`) %>%
+  summarise(mean_stock_value = mean(Value, na.rm=TRUE),
+            median_stock_value = median(Value, na.rm=TRUE),
+            stock_value_sd = sd(Value, na.rm=TRUE),
+            min_stock_value = min(Value, na.rm=TRUE),
+            max_stock_value = max(Value, na.rm=TRUE),
+            first_quartile_stock_value = quantile(Value, 0.25, na.rm=TRUE),
+            third_quartile_stock_value = quantile(Value, 0.75, na.rm=TRUE))
+print(GroupByYear)
+view(GroupByYear)
+
+```
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.
+
+The goal was to analyze the sizes of the five livestock categories within the dataset and determine the poultry quantities in different countries within the specified time period. Through a specific grouping approach by year, I observed a notable disparity between the presence of chickens and other types of poultry in these countries. It became evident that the countries had significantly higher numbers of chicken livestock compared to other poultry varieties. By grouping the data by year, we can explore interesting trends in chicken stocks over time. The `chicken_summary` and `chicken_range` tables provide valuable insights into the central tendency and dispersion of chicken stocks across different years. These tables reveal the highest and lowest mean, median, and mode chicken stocks, as well as the minimum, maximum, and quartile ranges. Analyzing the trends over time can help us identify any interesting patterns and understand how chicken stocks have varied throughout the specified time period.

@@ -1,0 +1,159 @@
+---
+title: "Challenge 6_PriyankaThatikonda"
+author: "Meredith Rolfe"
+description: "Visualizing Time and Relationships"
+date: "08/23/2022"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_6
+  - hotel_bookings
+  - air_bnb
+  - fed_rate
+  - debt
+  - usa_households
+  - abc_poll
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in a data set, and describe the data set using both words and
+    any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  create at least one graph including time (evolution)
+
+-   try to make them "publication" ready (optional)
+-   Explain why you choose the specific graph type
+
+5)  Create at least one graph depicting part-whole or flow relationships
+
+-   try to make them "publication" ready (optional)
+-   Explain why you choose the specific graph type
+
+[R Graph Gallery](https://r-graph-gallery.com/) is a good starting point
+for thinking about what information is conveyed in standard graph types,
+and includes example R code.
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R
+package and command.
+
+-   debt ⭐
+-   fed_rate ⭐⭐
+-   abc_poll ⭐⭐⭐
+-   usa_hh ⭐⭐⭐
+-   hotel_bookings ⭐⭐⭐⭐
+-   AB_NYC ⭐⭐⭐⭐⭐
+
+```{r}
+  df <- read.csv("_data/hotel_bookings.csv")
+  head(df)
+```
+
+### Briefly describe the data
+
+The dataset consists of 119,390 entries related to hotel bookings. It
+includes diverse information such as arrival date (year, month, day),
+hotel type, cancellation status, lead time, duration of stay, number of
+adults, children, and babies, meal preferences, country of origin,
+market segment, distribution channel, previous cancellations, reserved
+and assigned room types, booking changes, deposit type, days on the
+waiting list, customer type, average daily rate, required car parking
+spaces, and total number of special requests.
+
+```{r}
+dim(df)
+colnames(df)
+
+```
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to
+anticipate your end result to provide a sanity check, and document your
+work here.
+
+To visualize the number of bookings that occurred in 2015 for five
+countries (USA, BEL, GBR, DEU, FRA) across different months, a new
+column can be created to represent the total number of bookings
+combining all age group bookings. This allows us to observe the
+variation in booking numbers based on seasons or specific months in each
+country. To achieve this, the month and year can be aggregated to form a
+new date column.
+
+```{r}
+  df <- df %>% 
+  mutate(date_year = paste0(arrival_date_month," ",arrival_date_day_of_month," ",arrival_date_year))
+df$date_year %>% head()
+
+```
+
+Are there any variables that require mutation to be usable in your
+analysis stream? For example, do you need to calculate new values in
+order to graph them? Can string values be represented numerically? Do
+you need to turn any variables into factors and reorder for ease of
+graphics and visualization?
+
+Document your work here.
+
+```{r}
+df1<-data
+
+```
+
+## Time Dependent Visualization
+
+```{r}
+df %>%
+  filter(arrival_date_year == 2015) %>%
+  count(arrival_date_month, hotel) %>%
+  ggplot(aes(x = arrival_date_month, y = n, fill = hotel)) +
+  geom_col(position = "dodge") +
+  labs(x = "Month", y = "Total Bookings", title = "Monthly bookings by hotel") +
+  scale_fill_manual(values = c("#4f79a7", "#f28d2c"), 
+                    name = "Hotel", 
+                    labels = c("City Hotel", "Resort Hotel"))
+
+```
+
+## Visualizing Part-Whole Relationships
+
+```{r}
+
+df %>%
+  select(arrival_date_month, days_in_waiting_list) %>%
+  group_by(arrival_date_month) %>%
+  summarise(max_days_in_waiting_list = max(days_in_waiting_list)) %>%
+  mutate(month = make_date(year = 2021, month = match(arrival_date_month, month.name))) %>%
+  ggplot(aes(month, max_days_in_waiting_list)) +
+  geom_line() +
+  scale_x_date(date_labels = "%B", date_breaks = "1 month") +
+  labs(title = "Days in WL per month")
+
+```

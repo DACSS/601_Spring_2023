@@ -1,0 +1,300 @@
+---
+title: "Final Project Assignment: Nisarg Shah"
+author: "Nisarg Shah"
+description: "Final Project"
+date: "05/22/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_project_data_description
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(ggmap)
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Abstract {#sec-abstract}
+
+In this paper we will analyze a housing price dataset to identify factors that influence housing prices in Massachusetts. We will examine variables such as location, size, number of bedrooms and bathrooms, age, and condition of homes to understand their correlations with housing prices. Additionally, we will investigate the impact of the COVID-19 lockdown period on the housing market. By studying this dataset, we aim to gain insights into the housing market dynamics and contribute to understanding the effects of the pandemic on housing prices.
+
+## **Dataset Introduction** {#sec-dataset-introduction}
+
+The dataset was collected from Kaggle, a website that hosts datasets and competitions for data scientists. The dataset was created by Ahmed Shahriar Sakib who curated the data from https://www.realtor.com/. A real estate listing website operated by the News Corp subsidiary Move, Inc. and based in Santa Clara, California. It is the second most visited real estate listing website in the United States as of 2021, with over 100 million monthly active users.\
+\
+The dataset represents instances of property listings. Each row in the dataset represents a specific property listing with its corresponding features and details. Therefore, each row provides information about a distinct property that is listed for sale or potentially sold.
+
+The dataset includes various attributes associated with each property, such as the number of bedrooms and bathrooms, the size of the house and lot, the location (city, state, and ZIP code), and the price. These attributes describe the characteristics and specifications of each property listing.
+
+By examining each row in the dataset, we can analyze and extract insights about individual properties, understand their features, and explore relationships between these features and the corresponding prices.
+
+## Dataset Description {#sec-dataset-description}
+
+```{r}
+data <- read_csv("NisargShah_FinalProjectData/realtor-data.csv", col_types = cols(
+  status = col_character(),
+  city = col_character(),
+  state = col_character(),
+  bed = col_double(),
+  bath = col_double(),
+  acre_lot = col_double(),
+  zip_code = col_double(),
+  house_size = col_double(),
+  price = col_double(),
+  prev_sold_date = col_date())
+)
+  
+df <- subset(data, state == "Massachusetts")
+
+# Read the dataset with zip code coordinates
+zip_coords <- read.csv("NisargShah_FinalProjectData/uszips.csv")
+
+# Select only the zip code, longitude, and latitude columns from the zip_coords dataset
+zip_coords <- subset(zip_coords, state_name == "Massachusetts")
+zip_coords$zip_code <- zip_coords$zip
+zip_coords_subset <- zip_coords %>% select(zip_code, lat, lng)
+
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+head(zip_coords_subset)
+```
+
+```{r}
+# Impute missing values with mean or median (for numerical variables)
+df <- df %>%
+  mutate(
+    house_size = if_else(is.na(house_size), mean(house_size, na.rm = TRUE), house_size),
+    acre_lot = if_else(is.na(acre_lot), median(acre_lot, na.rm = TRUE), acre_lot)
+  )
+
+# Convert bed and bath to character/factor (if necessary)
+data <- data %>%
+  mutate(
+    bed = as.character(bed),
+    bath = as.character(bath)
+  )
+
+# Impute missing values using mode for categorical variables
+data <- data %>%
+  mutate(
+    bed = replace_na(bed, names(which.max(table(bed)))),
+    bath = replace_na(bath, names(which.max(table(bath))))
+  )
+
+# Convert bed and bath back to numeric (if necessary)
+data <- data %>%
+  mutate(
+    bed = as.numeric(bed),
+    bath = as.numeric(bath)
+  )
+
+# Remove NA's
+df <- na.omit(df)
+
+# Make sure Zip Code is 5 digits
+df$zip_code <- str_pad(df$zip_code, width = 5, pad = "0")
+zip_coords_subset$zip_code <- str_pad(zip_coords_subset$zip_code, width = 5, pad = "0")
+zip_coords_subset$zip_code <- as.character(zip_coords_subset$zip_code)
+# Merge the longitude and latitude columns based on the zip code column
+df <- left_join(df, zip_coords_subset, by = "zip_code")
+
+df
+```
+
+```{r}
+# Convert prev_sold_date column to proper date format
+df$prev_sold_date <- as.Date(df$prev_sold_date)
+
+# Convert columns to appropriate data types
+df <- df %>%
+  mutate(
+    status = as.character(status),
+    bed = as.double(bed),
+    bath = as.double(bath),
+    acre_lot = as.double(acre_lot),
+    city = as.character(city),
+    state = as.character(state),
+    zip_code = as.double(zip_code),
+    house_size = as.double(house_size),
+    price = as.double(price)
+  )
+
+# Display the tidied data frame
+print(df)
+```
+
+```{r}
+df_summary <- summarytools::dfSummary(df)
+print(df_summary)
+```
+
+The housing price dataset being analyzed in this paper contains information that can shed light on the factors influencing housing prices in Massachusetts. The dataset includes variables such as the location (city, state, and zip code), size (house size and acre lot), number of bedrooms and bathrooms (bed, bath), age (prev_sold_date), and price of homes.
+
+By examining these variables, we aim to uncover correlations between these factors and housing prices. The location variables will help us understand how different areas within Massachusetts may affect housing prices. Size-related variables will provide insights into the impact of property size and lot size on prices. The number of bedrooms and bathrooms can reveal the influence of these amenities on housing prices.
+
+Furthermore, we will investigate the impact of the COVID-19 lockdown period on the housing market using the dataset. This analysis will help us understand any changes in housing prices during the lockdown period and identify potential trends or patterns. By comparing housing prices before and during the lockdown, we can gain insights into the effects of the pandemic on the housing market dynamics.
+
+The data frame summary provides a comprehensive overview of the dataset's variables, which aligns with the objectives outlined. It will serve as a valuable resource for your analysis of factors influencing housing prices in Massachusetts and understanding the impact of the COVID-19 lock down on the housing market. The dataset includes variables such as location (city, state, zip code), size (house size, acre lot), and number of bedrooms and bathrooms. We can utilize the **`prev_sold_date`** variable to assess the time range covered in the dataset. By examining the distribution and trends of property sales dates, we can potentially gain insights into the effects of the pandemic on housing prices during the specified period.
+
+## Analysis Plan {#sec-analysis-plan}
+
+We aim to analyze a housing price dataset to gain insights into the factors influencing housing prices in Massachusetts and understand the impact of the COVID-19 lockdown period on the housing market. We will focus on specific variables to answer key questions.
+
+We will examine the relationship between the number of bedrooms (bed) and bathrooms (bath) in Massachusetts properties and analyze their correlation with housing prices (price). Additionally, we will investigate the impact of property age by utilizing the previous sold date (prev_sold_date) variable to estimate the age of properties and assess its influence on housing prices.
+
+Furthermore, we will explore the dataset during the COVID-19 lockdown period using the prev_sold_date variable to identify properties sold during that time. This analysis aims to uncover any specific trends or patterns in housing prices during the lockdown. Additionally, we will assess the effect of the COVID-19 lockdown on the overall housing market by studying sales trends during that period using the prev_sold_date variable.
+
+By examining these variables and conducting the analyses, our paper aims to contribute to a better understanding of the factors influencing housing prices in Massachusetts and shed light on the effects of the COVID-19 lockdown on the housing market dynamics.\
+\
+Our analysis involves several techniques to understand the factors influencing housing prices in Massachusetts and the impact of the COVID-19 lockdown. We will conduct time-series analysis to identify trends in housing prices over time. Comparative analysis will compare prices between different periods. Geospatial analysis will map housing prices to identify spatial variations. Correlation analysis will examine the relationship between bedrooms, bathrooms, and prices. Additionally, we will overlay property age on the geospatial analysis to explore its impact on prices. Through these methods, we aim to gain insights into the housing market dynamics and the effects of the lockdown.
+
+## **Analysis and Visualization** {#sec-analysis-and-visualization}
+
+### Co-relation Between Rooms and Bathrooms with Price {#sec-co-relation-between-rooms-and-bathrooms-with-price}
+
+```{r}
+ggplot(df, aes(x = bed, y = bath, color = price)) +
+  geom_point() +
+  ggtitle("Co-relation Between Rooms and Bathrooms with Price") +
+  scale_color_gradient(low = "blue", high = "red") +
+  labs(x = "Number of Bedrooms", y = "Number of Bathrooms", color = "Price") +
+  theme_minimal()
+```
+
+The relationship between price and the number of bedrooms and bathrooms in houses is not straightforward. There are both high-priced and low-priced properties regardless of the number of bedrooms and bathrooms. Other factors like the size of the land or the location of the house may contribute to these price variations. On average, houses tend to have between 5 and 10 bathrooms and bedrooms.
+
+### Housing Prices during COVID-19 Lockdown {#sec-housing-prices-during-covid-19-lockdown}
+
+```{r}
+# Filter data for properties sold during the COVID-19 lockdown period
+start_date <- as.Date("2019-03-01")  # Adjust the lockdown start date as per your dataset and requirements
+end_date <- as.Date("2022-02-28")  # Adjust the lockdown end date as per your dataset and requirements
+data_lockdown <- df %>% filter(prev_sold_date >= start_date & prev_sold_date <= end_date)
+
+# Line plot for housing prices during the lockdown period
+ggplot(data_lockdown, aes(x = prev_sold_date, y = price)) +
+  geom_line() +
+  labs(x = "Date", y = "Price", title = "Housing Prices during COVID-19 Lockdown") +
+  theme_minimal()
+```
+
+During the COVID-19 period in Massachusetts, the housing market showed resilience with relatively stable prices, despite the impact of the pandemic. However, there were a few notable peaks in house prices throughout the months.
+
+In September 2020, there was an increase in house prices, which could be attributed to various factors such as low interest rates, pent-up demand from the earlier months of the pandemic, and the reopening of the economy to some extent. This surge in prices might have been driven by buyers' desire to secure homes amidst uncertain market conditions.
+
+Another peak was observed in November 2020, possibly due to a combination of factors such as limited housing inventory and increased demand during the fall season. Additionally, the anticipation of potential changes in housing policies or economic conditions following the U.S. presidential election could have contributed to this surge in prices.
+
+In December 2020, there was yet another noticeable increase in house prices. This could be attributed to seasonal factors, as the holiday season often sees a decrease in housing inventory coupled with persistent demand. Additionally, favorable mortgage rates and buyers' motivation to settle into new homes before the end of the year may have influenced this upward trend.
+
+Despite these peaks, it is worth noting that the overall trend in house prices during the COVID-19 period showed a drop and a return to levels similar to those observed at the start of the pandemic. The uncertainty and economic impact caused by the pandemic might have influenced buyers' decisions, resulting in a stabilization of prices.
+
+### Trend of Housing Prices in the 2000s {#sec-trend-of-housing-prices-in-the-2000s}
+
+```{r}
+# Convert prev_sold_date to a date object
+df$prev_sold_date <- as.Date(df$prev_sold_date)
+
+# Subset data for the 2000s
+data_2000s <- df %>%
+  filter(prev_sold_date >= as.Date("2000-01-01"))
+
+# Create a line plot to visualize the trend of housing prices in the 2000s
+ggplot(data_2000s, aes(x = prev_sold_date, y = price)) +
+  geom_line() +
+  labs(x = "Date", y = "Housing Price") +
+  ggtitle("Trend of Housing Prices in the 2000s") +
+  theme_minimal()
+```
+
+Leading up to the 2010 period, the housing market experienced a significant increase in house sales. This could be attributed to several factors, such as a strong economy, easy access to mortgage credit, and a general sense of optimism among buyers. The demand for housing was high, resulting in a surge in sales transactions.
+
+However, following the 2010 period, there was a noticeable decline in the number of houses being sold. This drop in sales can be attributed to the aftermath of the 2009 financial crisis. The crisis had a profound impact on the real estate market, causing a decrease in property values, tightening lending standards, and widespread economic uncertainty. These factors led to a decrease in consumer confidence and a reluctance to engage in real estate transactions, resulting in fewer houses being sold.
+
+After 2018, there was a gradual recovery in the housing market, marked by an increase in the number of houses being sold. Several factors contributed to this positive trend. The economy started to strengthen, with improved job prospects and increased disposable income. Additionally, mortgage interest rates remained relatively low, making homeownership more affordable for potential buyers. These favorable market conditions, coupled with renewed consumer confidence, led to a rebound in housing sales and a gradual return to more active market activity.
+
+### Comparative Analysis: Housing Prices between Pre-Lockdown and Lockdown Periods {#sec-comparative-analysis-housing-prices-between-pre-lockdown-and-lockdown-periods}
+
+```{r}
+# Create a box plot to compare housing prices between pre-lockdown and lockdown periods
+ggplot(df, aes(x = factor(if_else(prev_sold_date < as.Date("2020-03-01"), "Pre-Lockdown", "Lockdown")), y = price)) +
+  geom_boxplot() +
+  labs(x = "Period", y = "Housing Price") +
+  ggtitle("Comparative Analysis: Housing Prices between Pre-Lockdown and Lockdown Periods") +
+  theme_minimal()
+```
+
+During the lockdown period, there was a significant decrease in the number of houses being sold compared to the pre-lockdown period. This decline can be attributed to the various restrictions and uncertainties imposed by the lockdown measures.
+
+The implementation of lockdown measures resulted in limited mobility and restricted access to properties for potential buyers. Real estate transactions, which often involve physical visits to properties, were hindered due to social distancing requirements and safety concerns. This led to a decrease in buyer activity and subsequently fewer houses being sold during the lockdown period.
+
+Additionally, the economic impact of the lockdown, such as job losses and financial uncertainties, also played a role in dampening the housing market. Many individuals and families faced financial constraints and chose to postpone their home-buying plans, resulting in reduced demand for houses.
+
+Furthermore, the overall market sentiment during the lockdown period was marked by caution and uncertainty. Buyers were hesitant to make significant financial decisions, including purchasing a new property, due to the unpredictable nature of the pandemic and its potential long-term effects on the economy and housing market.
+
+As a result, the number of houses being sold during the lockdown period experienced a significant decline compared to the pre-lockdown period when market conditions were more favorable, mobility was unrestricted, and buyer confidence was higher.
+
+### Housing Prices Across Massachusetts {#sec-housing-prices-across-massachusetts}
+
+```{r}
+# Set your Google Maps API key
+register_google(key = "AIzaSyAv3GsYIO5xgwB--LT5SJvXf0ixoQZv-PY")
+
+
+# Get the map of Massachusetts
+map <- get_map(location = "Massachusetts", zoom = 9)
+
+# Create a ggmap plot
+ggmap(map) +
+  geom_point(data = df, aes(x = lng, y = lat, color = price, size = price), alpha = 0.7) +
+  scale_color_gradient(low = "blue", high = "red") +
+  scale_size_continuous(range = c(2, 8)) +
+  labs(x = "Longitude", y = "Latitude", title = "Housing Prices") +
+  theme_minimal()
+```
+
+Throughout Massachusetts, there is generally a consistent price range observed across different areas. This indicates that the housing market in the state tends to exhibit relatively stable pricing trends. However, there are certain regions, such as Boston and Gloucester, where prices show an upward trend.
+
+In Boston, the capital city of Massachusetts, and Gloucester, a coastal city, there has been an increase in housing prices. This can be attributed to several factors. Boston, being a major economic and cultural hub, attracts a high demand for housing due to its employment opportunities, educational institutions, and vibrant urban lifestyle. The limited availability of land and high demand contribute to higher property prices in the city.
+
+Similarly, Gloucester, known for its picturesque coastal scenery and proximity to Boston, has experienced an increase in prices. The desirability of living in a coastal location and the potential for waterfront properties drive up the housing prices in this area.
+
+While the overall price range remains relatively consistent across Massachusetts, the localized increase in prices in Boston and Gloucester reflects the influence of specific factors, such as the economic prominence of the region or the unique appeal of coastal living, which contribute to higher property values in these areas.
+
+## **Conclusion**
+
+{#sec-conclusion-}
+
+In conclusion, this study focused on analyzing a housing price dataset to gain insights into the factors influencing housing prices in Massachusetts. By examining variables such as location, size, number of bedrooms and bathrooms, age, and condition of homes, we aimed to identify correlations with housing prices. Additionally, we investigated the impact of the COVID-19 lockdown period on the housing market.
+
+Throughout our analysis, we found that price does not have a direct correlation with the number of bedrooms and bathrooms. We observed a wide range of prices, indicating that other factors such as the size of the land and the location of the house contribute to price variations. The average number of bathrooms and bedrooms generally fell between 5-10.
+
+Regarding the impact of the COVID-19 lockdown period, we observed a significant decrease in the number of houses being sold compared to the pre-lockdown period. The restrictions and uncertainties imposed by the lockdown measures, along with economic uncertainties and cautious buyer sentiment, resulted in reduced buyer activity and a decline in housing sales.
+
+Furthermore, we noted relatively stable price ranges across Massachusetts, with specific regions such as Boston and Gloucester experiencing price increases. Factors such as the economic prominence of Boston and the desirability of coastal living in Gloucester contribute to higher housing prices in these areas.
+
+Overall, this study provides valuable insights into the housing market dynamics in Massachusetts and the effects of the COVID-19 pandemic on housing prices. The findings can be useful for real estate professionals, policymakers, and researchers interested in understanding the factors driving housing prices and making informed decisions in the Massachusetts housing market.
+
+## Bibliography {#sec--bibliography-}
+
+"USA Real Estate Dataset." *Www.kaggle.com*, www.kaggle.com/datasets/ahmedshahriarsakib/usa-real-estate-dataset.
+
+R Core Team. (2023). R: A Language and Environment for Statistical Computing. R Foundation for Statistical Computing. Retrieved from https://www.R-project.org/

@@ -1,0 +1,94 @@
+---
+title: "Challenge 8 "
+author: "Sue-Ellen Duffy"
+description: "Joining Data"
+date: "05/22/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - snl
+  - Sue-Ellen_Duffy
+
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+# Reading in the data
+This dataset will look at SNL actor/actress gender over time. 
+
+```{r}
+actors <- read_csv("_data/snl_actors.csv")
+casts <- read_csv("_data/snl_casts.csv")
+seasons <- read_csv("_data/snl_seasons.csv")
+```
+
+```{r}
+tibble(actors, 10)
+```
+
+```{r}
+tibble(casts, 10)
+```
+
+```{r}
+tibble(seasons, 10)
+```
+
+
+In order to join these datasets I will have to join actors and casts by "aid" or actor ID and then join that with seasons through "sid" or season ID. 
+
+```{r}
+unique(actors$ "type")
+```
+As a way to filter out the potential skewing of data through guests starring or crew (though those would also be interesting to look at later) I will filter these out of our datasets.
+```{r}
+cast_actors <- actors %>%
+  left_join(casts, by = "aid") 
+```
+
+```{r}
+all_data_prep <- cast_actors %>%
+  left_join(seasons, by = "sid")
+```
+
+```{r}
+all_data <- all_data_prep %>%
+  group_by (sid, year, gender, featured) %>% 
+  summarize(count = n())
+
+all_data
+```
+
+# Visualization
+
+Overtime SNL is adding more female actresses, but there is no equilibirium yet. T
+```{r}
+ggplot(all_data, aes(sid, count, col = gender))+ geom_line() + 
+     coord_cartesian(ylim = c(0, 15))
+
+all_data%>%
+  filter(gender != "andy") %>%
+ggplot(., aes(featured, stat = "count")) + geom_bar()
+
+
+all_data%>%
+  filter(gender != "andy") %>%
+ggplot(., aes(x = year, y = featured, stat = "count", )) + geom_violin()  + facet_wrap (~gender,)
+```

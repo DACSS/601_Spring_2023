@@ -49,7 +49,6 @@ Reading the dataset
 
 ```{r}
 data <- read.csv("PriyankaPerumalla_FinalProjectData/Levels_Fyi_Salary_Data.csv")
-head(data)
 ```
 
 Presenting the descriptive information of the dataset. Like what all columns are present and what all information is present in every column. The nature of every column can be viewed through this sample data.
@@ -58,14 +57,20 @@ Presenting the descriptive information of the dataset. Like what all columns are
 head(data)
     ```
 
+
 On,analysing the dimensions of the data set. We see that the dataset has 62642 rows to begin with and 29 distinct columns.
     ```{r}
 dim(data)
     ```
+
+
 Checking to see if any columns are repeating. We can notice that all the 29 columns ar eunique
     ```{r}
 length(unique(data))
     ```
+
+
+
 Taking a look on what all columns are present in the dataset.   
     ```{r}
 colnames(data)
@@ -182,8 +187,30 @@ data <- data %>%
 ```
 
 
+I want to group years of experience into buckets for further analysis. I have kept the bucket size as 5 years . I am trying get the count of people who fall into each of such experience buckets.
+```{r}
+data <- data %>%
+  mutate(Work_experience_bucket = case_when(yearsofexperience >=0 & yearsofexperience <5 ~ "0-5",
+  yearsofexperience >=5 & yearsofexperience <10 ~ "5-10",
+  yearsofexperience >=10 & yearsofexperience <15 ~ "10-15",
+  yearsofexperience >=15 & yearsofexperience <20 ~ "15-20",
+  yearsofexperience >=20 & yearsofexperience <25 ~ "20-25",                      
+  yearsofexperience >=25 & yearsofexperience <30 ~ "25-30",
+  yearsofexperience >=30 & yearsofexperience <35 ~ "30-35",
+  yearsofexperience >=35 & yearsofexperience <40 ~ "35-40",
+  yearsofexperience >=40  ~ "40+"))
+```
 
 
+I want to group months of the year into quarters to deep dive and understand how hiring and compensation offers change with respect to quarters in a company. I am trying get 4 quarters of a fiscal year.
+```{r}
+data <- data %>%
+  mutate(quarter_year = case_when(Month >=1 & Month <=3 ~ "Quarter 1",
+  Month >=4 & Month <=6 ~ "Quarter 2",
+  Month >=7 & Month <=9 ~ "Quarter 3",
+  Month >=10 & Month <=12 ~ "Quarter 4"
+  ))
+```
 #conduct summary statistics of the dataset(s)
 
 Now that the data is clean, tidy and all set for analysis, I would like to now view the summary statistics of the cleaned dataset.
@@ -207,15 +234,15 @@ The dataset provides several variables that can be used to answer various questi
 a) How is the education level effecting the people who are seeking jobs in Data Science and STEM Domains.
 b)  How does the gender pay gap manifest in the data? Are there noticeable differences in compensation between genders?
 c) Are there any trends or patterns in compensation based on educational attainment (Masters, Bachelors, Doctorate, etc.)?
-d) How does compensation vary across different years?
-
-g) Is there a correlation between years of experience at the company and total yearly compensation?
-h) Are there any regional differences in salaries for data science and STEM roles?
-i) Is level and years of experience proportional always?
-j) Number of states involved in the data set and is the data set skewed towards a specific state of the US given the number of companies in thar region?
-k) Which education level is currently the most popular?
-l) Can we explain education level based on gender(man and women) and age?
-m) Is a highest level of education required to earn an above average salary even with less than average years of experience for the role?
+d) How does compensation vary across different fiscal years?
+e) Are there any preferred companies? What comes under the most desired 10 companies list?
+f) Are there any roles that are more preferred than others? What comes under the most desired 10 roles list?
+g) If somebody wants to switch a job to get a higher compensation, are there any preferred months of the year?
+h) If somebody wants to increase the likelihood of getting back interview calls, is there a preferred quarter for hiring?
+i) Correlation between State, Work Experience in years and yearly compensation?
+j) Correlation between State, Company and yearly compensation?
+k) States with varied jobs in terms of pay compared to others?
+l) Does racial discrimination exist in compensation packages?
 
 
 ### Education level vs number of people
@@ -227,7 +254,7 @@ From the below plot, we see that about  9000 of respondants have a Master's degr
 ```{r}
 education <- as.data.frame(table(data$Education))
 ggplot(education, aes(reorder(Var1, +Freq), Freq))+
-  geom_bar(col = "gray10", stat = "identity", width = 0.6, fill = "lightblue")+
+  geom_bar(col = "gray10", stat = "identity", width = 0.6, fill = "orange")+
   scale_x_discrete(limits = c("Master's Degree", "Bachelor's Degree", "Highschool"))+
   labs(title = "Education level", y = "count", x = "Education level")
 ```
@@ -275,10 +302,10 @@ If we want to see how average total compensation for different years looks like,
 
 
 ```{r}
-data = data%>% na.omit() %>%
+data1 = data%>% na.omit() %>%
     group_by(Year) %>% summarise(Mean_salary = mean(totalyearlycompensation))
 p <- ggplot(
-  data,
+  data1,
   aes(y =  as.numeric(Mean_salary), x = as.factor(Year), color = factor(Year), group = 1)) +
   geom_point(size=1.5) +
   scale_color_viridis_d() +
@@ -290,8 +317,151 @@ p +  geom_line(color='blue')
 
 
 
+## Top 10 Companies 
+Any fresh graduate like me would be interested to know what are the trending companies that pay above average salaries for that year in order to apply and join. For the year 2020 and 2021, we have Uber,Netflix,Figma,HRT,ServiceNow,UiPath etc as some of the top companies. As a person from STEM background, even I can attest that these companies truly are dream companies to land a job at for any graduate student.
+
+```{r}
+colnames(data)
+# Top companies
+library(RColorBrewer)
+top_companies_year <- data %>%group_by(Year,company) %>%summarise(avg_compensation=mean(totalyearlycompensation))%>%arrange(desc(avg_compensation))%>%group_by(Year)%>%
+top_n(n = 10)
+colour_count <- n_distinct(top_companies_year$company)
+colour_palette1 <- brewer.pal(colour_count, name = "Set1")
+colour_palette2 <- brewer.pal(colour_count, name = "Set2")
+
+ggplot(top_companies_year, aes(x = Year, y = avg_compensation, color = company)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Top 10 companies",
+       x = "Year",
+       y = "Total People who reported Salaries",
+       color = "Company Name") +
+  theme_minimal() +
+  scale_color_manual(values = c(colour_palette1, colour_palette2,"black","blue") , name = "Company Name")
+```
+
+### Top 10 Roles
+The top 10 roles based on average yearly compensation come out to be
+ 1 Data Scientist              
+ 2 Hardware Engineer           
+ 3 Human Resources             
+ 4 Marketing                   
+ 5 Product Designer            
+ 6 Product Manager             
+ 7 Sales                       
+ 8 Software Engineering Manager
+ 9 Solution Architect          
+10 Technical Program Manager
+```{r}
+# Filter the data for the top 3 bikes based on overall sales
+top_ten_roles <- data %>%
+group_by(title) %>%
+summarise(avg_compensation = mean(totalyearlycompensation)) %>%
+top_n(10, avg_compensation) %>%
+select(title)
+
+top_ten_roles
+```
 
 
+### Month on month entries
+If somebody were to switch their role, they have a natural tendency to aim for a higher compensation package. But companies strictly spend in some months of the year and hence do not allow negotiation etc which helps to increase an techie's package. But there are also months when the hiring is aggressive and companies only target to hire the required head count not very strict with the packages. We understand from all of this that planning is crucial in such processes. As seen in our analysis, the months of Dec, Jan, Feb, Mar are ideal for a job change as people have typically reported a higher package during those months.
+```{r}
+
+job_month <- data %>% 
+  group_by(Month) %>%arrange(desc(Month)) %>%
+  summarise(avg_compensation=mean(totalyearlycompensation))
+
+
+# Plot average profit percentage over months
+month_plot <- ggplot(job_month, aes(x = Month, y = avg_compensation)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Average Profitability Over Months",
+       x = "Month",
+       y = "Average Profit Percentage") +
+  theme_minimal()
+# Display the plot
+month_plot
+```
+
+### Hiring Scene every quarter
+If somebody were to switch their role, they first have to apply then clear the interviews etc. A lot of times, even after applying aggresively, people don't get the callbacks for interviews. Hence, it is crucial to plan the time of the year which would be favorable for interview calls. The below analysis says,Quarter 1 of the year is highly favorable for such a thing,
+
+```{r}
+
+
+dim(data)
+ggplot(data, aes(x = quarter_year)) + geom_bar() + ggtitle("Hiring Quarter")
+```
+
+
+
+
+### Heat Map of Statewise distribution of salaries
+Usually the salary of person increases with years of experience. But it can vary depending on the cost of living of the state he is working in. The below analysis says that California has highest salaries followed by Washington.
+```{r}
+library(reshape2)
+library(ggplot2)
+filtered_data <- data%>%filter(State %in% c(" NY", " CA", " WA", " MA", " IL", " TX", " GA", " NH", " NC", " IL"," WY"," RI"))
+
+heatmap_plot<-ggplot(filtered_data, aes(x = State, y = Work_experience_bucket, fill = totalyearlycompensation)) + geom_tile() + scale_fill_gradient(low = "lightgreen", high = "darkgreen", na.value = "grey", name = "Total Yearly Compensation") + labs(title = "Heatmap of Total Yearly Compensation by State and Work Experience", x = "State", y = "Work Experience Bucket") + theme_minimal() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+# Display the heatmap
+heatmap_plot
+```
+
+
+
+### Heat Map of State vs Company
+Usually companies vary the compensation slightly to suite the cost of living in some regions. Our analysis supports this hypothesis. While the analysis says that California and Washington pay the highest salaries. It also rightly highlights the companies like UiPath,Netflix,Uber etc which pay people on a higher end.
+```{r}
+library(reshape2)
+library(ggplot2)
+filtered_data1 <- data%>%filter(State %in% c(" NY", " CA", " WA", " MA", " IL", " TX", " GA", " NH", " NC", " IL"," WY"," RI"))%>%filter(company %in% c("Microsoft","Amazon","3M","Addepar","Tesla","BCG","Fidelity Investments","UiPath","Uber","Netflix","Figma","HRT","ServiceNow"))
+
+heatmap_plot<-ggplot(filtered_data1, aes(x = company, y = State, fill = totalyearlycompensation)) + geom_tile() + scale_fill_gradient(low = "lightblue", high = "darkblue", na.value = "grey", name = "Total Yearly Compensation") + labs(title = "Heatmap of Total Yearly Compensation by State and Company", x = "company", y = "State") + theme_minimal() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+# Display the heatmap
+heatmap_plot
+```
+
+
+
+### State wise pay distribution
+While some states may have highest pay bands, but some states are more suitable for people who are the average pay band as they will have many options when they switch the jobs. For example,the state of Rhode Island has wider range of pay compared to Illinois but for an average earning person, Illinois has many job oppportunities to pursue at the same pay band compared to Rhode Island.
+```{r, fig.width=10 }
+# Using number of observation per group
+filtered_data2 <- data%>%filter(State %in% c(" NY", " CA", " WA"," IL", " TX", " GA", " NH", " NC"," WY"," RI"))
+
+func <- function(x) sprintf("%d", x)
+plot <- filtered_data2 %>% na.omit() %>% ggplot(aes(x = State, y = totalyearlycompensation)) +
+       stat_boxplot(geom = "errorbar", # Boxplot with error bars 
+                    width = 0.2) +
+       geom_boxplot(fill = 'red', colour = "blue", # Colors
+                    alpha = 0.9, outlier.colour = "red") +
+       scale_y_continuous(name = "Total Pay", labels = func) +  # Continuous variable label
+       scale_x_discrete(name = "Work Location") +      # Group label
+       ggtitle("Boxplot by Work Location") + # Plot title
+       theme(axis.line = element_line(colour = "black", # Theme customization
+                                      size = 0.25), axis.text.y = element_text(size = 8 ))
+plot
+```
+
+
+
+### Racial discrimination
+Companies try their best to not discriminate anybody in any way. But some races have lesser representation in our respondants list. We can clearly see this dataset is skewed towards Asian and White races compared to others.
+```{r}
+
+#ggplot(data, aes(x = Race, y= totalyearlycompensation)) + geom_bar() + ggtitle("Racial Distribution vs Pay")
+
+ggplot(data, aes(x = Race, y = totalyearlycompensation)) +
+  geom_point(size = 2)  +
+  labs(title = "Total Compensation vs Race",
+       x = "Race",
+       y = "Yearly Compensation")
+```
 
 
 ### CONCLUSION
@@ -306,6 +476,17 @@ With all the analysis above, we can answer the following questions-
 
 4. The average total compensation changes with every year. In fact it reduced from the year 2020 to 2021.
 
+5. There are definately preferred companies in terms of pay band.
+
+6. Some roles in the tech industry are very popular compared to others like Data Scientist, Software Development Engineer, Hardware engineer etc.
+
+7. Dec, Jan, Feb are more favorable for getting a higher package than other months of the year.
+
+8. Quarter 1 gives an individual more chances of callbacks for interviews over other quarters.
+
+9. Some states in the US are better for average earning people and some other states are better for people who earn way above the average pay bands.
+
+10. The dataset I have picked is skewed towards some human races(Asians, White) over others(Hispanic)
 
 ### Reflection
 

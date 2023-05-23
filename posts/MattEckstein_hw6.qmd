@@ -1,0 +1,119 @@
+---
+title: "Challenge 6"
+author: "Matt Eckstein"
+description: "Visualizing Time and Relationships"
+date: "04/05/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  
+  - debt
+  - Matt Eckstein
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+
+## Read in data
+
+
+```{r}
+
+library(readxl)
+debt <- read_xlsx("_data/debt_in_trillions.xlsx")
+
+```
+
+### Briefly describe the data
+
+This dataset contains the total amount of household debt of six types in the United States, as well as total household debt, for every quarter between quarter 1 of 2003 and quarter 2 of 2021 inclusive.
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+These data are tidy.
+
+```{r}
+
+#Nothing needed here
+```
+
+Are there any variables that require mutation to be usable in your analysis stream? For example, do you need to calculate new values in order to graph them? Can string values be represented numerically? Do you need to turn any variables into factors and reorder for ease of graphics and visualization?
+
+Document your work here.
+
+```{r}
+
+#I check the structure of the dataset; everything is numeric except for `Year and Quarter`.
+str(debt)
+
+#Though I preserve the original dataset as well, since keeping the year and quarter variable together in the original form is useful in some circumstances for readability, here, I separate them into two variables to make calculations easier.
+
+debt2 <- debt %>% 
+  separate(`Year and Quarter`, into = c("Year", "Quarter"),sep = ":")
+
+#Then, I drop the Q from the quarter variables by separating out the Q.
+
+debt2 <- debt2 %>% 
+  separate(Quarter, into = c("delete", "Quarter"),sep = "Q")
+
+#Finally, I get rid of the blank variable created by this process, reunite the year and quarter, and change the variable type - it's now numeric! This 
+
+debt2 <- debt2 %>%
+  unite(`yearquarter`, Year:Quarter, sep = "", remove=TRUE)
+
+debt2 <- debt2 %>%
+  mutate(yearquarter=as.numeric(yearquarter))
+
+str(debt)
+
+```
+
+## Time Dependent Visualization
+
+```{r}
+
+ggplot(debt, aes(x=`Year and Quarter`, y=Total)) + 
+  theme_classic(base_size = 20) + 
+  geom_point(position=position_dodge(), stat="identity") + 
+  xlab("Year and Quarter") +
+  ylab("Total All-Type Household Debt (trillions of $)") + 
+  theme(axis.text.x = element_text(angle=90)) +
+  theme(axis.text.x = element_text(size = 6)) +
+  theme(axis.title = element_text(size = 10)) 
+
+```
+
+
+
+## Visualizing Part-Whole Relationships
+
+Here, I modify the above graph to display the relationship of mortgage debt to total debt, with the color indicating growth in mortgage debt and the line indicating growth in total debt. (I tried various approaches to making total debt bars that filled up to a certain point in a different color for the share of the total debt that was mortgage debt, but to no avail.)
+
+```{r}
+
+ggplot(debt, aes(x=`Year and Quarter`, y=Total, fill=Mortgage)) + 
+  theme_classic(base_size = 20) + 
+  geom_bar(position=position_dodge(), stat="identity") + 
+  xlab("Year and Quarter") +
+  ylab("Mortgage Debt as Share of Total Household Debt") +
+  theme(axis.text.x = element_text(angle=90)) +
+  theme(axis.text.x = element_text(size = 6)) +
+  theme(axis.title = element_text(size = 10)) 
+
+```
+

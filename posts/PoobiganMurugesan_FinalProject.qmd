@@ -1,0 +1,238 @@
+---
+title: "Final Project: Poobigan Murugesan"
+author: "Poobigan Murugesan"
+description: "IMDB movie data analysis"
+date: "05/22/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project
+  - poobigan murugesan
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Introduction 
+In the realm of the film industry, the IMDB rating serves as a significant indicator of a movie's overall reception and public opinion. As one of the most popular platforms for movie ratings and reviews, a high IMDB rating often attracts new viewers and influences their decision to watch a particular film. Consequently, understanding the factors that contribute to a movie's rating is crucial for filmmakers, industry professionals, and movie enthusiasts alike. This research project aims to delve into the influence of various factors on a movie's rating, including movie duration, movie director, actors, and social media presence. 
+
+In this research project, the "IMDB 5000 Movie Dataset" available on Kaggle was analyzed to shed light on the following research inquiries:
+
+1. Does the duration of a movie impact its popularity?
+
+   Intuitively, one might speculate that longer movies could potentially captivate audiences more and provide a more comprehensive storytelling experience. However, it is necessary to explore whether there exists a correlation between a movie's duration and its popularity, as measured by the IMDB rating. By examining the dataset, we can draw insights into whether longer or shorter movies tend to receive higher ratings and determine the significance of movie duration as a factor in a movie's success.
+
+2. Does it matter to a movie if its cast is popular among Facebook users?
+
+   With the increasing prominence of social media platforms, the impact of actors' popularity on platforms like Facebook has gained attention. It is worth investigating whether a movie's IMDB rating correlates with the popularity of its cast among Facebook users. By leveraging the dataset, we can discern whether movies featuring actors who enjoy a substantial following on Facebook tend to receive higher ratings, thus highlighting the potential influence of social media presence on a movie's reception.
+
+3. What country do the most popular movies belong to?
+
+   Movies produced in different countries often reflect unique cultural perspectives and storytelling techniques. Exploring the dataset allows us to identify the countries associated with the most popular movies based on their IMDB ratings. This analysis can provide insights into whether certain regions or film industries exhibit a higher propensity for producing highly regarded films, highlighting the influence of cultural context on a movie's success.
+
+4. Does the presence of a particular actor boost a movie's ratings?
+
+   The influence of actors on a movie's success has long been recognized, but it remains intriguing to ascertain whether the presence of specific actors correlates with higher IMDB ratings. By examining the dataset, we can determine whether movies featuring certain actors tend to receive higher ratings and evaluate the impact of individual actors on a movie's reception.
+
+
+
+## Dataset
+
+Reading the dataset
+```{r}
+movie_data <- read.csv("PoobiganMurugesan_FinalProjectData/movie_metadata.csv")
+dim(movie_data)
+head(movie_data)
+```
+
+
+In this movie dataset(5043 movies), each row represents an individual movie, making it the case for analysis. The dataset includes various key variables that provide information about the movies and their characteristics. Let's examine the essential aspects of this dataset:
+
+movie_title: This variable contains the title of each movie, serving as a unique identifier for the films under consideration.
+
+duration: It represents the duration of the movies in minutes, indicating the length of each film.
+
+director_name: This variable captures the name of the director associated with each movie, providing insights into the individuals responsible for overseeing the creative direction of the films.
+
+actor_1_name, actor_2_name, actor_3_name: These variables identify the primary and other actors starring in the movies, offering information about the cast members involved in each film.
+
+genres: It captures the categorization of movies into various genres, such as animation, comedy, romance, horror, sci-fi, action, and family, providing insights into the different thematic elements and storytelling styles.
+
+title_year: This variable indicates the year in which each movie was released, allowing for temporal analysis and understanding of trends in the film industry over time.
+
+country: It represents the country where each movie was produced, providing information about the geographic origins and cultural influences associated with the films.
+
+```{r}
+drop_na(movie_data)
+```
+Dropping rows with nan values leaves us with about 3800 movies to work with.
+
+The table provided below displays the median, mean, and standard deviation (represented by the column name suffixes _mean, _median, and _sd, respectively) for each of the numeric columns:
+
+```{r}
+movie_data %>%summarise_if(is.numeric, list(mean = mean,median = median,sd = sd), na.rm = TRUE) %>% head()
+```
+The table below presents the class frequency for each of the non-numeric columns. Some columns have been omitted due to the presence of a large number of distinct values:
+```{r}
+movie_data %>%count(country,sort = TRUE)
+```
+
+```{r}
+movie_data %>%count(language, sort = TRUE)
+```
+
+```{r}
+movie_data %>%count(content_rating,sort = TRUE)
+```
+
+
+
+## Visualization
+
+The bar graph presented illustrates the distribution of IMDB ratings within the dataset over different years. The variable utilized for this visualization is 'title_year,' representing the year of release for each movie. Based on the graph, it is evident that a significant portion of the movies in the dataset were released during the time period spanning from 2000 to 2010.
+```{r}
+ggplot(data = movie_data,aes(x = title_year)) + geom_bar()+ scale_fill_manual(values=c("#69b3a2"))+
+ggtitle("Distribution of IMDB rating of movies over the years")
+
+```
+
+The provided plot displays the relationship between the IMDB score of a movie and the number of likes on its corresponding Facebook page. By analyzing the plot, we can observe that as the number of Facebook likes increases, there is a corresponding tendency for higher IMDB ratings. This suggests a positive correlation between the popularity of a movie on social media, as indicated by Facebook likes, and its IMDB rating.
+```{r}
+ggplot(data = movie_data, aes(x = movie_facebook_likes, y = imdb_score)) +   geom_point(alpha = 0.4)+
+ggtitle("Likes on movie facebook page vs IMDB rating")
+
+```
+
+
+To address the research question, "What country do the most popular movies belong to?" I created a bar graph where the x-axis represents different countries, and the y-axis represents the median IMDB score. To obtain a more accurate representation, I have modified the analysis by selecting the top 10 countries with the highest review count. By focusing on countries with a substantial number of reviews, we can ensure a more reliable and meaningful result. The resulting graph displays the median IMDB score for each of these 10 countries, providing a more realistic assessment of the countries associated with the most popular movies.
+```{r}
+country_summary <- movie_data %>% 
+  group_by(country) %>%   
+  summarise(med = median(imdb_score),  
+            sd = sd(imdb_score),
+            n_ = n()) %>% top_n(10, n_) 
+
+barPlot <- ggplot(country_summary, aes(reorder(country, -med), med)) + 
+                   geom_col() +  
+                   geom_errorbar(aes(ymin = med - sd, ymax = med + sd), width=0.2)
+
+barPlot + labs(y="Movie IMDB Rating", x = "Country") +  theme(axis.text.x=element_text(angle=90))+
+ggtitle("IMDB Rating of movies countrywise")
+ 
+```
+This barplot gives us enough reason to believe that countries like Japan, Spain, and others often produce movies with higher ratings due to their deep-rooted cultural heritage. Their rich history, unique traditions, and societal values might be providing a vast pool of storytelling material, enabling filmmakers to craft narratives that resonate with both domestic and international audiences.
+
+
+To investigate the research question, "Does the duration of a movie impact its popularity?" I have created a line graph that depicts the relationship between movie duration and IMDB rating. 
+To facilitate analysis and draw meaningful conclusions, I have categorized the movies in the dataset based on their language. 
+```{r}
+ggplot(subset(movie_data, language %in% c('English', 'Cantonese', 'French','German', 'Japanese', 'Italian', 'Mandarin', 'Spanish')), aes(x=duration, y=imdb_score, group=1)) + geom_smooth() + facet_wrap(vars(language)) + geom_point(alpha = 0.1)+
+ggtitle("Movie duration vs IMDB rating language-wise")
+
+
+```
+Based on the observations from the presented plots, it is evident that the duration of a movie does not significantly influence its popularity in the English and Italian languages. However, for other languages, there appears to be an increase in ratings with longer durations.
+
+In an attempt to address the research question, "Does it matter to a movie if its cast is popular among Facebook users?" I have created two plots to explore the relationship between the popularity of cast members on Facebook and the IMDB rating of the movie.
+
+```{r}
+ggplot(data=movie_data, aes(x=actor_1_facebook_likes, y=imdb_score, group=1)) + geom_smooth()+
+ggtitle("Likes on lead actor's facebook page vs IMDB rating")
+
+```
+```{r}
+ggplot(data=movie_data, aes(x=actor_2_facebook_likes, y=imdb_score, group=1)) + geom_smooth()+
+ggtitle("Likes on supporting actor's facebook page vs IMDB rating")
+
+
+```
+```{r}
+ggplot(data=movie_data, aes(x=actor_3_facebook_likes, y=imdb_score, group=1)) + geom_smooth()+
+ggtitle("Likes on casts' facebook page vs IMDB rating")
+
+
+```
+Upon analyzing the plots, an intriguing similarity in trends becomes apparent. Both plots demonstrate a similar variation in the IMDB rating as the number of Facebook likes increases for either Actor 1 or Actor 2. This suggests a potential correlation between the popularity of these cast members on Facebook and the movie's IMDB rating. The parallel trends observed in both plots lend support to the notion that the popularity of specific actors among Facebook users can indeed impact a movie's rating on IMDB.
+
+
+
+
+In our effort to explore whether the presence of an actor boosts a movie's ratings, we have generated visual plots focusing on the top 15 most popular actors listed as Actor 1, Actor 2, or Actor 3 in movies. 
+
+```{r}
+country_sum <- movie_data %>% 
+  group_by(actor_1_name) %>%   
+  summarise(med = median(imdb_score),  
+            sd = sd(imdb_score),
+            n_ = n()) %>% top_n(15, n_) 
+
+ggplot(country_sum, aes(reorder(actor_1_name, -med), med)) + 
+                   geom_col() +  theme(axis.text.x=element_text(angle=90)) + 
+                   geom_errorbar(aes(ymin = med - sd, ymax = med + sd), width=0.2) + ggtitle("Top 15 actors listed as Actor 1, ranked by their median IMDB rating of the movies") +
+  xlab("Actor") + ylab("IMDB Median Rating")
+```
+
+```{r}
+country_sum <- movie_data %>% 
+  group_by(actor_2_name) %>%   
+  summarise(med = median(imdb_score),  
+            sd = sd(imdb_score),
+            n_ = n()) %>% top_n(15, n_) 
+
+ggplot(country_sum, aes(reorder(actor_2_name, -med), med)) + 
+                   geom_col() +  theme(axis.text.x=element_text(angle=90)) + 
+                   geom_errorbar(aes(ymin = med - sd, ymax = med + sd), width=0.2) + ggtitle("Top 15 actors listed as Actor 2, ranked by their median IMDB rating of the movies") +
+  xlab("Actor") + ylab("IMDB Median Rating")
+```
+
+```{r}
+country_sum <- movie_data %>% 
+  group_by(actor_3_name) %>%   
+  summarise(med = median(imdb_score),  
+            sd = sd(imdb_score),
+            n_ = n()) %>% top_n(15, n_) 
+
+ggplot(country_sum, aes(reorder(actor_3_name, -med), med)) + 
+                   geom_col() +  theme(axis.text.x=element_text(angle=90)) + 
+                   geom_errorbar(aes(ymin = med - sd, ymax = med + sd), width=0.2) + ggtitle("Top 15 actors listed as Actor 3, ranked by their median IMDB rating of the movies") +
+  xlab("Actor") + ylab("IMDB Median Rating")
+```
+Notably, several names, such as Morgan Freeman, Steve Buscami, and Bruce Willis, appear across multiple plots. This observation suggests that the inclusion of these actors in a movie may indeed have an impact on its IMDB rating. The recurring presence of these actors in multiple plots serves as evidence that their involvement in a movie is potentially associated with higher ratings, lending support to the hypothesis that the presence of certain actors can positively influence a movie's overall reception.
+
+## Conclusion
+
+As an avid user of IMDB ratings for movies, this research project has been particularly intriguing. The IMDB 5000 Movie dataset has proven to be relatively clean, albeit with a few missing values. Throughout this project, the focus has been on visualizing various plots to explore the influence of factors such as movie directors, actors, Facebook likes, and movie duration on the popular opinion of movies, as indicated by their IMDB scores. While grappling with a large number of rows and categorical variables presented challenges in visualizing the data, narrowing down the scope by selecting specific variable values has enhanced the interpretability of the plots. This project has also provided a valuable learning experience in utilizing R for the first time.
+
+Determining the countries to which the most popular movies belong has been one of the more challenging aspects of this project. The multitude of distinct values for the country variable has resulted in skewed results when calculating the median IMDB ratings per country, especially for countries with a limited number of ratings available in the dataset. To address this issue, the dataset was filtered to identify the top 10 countries with the highest count of ratings, and their median IMDB ratings were plotted.
+
+To improve the understandability of the plots, techniques such as bar plots, facet wraps, and smooth plots have been employed. However, it is acknowledged that further improvement could have been achieved by sampling the dataset and narrowing down the focus of the analysis. Exploring the probability of a director's success within a specific genre, considering the IMDB ratings of their previous movies, would have been an interesting avenue for analysis. Unfortunately, the extensive range of different values for the genre variable hindered the exploration of this aspect. These areas provide potential avenues for future analysis in the project. Particularly intriguing are the impact of specific actors on movie ratings and the correlation between an actor's number of Facebook likes and the ratings of their movies.
+
+Based on the observations from the presented plots, it is evident that the duration of a movie does not significantly influence its popularity in the English and Italian languages. However, for other languages, there appears to be an increase in ratings with longer durations. Among the top 10 countries with the highest review counts in the dataset, Japan exhibits the highest median IMDB rating, closely followed by Spain, the UK, and India.
+
+The impact of the number of Facebook likes on a movie's IMDB rating remains inconclusive due to the limited number of movies with high Facebook page like counts. But the relationship between an actor's Facebook page likes and the movie's IMDB rating seems to have a positive correlation supportin our initial intuition. However, an interesting similarity emerges from the plots comparing the Facebook like counts of Actor 1 and Actor 2 against IMDB ratings, warranting further investigation. Although the presence of certain actors appears to have some influence on movie ratings, conclusive evidence cannot be drawn solely from the results depicted in the plots.
+
+
+
+## Bibliography
+1. Yueming (2017), ‘IMDB 5000 Movie Dataset’, [https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset](https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset)
+
+2. R Core Team (2017). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL [https://www.R-project.org/](https://www.R-project.org/).
+
+

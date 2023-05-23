@@ -1,0 +1,208 @@
+---
+title: "Final Project Assignment#1: Jaswanth Reddy Kommuru"
+author: "Jaswanth Reddy Kommuru"
+description: "Project & Data Description"
+date: "04/10/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+## Important Formatting & Submission Notes: {#important-formatting-submission-notes}
+
+1.  **Use this file as the template to work on: start your own writing from Section "Part.1"**
+
+2.  **Please make the following changes to the above YAML header:**
+
+    -   Change the "title" to "Final Project Assignment#1: First Name Last Name";
+
+    -   Change the "author" to your name;
+
+    -   Change the "date" to the current date in the "MM-DD-YYYY" format;
+
+3.  **Submission:**
+
+    -   Delete the unnecessary sections ("Overview", "Tasks", "Special Note", and "Evaluation").
+    -   **In the posts folder of your local 601_Spring_2023 project, create a folder named "FirstNameLastName_FinalProjectData", and save your final project dataset(s) in this folder. DO NOT save the dataset(s) to the \_data folder which stores the dataset(s) for challenges.**
+    -   Render and submit the file to the blog post like a regular challenge.
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+In this part, you should introduce the dataset(s) and your research questions.
+
+1.  Dataset(s) Introduction:
+
+Divvy is Chicagoland’s bike share system across Chicago and Evanston. Divvy provides residents and visitors with a convenient, fun and affordable transportation option for getting around and exploring Chicago.
+Divvy, like other bike share systems, consists of fleet of specially-designed, sturdy and durable bikes that are locked into a network of docking stations throughout the region. The bikes can be unlocked from one station and returned to any other station in the system. People use bike share to explore Chicago, commute to work or school, run errands, get to appointments or social engagements, and more. Some part of the data collected from the app has been kept available for public access.
+
+The dataset has numerous entries of each ride details without disclosing the personnel details of the person who booked it each row represents one ride information and each row has the below attribute's of the ride.
+
+  - ride_id: A unique identifier for each ride.
+  - rideable_type: The type of bike used for the ride (e.g., docked_bike).
+  - started_at: The date and time when the ride started.
+  - ended_at: The date and time when the ride ended.
+  - start_station_name: The name of the starting station for the ride.
+  - start_station_id: The identifier of the starting station.
+  - end_station_name: The name of the ending station for the ride.
+  - end_station_id: The identifier of the ending station.
+  - start_lat: The latitude coordinate of the starting station.
+  - start_lng: The longitude coordinate of the starting station.
+  - end_lat: The latitude coordinate of the ending station.
+  - end_lng: The longitude coordinate of the ending station.
+  - member_casual: Indicates whether the rider is a member or a casual user.
+
+    -   identify the source of the dataset(s): who or which organization collected the dataset(s); some dataset(s) also tells you how and when it was collected ;
+
+    -   a description of the "cases" represented by the dataset(s); in other words, what does each row represent?
+
+    -   **Erico's hint:** the website of the dataset(s) usually has a brief introduction of the above information; you can also look for the "user manual" document that comes with the dataset(s).
+
+    -   For reference, you can check out[the "Introduction" section of this final project](https://dacss.github.io/601_Fall_2022_final_posts/posts/final_project_Guanhua_Tan.html) as an example of dataset(s) introduction.
+
+2.  What questions do you like to answer with this dataset(s)?
+
+- How much of the data is about members and how much is about casuals?
+- How much of the data is distributed by month?
+- How is the temperature/weather influencing the number of rides made in a month.
+- How much of the data is distributed by weekday, weekends?
+- What is the time spent on the ride by different categories of people?
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+This part contains both a coding and a storytelling component.
+
+In the coding component, you should:
+
+1.  read the dataset;
+
+    -   (optional) If you have multiple dataset(s) you want to work with, you should combine these datasets at this step.
+
+    -   (optional) If your dataset is too big (for example, it contains too many variables/columns that may not be useful for your analysis), you may want to subset the data just to include the necessary variables/columns.
+
+```{r}
+  csv_files <- list.files(path = "/Users/jaswanth/Documents/601/JaswanthReddyKommuru_FinalProjectData", recursive = TRUE, full.names=TRUE)
+  ride_data <- do.call(rbind, lapply(csv_files, read.csv))
+```
+
+2.  present the descriptive information of the dataset(s) using the functions in Challenges 1, 2, and 3;
+
+    -   for examples: dim(), length(unique()), head();
+
+    ```{r}
+    head(ride_data)
+    ```
+    
+```{r}
+    dim(ride_data)
+```
+
+```{r}
+    colnames(ride_data)
+```
+
+```{r}
+length(unique(ride_data$start_station_name))
+```
+
+
+```{r}
+  ride_data %>% 
+  select(end_station_name) %>% 
+  n_distinct(.)
+```
+
+```{r}
+  ride_data %>% 
+  select(member_casual) %>% 
+  distinct(.)
+```
+
+```{r}
+  ride_data %>% 
+  select(rideable_type) %>% 
+  distinct(.)
+```
+
+```{r}
+  ride_data %>% 
+  select(ride_id) %>% 
+  n_distinct(.)
+```
+
+
+In the provided dataset, each row corresponds to a specific ride and contains multiple pieces of information. The dataset encompasses a distinctive identifier, known as "ride_id," assigned to uniquely identify the details of all 3,489,539 rides. Additionally, the dataset captures data on the starting and ending stations, denoted by "start_station_name" and "end_station_name," respectively. There are a total of 707 stations where bikes are picked up and 709 stations where bikes are returned. Moreover, the dataset includes geographical information, such as the latitude and longitude coordinates, for both the starting and ending bike stations, referred to as "start_lat," "start_lng," "end_lat," and "end_lng." Each station is also assigned a unique identifier, namely "start_station_id" and "end_station_id." The dataset further accounts for three types of bikes, referred to as "rideable_type," which are available for rides and their availability is dependent on the specific bike type. The individuals utilizing the bikes are categorized into two distinct groups based on their membership status, represented by the field "member_casual." This field indicates whether the person is a member with an active subscription plan or a casual member who typically pays for each ride individually.
+    
+
+3.  conduct summary statistics of the dataset(s); especially show the basic statistics (min, max, mean, median, etc.) for the variables you are interested in.
+
+```{r}
+summary(ride_data)
+```
+
+In the storytelling component, you should describe the basic information of the dataset(s) and the variables in a way that corresponds to your descriptive and summary statistics in the above coding component. **DO NOT** simply report the number of rows. Instead, describe the dataset(s) fully by **specifying what each row and column mean.** In other words, your description should be comprehensive and detailed enough for readers to picture or envision the dataset(s) in their brains.
+
+-   For example, suppose I use a dataset of all the athletes who participated in the Olympic Games. Here is how I describe the basic information of the data: "the case of this dataset is ab individual athlete, represented by each row in the dataset. The dataset includes individual (e.g., gender, age, height, weight, race) and event performance (e.g., final placement) information for all athletes (22,398) competing in all events (e.g., Male 400m Free, Female ...) in all Olympics Games since 1922 (24 Winter and 28 Summer Games. Athletes appearing in the dataset competed in anywhere from 1-11 distinct events (of 198 possible) during 1-5 distinct Olympic competitions, for a total of XXX, XXX athlete-event-Olympic-year observations. XXX Countries are represented, etc)."
+
+-   Erico's hint: as I mentioned above, sometimes a dataset is too large, and it is difficult to present and explain all the variables/columns (especially if you run summary statistics for the whole dataset). In this case, you will have to make a decision to select the most important variables/columns to discuss. For example, the Olympic dataset I mentioned above as an example contains more than 50 columns. For clarity of data presentation, I may just focus on 6 items/columns of individual athletes (gender, age, weight, height, race, nationality) and the column of final placement that are most relevant to answer my specific research questions. By doing so, you can just present the tables of the summary statistics of these 7 variables/columns without showing too much information and confusing the readers.
+
+-   A good example is to can check out [the Data Description section of the above student's final project](https://dacss.github.io/601_Fall_2022_final_posts/posts/final_project_Guanhua_Tan.html#briefly-describe-the-dataset.). As you can see, the student describes the dataset after he runs a few descriptive statistics. You can also see the weekly challenge solutions by Professor Rolfe for other examples of clear, concise data descriptions.
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+1.  Briefly describe what data analyses (**please the special note on statistics in the next section)** and visualizations you plan to conduct to answer the research questions you proposed above.
+
+- To comprehend the correlation between specific variables that are pertinent to the study questions I have set, I will plot various histograms, box plots, scatter plots, and linear graphs. To determine which set of people uses the service the most regularly, for instance, I can plot a bar graph of casual vs. member.
+
+2.  Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?
+
+3.  If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.
+
+- Box Plots: These can be used to see how a numerical variable is distributed among various properties. I can plot the distribution of the amount of time that various groups of people spend riding bikes using the bike data.
+
+- Histogram: To see how numerical variables are distributed, utilize histograms. I can use it to determine the time that was driven by various groups of people for this dataset.
+
+    -   What do you need to do to mutate the datasets (convert date data, create a new variable, pivot the data format, etc.)?
+
+    -   How are you going to deal with the missing data/NAs and outliers? And why do you choose this way to deal with NAs?
+
+4.  (Optional) It is encouraged, **but optional**, to include a coding component of tidy data in this part.
+
+```{r}
+x<-ride_data %>%
+  select(end_station_id) %>% 
+  is.na() %>%
+  sum()
+x
+```
+
+```{r}
+ column_with_na<-ride_data %>%
+  select_if(~ any(is.na(.))) %>%
+  names()
+column_with_na
+```
+
+- Rename a few of the column names to reflect the data more accurately.
+
+- Create new columns to contain additional data that can be pulled from current columns, such as the ride's duration time.
+
+- When dealing with missing data, or NAs, we must first identify the variables with missing values and the level of the missingness. We can use functions like is.na() or summary() to detect the missing data and then take the appropriate action to remove it.

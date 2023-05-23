@@ -1,0 +1,132 @@
+---
+title: "Challenge 8"
+author: "Xinyang Mao"
+description: "Joining Data"
+date: "05/22/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - snl
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+  - snl ⭐⭐⭐⭐⭐
+
+```{r}
+actors <- read.csv("_data/snl_actors.csv")
+seasons <- read.csv("_data/snl_seasons.csv")
+casts <- read.csv("_data/snl_casts.csv")
+```
+
+### Briefly describe the data
+show dimension of `actors`
+```{r}
+dim(actors)
+```
+Show the columns of `actors`
+```{r}
+colnames(actors)
+```
+```{r}
+head(actors)
+```
+
+By examining the dimensions of these dataframes, we can observe that "Saturday Night Live" spanned across 46 seasons and involved a total of 2306 actors.The "actors" dataset focuses on specific information related to the actors themselves. 
+
+show dimension of `seasons`
+```{r}
+dim(seasons)
+```
+Show the columns of `seasons`
+```{r}
+colnames(seasons)
+```
+```{r}
+head(seasons)
+```
+For `seasons` dataset,the "seasons" dataset provides comprehensive details about each season of the show, including the premiere and finale episodes, the initial airing year of each season, and the overall number of episodes in each season`
+
+show dimension of `casts`
+```{r}
+dim(casts)
+```
+Show the columns of `casts`
+```{r}
+colnames(casts)
+```
+```{r}
+head(casts)
+```
+The "casts" dataset offers insights into the cast members' participation on the show, including details such as their notable episodes, appearance counts, and other relevant data. 
+## Tidy data
+Check if own missing values.
+```{r}
+m_actors <- colSums(is.na(actors))
+m_actors
+
+```
+```{r}
+m_seasons <- colSums(is.na(seasons))
+m_seasons
+```
+```{r}
+m_casts <- colSums(is.na(casts))
+m_casts
+```
+`actors` and `seasons` datasets have no missing values, `casts` have missing values for `first_epid` and `last_epid`, but they are not used here, so I removed these two variables.
+
+```{r}
+casts <- subset(casts,select = -c(first_epid,last_epid))
+colnames(casts)
+```
+
+## Join Data
+
+Inner join the 3 datasets according to `aid` and `sid`
+```{r}
+a_c <- inner_join(actors,casts, by="aid")
+a_c_s <- inner_join(a_c,seasons, by="sid")
+colnames(a_c_s)
+```
+```{r}
+head(a_c_s)
+```
+Check if the new generated dataframe has missing value.
+```{r}
+m_n <- colSums(is.na(a_c_s))
+m_n
+```
+Perfect!The new dataframe doesn't has any missing value.
+
+Next,let's take a look at the distribution of `year` ,`season_fraction` and `gender` of actors!
+
+Check the unique value of `gender`
+```{r}
+print(unique(a_c_s$gender))
+```
+```{r}
+
+ggplot(a_c_s, aes(fill=gender, y=season_fraction, x=year)) + 
+    geom_bar(position="stack", stat="identity")
+  labs(x = "Year", y = "season_fraction of Episodes") +
+  theme_minimal()
+```
+
+

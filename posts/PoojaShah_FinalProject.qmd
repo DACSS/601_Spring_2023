@@ -1,0 +1,326 @@
+---
+title: "Final Project Pooja Shah"
+author: "Pooja Shah"
+description: "Final Project Submission"
+date: "05/22/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+
+## Introduction {#describe-the-project-concept}
+
+1.  Dataset(s) Introduction:
+
+    - I will be using a kaggle dataset about Superstore Sales for Sales Forecasting [https://www.kaggle.com/datasets/rohitsahoo/sales-forecasting]. The dataset has information about sales in a retail store and I will use that data to forecast sales pattern.
+    
+    - The dataset has almost 10k rows of information about sales and their 18 attributes. Each row consists of information such as the ordered goods information, shipment information, customer information and sales information.
+    
+2.  What questions do you like to answer with this dataset(s)?
+  
+    - My main aim with this dataset is to understand the trends within the data and predict on the amount of goods that will be sold in the nearby future.
+    
+    - This will lead to knowing how much surplus amount of goods a company should have ready to make sure there isn’t a shortage in the stores in the future.
+    
+## Describe the data set(s) {#describe-the-data-sets}
+
+1.  displaying the data
+
+```{r}
+data <- read_csv("PoojaShah_FinalProjectData/_data/data.csv")
+
+data
+```
+
+2.  descriptive information of the dataset
+
+```{r}
+
+dim(data)
+
+colnames(data)
+
+# Modifying Column Names
+colnames(data)[3] = "OrderDate"
+colnames(data)[5] = "ShipMode"
+colnames(data)[16] = "SubCategory"   
+colnames(data)
+```
+
+3.  cleaning the data;
+```{r}
+# Modifying data to split dates
+dateData <- data %>%
+  separate_wider_delim(OrderDate, '/', names = c("Date", "Month", "Year"))
+dateData
+
+dateData$Month = as.numeric(as.character(dateData$Month))
+dateData$Year = as.numeric(as.character(dateData$Year))  
+  
+# Making a new dataframe with only necessary colums
+newData <- dateData %>%
+  select(c("Month", "Year", "ShipMode", "Segment", "Country", "State", "Region", "Category", "SubCategory", "Sales"))
+
+newData
+```
+
+4.  summary statistics of data:
+```{r}
+summary(newData)
+
+newData %>%
+  select(Sales) %>%
+  sapply(sd)
+```
+
+
+The dataset consists of almost 10K rows of data, all of which are already cleaned. The data is about sales data for a superstore containing sales information about different categories as well as sub-categories. All the sales are in United States. The details also include the details such as segment of order to describe if the order was a consumer order, corporate order or of some other type. The location from which the order was placed is divided into city, state, postal code as well as region. Our main aim for this project is to be forecasting the sales for different categories in different regions.This is why, we are aggregating the data to have precise results.
+
+
+
+
+
+## The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+1.  Briefly describe what data analyses and visualizations you plan to conduct to answer the research questions you proposed above.
+
+I plan to visualize the data in different manners so as to understand the different proportions in which the data is divided. This will help visualize the data as well as better understand what the data is tring to show.
+
+2.  Explain why you choose to conduct these specific data analyses and visualizations. In other words, how do such types of statistics or graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you answer specific questions? For example, how can a bivariate visualization reveal the relationship between two variables, or how does a linear graph of variables over time present the pattern of development?
+
+I tried to form different bar graphs that would visualize different combinations of data. I tried to cross the data columns available and provide graphs for all the aspects that seemed to be important to me. Based on this data, I decided the final columns which I will be considering for my evaluation.
+
+
+```{r}
+ggplot(data, aes(Region, fill = Segment)) +
+  geom_bar() +
+  labs(title = "Sales per Region by Segment") 
+
+ggplot(data, aes(Region, fill = Segment)) +
+  geom_bar() +
+  labs(title = "Sales per Region by Segment divided by States")  + 
+  facet_wrap(vars(State)) 
+
+ggplot(data, aes(Category, fill = Segment)) +
+  geom_bar() +
+  labs(title = "Sales by Category per Segment")
+
+ggplot(data, aes(Category)) +
+  geom_bar() +
+  labs(title = "Sales by SubCategory per Segment") +
+  facet_wrap(vars(Segment))
+
+ggplot(data, aes(Segment)) +
+  geom_bar() +
+  labs(title = "Sales by Segment per SubCategory") +
+  facet_wrap(vars(SubCategory))
+```
+
+3.  If you plan to conduct specific data analyses and visualizations, describe how do you need to process and prepare the tidy data.
+
+As mentioned above, my main aim is to forecast the sales for different categories in different regions. This is why I am mutating the dataset to have the information in the form needed.
+
+
+4.  (Optional) It is encouraged, **but optional**, to include a coding component of tidy data in this part.
+```{r}
+totalSales1 <- newData %>%
+  select(Month, Year, Region, Category, Segment, Sales)
+totalSales1
+```
+  - Here, I am using 6 columns of the data that seemed important for my analysis. These columns are as under:
+```{r}
+  colnames(newData)
+```
+
+
+```{r}
+
+totalSales <- totalSales1 %>%
+  group_by(Month, Year, Region, Category, Segment) %>%
+  summarise(across(c(Sales), sum))
+
+totalSales
+
+ggplot(totalSales, aes(Region, weight = Sales)) +
+  geom_bar() +
+  labs(title = "Total Sales by Region per Category") +
+  facet_wrap(vars(Category))
+
+```
+
+
+## Evaluation {#evaluation}
+
+You will be evaluated on both the quality of your source code and your written report, with a greater emphasis on the clarity and details of the description of your dataset(s) and your research questions.
+
+```{r}
+model <- lm(Sales~Month+Year+Segment+Region+Category, data = totalSales)
+print(model)
+
+cat("# # # # The Coefficient Values # # # ","\n")
+
+a <- coef(model)[1]
+print(a)
+
+XMonth <- coef(model)[2]
+XYear <- coef(model)[3]
+XSegmentCorporate <- coef(model)[4]
+XSegmentHomeOffice <- coef(model)[5]
+XRegionEast <- coef(model)[6]
+XRegionSouth <- coef(model)[7]
+XRegionWest <- coef(model)[8]
+XCategoryOfficeSupplies <- coef(model)[9]
+XCategoryTechnology <- coef(model)[10]
+```
+
+```{r}
+#predicting sales for year 2019 in the month of July for Corporate in Region East for Category Technology
+
+X1 = 7
+X2 = 2019
+X3 = 1
+X4 = 0
+X5 = 1
+X6 = 0
+X7 = 0
+X8 = 0
+X9 = 1
+
+Y1 = a + XMonth*X1 + XYear*X2 + XSegmentCorporate*X3 + XSegmentHomeOffice*X4 + XRegionEast*X5 + XRegionSouth*X6 + XRegionWest*X7 + XCategoryOfficeSupplies*X8 + XCategoryTechnology*X9
+```
+sales for year 2019 in the month of July for Corporate in Region East for Category Technology:
+```{r}
+print(Y1)
+```
+
+```{r}
+#predicting sales for year 2019 in the month of July for Corporate in Region East for Category Office Supplies
+
+X1 = 7
+X2 = 2019
+X3 = 1
+X4 = 0
+X5 = 1
+X6 = 0
+X7 = 0
+X8 = 1
+X9 = 0
+
+Y2 = a + XMonth*X1 + XYear*X2 + XSegmentCorporate*X3 + XSegmentHomeOffice*X4 + XRegionEast*X5 + XRegionSouth*X6 + XRegionWest*X7 + XCategoryOfficeSupplies*X8 + XCategoryTechnology*X9
+```
+sales for year 2019 in the month of July for Corporate in Region East for Category Office Supplies:
+```{r}
+print(Y2)
+```
+
+```{r}
+#predicting sales for year 2019 in the month of July for Corporate in Region South for Category Technology
+
+X1 = 7
+X2 = 2019
+X3 = 1
+X4 = 0
+X5 = 0
+X6 = 1
+X7 = 0
+X8 = 0
+X9 = 1
+
+Y3 = a + XMonth*X1 + XYear*X2 + XSegmentCorporate*X3 + XSegmentHomeOffice*X4 + XRegionEast*X5 + XRegionSouth*X6 + XRegionWest*X7 + XCategoryOfficeSupplies*X8 + XCategoryTechnology*X9
+```
+sales for year 2019 in the month of July for Corporate in Region South for Category Technology:
+```{r}
+print(Y3)
+```
+
+```{r}
+#predicting sales for year 2019 in the month of July for Corporate in Region South for Category Office Supplies
+
+X1 = 7
+X2 = 2019
+X3 = 1
+X4 = 0
+X5 = 0
+X6 = 1
+X7 = 0
+X8 = 1
+X9 = 0
+
+Y4 = a + XMonth*X1 + XYear*X2 + XSegmentCorporate*X3 + XSegmentHomeOffice*X4 + XRegionEast*X5 + XRegionSouth*X6 + XRegionWest*X7 + XCategoryOfficeSupplies*X8 + XCategoryTechnology*X9
+```
+sales for year 2019 in the month of July for Corporate in Region South for Category Office Supplies:
+```{r}
+print(Y4)
+```
+
+```{r}
+#predicting sales for year 2019 in the month of July for Corporate in Region West for Category Technology
+
+X1 = 7
+X2 = 2019
+X3 = 1
+X4 = 0
+X5 = 0
+X6 = 0
+X7 = 1
+X8 = 0
+X9 = 1
+
+Y5 = a + XMonth*X1 + XYear*X2 + XSegmentCorporate*X3 + XSegmentHomeOffice*X4 + XRegionEast*X5 + XRegionSouth*X6 + XRegionWest*X7 + XCategoryOfficeSupplies*X8 + XCategoryTechnology*X9
+```
+sales for year 2019 in the month of July for Corporate in Region West for Category Technology:
+```{r}
+print(Y5)
+```
+
+```{r}
+#predicting sales for year 2019 in the month of July for Corporate in Region East for Category Office Supplies
+
+X1 = 7
+X2 = 2019
+X3 = 1
+X4 = 0
+X5 = 0
+X6 = 0
+X7 = 1
+X8 = 1
+X9 = 0
+
+Y6 = a + XMonth*X1 + XYear*X2 + XSegmentCorporate*X3 + XSegmentHomeOffice*X4 + XRegionEast*X5 + XRegionSouth*X6 + XRegionWest*X7 + XCategoryOfficeSupplies*X8 + XCategoryTechnology*X9
+```
+sales for year 2019 in the month of July for Corporate in Region West for Category Office Supplies:
+```{r}
+print(Y6)
+```
+
+```{r}
+tab <- matrix(c(Y1, Y2, Y3, Y4, Y5, Y6), ncol=3, byrow=TRUE)
+colnames(tab) <- c('East','South','West')
+rownames(tab) <- c('OfficeSupplies','Technology')
+tab <- as.table(tab)
+tab
+```
+Sales Forecast for July 2019

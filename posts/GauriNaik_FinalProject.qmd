@@ -1,0 +1,269 @@
+---
+title: "Final Project: Gauri Naik"
+author: "Gauri Naik"
+date: "05/19/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include = FALSE}
+library(tidyverse)
+library(readr)
+library(knitr)
+library(ggplot2)
+library(ggeasy)
+library(patchwork)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Introduction
+
+The World Bank Open Dataset is a repository of data from various countries under different themes. Each country has a listing of descriptors, including but not limited to GDP, homeless and poverty rate, violence and homicide rate, primary education completion rate, etc. Each of these variables are over time, going from a certain year to current. The datasets are updated every month.
+
+Literacy rates have been an issue for many countries around the world, and while there are many variables that affect literacy rates, this report will look at internet usage in particular. The internet in its modern mutation allows for relatively easy access to widespread knowledge, and can be utilized to teach and learn language among other things. This report will look at literacy rates against internet usage in Colombia from 2004 to 2020, and describe correlations between the two variables. We would like to see if internet usage has a positive influence on education in Colombia, and one way to visualize this is using literacy rates.
+			
+## Dataset Description
+
+The data below contains information of Colombia's income relative to other countries, their literacy rate based on age, and internet usage in percentage of population. I've subset a preview of the data below in tibble form.
+
+```{r read, echo = FALSE}
+data <- readxl::read_excel("C:/Users/naiga/Documents/GithubDACSS601/601_Spring_2023/posts/GauriNaik_FinalProjectData/Combined_Dataset.xlsx")
+
+data1 <- data %>%
+  select('Country Code', 'Indicator Code', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020')
+
+# making data numeric from character
+data1[3:19] <- sapply(data1[3:19],as.numeric)
+
+dim(data1)
+head(data1)
+```
+
+The dimensions of the dataset are printed above as 21 rows by 19 columns. These 21 rows are split by country into literacy rates and internet usage in population percentage and the columns are the country codes, indicator codes (the variable labels of literacy split by gender and age, and internet usage percentage), and the range of years I'm interested in. I've printed the average of each country's row means here. The first set of numbers is from the subset of Colombia: the means of literacy rates in female youths 15-24, male youths 15-24, total youths 15-24, and then female adults, male adults, total adults, and the final number in the first row is the average population percentage of internet users. The second set of numbers is the range of our dataset. 
+
+```{r sumstat, echo = FALSE, warning=FALSE, message=FALSE}
+#separating country data; wanted dataframes not a list of dataframes, so decided roundabout way
+col <- data1[1:7,]
+col[3:19] <- sapply(col[3:19], as.numeric)
+colmeans <- rowMeans(col[3:19], na.rm = TRUE)
+print(colmeans)
+print(range(col[3:19], na.rm = TRUE))
+```
+
+## Plan for Visualization
+
+In order to view the data above, first I will create three evolution scatter plot graphs (with trendlines showing the overall pattern of correlation) with the total literacy rates and internet usage. I would like a basic visualization of the evolution of each so we can see the rates over the years without interference from other variables.
+
+Then I will generate another scatter plot using the internet usage rate as the x-axis, to start visualizing any correlation between literacy rates and internet usage. We can visualize a basic trend by looking at literacy rates as internet usage increased. However, this does not show evolution over literacy vs. internet usage over time, therefore while we may draw assumptions from the graph about correlations, we cannot assume anything over a time basis.
+
+I also want to examine gender differences in literacy rate and internet usage. While internet usage is not split into gender, it is a way to understand the general environment that people were in; most information before the internet spread due to word of mouth and as such it is a valid assumption that those people who utilized the internet when percent was low would spread the information they learned through word of mouth and there could still be correlation between the environment and literacy rate. These gender differences would more than likely benefit from a bar graph to be able to better compare values.
+
+I would also like to describe the literacy rate of youth vs adults as it is usually a social observation that younger generations use the internet either more and/or differently than older generations. This graph is also a scatterplot to better visualize.
+
+These graphs will help me examine the literacy rate and internet usage correlation from various angles. I will also introduce historical context as required if I believe that it would have affected infrastructure, and in turn, education and electricity.
+
+```{r colombia, include = FALSE}
+options(warn = -1)
+#tidy data for graphing
+col1 <- col %>%
+  pivot_longer(cols = c(3:19),
+               names_to = "Year",
+               values_to = "Rates") %>%
+  arrange(`Indicator Code`)
+col1[3:4] <- sapply(col1[3:4], as.numeric)
+
+#splitting data based on indicator codes
+col_list <- list()
+col_list <- split(col1, f = col1$`Indicator Code`)
+
+#separate basic graphs for part 1, don't know if there's a way to iterate graph-making so did it manually
+c.young.total <- ggplot(col_list$SE.ADT.1524.LT.ZS, aes(x=Year))+
+  geom_point(aes(y=Rates)) +
+  labs(y = "Literacy Rate of All Young Adults (15-24)")+ 
+  theme_bw()
+
+c.adult.total <- ggplot(col_list$SE.ADT.LITR.ZS, aes(x=Year)) +
+  geom_point(aes(y=Rates)) + labs(y = "Literacy Rate of Adult Males") + theme_bw()
+
+c.int.rate <- ggplot(col_list$IT.NET.USER.ZS, aes(x=Year)) +
+  geom_point(aes(y=Rates)) + labs(y = "Percent of Population Utilizing Internet") + theme_bw()
+
+#editing original plots to create new patchwork for Colombia
+c.young.total.add <- c.young.total + easy_remove_x_axis(what = c('text', 'ticks')) + labs(y= 'Young Adult') + geom_abline(slope = 0.071931, intercept = -46.373039, fill = "#0244df")
+
+c.adult.total.add <- c.adult.total + easy_remove_x_axis(what = c('text', 'ticks')) + labs(y ='Adult') + geom_abline(intercept = -287.55064, slope = 0.18958)
+
+c.int.rate.add <- c.int.rate + labs(y = 'Internet Usage') + geom_abline(slope = 3.966, intercept = -7937.664)
+
+#summary of statistics for Colombia
+ctotals <- c.young.total.add/c.adult.total.add/c.int.rate.add + plot_annotation(title = "Total Literacy Rates and Internet Usage", subtitle = "Some years are missing data, therefore a trend line was added for prediction.")
+
+# dataframe comparing based on x = internet and y = age
+Years <- c("2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020")
+colagediff <- data.frame(matrix(nrow = 17, ncol = 4))
+colagediff$X1 <- Years
+colagediff$X2 <- col_list$IT.NET.USER.ZS$Rates
+colagediff$X3 <- col_list$SE.ADT.1524.LT.ZS$Rates
+colagediff$X4 <- col_list$SE.ADT.LITR.ZS$Rates
+
+colagediff1 <- colagediff %>%
+  rename(Year = X1,
+         Internet = X2,
+         Youth = X3,
+         Adult = X4) %>%
+  group_by(Year)
+
+#compare youth and adult literacy rate as internet usage goes up
+col_intusage <- ggplot(colagediff1, aes(x=Internet)) +
+  geom_point(aes(y=Youth, color = "Youth")) +
+  geom_point(aes(y=Adult, color = "Adult")) +
+  labs(title = "Comparison of Literacy Rate as Internet Usage Goes Up", caption = "Some values are missing") +
+  scale_color_manual(name = "Age Group", values = c("#2781d1", "#d13e27")) +
+  theme_bw()
+
+# gender difference in literacy over years, make dataframe
+colgendiff <- data.frame(matrix(nrow = 17, ncol = 6))
+colgendiff$X1 <- Years
+colgendiff$X2 <- col_list$IT.NET.USER.ZS$Rates
+colgendiff$X3 <- col_list$SE.ADT.1524.LT.FE.ZS$Rates
+colgendiff$X4 <- col_list$SE.ADT.1524.LT.MA.ZS$Rates
+colgendiff$X5 <- col_list$SE.ADT.LITR.FE.ZS$Rates
+colgendiff$X6 <- col_list$SE.ADT.LITR.MA.ZS$Rates
+
+colgendiff1 <- colgendiff %>%
+  rename(Years = X1,
+         Internet = X2,
+         YA.FM = X3,
+         YA.M = X4,
+         FM = X5,
+         M = X6)
+
+#youth dataframe
+colgendiffy <- colgendiff1 %>%
+  select(Years, YA.FM, YA.M, Internet) %>%
+  pivot_longer(cols = c(YA.FM, YA.M), names_to = "Gender", values_to = "Rates")
+
+#youth graph
+c.gendiffy.i <- ggplot(colgendiffy, aes(x= Years, y = Rates, fill=factor(Gender))) +
+  geom_bar(stat="identity", position="dodge2") + 
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) + 
+  labs(title = "Literacy Rate of Youth Age Group Based on Gender", caption = "Values are missing for certain years") +
+  guides(fill=guide_legend(title = "Gender")) +
+  scale_fill_hue(labels = c("Female", "Male"))
+
+#adult dataframe
+colgendiffa <- colgendiff1 %>%
+  select(Years, Internet, FM, M) %>%
+  pivot_longer(cols = c(FM, M), names_to = "Gender", values_to = "Rates")
+
+#adult graph
+c.gendiffa.i <- ggplot(colgendiffa, aes(x= Years, y = Rates, fill=factor(Gender))) +
+  geom_bar(stat="identity", position="dodge2") + 
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) + 
+  labs(title = "Literacy Rates of Adult Age Group Based on Gender", caption = "Values are missing for certain years") +
+  guides(fill=guide_legend(title = "Gender")) +
+  scale_fill_hue(labels = c("Female", "Male"))
+
+#changing og plots for better visualization with patchwork
+c.gendiffy.i.add <- c.gendiffy.i + labs(title = "Youth Literacy", caption = "") + easy_remove_legend() + coord_flip(ylim = c(90,100))
+
+c.gendiffa.i.add <- c.gendiffa.i + labs(title = "Adult Literacy") + easy_remove_y_axis(what = c('ticks', 'title', 'text', 'line')) + coord_flip() + coord_flip(ylim = c(90,100))
+
+#compare youth vs adult literacy over years
+compare <- c.gendiffy.i.add + c.gendiffa.i.add + plot_annotation(title = "Gender Differences in Age Groups' Literacy Over the Years")
+
+#dataframe for which I flipped stuff around, comparing youth and adult rates and internet and years
+col2 <- colagediff1 %>%  
+  pivot_longer(cols = c("Youth", "Adult"),
+               names_to = "Age",
+               values_to = "Rate")
+
+# literacy vs internet vs year bar graph
+litintyear <- ggplot(col2, aes(x=Year, y=Rate, fill=Age)) +
+  geom_bar(stat='identity', position = 'dodge', just = 0.5) + 
+  easy_rotate_x_labels(side = "right") +
+  geom_line(aes(y=Internet), group =1)+
+  labs(title = "Comparison of Literacy vs Internet Trend", caption = "This graph is extremely zoomed to show the internet usage trend over the 
+  whole population as it does not reach above 75%. However, when we zoom in 
+  we can see that the literacy rate of both adults and youths increase.")
+
+zoomlitintyear <- litintyear +
+  coord_cartesian(ylim = c(90, 100)) + labs(caption = "As we zoom in we can clearly see here the differences and an increase 
+                                            in literacy rates.")
+
+#simple adult and literacy total rates
+rates <- ggplot(colagediff1, aes(x=Year))+
+  geom_point(aes(y=Youth), color = "#129483") +
+  geom_point(aes(y=Adult), color = "#091823") +
+  labs(title = "Comparison of Total Youth and Adult Literacy Rates", subtitle = "Blue is youth, and black is adults", y = "Rate") +
+  theme_bw()
+```
+
+
+## Results: Analysis and Visualization
+
+Our question was the trends and comparisons between young adult literacy rates, adult literacy rates, and internet usage over the years. We are primarily interested in seeing if there is a positive correlation between internet usage by the population and literacy rate.
+
+Let's look at the various graphs generated. First, we look at the summary of the variables we are interested in.
+```{r graph1, echo = FALSE}
+ctotals
+```
+I've included a trend line so we can better visualize the trend over the years. As we can see, the trend for all three variables included (young adult literacy rate, adult literacy rate, and useage of internet by total population) goes up as the years progress. We will note, however, that the literacy rate of young adults seems relatively high (starts at 98% in 2004, whereas adults start at 92.8%) comparatively speaking. The rate of internet usage is also very lower in 2004, at 9.12% of the total population using it. Therefore these graphs, while showing a positive trend, are also in very different ranges.
+
+Let's now look at the comparison between total adult and youth literacy rates over the years.
+```{r graph2, echo = FALSE}
+rates
+```
+As we can see, the y-axis starts at 92% of the population. Relatively speaking, the literacy rate for Colombia is very high, and a good amount of the population can read. However, it seems that more youths (age group 15-24) can read compared to adults who have been taught to read. It also looks like the adult literacy rate has a very drastic increase, ending in 2020 with 95.6% total adults having been taught to read.^[World Bank is not clear on how this data is collected, therefore we do not know if young adults on the cusp of the cut-off for adult groups surveyed the year after were included in the literacy rate calculations, rather than following the same people in each group regardless of age. It does seem, though, that it wouldn't matter as the young adult group's literacy rate also rises, implying that younger children continue to receive education to read.]
+
+```{r graph3, echo = FALSE}
+col_intusage
+```
+This third graph compares the literacy rate of adults and youths as internet usage goes up. We can assume the x-axis of internet usage to follow the linear progression of time, as in the summary graphs, internet usage only increases as the years progress.
+
+Here, we can see that as usage of the internet by the general population increased, the literacy rate also increased. We can see that the adult population's literacy rate also increased. Of course, there may be other factors involved, but that there is a positive correlation between adult literacy rates and internet usage can allow us to draw some assumptions about the internet and its usage as an education tool. 
+
+We will divert to comparing the literacy rates of genders over the years. A component of internet usage in countries is the infrastructure built to allow the general populace to use it. As such, we will assume that both genders had equal access to the internet for the graph below.
+```{r graph4, echo = FALSE}
+compare
+```
+It seems that from 2004 (at the bottom of the graph provided) to 2020, females hold a marginally higher literacy rate than males. While this trend holds throughout the year range we examined for young adults, for adults it seems that males for a while had a slightly higher literacy rate than females, until around 2007, when the bar graph shows that females hold the higher literacy rate for after 2007. We cannot say, however, whether this difference in education is statistically significant, but that there is a correlation between gender and literacy rate through age groups is visible through this chart.
+
+This graph below maps the percent of population using the internet over the total literacy rate of adults and youths over the years.
+```{r graph5, echo = FALSE}
+litintyear
+```
+The graph, as written in the caption, is extremely zoomed out so we may see the positive trend of internet usage. Since the literacy rate of the population is extremely high even when internet usage is very low, it is hard to compare literacy rate to internet usage rates for this dataset. Running statistical analyses for this visualization is out of the scope of this report, so we can only make assumptions based on graphical analyses.
+
+However, as we can see, internet use does increase over the years. Therefore, if we zoom into the top half of the graph:
+```{r graph6, echo = FALSE}
+zoomlitintyear
+```
+We can see a stark difference between literacy rates for adults and youths in 2004, and as the years go by, adults' literacy rates increase as internet use increases.
+
+As a sidenote, there was missing data for two consecutive years for both adult and young adults. However, we could extrapolate using trend lines an average positive increase over both years, and therefore it did not affect our observations much.
+
+## Conclusion and Discussion
+
+Our question of whether or not internet can affect education by using the measure of literacy rate has been answered using graphical analyses. In this case, we found a positive correlation between the increase in internet usage and literacy rate in the population, both between gender and age group.
+
+We have many limitations in this work. Our dataset is open-source from a databank of international statistical analyses and there is much data that is not relevant to the question we were analyzing or, if it was relevant, many years of information was missing. Data that was relevant to the question we are analyzing includes confounding variables, where other factors may affect increase in internet usage and literacy rate and internet usage is just positive correlation, and we cannot assume correlation equals causation. A statistical analysis must be conducted on various variables to claim any final conclusions, which is out of the scope of this project.
+
+Further analyses we could conduct in the future include tests of whether or not the difference in literacy rates in genders and age groups is statistically significant, and what variables affected it. If possible to source this information, we could also look at internet usage and infrastructure surrounding electricity, any incentives for advancing technology, and if internet usage increased availability of educational material and literary material for the general populace, versus a specific percent of the population having access to literary material.
+
+## Bibliography
+
+The World Bank Data. (2023). Colombia. Retrieved May 2023 from https://data.worldbank.org/country/colombia.
+
+Posit, PBE. RStudio (4.3.0). https://posit.co/download/rstudio-desktop/.
+
+Toro, A. (2023, February 7).Colombian family: Understanding values and traditions. Colture. Toro, A. (2023, February 7). Colombian family: Understanding values and traditions. Colture. https://www.colture.co/bogota/culture-bogota/lifestyle-customs-traditions/colombian-family/ 

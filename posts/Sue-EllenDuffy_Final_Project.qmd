@@ -7,13 +7,15 @@ format:
   html:
     df-print: paged
     toc: true
+    code-fold: true
     code-copy: true
     code-tools: true
-    css: styles.css
+    css: "styles.css"
 categories:
   - final_project
+  - Sue-Ellen Duffy
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ```{r}
@@ -39,7 +41,7 @@ library(knitr)
 library(kableExtra)
 library(GGally)
 library(patchwork)
-knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 ```
 
 # Introduction
@@ -58,6 +60,27 @@ Post-pandemic car ownership and commuting by car has increased in an astonishing
 
 3. How did the pandemic affect Boston crashes?
 
+
+#### Data Description 
+* **Crash Date** - Date occurrence of crash (year, month, and day)
+
+* **Crash Time** - Time occurrence of crash (hour, min, and sec)
+
+* **Crash Severity** - Indicates the severity of a crash based on the most severe injury to any person based on 3 levels - Fatal injury, Non-fatal injury, Property damage only (no injury) - and either Unknown or Not Reported
+
+* **Maximum Injury Severity Reported** - Reported injury if both fatal and non-fatal will be categorized "Fatal injury" as it is the most severe reported injury
+
+* **Non_Motorist_Type** - The type of non-motorist 
+
+* *Crash Hour* - [added for analysis] Time occurrence of crash (hour only) 
+
+* *Crash Timegroup* - [added for analysis] Time occurrence of crash (defined by time intervals: (Overnight = 2AM-5:59AM; Morning = 6AM-9:59AM; Midday = 10AM-1:59PM; Afternoon = 2PM-5:59PM; Evening = 6PM-9:59PM; Late Night = 10PM-1:59AM)
+
+* *Crash Count* - [added for analysis] Number of crash occurrences per day
+
+* *Crash Countgroup* - [added for analysis] Number of crash occurrences per day (defined by group intervals: (1-5, 6-10, 11-15, 16-20, 21-25, 26-30, 31-35, 36-40)
+
+#### Data Cleaning:
 ```{r}
 mydataog <- read_csv("Sue-EllenDuffy_FinalProjectData/Crash_Details_2012-2022.csv", 
     skip = 2)
@@ -66,8 +89,6 @@ mydata <- mydataog
 ```{r}
 mydataog$Crash_Date <- as.Date(mydataog$Crash_Date, "%d-%b-%Y")
 mydataog$Year <- year(mydataog$Crash_Date)
-```
-```{r}
 mydata$Crash_Date <- as.Date(mydata$Crash_Date, "%d-%b-%Y")
 mydata$Weekday <-wday(mydata$Crash_Date, label = TRUE, abbr = FALSE)
 mydata$Month <- month(mydata$Crash_Date, label = TRUE, abbr = TRUE)
@@ -114,25 +135,6 @@ positions <- c("Overnight", "Morning", "Midday", "Afternoon", "Evening", "Late N
 positions2 <- c("Rear-end", "Single vehicle crash", "Angle", "Sideswipe, same direction", "Not reported", "Head-on", "Sideswipe, opposite direction", "Unknown", "Front to Rear", "Front to Front", "Rear-to-rear", "Rear to Side", "NA")
 position_Countgroup <- c("1-5", "6-10", "11-15", "16-20", "21-25", "26-30", "31-35", "36-40")
 ```
-#### Data Description 
-* **Crash Date** - Date occurrence of crash (year, month, and day)
-
-* **Crash Time** - Time occurrence of crash (hour, min, and sec)
-
-* **Crash Severity** - Indicates the severity of a crash based on the most severe injury to any person based on 3 levels - Fatal injury, Non-fatal injury, Property damage only (no injury) - and either Unknown or Not Reported
-
-* **Maximum Injury Severity Reported** - Reported injury if both fatal and non-fatal will be categorized "Fatal injury" as it is the most severe reported injury
-
-* **Non_Motorist_Type** - The type of non-motorist 
-
-* *Crash Hour* - [added for analysis] Time occurrence of crash (hour only) 
-
-* *Crash Timegroup* - [added for analysis] Time occurrence of crash (defined by time intervals: (Overnight = 2AM-5:59AM; Morning = 6AM-9:59AM; Midday = 10AM-1:59PM; Afternoon = 2PM-5:59PM; Evening = 6PM-9:59PM; Late Night = 10PM-1:59AM)
-
-* *Crash Count* - [added for analysis] Number of crash occurrences per day
-
-* *Crash Countgroup* - [added for analysis] Number of crash occurrences per day (defined by group intervals: (1-5, 6-10, 11-15, 16-20, 21-25, 26-30, 31-35, 36-40)
-
 #### Handling Unknown, Not Reported, NA or Missing data
 
 **Unknown/Not Reported Data:** 

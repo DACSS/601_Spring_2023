@@ -1,0 +1,562 @@
+---
+title: "601_Final_Project"
+author: "Paritosh Gandhi"
+description: "Salries Analytics Levels.fyi"
+date: "05/23/2023"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - final
+  - Paritosh Gandhi
+---
+# **Introduction**
+
+-   Each and everyone amongst us is working hard today in their personal and  profession whether as a Student, Teacher, Tutor or as an employee to achieve our financial, personal, social and other goals. In order to attain our goals we need multiple ingredients, such as good physical health , stable mental health, a supporting partner, a family which provides us a purpose and keeps us going constantly. For a lot of people around the globe financial goals are the topmost priority since it gives them a secure future. However, like everything in this world it does have its own merits and demerits. Many times I do wonder what will be the payback period, internal rate of return to my investment in international education. One of the primary reasons to choose a course related to DACSS was its flexibility which allows students to take up multiple subjects from varied departments and which might help develop themselves in their profession of interest which may also pay handsomely. The dataset provides information about compensation both pre-covid and during covid present salaries and bonuses. It might include both but particularly emphasize pre-covid levels relative to during covid. My analysis and this dataset will most likely be helpful to students who will be graduating in present time or within immediate one to two years from now to gauge probable compensations, returns on investment and demand supply. In most of the cases ,the supply of jobs in terms of the compensation  is determined by the roles which are in particular demand presently. However, we should also keep in mind the role which would be in particular demand in the coming  two years.Though its popularity is uncertain in the current times or in the later future,one such field of engineering particularly in demand in the immediate future is "Prompt Engineering".
+
+# **Data**
+
+-   The dataset consists of 62642 rows and 29 column and out of which only 10 are relevant to analysis not to forget 10 columns after tidying the data as few columns were created by separating columns into new column, this will be discussed in detail in tidying the data section. Dataset is "metadata-based dataset" which was downloaded from kaggle but the primary source of the data is website "Levels.Fyi", and glassdoor.com which based on the responses of the people created the metadata
+
+-   The original metadata contains the actual data to race, gender, education level but this dataset created from meta data does not contain the same information but it does contain vital information about the compensation distribution in the form of base salary, stock grants bonus. It consists of information about the company they are working and location of work etc.
+
+-   Reading the data and calling/or listing the libraries in use
+
+```{r warning = FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(ggrepel)
+library(plotly)
+library(tidyr)
+library(summarytools)
+
+dt <- read_csv("Data_Folder_Paritosh/Levels_Fyi_Salary_Data.csv")
+
+```
+
+-   **listing the columns**
+
+```{r warning=FALSE}
+colnames(dt)
+```
+
+-   The rows or data in the columns after column number 12 which is bonus are either "NA" or "0" or either edited so that data cannot be used most likely due to privacy reason or reasons not known hence deleting them. Before column number 12 bonus there is one column named "tag" which has nothing but "NA".
+
+-   After deleting column "tag" bonus will be column number 11 and the next step will be to delete rest of the columns after column "bonus".
+
+-   **Deleting column "tag"**
+
+    ```{r warning=FALSE}
+    dt <- subset(dt, select = -tag)
+    ```
+
+-   **deleting column 12 to 28**
+
+    ```{r warning=FALSE}
+    dt <- dt[, -c(12:28)]
+    ```
+
+-   **Updated colnames**
+
+    ```{r warning=FALSE}
+    colnames(dt)
+    ```
+
+-   **Handling NA values.**
+
+    Only column name "level" has 15 "NA" missing values but we are not using the column in any visualisations.
+
+**Summary of the dataset**
+
+```{r warning=FALSE}
+
+print(summarytools::dfSummary(dt,
+                        varnumbers = FALSE,
+                        plain.ascii  = FALSE, 
+                        style        = "grid", 
+                        graph.magnif = 0.70, 
+                        valid.col    = FALSE),
+      method = 'render',
+      table.classes = 'table-condensed')
+
+
+```
+
+-   **A few times "TYC" is used for total yearly compensation, points of interest for analysis are labelled in alphabetical order and visualisation are labelled 1.a), 2.b) the number represents the order of visualisation and the alphabet refers to research related point the visualization it is referring to and if there is not alphabet for. eg 1) 2) than it is just numbering to the plot provided and the plot is just for explanation and not referring to points of interest.**
+
+## **Tidying the Dataset**
+
+-   Our First Column "timestamp" contains date and time together date is in mm/dd/yyyy format and time is in time/minutes/seconds 24 hour format. Our aim is to split "timestamp" into three columns namely "date", "time" and "Year" which will initially help us to know the time frame in years over which the data for the dataset was collected and in the later stage will help us to learn changes in total compensation over the period of years for a Job_title within the state or across nation/nations.
+
+```{r warning=FALSE}
+#separation of time stamp into date,time and year to obatin details during what timeframe in years the data is distributed
+dt <- dt %>% separate(timestamp, into = c("date","time","year"), sep = " ") %>% 
+  mutate(year = year(mdy(date))) 
+```
+
+2\) Replacing 4 piece String of South Korea "Suwon, KG, Korea, South" and "Seoul, KG, Korea, South" into 3 pieces so that we can further divide the location column into 3 new columns namely "City", "State", "Country" so our new Strings will be "Seoul, KG, South Korea" and "Suwon, KG, South Korea".
+
+```{r warning=FALSE}
+# converting 4 pice string into 3 piece so that it can be further separated into city,state,country
+dt <- dt %>% mutate(location = str_replace(location, "Seoul, KG, Korea, South", "Seoul, KG, South Korea"))
+
+
+dt <- dt %>% mutate(location = str_replace(location, "Suwon, KG, Korea, South", "Suwon, KG, South Korea"))
+```
+
+3\) The second step which we conducted before has reduced the string types from two,three and four pieces to two pieces and three pieces. The next will create 3 new columns "City", "State", "Country" and will divide "Location" into three pieces and for 79 countries apart from United States which will have "NA" initially in "country" column which will be updated in the next step we will have complete dataset.
+
+```{r warning = FALSE}
+#separating location into city state and country so that we can carry out an independent study on individual
+dt <- dt %>%
+  separate(location, c("city", "state", "country"), sep = ", ") %>%
+  mutate(location_type = case_when(
+    nchar(country) > 2 & nchar(state) > 2 ~ "City, State, Country",
+    nchar(country) == 2 & nchar(state) > 2 ~ "City, State",
+    nchar(country) > 2 & nchar(state) <= 2 ~ "City, Country",
+    TRUE ~ "Unknown"
+  ))
+```
+
+4\) As our location column only had 2 pieces of string for United States so while separating it into 3 new column "City", "State", "Country" the "Country" column had white spaces now filling it with the name "United States".
+
+```{r warning=FALSE}
+#Checking for NA and replacing it with United States 
+dt <- dt %>%
+  mutate(country = case_when(
+    is.na(country) ~ "United States",
+    TRUE ~ country
+  ))
+```
+
+## **Points of Interest which will be Analysed(sort of research Questions)**
+
+A comparative study on total compensation,bonuses and stock grants of certain title's during the years 2017-2021 when there was a spike in salaries in United States. We will be studying the changes in compensation pre and post covid related increase in salary in United States, Overall world, and in few states in United States.
+
+a\) Whether there were changes in salary in the time span of 4 years in the world and across all roles or a few of them.
+
+b\) Did the changes in compensation in the timespan within U.S had the same or different effect on the world compensation.
+
+c\) There was Salary hike of a certain job role in 2020, we will know whether it was all over united states or not.
+
+d\) To know the skewness of data across titles.
+
+e\) Knowing the patterns between total yearly compensation and base salary, bonus and stock grants.
+
+f\) Can we say that reason for layoffs apart from inflation,slow down, and people spending less time on certain apps/sites is to meet the requirement of employees companies ended up paying exorbitantly.
+
+## **Tentative Plan of Visualisation**
+
+## **Distribution of dataset**
+
+-   As the dataset is large in my view with about 62k rows I guess we need to use visualisation's to understand the distribution of datasets. the visualisation plan for distribution of dataset is as below.
+
+    1\) Bar chart :- number/percentage(y-axis) of responses && year(x-axis)
+
+    Bar chart :- number/percentage(y-axis) of responses && Top 15 countries in terms of responses(x-axis) \[This bar chart has been excluded the reason being around 84.35% of responders are from United states, India being the second one with 4.51% of share followed by canada, United Kingdom and Germany with 2.86%, 1.9% and 0.91%, it did not make much sense to plot this graph to follow the good practices as it was just creating redundancy.\]
+
+    2\) Pie-chart :- State wise pie of top 15 states in terms of responses.
+
+    3\) Bar-chart :- number/percenatage(y-axis) && Top 15 companies in terms of responses.
+
+    **Visualisation of Salaries**
+
+    4\) table:- shows how "total yearly compensation" is distributed across ranges defined by me.
+
+    5\) Violin Plot:- Title's on x -axis and Tyc(Total Yearly Compensation) on y-axis so we can visualize their spread.
+
+    6.a)Box Plot:- Title's on x-axis Tyc on y-axis Colors show different years will help us to change in patterns of tyc across title's year over year in overall data.
+
+    7.b)Box-Plot:- this box-plot is similar to previous box plot the only difference is the plot is focusing on responses only from United States.
+
+    8.c)Box-Plot :- Title "Software Engineering" for which the responses are highest in the dataset was selected and its total yearly compensation is plotted on y-axis and x axis are states where the patterns are being studies colors show year.
+
+-   Omitted Box-Plots and facet's:- Box-plots for countries other than united states, India, and tyc of titles such as Product Manager, Software Engineering Manager, Data Scientist across states was omitted due absence of meaningful patterns or less diversity in the dataset or to create plots that make sense. Before plotting titles mentioned such as P.M, S.E.M, Data Scientist across states facet grid but for every title other than software engineer the plot provided same information as of box plot for U.S.
+
+-   9.d) Combination of Scatter, Bar, Line Plot :- Title's were plotted on x-axis and and average \_salary of titles on y-axis median salary was plotted as points using scatter plots and points were connected using line plot.
+
+-   10.e), 11.e), 12.e) 3 Scatter Plots showing tyc on y axis and on x-axis bonus, stock grant value, base salary to look for patterns.
+
+-   13.f), 14.f) table shows patterns of salary across companies to learn whether company is over paying compared to peers which might have led to depreciation of stock price and higher amount of layoffs.
+
+-   **A few times "TYC" is used for total yearly compensation, points of interest for analysis are labelled in alphabetical order and visualisation are labelled 1.a), 2.b) the number represents the order/numbering given to visualisation's or plot and the alphabet refers to research related point the visualization is referring to and if the alphabet is absent for. eg 1) ,2) than it is just numbering/order to the plot provided and the plot is just for explanation and not referring to points of interest.**
+
+## **Visualization related to dataset**
+
+## **1) Year wise distribution of responses**
+
+```{r warning=FALSE}
+#yearwise number and percentage of responses 
+dt %>% 
+  count(year) %>% 
+  arrange(desc(n)) %>% 
+  mutate(percentage = n/sum(n)) %>% 
+  mutate(label = paste0(sprintf("%.1f", percentage*100), "% (", n, ")")) %>%
+  ggplot(aes(x = reorder(year, -percentage), y = percentage)) +
+  geom_bar(stat = "identity", fill = "brown") +
+  labs(x = "Dataset spread for 5 years", y = "Percentage,Total = 62642 ",title = "Year-wise Distribution") +
+  theme(axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1, size = 8)) +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(0,0.40),
+                     breaks = seq(0,0.40,0.05)) +
+  geom_text(aes(label = label), hjust = 0.4, vjust = 0.2, size = 4)
+
+```
+
+-   From the bar chart and percentage it it is visible that about 75% responses were provided during the year's 2020 and 2021 and and about 18% are from the 2019 hence the data is much concentrated in the range 2019-2021. We should not forget to acknowledge that there are 3895 rows for the year 2018 which is significant and whether it is relevant or not can be known during further analysis of dataset.
+
+## **2) Pie-chart showing pie of each state for United States.**
+
+```{r warning=FALSE}
+#statewise distribution of responses across United States
+dt %>%  
+  select(country, state) %>% 
+  filter(country == "United States") %>% 
+  count(state) %>% 
+  arrange(desc(n)) %>% 
+  mutate(percentage = n / sum(n) * 100) %>% 
+  slice(1:10) %>% 
+ggplot(aes(x = "", y = percentage, fill = state)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%",state,n)), 
+            position = position_stack(vjust = 0.5), 
+            color = "white", size = 3) +
+  coord_polar("y", start = 0) +
+  labs(fill = "State", x = NULL, y = NULL, title = "Top 10 States in the US", subtitle = "Percentage & counts") +
+  theme_void() +
+   scale_fill_manual(values = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf")) +
+  #scale_fill_brewer(palette = "Set3")
+  theme(panel.border = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 16),
+        plot.subtitle = element_text(hjust = 0.5, size = 14))
+
+```
+
+The Pie-chart is self - explanatory showing the share of top-10 states in terms of numbers in dataset. States in the shades of Blue "CA" and "WA" dominate the share followed by NY(in Brown) and TX(in Grey) with 8.9% and 5.1%.
+
+## **3) Top 15 companies employee percentage.**
+
+```{r warning=FALSE}
+# distribution of data by companies
+dt %>%
+  count(company) %>%
+  arrange(desc(n)) %>%
+  mutate(percentage = n/sum(n)) %>% 
+  slice(1:15) %>% 
+  ggplot(aes(x = reorder(company, -percentage), y = percentage)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  xlab("Company") +
+  ylab("Percentage") +
+  ggtitle("Top 15 Companies") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 0.5)) +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(0,0.15),
+                     breaks = seq(0,0.15,0.01))
+
+  
+```
+
+-   Though the dataset in much concentrated towards America Countrywise and california Statewise but the scenario is different when it comes to companies as there are 1633 distinct in total as around 35 % is share is with Facebook, Amazon, Apple, Microsoft, Google while rest of the companies share range from 1.8%(oracle) to 0.008%.
+
+## **4) Table showing range wise distribution of** salary the ranges are defined by me.
+
+```{r warning=FALSE}
+# ranges were defined by me and range wise number of responders are visualised in a tabular form
+dt %>%
+  mutate(salary_range = case_when(
+    totalyearlycompensation > 0 & totalyearlycompensation <= 100000 ~ "0k to 100k",
+    totalyearlycompensation > 100000 & totalyearlycompensation <= 300000 ~ "100k to 300k",
+    totalyearlycompensation > 300000 & totalyearlycompensation <= 500000 ~ "300k to 500k",
+    totalyearlycompensation >= 500000 ~ "more than 500k"
+  )) %>%
+  group_by(salary_range) %>%
+  summarise(count = n())
+```
+
+This shows responders with salary more than 500k are approx 3% and this will be used as ceiling for Total yearly compensation in most of our visualizations.
+
+## **5) Violin Plot shows spread of TYC for each titles**
+
+```{r warning=FALSE}
+# Distribution of Total yearly compensation across titles
+dt %>%
+  select(title,totalyearlycompensation) %>% 
+  ggplot(aes(x = title, y = totalyearlycompensation, fill = title)) +
+  geom_violin() +
+  labs(x = "Title's", title = "Violin Plot for Title's") +
+  scale_y_continuous(limits = c(50000, 500000), breaks = seq(50000, 500000, by = 50000)) +
+  theme(axis.text.x = 
+          element_blank())
+```
+
+-   From the plot it is visible that most of the STEM related fields namely Data Scientist, Software Engineer, Software Engineering Manager, Solution Architect, Technical Program manager etc. are less oblong and more flatter signifying more diverse and high salary ranges or even outliers. While Business Analyst and Mechanical Engineer and Recruiter's salary is more concentrated downwards range 80k and 100k for business analyst and Mechanical Engineer.
+
+## **6.a) Box plot for All countries title and tyc and color is year**
+
+```{r warning=FALSE}
+# Box-Plot ! for title and year wise tyc around the world 
+dt %>% 
+  select(year,title,totalyearlycompensation) %>% 
+  group_by(year, title,totalyearlycompensation) %>%
+  summarise(count = n()) %>%
+  rename("Job Title" = title) %>%
+  ggplot(aes(x = `Job Title`, y = totalyearlycompensation, color = factor(year))) +
+  geom_boxplot(width = 0.70) +
+  labs(x = "Job Title's", y = "Total Yearly Compensation", title = "Title's Vs.TYC All Nations",color = "Year") +
+  theme(plot.title = element_text(hjust = 0.5, size = 12),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+        axis.text.y = element_text(size = 8),
+        axis.title = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12)) +
+  scale_y_continuous(limits = c(10000, 500000), breaks = seq(10000, 800000, by = 25000)) 
+   
+
+```
+
+Combined Analysis of Both box -plot is carried out after the second box-plot .
+
+## **7.b) Box Plot for united states all titles tyc and color = year**
+
+```{r warning = FALSE}
+# Box-Plot 2 for year wise and title wise salary in UNited States
+dt %>% 
+  select(country,year,title,totalyearlycompensation) %>% 
+  filter(country == "United States") %>% 
+  group_by(year, title,totalyearlycompensation) %>%
+  summarise(count = n()) %>%
+  rename("Job Title" = title) %>%
+  ggplot(aes(x = `Job Title`, y = totalyearlycompensation, color = factor(year))) +
+  geom_boxplot(width = 0.80) +
+  labs(x = "Job Title's", y = "Total Yearly Compensation", color = "Year", title = "TYC in United states for various Job roles") +
+  theme(plot.title = element_text(hjust = 0.5, size = 12),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+        axis.text.y = element_text(size = 6),
+        axis.title = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.text = element_text(size = 12)) +
+  scale_y_continuous(limits = c(10000, 450000), breaks = seq(10000, 450000, by = 25000)) 
+
+```
+
+Combined Analysis of Two Box-Plots is as Below:- We will be focusing on Median value of salaries.
+
+Business Analyst:- Salary of Business Analyst are rising in united states from 2018 to 2021 but overall world there was not significant change.
+
+Data Scientist :- Salary if Data Scientist is constant or in a very mild uptrend close to insignificant in United States and in Overall world it appears in a slight downtrend which might be insignificant.
+
+Human Resource:- Salary of Human Resource Professionals are dropping overall world and in United States.
+
+Management Consultant:- Salary of a management consultant has not much changed in overall world and United States and data for it minimal only limited for the year 2020-2021.
+
+Marketing:- Salary of Marketing Professionals have been in downward trend post 2019 both in United States and overall world.
+
+Mechanical Engineer :- Salary of Mechanical Engineer has risen post 2018 both in overall world and in United States.
+
+Product Designer:- Salary of Production Designer has not changed much both overall world and in United States.
+
+Product Manager :- Both overall and united states salary rise in 2020 post 2017.
+
+Recruiter :- Salary dropped from 2019 levels in United States and overall.
+
+Sales:- Salary dropped from 2019 levels in United States and overall.
+
+Software Engineer:- United states and overall rise upto year 2020 and then constant.
+
+Software Engineering manager:- Slight decrease in both U.S and World from 2018 surprisingly even during covid period of 2020.
+
+Solutions architect:- Decline from 2018 levels in both U.S and world but decline is greater in world than united states.
+
+Technical Program manager:- no previous data before 2020 after which it is constant i world and united states.
+
+**To Conclude covid related effect in the year 2020 on technical roles such as Business analyst, Mechanical Engineer, Product Manager, Software Engineer saw a rise in median total yearly compensation in United States.**
+
+## **8.c)Analyzing Salary of Software Engineer across states in United States.**
+
+```{r warning=FALSE}
+# box plot-3 to know year wise tyc of software engineer across states in U.S in 4 years
+dt %>% 
+  select(country,year,title,totalyearlycompensation,state) %>% 
+  filter(country == "United States",state == c("CO","DC","IL","MA","NY","OR","TX","VA","WA"),title == "Software Engineer") %>% 
+  group_by(year, title,totalyearlycompensation,state) %>%
+  summarise(count = n()) %>%
+  rename("Job Title" = title) %>%
+  ggplot(aes(x = `state`, y = totalyearlycompensation, color = factor(year))) +
+  geom_boxplot(width = 0.80) +
+  labs(x = "States", y = "Total Yearly Compensation", color = "Year",title = "TYC across states for Software Engineers" ) +
+  theme(plot.title = element_text(hjust = 0.5, size = 16),
+        axis.text.x = element_text(angle = 0, hjust = 1, size = 10),
+        axis.text.y = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12)) +
+  scale_y_continuous(limits = c(10000, 500000), breaks = seq(10000, 800000, by = 25000))
+```
+
+Median Salary of a Software Engineer has been rising in the data overall from 2019 while in United States it is rising since 2018, But, similar pattern is not visible when it comes to individual states for eg. in Colarado there was a rise till uptill 2020 but in 2021 median salary dropped from around 210k to 150k and Surprisingly in Texas median salary dropped in the year 2020 and in Washington there was not a spike visible in 2020 and a slight downward trend. In Illinois(IL) as well there was a drop in median Salary in the year 2020. Though the inference cannot be assumed as conclusive and the trend's and statistics are an outcome of responses provided.
+
+## **9.d) Title wise skewness of TYC**
+
+```{r warning=FALSE}
+dt %>%
+  group_by(`title`) %>%
+  summarise(average_salary = mean(totalyearlycompensation), 
+            median_salary = median(totalyearlycompensation)) %>% 
+  arrange(desc(average_salary)) %>% 
+  ggplot(aes(x = reorder(`title`, -average_salary), y = average_salary)) +
+           geom_bar(position = "dodge", stat = "identity") +
+  geom_point(aes(x = title, y = median_salary), color = "green", linewidth = 3) +
+  geom_line(aes(x = title, y = median_salary, group = 1), color = "blue", size = 1) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
+  labs( x = "Title's", y = "Average Salary", title = "Avg. Salary Vs. Median Salary" )
+```
+
+-   For title's Software Engineering manager, Product Manager, Sales, Hardware Engineer, Product Designer, Software Engineer, Data Scientist, Marketing, Mechanical Engineer the average salary or Mean Salary is higher than the median salary which might be due to the outliers are pulling overall average upwards. Hence, for this titles the data is right skewed or positively skewed.
+
+<!-- -->
+
+##**10.e) TYC vs. Stock Grant Value**
+
+```{r warning=FALSE}
+#Tyc on yaxis and Stock grant value on x-axis
+dt %>% 
+  select(totalyearlycompensation,stockgrantvalue) %>% 
+  ggplot(aes(y = totalyearlycompensation)) +
+  geom_point(aes(x = stockgrantvalue)) +
+  scale_y_continuous(limits = c(100000, 500000), breaks = seq(100000, 500000, by = 50000)) +
+  scale_x_continuous(limits = c(0,600000), breaks = seq(0, 600000, by = 50000), labels = scales :: comma) +
+  theme(plot.title = element_text(hjust = 0.5, size = 16),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12))
+```
+
+-   As we above 50k stock grant value it begins to lose it share and probably base salary and bonus might be gaining. once stock grant value rises above 200k there are more variation with respect to tyc and variations are at peak after 300k stock grants the variations might be due to outliers.
+
+## **11.e) TYC VS. Base salary**
+
+    ```{r warning=FALSE}
+    # TYC on y axis and base salary on x axis
+    dt %>% 
+      select(basesalary,totalyearlycompensation) %>% 
+      ggplot(aes(y = totalyearlycompensation)) +
+      geom_point(aes(x = basesalary)) +
+       geom_vline(xintercept = c(300000,360000), linetype = "dashed", color = "green") +
+      geom_hline(yintercept= c(350000,450000), linetype = "dashed", color = "brown") +
+      scale_y_continuous(limits = c(100000, 1000000), breaks = seq(100000, 1000000, by = 50000)) +
+      scale_x_continuous(limits = c(0,600000), breaks = seq(0, 600000, by = 60000), labels = scales :: comma) +
+      theme(plot.title = element_text(hjust = 0.5, size = 16),
+            axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+            axis.text.y = element_text(size = 10),
+            axis.title = element_text(size = 14),
+            legend.title = element_text(size = 14),
+            legend.text = element_text(size = 12))
+    ```
+
+-   The base salary range of 300k to 360k is where base salary gets range bound even though tyc on y axis is seen rising once the range breaks from base salary peak of 360k. Post 360k variations in base salary is visible may be due to outliers.
+
+## **12.e) TYC vs Bonus**
+
+```{r warning=FALSE}
+# tyc on y axis and bonus on x axis
+dt %>% 
+  select(totalyearlycompensation,bonus) %>% 
+  ggplot(aes(y = totalyearlycompensation)) +
+  geom_point(aes(x = bonus), color = "blue") +
+  geom_segment(aes(x = 0, y = 100000, xend = 600000, yend = 1000000), color = "red") +
+   geom_vline(xintercept = c(90000, 210000), linetype = "dashed", color = "green") +
+   geom_hline(yintercept = c(350000, 500000), linetype = "dashed", color = "brown") +
+  scale_y_continuous(limits = c(100000, 1000000), breaks = seq(100000, 1000000, by = 50000)) +
+  scale_x_continuous(limits = c(0,600000), breaks = seq(0, 6000000, by = 30000), labels = scales :: comma) +
+  theme(plot.title = element_text(hjust = 0.5, size = 16),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
+        axis.text.y = element_text(size = 10),
+        axis.title = element_text(size = 14),
+        legend.title = element_text(size = 14),
+        legend.text = element_text(size = 12))
+```
+
+-   once the total yearly compensation is more than 500k the bonus is highly variable. Total yearly compensation at 500k and bonus at 40% of Total Yearly Compensation at 210k the variation in the data is pretty high once 210k breaks it might be due to less number responses for total yearly compensation higher than 500k.
+
+## **13.f) Table is used as benchmark for n= total reponses or employees who provided responses, total_salary = sum of Tyc's of employee's or responders rest is self_explanatory.**
+
+```{r}
+dt %>% 
+  group_by(`company`) %>%
+  summarise(total_salary= sum(totalyearlycompensation), total = n(), median_company = median(totalyearlycompensation)) %>%  
+  arrange(desc(total_salary)) %>% 
+  mutate(salary_employee = total_salary/total) 
+```
+
+-   salary_employee:- which is (sum of total yearly compensation of all responders) divided by total responses for company) if we look at individual companies it provide us vital information about current depreciation in stock prices and layoff in some companies.
+
+-   check out the next table and compare the last column from first table and second it is observed in the second table the salary_employee is well above 300k and as per news analysis the companies in the second table have faced much difficulties due to depreciation of stock prices and laying off more employees which i believe from the analysis is due to very high salary_employee compared to peers.
+
+## **14.f) Below table shows selected companies which compare to table 13.f) paid exorbitantly**
+
+```{r warning=FALSE}
+dt %>% 
+  filter( company == c("Facebook","Netflix","Twitter","Lyft","Airbnb","Snap")) %>% 
+ group_by(`company`) %>%
+  summarise(total_salary= sum(totalyearlycompensation), total = n(), median_company = median(totalyearlycompensation)) %>%  
+  arrange(desc(total_salary)) %>% 
+  mutate(salary_employee = total_salary/total) 
+```
+
+## **Conclusion**
+
+conclusion is provided for each research question as it labelled above in alphabetical order.
+
+a\) ,b) combined :- 1) Business Analyst:- were paid more in 2021 than in 2018 in united states but worldwide there was not much change.
+
+2\) Data Scientist:- Salary has not changed much in United States but in Overall world it is dropping
+
+3\) for hardware engineer there is not a significant change but worldwide it is dropping
+
+4\) Product Manager:- in U.S their salary has risen from 2018 to 2021 but worldwide there is not much change.
+
+5\) Software Engineering Manager:- both worldwide and in U.S their salary is dropping but the downward trend is faster in the world.
+
+roles such as Project Manager, Software Engineer, Mechanical Engineer and Business Analyst saw covid related hike in compensation in United States in the year 2020.
+
+Rest of the Job roles followed almost same pattern as United States.
+
+**Assumption Reasoning:- Salary for responders outside of U.S is assumed to be in USD the reson being i had a look at the compensations in India and it did not make any sense in local currency terms if the responders provided the salary in local terms it might be converted to Purchasing power parity terns as it made sense looking at the numbers.**
+
+c\) There were a few states which were outliers and did not follow the same trend patterns as the whole united states followed for "Software Engineer" a detailed explanation is provided under the plot 8.c).
+
+d\) for certain job roles such as Software Engineering manager, Product Manager, Sales, Hardware Engineer, Product Designer, Software Engineer, Data Scientist, Marketing, Mechanical Engineer the data is positively skewed.
+
+e\) TYC vs. Stock Grant Value :- As we above 50k stock grant value it begins to lose it share and probably base salary and bonus might be gaining. once stock grant value rises above 200k there are more variation with respect to tyc and variations are at peak after 300k stock grants the variations might be due to outliers.
+
+e\) TYC VS. Base salary:- The base salary range of 300k to 360k is where base salary gets range bound even though tyc on y axis is seen rising once the range breaks from base salary peak of 360k. Post 360k variations in base salary is visible may be due to outliers.
+
+e\) TYC vs Bonus:- once the total yearly compensation is more than 500k the bonus is highly variable. Total yearly compensation at 500k and bonus at 40% of Total Yearly Compensation at 210k the variation in the data is pretty high once 210k breaks it might be due to less number responses for total yearly compensation higher than 500k.
+
+f\) Comparing table 13.f) and 14.f) companies like Facebook, Twitter, Netflix, Snap, Lyft Airbnb paid their employees exorbitantly and it affected their Stock prices and also they had Layoff more employees.
+
+## **Bibliography**
+
+1\) R Graph Gallery :- https://r-graph-gallery.com/
+
+2\) Data Programming 101 youtube :- https://www.youtube.com/\@RProgramming101
+
+3\) Other youtube ggplot2 webinar:- https://www.youtube.com/watch?v=h29g21z0a68&t=4223s , https://www.youtube.com/watch?v=0m4yywqNPVY&t=430s
+
+4\) Youtube BioinfQuests channel, lubridate :- https://www.youtube.com/watch?v=mutrbBdEbUM
+
+5\) Data Source :- https://www.kaggle.com/datasets/jackogozaly/data-science-and-stem-salaries,
+
+kaggle got the dataset from the responses at glassdoor and website :- https://www.levels.fyi/?compare=Tata%20Consultancy%20Services,Accenture,Infosys&track=Software%20Engineer
+
+6\) Dacss 601 Tutorials and Challenges.
+
+7\) reorder from Rpub:- https://www.rpubs.com/dvdunne/reorder_ggplot_barchart_axis

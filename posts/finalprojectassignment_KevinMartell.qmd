@@ -1,0 +1,294 @@
+---
+title: "Final Project Assignment#1: Kevin Martell Luya"
+author: "Kevin Martell Luya"
+description: "Project & Data Description"
+date: "04/25/2023"
+format:
+  html:
+    df-print: paged
+    toc: true
+    code-copy: true
+    code-tools: true
+    css: styles.css
+categories:
+  - final_Project_assignment_1
+  - final_project_data_description
+editor_options: 
+  chunk_output_type: console
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(here)
+library(mosaic)
+library(lubridate)
+library(stringr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Part 1. Introduction {#describe-the-data-sets}
+
+
+
+Data.world is a platform for data collaboration, analysis, and sharing
+designed to help teams and organizations discover, use, and publish
+high-quality data in different contexts such as sports. Sports are a fundamental aspect of human culture and have been practiced for thousands of years. They provide a platform for physical activity, competition, and entertainment. Swimming is one of the many sports that have gained popularity around the world due to its many health benefits and its inclusion in major international events like the Olympics. Swimming features a variety of events, including freestyle, breaststroke, backstroke, and butterfly. The world records for each event are continually being broken by exceptional athletes who push the limits of human performance.
+
+The swimming events at the Olympic Games are a highly anticipated
+competition featuring some of the world's top athletes. Swimmers compete
+in a variety of disciplines, including freestyle, breaststroke,
+backstroke, butterfly, and medley, with races ranging from 50 meters to
+1500 meters. Because analyzing a vast number of swimming history records it is 
+of the scope of this paper, we will focusn on The top 200 time swimming styles 
+and answer the following research questions:
+
+   
+    1.Are there any patterns or trends in the progression of swimming
+    world records over time? For example, are records being broken more
+    frequently in certain events or during certain time periods?
+
+    2.Is there a relationship between a swimmer's age, gender, or
+    nationality and their likelihood of breaking a world record? For
+    example, do younger or older swimmers tend to break records more
+    often than their peers?
+
+    3.How do different strokes or distances compare in terms of the
+    frequency and magnitude of world record breaking? For example, are
+    world records more likely to be broken in shorter or longer races,
+    or in certain stroke categories?
+
+    4.Have advancements in technology or changes in swimming equipment
+    had an impact on the frequency or magnitude of world record
+    breaking? For example, have swimsuits or other equipment innovations
+    led to more world records being broken in recent years?
+
+
+## Part 2. Describe the data set(s) {#describe-the-data-sets-1}
+
+
+Top 200 times in swimming styles includes details such as the event names, swim times, and swim dates for each swimmer's performance, as well as information about the team they represent, their full name, gender, birth date, rank order, city, country code, and duration of their swim. In this datase each row representing a different swimmer and each column containing a specific piece of information about that swimmer's performance. The data appears to be sourced from various international swimming competitions, including the Olympic Games, the FINA World Championships, and national championships in different countries.
+This dataset could be used to analyze trends in the Men's 100 Freestyle event over time, such as changes in performance or the dominance of certain countries or swimmers. It could also be used to compare and contrast the performance of different swimmers or teams across various competitions.
+
+
+
+1.  Read the dataset
+```{r}
+df_swim<- read_csv("./_data/swimming_database.csv")
+df_swim
+```
+
+2.  Present the descriptive information of the dataset(s) 
+
+This data set has records from 716 different swimmers from around the world who 
+participated in 474 events at different times in history .
+```{r}
+dim(df_swim)
+length(unique(df_swim$`Event Name`))
+length(unique(df_swim$`Team Name`))
+length(unique(df_swim$`Athlete Full Name`))
+table(df_swim$`Event description`)
+head(df_swim)
+```
+
+
+3.  Conduct summary statistics of the dataset adn for the variable Swim time.
+```{r}
+
+df_swim <- df_swim %>%
+  mutate(
+    #`Event Name` = factor(`Event Name`),
+    #`Swim time` = factor(`Swim time`),
+    #`Swim date` = factor(`Swim date`),
+    `Event description` = factor(`Event description`),
+    `Team Code` = factor(`Team Code`),
+    `Team Name` = factor(`Team Name`),
+    `Athlete Full Name` = factor(`Athlete Full Name`),
+    `Gender` = factor(`Gender`),
+    `Athlete birth date` = factor(`Athlete birth date`),
+    `Rank_Order` = factor(`Rank_Order`),
+    `City` = factor(`City`),
+    `Country Code` = factor(`Country Code`),
+    #`Duration (hh:mm:ss:ff)` = factor(`Duration (hh:mm:ss:ff)`)
+  )
+
+summary(df_swim)
+fav_stats(df_swim$`Swim time`)
+
+```
+    
+Let's make quick view the number of record set by each country from 1980 to 2022.
+```{r}
+p <- ggplot(df_swim, aes(x = df_swim$`Team Code`)) + 
+  geom_bar(stat = 'count') +
+  coord_flip() +
+  labs(title = "Number of record set by each country from 1980 to 2022 ",
+       x = "Number of records", y ="Countries")
+p
+
+```
+We can see that the dominant countries are The United States, Australia, Japan, China, and Great Britain. Our interest is not to analyse why they have the majority of records set from 1980 to 2022, but finding hidden patterns that can be evidenciated by data analysis.
+
+To answer the first research question: Are there any patterns or trends in the progression of swimming world records over time? We can inspect the records being broken more frequently in certain events or during certain time periods. 
+
+The first step is to have a dedicated column with the year when the event took place. Let's extract the year of the Swim Date column using the stringr library. This will facilitate and shorten the code implementation for the next research questions.
+
+```{r}
+# extracting the event year
+date <- parse_date_time(df_swim$`Swim date`, orders = "mdy")
+# concatenating the years as a new column
+df_swim$event_year = year(date)
+# sanity check
+head(df_swim)
+sum(df_swim$event_year == "")
+
+# extracting the athletes birth year
+date <- parse_date_time(df_swim$`Athlete birth date`, orders = "mdy")
+# concatenating the event_athle_age as a new column
+df_swim$event_athle_age = df_swim$event_year -  year(date)
+#sanity check
+df_swim
+```
+One interesting idea to investigate is whether the number of broken records is higher during certain time periods. To explore this, I plan to create a histogram of the years in which the most records were broken for specific events. This visualization will provide an overview of the trends in record-breaking across different time periods, which could potentially reveal patterns and help me draw meaningful conclusions from the data.
+```{r}
+min_year <- min(df_swim$event_year)
+max_year <- max(df_swim$event_year)
+
+p <- ggplot(df_swim, aes(x = df_swim$event_year)) + 
+  geom_bar(stat = 'count') +
+  scale_x_continuous(breaks = seq(min_year, max_year, by = 2 )) +
+  labs(title = "Number of record set per year from 1980 to 2022 ",
+       x = "Years", y ="Number of records")
+p
+```
+The data shows that from 1980 to 2020, swimmers of different ages, nationalities, and categories have continuously set new world records, pushing the limits of the discipline. In order to gain a deeper understanding of this trend, I plan to analyze the years 2008, 2009, 2016, 2019, and 2021, and observe which swimming events have set the most new records, regardless of nationality, gender, or age. By doing so, I hope to uncover patterns that may reveal whether certain time periods are associated with more frequent record-breaking. In addition, I plan to create a histogram of the years in which the most records were broken for specific events, which will provide a useful visual representation of the trends in record-breaking across different time periods.
+
+```{r}
+
+min_age <- 14
+max_age <- 20
+
+# Filter the data to include only participants aged 14 to 20
+filtered_data <- df_swim %>%
+  filter(
+      df_swim$event_year == 2008 |
+      df_swim$event_year == 2009 |
+      df_swim$event_year == 2016 |
+      df_swim$event_year == 2019 |
+      df_swim$event_year == 2021 )
+
+print(filtered_data)
+
+filtered_data <- filtered_data %>%
+  mutate(event_year  = factor(event_year))
+
+
+p <- ggplot(filtered_data, aes(`Event description`, fill = event_year)) +
+  geom_histogram(stat = "count",position="dodge2") +
+  theme(legend.position = "top") +
+  coord_flip() +
+  labs(x = "Type of wimming event", y = "Number of broken records ", title = "Broken records by swimming event in years 2010 and 2021") +
+  guides(fill = guide_legend(title = "Year of observation"))
+
+p  
+```
+
+By analyzing the years 2008, 2009, 2016, 2019, and 2021, I have observed that short swimming events, have been broken more frequently during this periods. Furthermore, specific swimming events such as the Women's 100-meter Backstroke and the Men's 100-meter Breaststroke are particularly representative of this pattern. By identifying such trends, I hope to gain a deeper understanding of the factors that contribute to record-breaking in swimming and how it has evolved over time.
+
+Another view of this pattern we found. 
+```{r}
+# Create a histogram of the filtered data
+p <- ggplot(filtered_data, aes(x =filtered_data$`Event description` )) +
+  #geom_bar(stat = "count") +
+  geom_bar(aes(fill= filtered_data$event_year), position = position_stack(reverse = TRUE)) +
+  theme(legend.position = "top") +
+  coord_flip() +
+  labs(x = "Type of wimming event", y = "Number of broken records ", title = "Broken records by swimming event in years 2010 and 2021") +
+  guides(fill = guide_legend(title = "Year of observation"))
+p
+
+```
+
+
+To investigates the relationship between a swimmer's age, gender, or nationality and their likelihood of breaking a world record, requires several conditions to be met. These conditions include filtering the data by the same age, event name, team, and gender. After preprocessing the data, the distribution of ages of each swimmer at the year of the competition will be checked, and the ages of top records that participated in different events over time will be visualized. By following this plan, we can analyze the data and determine what are the possible trends.
+    
+Let's plot a histogram
+```{r}
+p <- ggplot(df_swim, aes(x = df_swim$event_athle_age)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "gray",show.legend = TRUE) +
+  xlim(0,50) +
+  labs(title = "A histogram showing the distribution of ages when the swimmers participated in a contest",
+       x = "Ages", y ="Number of swimmers")
+p
+```
+The distribution of ages follows a bell-shaped curve which suggests that it is normally distributed. Observing the histogram, younger and older swimmers tend to break records.
+
+
+```{r}
+min_age <- 14
+max_age <- 20
+
+# Filter the data to include only participants aged 14 to 20
+filtered_data <- df_swim %>%
+  filter(
+      (df_swim$event_athle_age) >= min_age &
+      (df_swim$event_athle_age) <= max_age)
+
+print(filtered_data)
+min_year <- min(filtered_data$event_year)
+max_year <- max(filtered_data$event_year)
+# Create a histogram of the filtered data
+ggplot(filtered_data, aes(x = filtered_data$event_year, fill = "blue")) +
+  geom_histogram(binwidth = .5, alpha = 0.5, position = "identity") +
+  scale_x_continuous(breaks = seq(min_year, max_year, by = 2 )) +
+  scale_fill_manual(values = "blue") +
+  labs(x = "Year of competition", y = "Number of Swimmers ", title = "Swimmers whose ages were from 14 to 20 at given year competiton")
+```
+
+Let's show how the performance of the top 200 swimming styles in 100-meters free style
+have progressed in time per country.
+
+```{r}
+
+
+
+```
+
+
+## 3. The Tentative Plan for Visualization {#the-tentative-plan-for-visualization}
+
+1.  Briefly describe what data analyses (**please the special note on
+    statistics in the next section)** and visualizations you plan to
+    conduct to answer the research questions you proposed above.
+
+2.  Explain why you choose to conduct these specific data analyses and
+    visualizations. In other words, how do such types of statistics or
+    graphs (see [the R Gallery](https://r-graph-gallery.com/)) help you
+    answer specific questions? For example, how can a bivariate
+    visualization reveal the relationship between two variables, or how
+    does a linear graph of variables over time present the pattern of
+    development?
+
+3.  If you plan to conduct specific data analyses and visualizations,
+    describe how do you need to process and prepare the tidy data.
+
+    -   What do you need to do to mutate the datasets (convert date
+        data, create a new variable, pivot the data format, etc.)?
+
+    -   How are you going to deal with the missing data/NAs and
+        outliers? And why do you choose this way to deal with NAs?
+
+4.  (Optional) It is encouraged, **but optional**, to include a coding
+    component of tidy data in this part.
+
+## References
+
+    - For reference, you can check out [the source of the dataset](https://data.world/romanian-data/swimming-dataset-top-200-world-times)

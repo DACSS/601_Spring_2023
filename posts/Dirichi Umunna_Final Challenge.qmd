@@ -1,0 +1,464 @@
+---
+title: "Final Challenge"
+author: "Dirichi Umunna"
+description: "Final Project"
+date: "05/25/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - Final Project
+  - Dirichi Umunna
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readxl)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+
+
+
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Abstract
+
+HIV/AIDS stigma remains a significant challenge in Africa, with detrimental consequences for affected individuals and communities. This study aims to explore the complex relationship between HIV/AIDS stigma and key demographic variables, including educational level, gender, and media exposure, in order to shed light on the prevailing dynamics and regional variations. By employing a diverse range of complex visualizations, this research delves into the rich dataset to uncover meaningful insights, with a particular emphasis on storytelling through visualization. Existing literature highlights the multifaceted nature of stigma and its far-reaching consequences, including barriers to prevention, treatment, and support services. However, little attention is paid to the individuals who hold these stigmatizing beliefs (Cort, 2018). This study contributes to the scholarship on HIV/AIDS in Africa by examining the influence of demographic factors such as educational level, gender, and media exposure and regional variations in the development of stigmatizing beliefs. This study seeks to bridge these gaps in the literature and contribute to a more nuanced understanding of HIV/AIDS stigma in the African context.
+
+## Introduction
+
+Extensive literature exists on HIV/AIDS stigma, examining its origins, consequences, and factors contributing to its persistence. The literature highlights that HIV/AIDS stigma is fueled by various factors, including fear, misconceptions, cultural beliefs, and moral judgments. While there is a substantial body of research on HIV/AIDS in Sub-Saharan Africa, a literature gap exists in that it fails to address the development of stigmatizing beliefs among individuals who hold such beliefs (Billings et al., 2021; Cort et al. 2018, Cort et al. 2023). This study aims to address these gaps in the literature by exploring HIV/AIDS stigma in the African context, taking into account regional variations and the influence of demographic factors. By employing a multidimensional approach and utilizing complex visualizations, this research seeks to uncover nuanced insights into the relationships between stigma, educational level, gender, and media exposure. Specifically, this study investigates the relationship between stigma and demographic factors, including educational level, gender, and media exposure while also examining how HIV/AIDS stigma vary across different regions of Africa.
+
+## Dataset Introduction
+
+```{r}
+#read in dataset to get an accurate description.
+dhsorig <- haven::read_dta("/Users/dirichiumunna/Downloads/dhs_subset.dta")
+
+#getting a brief summary of the data
+dim(dhsorig)
+
+```
+
+The dataset used in this study is derived from the Demographic and Health Surveys (DHS), a project conducted by ICF International in collaboration with national statistical offices and ministries of health in various countries. The DHS program collects comprehensive and nationally representative data on population, health, and socio-economic indicators. The dataset comprises individual-level information collected through the DHS surveys conducted in multiple African countries. Each row in the dataset represents a participant or respondent who took part in the survey.
+
+## Dataset Description
+
+The dataset used in this study consists of 735,255 observations and 16 variables. These variables include demographic information such as age, gender, marital status, household size, and urban/rural residence as well as the year of interview. Health-related variables encompass HIV/AIDS stigma, HIV knowledge, sexual behavior, healthcare utilization, and access to healthcare services. Socio-economic variables capture educational attainment, employment status, household wealth, and media exposure. Additionally, geographic variables provide information on the region, province, or specific geographic location of each respondent. This comprehensive dataset enables the exploration of various factors related to HIV/AIDS and their interplay with demographic, health, socio-economic, and geographic factors.
+
+```{r}
+
+# Recode missing values and rename stigma variables
+dhsorig <- dhsorig %>%
+  mutate(
+    v754dp = ifelse(v754dp %in% c(8, 9), 1, v754dp),
+    v754cp = ifelse(v754cp %in% c(8, 9), 1, v754cp),
+    v756 = ifelse(v756 %in% c(8, 9), 1, v756),
+    v754jp = ifelse(v754jp %in% c(8, 9), 1, v754jp),
+    v754wp = ifelse(v754wp %in% c(8, 9), 1, v754wp)
+  ) %>%
+  drop_na(v754dp, v754cp, v756, v754jp, v754wp) %>%
+  rename(
+    stigma1 = v754dp,
+    stigma2 = v754cp,
+    stigma3 = v756,
+    stigma4 = v754jp,
+    stigma5 = v754wp
+  )
+
+
+# Get aggregate stigma score and create stigma frequency category
+dhsorig <- dhsorig %>%
+  mutate(
+    stigma_total = rowSums(select(., stigma1, stigma2, stigma3, stigma4, stigma5)),
+    stigma_frequency = case_when(
+      stigma_total %in% 0:2 ~ "Low",
+      stigma_total %in% 3:5 ~ "High",
+      TRUE ~ NA_character_
+    )
+  )
+
+# Inspect and scale the media exposure variable
+
+dhsorig <- dhsorig %>%
+  mutate(
+    media_total = rowSums(select(., paper1, radio1, tv1)),
+    media_exposure = case_when(
+      media_total %in% 3:6 ~ "Low",
+      media_total %in% 7:10 ~ "Moderate",
+      media_total %in% 11:15 ~ "High",
+      TRUE ~ NA_character_
+    )
+  )
+
+# Create education category and gender variable
+dhsorig <- dhsorig %>%
+  mutate(
+    educ_category = case_when(
+      educ2 <= 3.1679 ~ "Low",
+      educ2 > 3.1679 & educ2 <= 5.3262 ~ "Moderate",
+      educ2 > 5.3262 ~ "High",
+      TRUE ~ NA_character_
+    ),
+    gender = ifelse(males == 1, 1, 2)
+  )
+
+# Select relevant variables for visualization
+dhs_modified <- dhsorig %>%
+  select(year, educ2, educ_category, stigma_total, stigma_frequency, media_total, media_exposure, gender, country, soafrica, wafrica, cafrica, eafrica)
+
+# modify country variable
+dhs_modified <- dhs_modified %>%
+  mutate(country_name = case_when(
+    country == 2 ~ "Burkina Faso",
+    country == 4 ~ "Cameroon",
+    country == 5 ~ "Chad",
+    country == 6 ~ "Congo DR",
+    country == 7 ~ "Ivory Coast",
+    country == 8 ~ "Ethiopia",
+    country == 9 ~ "Gabon",
+    country == 10 ~ "Gambia",
+    country == 11 ~ "Ghana",
+    country == 12 ~ "Guinea",
+    country == 13 ~ "Kenya",
+    country == 14 ~ "Lesotho",
+    country == 15 ~ "Liberia",
+    country == 16 ~ "Malawi",
+    country == 17 ~ "Mali",
+    country == 18 ~ "Mozambique",
+    country == 19 ~ "Namibia",
+    country == 20 ~ "Niger",
+    country == 21 ~ "Rwanda",
+    country == 22 ~ "Senegal",
+    country == 23 ~ "Sierra Leone",
+    country == 24 ~ "Swaziland",
+    country == 25 ~ "Tanzania",
+    country == 26 ~ "Togo",
+    country == 27 ~ "Uganda",
+    country == 28 ~ "Zambia",
+    country == 29 ~ "Zimbabwe",
+    country == 31 ~ "Benin",
+    country == 32 ~ "Comoros",
+    country == 33 ~ "Congo B",
+    country == 34 ~ "Madagascar",
+    country == 35 ~ "Nigeria",
+    country == 36 ~ "Sao Tome",
+    TRUE ~ NA_character_
+  ))
+
+
+#create gender variable
+dhs_modified <- dhs_modified %>%
+  mutate(new_gender = ifelse(gender == 1, "Male", "Female"))
+
+
+```
+
+## Analysis Plan
+
+This dataset presents some challenges as it lacks some of our variables of interest. Consequently, we have to create new variables to capture stigma, media exposure, and recode the educational and gender variables. For the stigma variable, we selected five scale items related to attitudes towards HIV/AIDS, coding stigmatizing responses as higher numbers. These items include willingness to care for relatives with AIDS, willingness to live with someone infected with HIV, opinions on infected teachers, and willingness to buy from an HIV-positive vendor. Additive scaling was used to calculate an overall stigma score. Similarly, we created a media exposure variable by combining individual scores from media variables such as paper, TV, and radio. Both media exposure and education were categorized into low, moderate, and high categories. We further mutated several variables changing their properties from numeric to categorical so that we can perform the analysis. Broadly, our plan ranges from data preparation, exploratory analysis of our variables of interest, visualization and interpretations.
+
+## Results: Analysis and Visualization: Overall Stigma Exploration
+
+```{r}
+
+# Create vectors with the African regions
+west_africa <- c("Burkina Faso", "Ivory Coast", "Gambia", "Ghana", "Guinea", "Liberia", "Mali", "Niger", "Senegal", "Sierra Leone", "Togo", "Nigeria")
+central_africa <- c("Cameroon", "Chad", "Congo DR", "Gabon")
+east_africa <- c("Ethiopia", "Kenya", "Malawi", "Mozambique", "Rwanda", "Tanzania", "Uganda")
+southern_africa <- c("Lesotho", "Namibia", "Swaziland", "Zambia", "Zimbabwe")
+
+
+# Create a new column "Region" in the dhs_modified dataset and assign the regions accordingly
+dhs_modified$Region <- ifelse(dhs_modified$country_name %in% west_africa, "West Africa",
+                              ifelse(dhs_modified$country_name %in% central_africa, "Central Africa",
+                                     ifelse(dhs_modified$country_name %in% east_africa, "East Africa",
+                                            ifelse(dhs_modified$country_name %in% southern_africa, "Southern Africa", NA)
+                                     )
+                              ))
+
+
+#remove missing cases
+dhs_modified <- subset(dhs_modified, !is.na(Region))
+
+#Check the updated dataset with the new "Region" column
+head(dhs_modified)
+
+
+```
+
+Here, we performed data preprocessing and created a new variable called "Region" based on the countries in the dataset. We classified the countries into four regions: West Africa, Central Africa, East Africa, and Southern Africa. This was achieved by using conditional statements to assign the corresponding region based on the country name. We then removed cases with missing values in the "Region" column to ensure data integrity. These steps allowed us to categorize the countries in the dataset into their respective regions, providing a useful grouping for further analysis. This information on regional categorization will contribute to our understanding of the diverse African context in relation to HIV/AIDS stigma.
+
+### Descriptive Statistics
+
+```{r}
+
+# Calculate the mean results
+mean_stigma_total <- mean(dhs_modified$stigma_total, na.rm = TRUE)
+mean_media_exposure <- mean(dhs_modified$media_total, na.rm = TRUE)
+mean_educational_level <- mean(dhs_modified$educ2, na.rm = TRUE)
+
+# Create a data frame for the mean results
+mean_results <- data.frame(
+  Variable = c("Stigma Total", "Media Exposure", "Educational Level"),
+  Mean = c(mean_stigma_total, mean_media_exposure, mean_educational_level)
+)
+
+# Print the table
+print(mean_results)
+
+```
+
+We computed the mean values for three important variables: stigma total, media exposure, and educational level. Upon calculating the mean values, we found that the mean stigma score was 3.2 out of a maximum score of 5. This indicates that, on average, individuals exhibited a moderate level of stigma towards HIV/AIDS. It is important to note that a higher stigma score reflects a greater level of stigmatizing attitudes and beliefs. Regarding media exposure, we observed a mean score of 6.9 out of 10. This suggests that, on average, individuals had a moderate level of exposure to media channels such as newspapers, television, and radio, which are influential in shaping perceptions and knowledge related to HIV/AIDS.Furthermore, the mean educational level was found to be 5.3 years. This indicates that, on average, individuals in the studied population had completed approximately 5.3 years of formal education. These variables are significant factors in shaping awareness, understanding, and attitudes towards HIV/AIDS stigma development among individuals that hold stigma.
+
+```{r}
+
+# Filter out non-numeric values in stigma_total
+filtered_data <- dhs_modified %>%
+  filter(is.numeric(stigma_total))
+
+# Calculate the mean stigma frequency for each distinct country
+mean_stigma <- filtered_data %>%
+  group_by(country_name) %>%
+  summarise(mean_stigma = mean(stigma_total, na.rm = TRUE))
+
+# Sort the mean_stigma dataframe by mean_stigma in descending order
+mean_stigma <- mean_stigma %>%
+  arrange(desc(mean_stigma))
+
+# Create a bar chart of stigma frequency with two colors
+ggplot(mean_stigma, aes(x = country_name, y = mean_stigma)) +
+  geom_bar(stat = "identity", fill = "darkgreen") +
+  labs(title = "Mean Stigma Frequency by Country", x = "Country", y = "Mean Stigma Frequency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+Here, we try to look at the distribution of the stigma around the countries in the dataset, but this doesn't tell us much as it is all centered around the mean. Let us look at the distribution of stigma by the various regions in the continent.
+
+```{r}
+ggplot(data = dhs_modified, aes(x = Region, y = stigma_total, fill = stigma_frequency)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Region", y = "Stigma Total") +
+  theme_minimal()
+
+```
+
+Now, this tells us more. We can clearly see that the highest stigma cases are concentrated around West Africa and the least stigma cases are in central Africa. This gives us a clear basis of comparisons between two regions that show opposite proportions of stigma holders.
+
+```{r}
+
+# Filter the data for countries in West Africa
+west_africa_data <- dhs_modified %>%
+  filter(Region == "West Africa")
+
+# Sort the data by stigma total in descending order
+west_africa_data <- west_africa_data[order(-west_africa_data$stigma_total), ]
+
+# Create the bar plot
+ggplot(data = west_africa_data, aes(x = country_name, y = stigma_total, fill = country_name)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Country", y = "Stigma Total", title = "Stigma Total in West African Countries") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_flip()
+
+```
+
+We delve even deeper into the West Africa region and we uncover the country with the highest cases of stigma within the region. Nigeria single handedly accounts for around 250,000 cases of higher stigma holders. This is almost double of the cases for other West African countries. Hence, we will further isolate Nigeria as our first comparison country of interest in this study.
+
+```{r}
+
+# Filter the data for countries in Central Africa
+central_africa_data <- dhs_modified %>%
+  filter(Region == "Central Africa")
+
+# Sort the data by stigma total in descending order
+central_africa_data <- central_africa_data[order(-central_africa_data$stigma_total), ]
+
+# Create the bar plot
+ggplot(data = central_africa_data, aes(x = country_name, y = stigma_total, fill = country_name)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Country", y = "Stigma Total", title = "Stigma Total in Central African Countries") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_flip()
+
+
+```
+
+We can see that within the region of Central Africa, Chad has the lowest population of low stigma holders with less than 40,000 of the population. This will form our second country of comparison. Chad and Nigeria are from different regions in the continent. Let us now look at the distribution of media exposure amongst high and low stigma holders in these two countries.
+
+```{r}
+
+# Filter the data for Nigeria and Chad
+filtered_data <- dhs_modified %>% 
+  filter(country_name %in% c("Nigeria", "Chad"))
+
+# Convert media_total to numeric
+filtered_data$media_total <- as.numeric(filtered_data$media_total)
+
+# Calculate media exposure totals for high and low stigma in Nigeria and Chad
+media_exposure_totals <- filtered_data %>% 
+  group_by(country_name, stigma_frequency) %>% 
+  summarise(media_exposure_total = sum(media_total, na.rm = TRUE))
+
+# Create the dodged bar chart
+ggplot(media_exposure_totals, aes(x = country_name, y = media_exposure_total, fill = stigma_frequency)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  labs(title = "Media Exposure by Stigma and Country", x = "Country", y = "Media Exposure Total") +
+  scale_fill_manual(values = c("High" = "darkgreen", "Low" = "lightgreen"),
+                    labels = c("High Stigma", "Low Stigma")) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+
+```
+
+These findings are rather interesting. It is anticipated that media exposure will aid in the reduction of stigmatizing beliefs. But from this visuals, we can see that higher stigma holders in Nigeria also have higher media exposure, while those that have lower stigmatizing beliefs have lower media consumption. In Chad, it is a closely similar trend, however, there is low media consumption in the country. Let us look at the educational levels by stigma beliefs.
+
+```{r}
+
+# Calculate educational level totals for high and low stigma in Nigeria and Chad
+educational_level_totals <- filtered_data %>% 
+  group_by(country_name, stigma_frequency) %>% 
+  summarise(educational_level_total = sum(educ2, na.rm = TRUE))
+
+# Create the dodged bar chart
+ggplot(educational_level_totals, aes(x = country_name, y = educational_level_total, fill = stigma_frequency)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  labs(title = "Educational Level by Stigma and Country", x = "Country", y = "Educational Level Total") +
+  scale_fill_manual(values = c("High" = "darkgreen", "Low" = "lightgreen"),
+                    labels = c("High Stigma", "Low Stigma")) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+
+```
+
+Like media exposure, we also see that higher stigma holders also have higher educational levels. Let us look at how this varies by gender.
+
+```{r}
+# Convert new_gender to factor
+filtered_data$new_gender <- factor(filtered_data$new_gender)
+
+# Calculate the stigma count by country, gender, and stigma frequency
+stigma_distribution <- filtered_data %>%
+  group_by(country_name, new_gender, stigma_frequency) %>%
+  summarise(count = n())
+
+# Create the violin plot
+ggplot(stigma_distribution, aes(x = country_name, y = count, fill = new_gender)) +
+  geom_violin() +
+  labs(title = "Stigma Distribution by Gender and Country",
+       x = "Country", y = "Count") +
+  scale_fill_manual(values = c("lightpink", "purple"), labels = c("Male", "Female")) +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+```
+
+Here, we see that males have higher stigma holders in both countries although it is significantly higher in Nigeria. Let us look at the trend of educational and media exposure over time to see if this has been consistent over time.
+
+```{r}
+
+
+# Set the year range and increment
+start_year <- 2003
+end_year <- 2017
+year_increment <- 5
+
+# Prepare the Data
+summary_data <- filtered_data %>%
+  mutate(year = as.numeric(year)) %>%
+  group_by(country_name, year) %>%
+  summarize(avg_media_exposure = mean(media_total, na.rm = TRUE),
+            avg_educational_level = mean(educ2, na.rm = TRUE))
+
+# Create the Line Plot for Media Exposure
+ggplot(summary_data, aes(x = year, y = avg_media_exposure, color = country_name)) +
+  geom_line() +
+  labs(title = "Trends of Media Exposure Over Time",
+       x = "Year",
+       y = "Average Media Exposure") +
+  scale_x_continuous(breaks = seq(start_year, end_year, year_increment)) +
+  scale_color_manual(values = c("Chad" = "blue", "Nigeria" = "red")) +
+  theme_minimal()
+
+# Create the Line Plot for Educational Level
+ggplot(summary_data, aes(x = year, y = avg_educational_level, color = country_name)) +
+  geom_line() +
+  labs(title = "Trends of Educational Level Over Time",
+       x = "Year",
+       y = "Average Educational Level") +
+  scale_x_continuous(breaks = seq(start_year, end_year, year_increment)) +
+  scale_color_manual(values = c("Chad" = "blue", "Nigeria" = "red")) +
+  theme_minimal()
+
+```
+
+We see here that is that media exposure is dropping over time for both countries and education has been consistent for Nigeria and dropping for Chad.
+
+```{r}
+
+# Calculate average stigma by year and country
+average_stigma <- filtered_data %>%
+  group_by(country_name, year) %>%
+  summarize(average_stigma = mean(stigma_total, na.rm = TRUE))
+
+# Specify the years and their labels
+years <- c(2003, 2008, 2013, 2017)
+year_labels <- as.character(years)
+
+# Create a line plot for average stigma levels over time
+ggplot(average_stigma, aes(x = year, y = average_stigma, color = country_name, group = country_name)) +
+  geom_line() +
+  scale_x_continuous(breaks = years, labels = year_labels) +
+  labs(title = "Average Stigma Levels Over Time",
+       x = "Year", y = "Average Stigma") +
+  scale_color_manual(values = c("Chad" = "blue", "Nigeria" = "red")) +
+  theme_minimal()
+
+
+```
+
+Interestingly, stigma levels seem to be dropping for Nigerians over time as it was high in the earky 2000s and abruptly decreased in the early 2010s. Meanwhile Chad's stigma beliefs started to rise in the early 2000s peaking at 2013, then dropped sharply.
+
+## Discussion
+
+The findings of this analysis shed light on the distribution of stigma related to HIV/AIDS across different regions and countries in Africa. The results reveal interesting patterns and highlight notable variations between West Africa and Central Africa.
+
+The examination of stigma distribution across regions indicates that West Africa exhibits a higher concentration of stigma cases, while central Africa shows a lower prevalence. This stark contrast provides a compelling basis for comparative analysis between these two regions. Further investigation within West Africa reveals Nigeria as the country with the highest number of stigma cases, accounting for approximately 250,000 individuals. This significant figure is almost double that of other West African countries, emphasizing the need for a focused examination of Nigeria as a primary country of interest in this study. Similarly, within the Central Africa region, Chad stands out with the lowest population of individuals exhibiting low stigma beliefs, comprising fewer than 40,000 individuals. Therefore, Chad becomes the second country of comparison due to its unique position within the continent.
+
+To gain deeper insights, we explore the distribution of media exposure among high and low stigma holders in Nigeria and Chad. Surprisingly, the visuals depict a contrasting trend to the anticipated effect of media exposure. In Nigeria, higher stigma holders demonstrate higher media exposure, while individuals with lower stigmatizing beliefs exhibit lower media consumption. Similarly, Chad exhibits a similar pattern with low media consumption overall. These findings challenge the notion that media exposure alone aids in reducing stigmatizing beliefs, suggesting that other factors might contribute to the complex dynamics of stigma.
+
+Examining educational levels alongside stigma beliefs reveals that males tend to exhibit higher levels of stigma in both countries, with Nigeria experiencing significantly higher stigma levels. This highlights potential gender-related disparities in stigma beliefs within the studied contexts.
+
+Furthermore, exploring the trends of educational levels and media exposure over time provides valuable insights into the dynamics of stigma. The analysis shows a gradual decline in media exposure over time for both Nigeria and Chad. Simultaneously, educational levels remained relatively consistent for Nigeria but experienced a decline in Chad. Interestingly, stigma levels among Nigerians showed a significant decrease in the early 2010s after peaking in the early 2000s. In contrast, Chad experienced a rise in stigma beliefs from the early 2000s, reaching its peak in 2013, followed by a sharp decline.
+
+Together, these findings contribute to our understanding of the complex nature of HIV/AIDS stigma in Africa. They highlight the regional variations and draw attention to Nigeria and Chad as distinct cases for further investigation. The unexpected relationship between media exposure and stigma beliefs challenges existing assumptions and warrants deeper exploration. Additionally, the gender disparities and the changing patterns of stigma over time provide valuable insights for designing targeted interventions and policies aimed at reducing stigma and promoting inclusivity in HIV/AIDS discourse.
+
+## Conclusion
+
+This study analyzed the distribution of HIV/AIDS stigma across different regions and countries in Africa, with a focus on West Africa and Central Africa. The findings revealed distinct patterns of stigma prevalence, with West Africa exhibiting higher levels compared to Central Africa. Nigeria emerged as a significant hotspot of stigma cases within West Africa, while Chad showcased the lowest population of individuals with low stigma beliefs in Central Africa.
+
+Further analysis explored the relationship between media exposure and stigma beliefs, challenging conventional assumptions. Surprisingly, higher stigma holders in Nigeria demonstrated higher media exposure, contrasting with expectations that media exposure would reduce stigmatizing beliefs. A similar trend was observed in Chad, albeit with overall low media consumption. Gender disparities were also evident, with males exhibiting higher stigma levels, particularly in Nigeria.
+
+Examining the trends over time revealed a decline in media exposure for both countries, while educational levels remained relatively consistent in Nigeria and declined in Chad. Notably, stigma levels decreased among Nigerians in the early 2010s after a peak in the early 2000s, whereas Chad experienced a rise in stigma beliefs until 2013, followed by a sharp decline.
+
+These findings contribute to our understanding of HIV/AIDS stigma in Africa and highlight the need for targeted interventions. The unexpected relationship between media exposure and stigma beliefs calls for further exploration of underlying factors influencing stigma dynamics. Additionally, addressing gender disparities and understanding the temporal patterns of stigma can inform policies and interventions aimed at reducing stigma and promoting inclusivity in HIV/AIDS discourse.
+
+Overall, this study emphasizes the importance of region-specific analysis, highlights Nigeria and Chad as significant cases for further investigation, and underscores the complexities surrounding HIV/AIDS stigma in Africa.

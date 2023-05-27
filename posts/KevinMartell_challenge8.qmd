@@ -1,0 +1,131 @@
+---
+title: "Challenge 8 Instructions"
+author: "Kevin Martell Luya"
+description: "Joining Data"
+date: "05/22/2023"
+format:
+  html:
+    toc: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_8
+  - railroads
+  - snl
+  - faostat
+  - debt
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to:
+
+1)  read in multiple data sets, and describe the data set using both words and any supporting information (e.g., tables, etc)
+2)  tidy data (as needed, including sanity checks)
+3)  mutate variables as needed (including sanity checks)
+4)  join two or more data sets and analyze some aspect of the joined data
+
+(be sure to only include the category tags for the data you use!)
+
+## Read in data
+
+Read in one (or more) of the following datasets, using the correct R package and command.
+
+  - military marriages ⭐⭐
+  - faostat ⭐⭐
+  - railroads  ⭐⭐⭐
+  - fed_rate ⭐⭐⭐
+  - debt ⭐⭐⭐
+  - us_hh ⭐⭐⭐⭐
+  - snl ⭐⭐⭐⭐⭐
+
+```{r}
+
+actors <- read.csv(file = "_data/snl_actors.csv",
+  header=TRUE,
+  sep = ",")
+
+casts <- read.csv(file = "_data/snl_casts.csv",
+  header=TRUE,
+  sep = ","
+  )
+
+seasons <- read.csv(file = "_data/snl_seasons.csv",
+  header=TRUE,
+  sep = ","
+  )
+head(actors)
+head(casts)
+head(seasons)
+
+```
+### Briefly describe the data
+
+The datasets are related to Saturday Night Live (SNL) and contain different types of information. The snl_casts dataset has data on the episodes and seasons in which actors were cast, while the snl_seasons dataset has information about each season, such as the number of episodes and the year it started. The snl_actors dataset contains information about each actor, including their role and type of appearance. The actors dataset has 2306 rows and 4 columns, the casts dataset has 614 rows and 8 columns, and the seasons dataset has 46 rows and 5 columns.
+
+
+## Tidy Data (as needed)
+
+Is your data already tidy, or is there work to be done? Be sure to anticipate your end result to provide a sanity check, and document your work here.
+
+```{r}
+actors  <- na.omit(actors)
+#casts   <- na.omit(casts)
+#seasons   <- na.omit(seasons)
+```
+
+
+## Join Data
+
+The casts dataframe has information about cast members in each season, but not their gender. Gender information is stored in the actors dataframe, which does not have information about the seasons. To merge the two dataframes, left_join() will be used based on actor ID. Guest stars and crew members will be filtered out using the filter() function. Finally, the count() function will be used to summarize gender makeup by season.
+```{r}
+casts_seasons <- casts %>% left_join(seasons ,by="sid")
+
+#sanity check 
+head(casts_seasons)
+```
+```{r}
+seasons_casts_actors <- casts_seasons %>% 
+  left_join(actors, by = "aid")
+
+# sanity check
+head(seasons_casts_actors)
+```
+
+After left joining three table, we enriched this table by changing the date format
+```{r}
+seasons_casts_actors <- mutate( seasons_casts_actors, 
+                   first_epid.x = as.Date( as.character(first_epid.x), format= "%Y%m%d"), 
+                   last_epid.y = as.Date(as.character(last_epid.x), format = "%Y%m%d"))
+
+#sanity check
+table(seasons_casts_actors$first_epid.x)
+
+```
+
+
+```{r}
+head(seasons_casts_actors)
+```
+
+## Visualization
+```{r}
+library(ggplot2)
+ggplot(data = seasons_casts_actors, aes(x = year, y = mean(n_episodes.x), fill = gender)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Year", y = "Number of Episodes", title = "Number of Episodes per Season") +
+  theme_minimal()
+```
+

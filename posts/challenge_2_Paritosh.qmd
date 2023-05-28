@@ -1,0 +1,115 @@
+---
+title: "Challenge 2 "
+author: "Paritosh Gandhi"
+description: "Data wrangling: using group() and summarise()"
+date: "05/26/2022"
+format:
+  html:
+    toc: true
+    code-fold: true
+    code-copy: true
+    code-tools: true
+categories:
+  - challenge_2
+  - railroads
+  - faostat
+  - hotel_bookings
+---
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Challenge Overview
+
+Today's challenge is to
+
+1)  read in a data set, and describe the data using both words and any supporting information (e.g., tables, etc)
+2)  provide summary statistics for different interesting groups within the data, and interpret those statistics
+
+## Read in the Data
+
+Read in one (or more) of the following data sets, available in the `posts/_data` folder, using the correct R package and command.
+
+-   railroad\*.csv or StateCounty2012.xls ⭐
+-   FAOstat\*.csv or birds.csv ⭐⭐⭐
+-   hotel_bookings.csv ⭐⭐⭐⭐
+
+```{r}
+htb <- read.csv(file = '_data/hotel_bookings.csv')
+
+
+
+
+#unique(df$adults)
+```
+
+Add any comments or documentation as needed. More challenging data may require additional code chunks and documentation.
+
+## Describe the data
+
+Using a combination of words and results of R commands, can you provide a high level description of the data? Describe as efficiently as possible where/how the data was (likely) gathered, indicate the cases and variables (both the interpretation and any details you deem useful to the reader to fully understand your chosen data).
+
+```{r}
+unique(htb$hotel)
+unique(htb$arrival_date_year)
+unique(htb$country)
+unique(htb$market_segment)
+unique(htb$reserved_room_type)
+unique(htb$arrival_date_month)
+
+
+```
+
+Hence, the dataset contains booking data for two types of hotels, in 3 years time frame. The guests are from 177 countries and 10 types of rooms.
+
+\
+\## Provide Grouped Summary Statistics
+
+Conduct some exploratory data analysis, using dplyr commands such as `group_by()`, `select()`, `filter()`, and `summarise()`. Find the central tendency (mean, median, mode) and dispersion (standard deviation, mix/max/quantile) for different subgroups within the data set.
+
+```{r}
+htb %>% 
+  filter(hotel == "City Hotel") %>% 
+  group_by(hotel) %>% 
+  summarize(avg_adr = mean(adr))
+```
+
+```{r}
+htb %>% 
+  summarize(avg_adr = mean(adr))
+```
+
+```{r}
+htb %>% 
+  filter(hotel == "Resort Hotel", country %in% c("PRT","GBR","USA","","FRA","POL")) %>% 
+  group_by(arrival_date_month) %>% 
+  summarise(avg_adr = mean(adr))
+  
+  
+              
+
+
+```
+
+### Explain and Interpret
+
+Be sure to explain why you choose a specific group. Comment on the interpretation of any interesting differences between groups that you uncover. This section can be integrated with the exploratory data analysis, just be sure it is included.
+
+```{r}
+table_1 <- htb%>%
+  group_by(hotel, reserved_room_type)%>%
+  summarise(price = mean(adr),
+            adults = mean(adults),
+            children = mean(children+babies, na.rm=TRUE)
+            )%>%
+  pivot_wider(names_from= hotel, 
+              values_from = c(price, adults, children))
+
+```

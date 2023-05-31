@@ -120,10 +120,22 @@ view(data)
 3.  Conduct summary statistics of the dataset : 
 
 ```{r}
-# Displaying the summary of the Patients data
+library(knitr)
 
-summary(data)
+# Displaying the summary of the Patients data in a table
+
+summary_stats <- summary(data)
+kable(summary_stats)
 ```
+
+```{r}
+# Displaying number of NAs in key variables Genetic Disorder and Disorder Subclass
+
+sum(is.na(data$`Genetic Disorder`))
+sum(is.na(data$`Disorder Subclass`))
+```
+
+Number of NA values in Genetic Disorder and Disorder Subclass are 3121 and 3140 respectively. We remove these at the start of our Data Pre-processing section since we don't want to have missing values in our important features.
 
 ## Part 5. Data Pre-processing and Analysis Plan
 
@@ -159,6 +171,8 @@ Analysis Plan :
 
 ## Part 6. Data Pre-processing and Visualization
 
+Pre-processing plan: Task 1 and 2
+
 ```{r}
 # Dropping patients with missing values in 'Genetic Disorder' and 'Disorder Subclass' columns
 data <- data[!is.na(data$`Genetic Disorder`) & !is.na(data$`Disorder Subclass`), ]
@@ -173,6 +187,8 @@ data <- select(data, -c(`Patient Id`, `Family Name`, `Institute Name`, `Patient 
 ```
 
 Dropping features that do not affect the type of genetic disorder or subclass in any way and hence analyzing them isn't of any use.
+
+Pre-processing plan: Task 3 and Specific Questions 1, 2 and 3
 
 ```{r}
 # Checking unique values in 'Test 1', 'Test 2', 'Test 3', 'Test 4', and 'Test 5' columns
@@ -194,16 +210,37 @@ data$`Test 5` <- ifelse(is.na(data$`Test 5`), -99.0, data$`Test 5`)
 ```
 
 Checking the unique values in the test results columns and replacing the missing values with an arbitrary negative value to identify them during future analysis.
-.
+
 ```{r}
-# Creating density plots for `Patient Age`,`Blood cell count (mcL)` and `White Blood cell count #(thousand per microliter)`
+# Creating density plots for `Patient Age`
+
 ggplot(data, aes(x = `Patient Age`, fill = "Patient age")) +
   geom_density(alpha = 0.5, color = "red") +
-  geom_density(aes(x = `Blood cell count (mcL)`, fill = "blood cell count"), alpha = 0.5, color = "blue") +
-  geom_density(aes(x = `White Blood cell count (thousand per microliter)`, fill = "white blood cell count"), alpha = 0.5, color = "black") +
   labs(x = "Value", y = "Density") +
-  ggtitle("Distribution of Patient Age, Blood Cell Count, and White Blood Cell Count") +
-  scale_fill_manual(values = c("red", "blue", "black"), labels = c("Patient age", "Blood cell count", "White blood cell count")) +
+  ggtitle("Distribution of Patient Age") +
+  scale_fill_manual(values = "red", labels = "Patient age") +
+  theme_minimal()
+```
+
+```{r}
+# Creating density plots for `Blood cell count (mcL)` 
+
+ggplot(data, aes(x = `Blood cell count (mcL)`, fill = "Blood cell count (mcL)")) +
+  geom_density(alpha = 0.5, color = "blue") +
+  labs(x = "Value", y = "Density") +
+  ggtitle("Distribution of Blood cell count (mcL)") +
+  scale_fill_manual(values = "blue", labels = "Blood cell count (mcL)") +
+  theme_minimal()
+```
+
+```{r}
+# Creating density plots for `White Blood cell count (thousand per microliter)` 
+
+ggplot(data, aes(x = `White Blood cell count (thousand per microliter)`, fill = "White Blood cell count (thousand per microliter)")) +
+  geom_density(alpha = 0.5, color = "black") +
+  labs(x = "Value", y = "Density") +
+  ggtitle("Distribution of White Blood cell count (thousand per microliter)") +
+  scale_fill_manual(values = "black", labels = "White Blood cell count (thousand per microliter)") +
   theme_minimal()
 ```
 
@@ -224,6 +261,7 @@ From the scatter plot, it looks like there are lot of outliers for the white blo
 # Create scatter plot of `Blood cell count (mcL)` against `Patient Age`
 ggplot(data, aes(x = `Patient Age`, y = `Blood cell count (mcL)`)) +
   geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
   labs(x = "Patient Age", y = "Blood cell count (mcL)") +
   ggtitle("Patient Age vs. Blood cell count") +
   theme_minimal()
@@ -233,6 +271,7 @@ ggplot(data, aes(x = `Patient Age`, y = `Blood cell count (mcL)`)) +
 # Create scatter plot of `White Blood cell count (thousand per microliter)` against `Patient Age`
 ggplot(data, aes(x = `Patient Age`, y = `Blood cell count (mcL)`)) +
   geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
   labs(x = "Patient Age", y = "Blood cell count (mcL)") +
   ggtitle("Patient Age vs. Blood cell count") +
   theme_minimal()
@@ -547,14 +586,19 @@ data$`H/O substance abuse`[data$`H/O substance abuse` == 'None' | data$`H/O subs
 
 I replaced arbitrary negative value(-99) in Test results feature with 0 since it implies that missing value equals a negative test which is the most appropriate to assume. I replaced the arbitrary value in White Blood cell count, Respiratory and heart rate with median and mode respectively as taking the central tendency value would make the most sense as these features are key for determining the type of genetic disorder. I replaced 'Normal (30-60)' with 'Normal', 'No record' with 'Not available', 'None' and '-' with 'No' in Respiratory Rate, Birth asphyxia, Autopsy shows birth defect, H/O radiation exposure and H/O substance abuse respectively to maintain uniformity within the sub categories. 
 
+Specific Question 4
+
 ```{r}
 # Creating the count plot for `Disorder Subclass`
 ggplot(data, aes(x = `Disorder Subclass`)) +
   geom_bar(fill = "steelblue") +
-  labs(title = "Disorder Subclass", x = "Disorder Subclass", y = "Count")
+  labs(title = "Disorder Subclass", x = "Disorder Subclass", y = "Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 From the Count plot for the subclasses of genetic disorder, I can say that most of the patients suffer from Leigh Syndrome while the least amount of children have Cancer.
+
+Specific Question 5
 
 ```{r}
 # Creating the correlation graph between Maternal gene and Genetic Disorder

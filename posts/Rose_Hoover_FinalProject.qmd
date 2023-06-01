@@ -72,6 +72,7 @@ ggpairs(ebay_transformed %>% select(duration, n_bids, cond, start_pr, log_seller
 I chose to apply a log transformation to seller rate and total price as seller rate in attempts to normalize the results. Similar to total price, seller rate had odd summary statistics and my interest was piqued. The mean seller rate was 15898.42 meaning that the average seller rate had 15898.42 positive ratings. The wide spread distribution (shown by the gray bin of the residual graph) comes from the standard deviation of 51840.32 positive reviews. The very high standard deviation meas that there is an incredibly wide spread of data and indicates that a transformation may be a useful tool to normalize the results.Pre-transformation, the data was too cluttered and confusing for clear conclusions to be reached. Post transformation the skewed original data is much more normal. It improved linearity between seller rate and total price as seen in the now significant correlation between total price and duration.
 
 As a result of the improved linearity and correlation, I feel much more confident in mapping marginal effects of coefficients to assess correlation between my variables of interest and the now logged total price. 
+<<<<<<< HEAD
 
 I used marginal effects to best plot the interaction of my variables of interest on total price. When I apply the "margins" function, it calculates the marginal effect of between coefficients of interests. In this case it will calculate the marginal effects of variables: duration of auction, starting price condition of item, number of bids and number of bids.
 
@@ -93,6 +94,31 @@ plot_model(x, type = "pred", terms = "duration")
 ```
 
 The chart shows fairly insignificant levels of correlation between starting price and duration of the bid, but a significant level of correlation between the starting price and the number of bids. The plot shows the predicted values for the response at each value for the term "duration". I plotted the marginal effect of auction duration against logged total price. Visually there is a weak negative correlation with a very wide bin of distribution between auction duration and log total price. In the plot, as the duration of the auction nearly doubles (from 2.5 to 5.0), predicted total price only decreased by less than 0.05. There is not a truly substantial change in total price with changes in log total price. The margins formula results also comes to similar conclusions as there is a marginal effect of -0.0165 which means that as duration increases by one day total price decreases by -0.0165.
+=======
+
+I used marginal effects to best plot the interaction of my variables of interest on total price. When I apply the "margins" function, it calculates the marginal effect of between coefficients of interests. In this case it will calculate the marginal effects of variables: duration of auction, starting price condition of item, number of bids and number of bids.
+
+```{r}
+data(ebay_transformed)
+x <- lm(log_total_pr ~ duration + start_pr + cond + stock_photo + log_seller_rate + n_bids, data = ebay_transformed)
+margins(x)
+
+plot_model(x, type = "pred", terms = "cond")
+```
+
+I began by calculating the marginal effects between condition of the listing and total price. If the item was listed as being used it had a marginal effect of -0.194 on total price. When examining the visual effects of condition on total price, we see items listed as new were significantly higher than those listed as used. The marginal effect of -0.194 is consistent with the significantly lower predicted total price for those items that were listed as being used opposed to the higher priced new condition listings.
+
+
+```{r}
+data(ebay_transformed)
+x <- lm(log_total_pr ~ duration + start_pr + cond + stock_photo + log_seller_rate + n_bids, data = ebay_transformed)
+plot_model(x, type = "pred", terms = "duration")
+```
+
+The chart shows fairly insignificant levels of correlation between starting price and duration of the bid, but a significant level of correlation between the starting price and the number of bids.
+
+The plot shows the predicted values for the response at each value for the term "duration". I plotted the marginal effect of auction duration against logged total price. Visually there is a weak negative correlation with a very wide bin of distribution between auction duration and log total price. In the plot, as the duration of the auction nearly doubles (from 2.5 to 5.0), predicted total price only decreased by less than 0.05. There is not a truly substantial change in total price with changes in log total price. The margins formula results also comes to similar conclusions as there is a marginal effect of -0.0165 which means that as duration increases by one day total price decreases by -0.0165.
+>>>>>>> 380772c6fb7f4efc5c98fe07b48f33fd5c1dc2e3
 
 
 I ran one last visualization between the variables n_bids and total price.  

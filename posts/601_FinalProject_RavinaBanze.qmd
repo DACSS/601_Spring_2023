@@ -1,0 +1,521 @@
+---
+title: "DACSS 601 Final Project Spring 2023"
+format: 
+    html:
+      code-fold: true
+      code-tools: true
+execute: 
+  freeze: true
+code-block-bg: true
+highlight-style: github
+author: "Ravina Banze"
+bibliography: 
+    - RB_data_files/ref.bib
+    - RB_data_files/packages.bib
+nocite: |
+    @*
+---
+
+# Visualizing the American Workforce and Mapping changes in it over the years
+
+According to the Pew Research, more than 157 Americans are part of the labor force. Over the years, particularly since 1999, the composition of the workforce has undergone significant transformations, transitioning towards a more service-oriented economy. In this research endeavor, the objective is to analyze and investigate the patterns of workforce changes utilizing the available data spanning the period from 1999 to 2018. This project adopts a focused approach by emphasizing a singular overarching research question, rather than pursuing multiple distinct research inquiries. The aim is to discern discernible patterns within the chosen scope, thereby enhancing the depth of analysis and facilitating a more comprehensive understanding of the subject matter. By adopting this methodological approach, the research endeavors to provide a coherent and cohesive examination of the identified patterns within the context of the study, enabling more robust conclusions to be drawn.
+
+### Loading all the libraries
+
+```{r}
+#| warning: false
+#| messages: false
+
+library(pacman)
+
+pacman::p_load(
+    "tidyverse", "readxl", "usethis", 
+    "ggplot2", "cowplot", "grid", 
+    "packcircles"
+)
+
+knitr::write_bib(c(.packages(), "bookdown"), "RB_data_files/packages.bib")
+
+options(file.sep = "\\")
+```
+
+## Data Cleaning and Formulation
+
+Since the size of the dataset was too large, I decided to store all of them as zip files and unzip them as required and then delete them after I have created a combined dataset.
+
+Defining an empty dataframe and other required path variables like `zip_folder` and `years` which will help locating the file.
+
+```{r}
+
+combined_data <- list()
+
+zip_folder <- "RB_data_files\\zip" # Path to zip data files
+temp_dir <- "RB_data_files\\temp_files" #Path to store all of the extracted sheets
+
+years <- c(
+  "97", "98", "99", "00", "01", "02", "03", "04", "05", "06", "07", "08",
+  "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+  "21", "22"
+) %>% unlist()
+```
+
+Unzipping and storing all of the zip files temporarily.
+
+```{r}
+#| output: false
+
+lapply(
+    list.files(
+        zip_folder, 
+        full.name = T,
+    ),
+    function(file){
+        file.list <- utils::unzip(
+            file,
+            list = TRUE,
+        )
+        files.to.extract <- file.list[!grepl("field_description", file.list$Name), "Name"]
+        
+        utils::unzip(
+            file,
+            files = files.to.extract,
+            exdir = temp_dir,
+            junkpaths = T
+        )
+    }
+)
+
+file.rename(
+    file.path(
+        "RB_data_files//temp_files", "national_dl.xls"
+    ),
+    file.path(
+        "RB_data_files//temp_files", "national_2009_dl.xls"
+    )
+)
+
+file_names <- c(list.files(path = "RB_data_files/temp_files", full.names = T))
+```
+
+Combining all of the data files under `combined_files`. Since each dataset had NA values or required skipping rows, I decided to declare the type of all the problematic or error raising columns before calling the function `dplyr::bind_rows()`. I also renamed all of the columns in the dataframe so that there is uniformity since each dataset had the columns labeled differently or in some cases had different columns towards the end. To handle for all such cases, I only renamed the useful columns and then selected them from from the sheet.
+
+After binding all of the rows I proceed to delete all of the temporary files extracted from the zips.
+
+```{r}
+#| output: false
+
+
+col.names <- c(
+    "occ_code", "occ_title", "group", "tot_emp",
+    "emp_prse", "h_mean", "a_mean", "mean_prse",
+    "h_pct10", "h_pct25", "h_median", "h_pct75",
+    "h_pct90", "a_pct10", "a_pct25", "a_median",
+    "a_pct75", "a_pct90", "a_pct90", "annual"
+)
+
+
+
+combined_files <- lapply(
+    years,
+    function(year){
+        year_pre <- ifelse( as.numeric(year) > 90, "19", "20")
+        file <- file_names[grep(paste0(year_pre, year), file_names)]
+
+        skiprows <- ifelse( 
+            as.numeric(paste0(year_pre, year)) < 2001,
+            38,
+            0
+        )
+        
+        file <- file %>%
+                stringr::str_replace_all(., "/", "//") %>%
+                readxl::read_excel(., skip = skiprows) # %>%
+                # mutate(
+                #     Year = substr(
+                #         paste0(year_pre, year),
+                #         nchar(paste0(year_pre, year)) - 3,
+                #         4
+                #     )
+                # )
+
+        # print(paste0(year_pre, year))
+        
+        if (as.numeric(paste0(year_pre, year)) < 2001){
+            print("Executing")
+            colnames(file) <- col.names
+            
+        }
+        else {
+           colnames(file) <- col.names
+        }
+
+        file$year.id<- paste0(year_pre, year)
+
+        # print(as.numeric(paste0(year_pre, year)))
+        # print(colnames(file))
+        
+        file <- file %>%
+             dplyr::select(
+                     year.id, occ_title, group, tot_emp, emp_prse, h_mean,  
+                     mean_prse, h_pct25, h_pct75, h_median, a_mean, 
+                     a_pct25, a_pct75, a_median
+             )
+        
+        file$emp_prse <- as.numeric(file$emp_prse)
+        file$tot_emp <- as.numeric(file$tot_emp)
+        file$mean_prse <- as.numeric(file$mean_prse)
+        file$h_pct75 <- as.numeric(file$h_pct75)
+        file$h_pct25 <- as.numeric(file$h_pct25)
+        file$h_median <- as.numeric(file$h_median)
+        file$h_mean <- as.numeric(file$h_mean)
+        file$a_mean <- as.numeric(file$a_mean)
+        file$a_median <- as.numeric(file$a_median)
+        file$a_pct25 <- as.numeric(file$a_pct25)
+        file$a_pct75 <- as.numeric(file$a_pct75)
+        
+        
+        return (file)
+    }
+)
+
+combined_files <- combined_files %>%
+  dplyr::bind_rows()
+
+file.remove(list.files("data//temp_files", full.names = T))
+```
+
+A quick look of the combined dataset
+
+```{r}
+head(combined_files)
+```
+
+We can see that there are some NA values right from the start. Since our focus of study is to based different `occ_title`, we need to first analyze this column
+
+```{r}
+combined_files %>% dplyr::count(occ_title)
+```
+
+Since there a lot of unique values, we need a separate column to classify each job title into a more inclusive one. We can just select the occupations marked as `Major` under the group column. This helps in identifying major fields of occupation.
+
+```{r}
+#| warning: false
+
+grouped_data <- combined_files %>%
+    dplyr::filter(grepl("major", group, ignore.case = T)) %>%
+    dplyr::group_by(., year.id, occ_title) %>%
+    dplyr::summarise(
+        tot_emp = sum(tot_emp),
+        h_mean = mean(h_mean),
+        h_pct25 = stats::median(h_pct25),
+        h_pct75 = stats::median(h_pct75),
+        h_median = stats::median(h_median),
+        a_mean = mean(a_mean),
+        a_pct25 = stats::median(a_pct25),
+        a_pct75 = stats::median(a_pct75),
+        a_median = stats::median(a_median)
+    ) %>%
+    dplyr::mutate(
+        a_median = as.double(a_median),
+        a_pct25 = as.double(a_pct25),
+        a_pct75 = as.double(a_pct75)
+    )
+
+grouped_data %>% head()
+```
+
+The data looks almost ready after this step but we still need to check `occ_title`.
+
+```{r}
+grouped_data %>% dplyr::ungroup() %>% count(occ_title) %>% print(n= 30)
+```
+
+After a quick look we can make out that almost all of the fields listed have 2 or more occurrences due to difference in cases of words. To go past this I will convert all of the names to lower and then again group it to get the correct values.
+
+```{r}
+
+combined_files %>%
+    dplyr::filter(grepl("major", group, ignore.case = T)) %>%
+    dplyr::mutate(occ_title = stringr::str_to_lower(occ_title)) %>% 
+    dplyr::count(occ_title) %>%
+    dplyr::filter(n != 20)
+```
+
+Since there is only 1 occurrence of `all_occupation`, we need to filter it out and also using `dplyr::mutate` and `grepl` match and join all the other similar professions.
+
+```{r}
+
+combined_files %>%
+    dplyr::filter(grepl("major", group, ignore.case = T)) %>%
+    dplyr::slice(-1) %>%
+    dplyr::mutate(
+        occ_title = stringr::str_to_lower(occ_title),
+        occ_title = dplyr::case_when(
+            grepl('community and social', occ_title) ~ 'community and social services occupations',
+            grepl('computer and mathematical', occ_title) ~ 'computer and mathematical science occupations',
+            grepl('healthcare practitioner', occ_title) ~ 'healthcare practitioners and technical occupations',
+            TRUE ~ occ_title
+        )
+    ) %>%
+    dplyr::count(occ_title) %>%
+    print(n=24)
+```
+
+We will have to start from `combined_files` in order to get other complex calculations like median and mean correct.
+
+```{r}
+grouped_data <- combined_files %>%
+    dplyr::filter(grepl("major", group, ignore.case = T)) %>%
+    dplyr::filter(!str_detect(occ_title, 'all_occupations')) %>%
+    dplyr::mutate(
+        occ_title = stringr::str_to_lower(occ_title),
+        occ_title = dplyr::case_when(
+            grepl('community and social', occ_title) ~ 'community and social services occupations',
+            grepl('computer and mathematical', occ_title) ~ 'computer and mathematical science occupations',
+            grepl('healthcare practitioner', occ_title) ~ 'healthcare practitioners and technical occupations',
+            TRUE ~ occ_title
+        ),
+        year.id = as.numeric(year.id)
+    ) %>%
+    dplyr::group_by(., year.id, occ_title) %>%
+    dplyr::summarise(
+        tot_emp = sum(tot_emp),
+        h_mean = mean(h_mean),
+        h_pct25 = stats::median(h_pct25),
+        h_pct75 = stats::median(h_pct75),
+        h_median = stats::median(h_median),
+        a_mean = mean(a_mean),
+        a_pct25 = stats::median(a_pct25),
+        a_pct75 = stats::median(a_pct75),
+        a_median = stats::median(a_median)
+    ) %>%
+    dplyr::mutate(
+        a_median = as.double(a_median),
+        a_pct25 = as.double(a_pct25),
+        a_pct75 = as.double(a_pct75)
+    )
+
+grouped_data %>% ungroup() %>% count(occ_title) %>% print(n = 40)
+```
+
+The categories are still a bit much and won't allow us to analyze the fields in depth. To be able to study the entire dataset we can create a new column `category`. Here are five categories you can use to group the occupations:
+
+1.  Professional Services
+
+    -   Architecture and Engineering Occupations
+
+    -   Business and Financial Operations Occupations
+
+    -   Legal Occupations
+
+2.  Creative and Media
+
+    -   Arts, Design, Entertainment, Sports, and Media Occupations
+
+3.  Service Industry
+
+    -   Building and Grounds Cleaning and Maintenance Occupations
+
+    -   Personal Care and Service Occupations
+
+    -   Food Preparation and Serving Related Occupations
+
+4.  Healthcare
+
+    -   Healthcare Practitioners and Technical Occupations
+
+    -   Healthcare Support Occupations
+
+5.  Education and Administration
+
+    -   Education, Training, and Library Occupations
+
+    -   Office and Administrative Support Occupations
+
+```{r}
+grouped_data2 <- combined_files %>%
+    dplyr::filter(grepl("major", group, ignore.case = T)) %>%
+    dplyr::filter(!str_detect(occ_title, 'all_occupations')) %>%
+    dplyr::mutate(
+        occ_title = stringr::str_to_lower(occ_title),
+        occ_title = dplyr::case_when(
+            grepl('community and social', occ_title) ~ 'community and social services occupations',
+            grepl('computer and mathematical', occ_title) ~ 'computer and mathematical science occupations',
+            grepl('healthcare practitioner', occ_title) ~ 'healthcare practitioners and technical occupations',
+            TRUE ~ occ_title
+        ),
+        year.id = as.numeric(year.id)
+    ) %>%
+  mutate(category = case_when(
+    occ_title %in% c(
+      "architecture and engineering occupations",
+      "business and financial operations occupations",
+      "legal occupations"
+    ) ~ "Professional Services",
+    occ_title %in% c("arts, design, entertainment, sports, and media occupations") ~ "Creative and Media",
+    occ_title %in% c(
+      "building and grounds cleaning and maintenance occupations",
+      "personal care and service occupations",
+      "food preparation and serving related occupations"
+    ) ~ "Service Industry",
+    occ_title %in% c(
+      "healthcare practitioners and technical occupations",
+      "healthcare support occupations"
+    ) ~ "Healthcare",
+    occ_title %in% c(
+      "education, training, and library occupations",
+      "office and administrative support occupations"
+    ) ~ "Education and Administration",
+    TRUE ~ "Other"
+  )) 
+    
+      
+  grouped_data2 <- grouped_data2 %>% 
+                  dplyr::filter(occ_title != "all occupations") %>% 
+                  dplyr::group_by(., year.id, category) %>%
+                  dplyr::summarise(
+                        tot_emp = sum(tot_emp),
+                        h_mean = mean(h_mean),
+                        h_pct25 = stats::median(h_pct25),
+                        h_pct75 = stats::median(h_pct75),
+                        h_median = stats::median(h_median),
+                        a_mean = mean(a_mean),
+                        a_pct25 = stats::median(a_pct25),
+                        a_pct75 = stats::median(a_pct75),
+                        a_median = stats::median(a_median)
+                    ) %>%
+                    dplyr::mutate(
+                        a_median = as.double(a_median),
+                        a_pct25 = as.double(a_pct25),
+                        a_pct75 = as.double(a_pct75)
+                    )
+
+head(grouped_data2)
+```
+
+## Analysis
+
+```{r}
+
+g <- grouped_data2 %>%
+    ggplot2::ggplot(., aes(x = year.id, y = tot_emp, fill = category)) +
+    geom_area()
+
+g + theme_minimal() + theme(legend.position = "none")
+```
+
+```{r}
+#| echo: false
+
+legend <- cowplot::get_legend(g)
+
+grid.newpage()
+grid.draw(legend)
+```
+
+Creating the column `emp_prct` to show percentage share of each category for each year. For validation we can group it by `year.id` and then `sum(emp_prct)`.
+
+```{r}
+
+grouped_data2 <- grouped_data2 %>%
+    dplyr::group_by(year.id) %>%
+    dplyr::mutate(emp_prct = tot_emp * 1e2/sum(tot_emp),total = sum(tot_emp)) %>%
+    dplyr::ungroup()
+
+grouped_data <- grouped_data %>%
+    dplyr::group_by(year.id) %>%
+    dplyr::mutate(emp_prct = tot_emp * 1e2/sum(tot_emp),total = sum(tot_emp)) %>%
+    dplyr::ungroup()   
+```
+
+To put the data in perspective we can re-plot on as percentage of employment for each category over the years instead.
+
+```{r}
+g <- grouped_data2 %>%
+    ggplot2::ggplot(., aes(x = year.id, y = emp_prct, fill = category)) +
+    geom_bar(stat = "identity")
+
+g + theme_minimal() + theme(legend.position = "none") 
+```
+
+```{r}
+#| echo: false
+
+legend <- cowplot::get_legend(g)
+
+grid.newpage()
+grid.draw(legend)
+```
+
+```{r}
+#| code-fold: false
+
+# Function to generate packed bubble plot for a specific year
+generate_packed_bubble_plot <- function(year, grouped_data2) {
+  data <- grouped_data2 %>%
+    filter(year.id == year) %>%
+    select(category, emp_prct)
+  
+  packing <- packcircles::circleProgressiveLayout(data$emp_prct, sizetype = 'area')
+  
+  data <- cbind(data, packing)
+  
+  dat.gg <- circleLayoutVertices(packing, npoints = 5)
+  
+  # Make the plot
+  ggplot(data = dat.gg) + 
+    geom_polygon(aes(x, y, group = id, fill = as.factor(id)), colour = "black", alpha = 0.6) +
+    geom_text(data = data, aes(x, y, size = emp_prct, label = paste0(category,": ",round(emp_prct, 2)))) +
+    scale_size_continuous(range = c(1, 4)) +
+    theme_void() +
+    theme(legend.position = "none") +
+    coord_equal() +
+    labs(title = paste("Year-", year))
+}
+```
+
+::: panel-tabset
+## 1999
+
+```{r}
+#| echo: false
+generate_packed_bubble_plot(1999, grouped_data2)
+```
+
+## 2003
+
+```{r}
+#| echo: false
+generate_packed_bubble_plot(2003, grouped_data2)
+```
+
+## 2007
+
+```{r}
+#| echo: false
+generate_packed_bubble_plot(2007, grouped_data2)
+```
+
+## 2011
+
+```{r}
+#| echo: false
+generate_packed_bubble_plot(2011, grouped_data2)
+```
+
+## 2015
+
+```{r}
+#| echo: false
+generate_packed_bubble_plot(2015, grouped_data2)
+```
+
+## 2018
+
+```{r}
+#| echo: false
+generate_packed_bubble_plot(2018, grouped_data2)
+```
+:::
+
+From the graph obtained we can see that there has been a steady growth in the `service industry` over the years along with `Professional Services`. Although `Healthcare` is one of the most important, it's employment has always been ${< 10 \%}$ which is concerning.

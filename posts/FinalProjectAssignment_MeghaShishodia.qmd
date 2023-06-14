@@ -16,8 +16,8 @@ categories:
 editor_options: 
   chunk_output_type: console
 ---
-
-
+  
+  
 ```{r}
 #| label: setup
 #| warning: false
@@ -37,12 +37,12 @@ In this project I study how COVID-19 affected each nation differently. Numerous 
 ## Dataset Introduction and Description:
 
 I have used five datasets, the source of all datasets is the official data released by Google Health and is available on https://health.google.com/covid-19/open-data/. The data has been updated till September 15, 2022. The datasets are as follows:
-
- * Index : The names and codes of nations, useful for joining with other datasets
- * Demographics : The population statistics regarding the distribution of population 
- * Epidemiology : COVID-19 cases, deaths, recoveries and tests
- * Vaccinations : Trends in persons vaccinated and population vaccination rate regarding various Covid-19 vaccines.
- * Health : Health indicators for the region like smoking prevalence
+  
+* Index : The names and codes of nations, useful for joining with other datasets
+* Demographics : The population statistics regarding the distribution of population 
+* Epidemiology : COVID-19 cases, deaths, recoveries and tests
+* Vaccinations : Trends in persons vaccinated and population vaccination rate regarding various Covid-19 vaccines.
+* Health : Health indicators for the region like smoking prevalence
 
 
 We clean, preprocess and merge the datasets. We preserve relevant columns in each dataset and omit the columns we do not need for our analysis. We also remove the entries that are corrupt, by omitting rows with NA.  
@@ -62,8 +62,13 @@ Epidemiology
 The epidemiology dataset has entries for each person deceased and confirmed by date. We need cumulative data for our study so we pick the row with the latest/highest cumulative data.
 ```{r}
 library(data.table)
-epidemiology <- read_csv("MeghaShishodia_FinalProjectData/epidemiology_raw.csv")
-epidemiology <- epidemiology %>% group_by(location_key) %>% top_n(1, cumulative_confirmed)
+
+#Due to being unable to upload the raw data, the following two lines are commented
+#epidemiology <- read_csv("MeghaShishodia_FinalProjectData/epidemiology_raw.csv")
+#epidemiology <- epidemiology %>% group_by(location_key) %>% top_n(1, cumulative_confirmed)
+
+#We are straightaway using the processed data
+epidemiology <- read_csv("MeghaShishodia_FinalProjectData/epidemiology.csv")
 epidemiology = subset(epidemiology, select = c(location_key,cumulative_confirmed, cumulative_deceased))
 na.omit(epidemiology)
 ```
@@ -88,9 +93,14 @@ Vaccinations
 The vaccination dataset, similar to the epidemiology, has entries for each person vaccinated by date. We need cumulative data for our study so we pick the row with the latest/highest cumulative data. This dataset also contains duplicated entries that we remove for cleaning our data.
 
 ```{r}
-vaccinations <- read_csv("MeghaShishodia_FinalProjectData/vaccinations_raw.csv")
+#Due to being unable to upload the raw data, the following two lines are commented
+#vaccinations <- read_csv("MeghaShishodia_FinalProjectData/vaccinations_raw.csv")
+#vaccinations <- vaccinations %>% group_by(location_key) %>% top_n(1, cumulative_persons_fully_vaccinated)
+
+
+#We are straightaway using the processed data
+vaccinations <- read_csv("MeghaShishodia_FinalProjectData/vaccinations.csv")
 vaccinations = subset(vaccinations, select = c(location_key,cumulative_persons_fully_vaccinated))
-vaccinations <- vaccinations %>% group_by(location_key) %>% top_n(1, cumulative_persons_fully_vaccinated)
 vaccinations = vaccinations[!duplicated(vaccinations), ]
 na.omit(vaccinations)
 ```
@@ -110,7 +120,7 @@ df <- list_df %>% reduce(inner_join, by='location_key')
 df = df[!duplicated(df), ]
 na.omit(df)
 df <- df %>% 
-        filter(across(everything(), ~ . > 0))
+  filter(across(everything(), ~ . > 0))
 print(head(df))
 ```
 
@@ -128,10 +138,10 @@ df <- df%>%mutate(cumulative_persons_fully_vaccinated_per_capita = cumulative_pe
 ```
 
 Data Description:
-
-The final dataset has 12 columns and the description of the columns is as follows:
-
-* location_key : Nation that this row represents
+  
+  The final dataset has 12 columns and the description of the columns is as follows:
+  
+  * location_key : Nation that this row represents
 * country_name : Name of the nation that the row represents
 * smoking_prevalence : Percentage of smokers in population
 * cumulative_persons_fully_vaccinated : Fully vaccinated population
@@ -146,7 +156,7 @@ The final dataset has 12 columns and the description of the columns is as follow
 
 
 The dataset contains 136 unique nations and they are as follows:
-```{r}
+  ```{r}
 nations <- unique(df$country_name)
 nations
 ```
@@ -163,9 +173,8 @@ We plot the deceased population on the world map.
 ```{r}
 library(tidyverse)
 library(ggthemes)
-WorldData <- map_data('world') %>% filter(region != "Antarctica") %>% fortify
-world_map = map_data("world") %>% 
-  filter(! long > 180)
+WorldData <- map_data("world") %>% filter(region != "Antarctica") %>% fortify
+world_map = map_data("world") %>% filter(! long > 180)
 
 countries = world_map %>% 
   distinct(region) %>% 
@@ -221,11 +230,11 @@ We can see a pattern in all the maps above for the regions which are colored dar
 ```{r}
 tempdf = subset(df, select = c(location_key, cumulative_deceased_per_capita, older_per_capita, smoking_prevalence, cumulative_persons_fully_vaccinated_per_capita, human_development_index) )
 tempdf <- tempdf %>% 
-       rename("deceased" = "cumulative_deceased_per_capita", 
-              "HDI" = "human_development_index",
-              "vaccinated" = "cumulative_persons_fully_vaccinated_per_capita",
-              "older_people" = "older_per_capita",
-              "smoking" = "smoking_prevalence")
+  rename("deceased" = "cumulative_deceased_per_capita", 
+         "HDI" = "human_development_index",
+         "vaccinated" = "cumulative_persons_fully_vaccinated_per_capita",
+         "older_people" = "older_per_capita",
+         "smoking" = "smoking_prevalence")
 
 ```
 
@@ -448,23 +457,6 @@ On studying this Covid-19 data, we were able to gain pretty interesting insights
 1. https://github.com/GoogleCloudPlatform/covid-19-open-data#aggregated-table
 2. https://health.google.com/covid-19/open-data/
 3. https://www.rdocumentation.org/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -2,7 +2,7 @@
 title: "Final Project: Neha Jhurani"
 author: "Neha Jhurani"
 description: "Project"
-date: "05/22/2023"
+date: "06/16/2023"
 format:
   html:
     df-print: paged
@@ -31,40 +31,37 @@ knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
 
 ## Part 1. Introduction
 
-Causes of death: Our world in Data
-The project aims to analyze the causes of death in South Asian countries and in United States.
+The project aims to identify the leading causes of death across the world during the year 1990 to 2019
 
-General Research Question: What are the leading causes of death in South asian countries and in United States.
+General Research Question: What is the leading cause of death across the world (including people from all demographics)? How did the causes of death change over time and differ between different countries and world regions?
 
-Dataset Description: The causes of death dataset by "Our World In Data" offers valuable insights into leading causes of mortality globally and across different countries and time periods. The dataset covers a wide range of causes of death, including both communicable and non-communicable diseases, injuries, and other factors contributing to mortality rates.
+Dataset Description: We use the data from The Global Burden of Disease which is a major global study that includes the annual number of deaths at the country level during the years - 1990 and 2019. Each row represents the annual deaths in a specific country for the specific disease or cause. The dataset covers a wide range of causes of death, including both communicable and non-communicable diseases, injuries, and other factors contributing to mortality rates. The dataset represents the annual death for all demographic characteristics.
 
-Unit of Analysis: Each row of the dataset describes the number of deaths caused by the mentioned disease/reason across the given country during the time period mentioned.
+Unit of Analysis: Each row in the dataset represents the annual death numbers for the specific country during the mentioned year from the specified cause or disease. The dataset includes data of all the people irrespective of their demographic characteristics.
 
 ## Part 2. Literature Review
 
-"Our World in Data" is a reputable online publication that provides comprehensive and evidence-based information on various global issues, including health, population, and mortality. It is known for its rigorous approach to data collection and analysis. The causes of death dataset likely incorporates data from reputable sources, such as national health agencies, the World Health Organization(WHO), and other reliable databases and research publications.
+The Global Burden of Disease (GBD) is a comprehensive initiative in the early 1990s by the World Health Organization (WHO), in collaboration with the World Bank and the Harvard School of Public Health. Since then, it has evolved into an ongoing and collaborative effort involving researchers from around the world. It aims to quantify and analyze the health loss caused by diseases, injuries and risk factors in population worldwide. It provides a systematic and rigourous assessment of the global burden of diseases and their impact on health.
 
-The causes of death dataset provided by "Our World in Data" can help us gain valuable insights into global moratlity patterns. The dataset allows us to analyze and understand the leading causes of death worldwide. By examining trends over time, we can identify shifts in disease burdens and track progress or challenges in pubic health efforts. 
+The causes of death dataset can help us gain valuable insights into global moratlity patterns. It helps us identify the leading causes of moratlity, as well as their distribution across different regions. By knowing the specific causes of death, policymakers and public health professionals can identify priority areas for intervention and allocate resources effectively. The dataset enables cross-country comparisons, highlighting variations in causes of death. 
 
-By knowing the specific causes of death, policymakers and public health professionals can identify priority areas for intervention and allocate resources effectively. The dataset enables cross-country comparisons, highlighting variations in causes of death. This information is valuable for understanding disparities in health outcomes, identifying successful interventions in sppecific regions, and promoting best practices globally.
+This information is valuable for understanding disparities in health outcomes, identifying successful interventions in specific regions, and promoting best practices globally. It can serve as a powerful advocacy tool to mobilize resources, generate public support, and drive political action towards addressing these health issues.
 
 ## Part 3. Dataset Introduction
 
-The Global Burden of Disease is a major global study on the causes of death and disease published in the medical journal The Lancet. These estimates of the annual number of deaths by cause are shown in "Our World in Data". We extract our data from this source.
+The Global Burden of Disease is a major global study on the causes of death and disease published in the medical journal The Lancet. The dataset represents data for all demographic people from the year 1990 to 2019 as mentioned on their website. We extract our data from this source.
 
-Each row of the dataset represents the annual number of deaths that happened because of a certain cause in a specific country during a specific year.
+The dataset includes data on country level. Every row in the dataset mentions the annual death numbers attributed to each of the cause for the specified country during the mentioned year.
 
 ## Part 4. Dataset Description
 
-The dataset contains data for all countries(globally) and has 201762 rows and 6 columns. As we want to conduct our analysis for South Asian countries and for United States, we will extract 2 sub datasets from it.
-
-India','Pakistan','Afghanistan','Bangladesh','Bhutan', 'Maldives', 'Sri Lanka', 'Nepal' and considered to be South Asian countries. We see that the South Asian countries dataset has 991 rows and 6 columns. The United States dataset has 990 rows and 6 columns.
+The dataset contains data for all countries(globally) across time period 1990 to 2019. It has 200772 rows and 6 columns, i.e., it covers a wide range of causes of death for various countries from the year 1990 to 2019. 
 
 The 6 columns in the dataset represent the following:
 
 Causes name - This represents the cause of death. This can be a disease or a natural phenomena or a legal action
 
-Causes Full Description - This represents if the death is in all age groups or in a particular set of age groups, and weather it is in all the genders or in specific gender
+Causes Full Description - This represents if the death is in all age groups or in a particular set of age groups, and weather it is in all the genders or in specific gender. In the dataset that we are using, we can see that all the data is mentioned for all ages and genders. 
 
 Death Numbers - This represents the annual number of deaths for specific value of cause, year and country
 
@@ -85,296 +82,416 @@ dim(death_dataset)
 #Columns of death dataset
 colnames(death_dataset)
 
-south_asian_death_dataset <- death_dataset[death_dataset$Entity== (alist('India','Pakistan','Afghanistan','Bangladesh','Bhutan', 'Maldives', 'Sri Lanka', 'Nepal' )),]
-# Dimensions of South Asian countries death dataset
-dim(south_asian_death_dataset)
+#Viewing first few rows of the dataset
+head(death_dataset)
 
-# The number of countries considered as South Asian
-length(unique(south_asian_death_dataset$Entity))
-
-# Viewing the first few rows of South Asian dataset
-head(south_asian_death_dataset)
-
-us_death_dataset <- death_dataset[death_dataset$Entity== 'United States',]
-
-# Dimensions of United States death dataset
-dim(us_death_dataset)
-
-# The number of diseases or causes of death in United States
-length(unique(us_death_dataset$'Causes name'))
-
-# Viewing the first few rows of United States dataset
-head(us_death_dataset)
+#summary of each of the columns in the dataset
+summary(death_dataset)
 ```
+The mean number of annual deaths across countires during the years 1990 to 2019 is around 7712. We will further analyze the countries and years with higher and lower number of deaths.
+
+```{r}
+#different causes of death included in the dataset
+unique(death_dataset$'Causes name')
+```
+We can see that there are 33 different causes of deaths showed across countries in the world. These causes include communicable diseases (such as HIV/AIDS, malaria, etc), non communicable diseases (such as cancers, diabetes, etc) and injuries (such as road accidents, natural disasters, etc). 
+
+```{r}
+#renaming the columns for better understanding and for making it more accessible
+death_dataset <- death_dataset %>%  
+    rename(Country = `Entity`,
+           Cause = 'Causes name',
+           NumberOfDeaths = 'Death Numbers') %>%  
+    as.data.frame()
+head(death_dataset)
+```
+
+
+```{r}
+#Number of NAs in the number of deaths column
+sum(is.na(death_dataset$NumberOfDeaths))
+
+#grouping the data by cause and finding the number of deaths for each cause from the year 1990 to 2019
+#ignoring NA values for this initial graph as this graph is generated for representing/visualizing data in a simpler and understandable format.
+frequency_of_causes <- death_dataset%>%
+group_by(Cause) %>%
+summarise(deaths = sum(NumberOfDeaths, na.rm=TRUE))
+
+#Ordering the data in the order of the number of deaths it causes
+frequency_of_causes$Cause <- factor(frequency_of_causes$Cause, levels = frequency_of_causes$Cause[order(frequency_of_causes$deaths)])
+
+#the below command helps us avoid showing frequency in exponential/scientific notation
+options(scipen = 999)
+
+#using ggplot2 to show a pictorial representation of data as a histogram
+ggplot(frequency_of_causes) + geom_bar(aes(x=deaths, y=Cause), stat="identity", color="black", fill = "pink") + ggtitle("Number of Deaths due to Different Causes")
+```
+The dataset shows the total number of deaths from the year 1990 to 2019 for the mentioned diseases. We can see above that the highest number of deaths during those years are due to cardiovascular diseases. 
 
 Data Preprocessing:
-- Death Number are missing in a lot of rows, we will drop those rows instead of making them 0 because 'there are no deaths for that particular cause' or 'that particular cause of death is non existent' describes the same case.
-- Many ISO Codes are missing. As this is same as Country Name that is represented by Entity (which is non null), we will drop Code column.
-- Dropping 'Causes Full Description' because that column is currently not used in our analysis
-- Rename 'Entity' to 'Country', 'Causes name' to 'Cause' and 'Death Numbers' to 'NumberOfDeaths' for better understandability.
+a) We have already renamed few columns of our data for better understanding.
+b) Many ISO Codes are missing. As this is same as Country Name that is represented by Entity (which is non null), we will drop Code column.
+c) Dropping 'Causes Full Description' because that column mentions that the data is for all age groups and genders. As all of the data are for the same demographic people, having this column is redundant or unnecessary.
+d) We saw above that Number of deaths are missing in a lot of rows. GBD study provides detailed information about the data sources used, the methodology employed and any known data gaps or limitations. After going through their official website, the following are the possible reasons why we see missing or NA values for number of deaths in GBD study - 
+- limitations in data collection processes. This can happen in countries with limited healtcare infrastructure which could lead to incomplete death reporting, lack of standardized tests, etc. 
+- Vital registration systems, which records births, death, and causes of death, may be less developed or incomplete in some countries. So, lack of reporting system can lead to missing values.
+- The source of data is of inadequate quality or is unreliable.
+- Access to mortality data may be restricted due to legal or privacy considerations, especially in cases where individual-level data is involved. This can result in missing values for specific years or regions.
+- as the study is dynamic and ever evolving, delay in reporting can also lead to NA or missing values.
+For our analysis we will drop those rows. This is because we are more concerned about analyzing the established causes of death rather than analysing the gaps in the data collection. Also, Dropping the rows is more appropriate than making them 0 because 'there are no deaths for that particular cause' or 'that particular cause of death is non existent' describes the same case. 
 ```{r}
-south_asian_death_dataset <- south_asian_death_dataset%>%drop_na('Death Numbers')
-
-south_asian_death_dataset <- south_asian_death_dataset %>%  
+death_dataset <- death_dataset %>%  
     select(-c(`Causes Full Description`, `Code`)) %>% 
-    rename(Country = `Entity`,
-           Cause = 'Causes name',
-           NumberOfDeaths = 'Death Numbers') %>%  
     as.data.frame()
-head(south_asian_death_dataset)
+head(death_dataset)
+death_dataset <- death_dataset%>%drop_na('NumberOfDeaths')
 
-us_death_dataset <- us_death_dataset%>%drop_na('Death Numbers')
-
-us_death_dataset <- us_death_dataset %>%  
-    select(-c(`Causes Full Description`, `Code`)) %>% 
-    rename(Country = `Entity`,
-           Cause = 'Causes name',
-           NumberOfDeaths = 'Death Numbers') %>%  
-    as.data.frame()
-head(us_death_dataset)
-```
-
-Summary statistics for both datasets:
-```{r}
-# Displaying summary statistics for both the datasets
-summary(south_asian_death_dataset)
-
-summary(us_death_dataset)
+#Checking if all NA values rows are dropped
+sum(is.na(death_dataset$NumberOfDeaths))
 ```
 
 ## Part 5. Analyses Plan
-We will analyze both the sub datasets created above to answer the following granular questions :
+We will analyze the above dataset to answer the following granular questions :
 
- - What are the total number of deaths over the years in South Asian countries?
- 
- - Which countries in South Asia have the highest number of deaths?
- 
- - Which countries in South Asia have the lowest number of deaths?
+- Which group of diseases contribute highest to death numbers over the years?
 
- - What is most common cause of death in South Asian Countries?
+- What are the total number of deaths every year from 1990 to 2019?
 
- - What has been the trend of few of the most common cause of deaths in South Asian countries?
+- Which countries have the highest number of deaths every year?
 
- - What is the total number of deaths in United States over the years?
+- Which countries have the lowest number of deaths every year?
 
- - What is the most common cause of death in United States?
+- What is the most common cause of death across the world for the time period 1990-2019?
 
- - What is the trend of the most common cause of death in recent years in United States?
+- What is the trend of the 3 of the most common cause of death over the years?
 
- - Which year had the most number of deaths in United States?
+- How is the number of deaths related to mental illness over the years in the extracted dataset?
 
- - How is the number of deaths related to mental illness over the years in United States?
+- In which year were the highest number of deaths across the world?
 
 Visual representations, such as graphs, charts, and diagrams, can simplify complex concepts, patterns, or relationships, making them easier to understand and comprehend. They help us identify patterns, trends, and anomalies in data more easily. We will be using the following types of graph for our project:
 
-Bivariate Graphs : They allow us to identify the nature of the relationship between two variables. We can determine if the variables are positively or negatively correlated, or if there is no apparent relationship between them. We will be using these graphs to find the relations between the time-period and the number of deaths across countries and diseases.
+Bivariate and Multivariate Graphs : They allow us to identify the nature of the relationship between two or more variables. We can determine if the variables are positively or negatively correlated, or if there is no apparent relationship between them. We will be using these graphs to find the relations between the time-period and the number of deaths across countries and diseases.
 
-Histogram Graphs : Histograms provide a visual representation of the distribution of data, allowing us to observe the shape, center, and spread of the variable. We will be using histograms to represent the most common diseases across countries and the distribution of death over the years in United States
+Histogram/Bar Graphs : Histograms or Bar graphs provide a visual representation of the distribution of data, allowing us to observe the shape, center, and spread of the variable. We will be using these to represent the most common diseases across countries and the number of deaths globally for every year from 1990 to 2019.
 
 ## Part 6. Statistical Analysis and Visualizations
+There are 33 different causes mentioned in the dataset, I am dividing them into 3 parts - communicable, non-communicable and injuries to analyze which type of disease contribute to the highest number of deaths across countries during the time period 1990 to 2019.
 
-South Asian Countries:
+Communicable diseases, i.e., infectious diseases include Meningitis, Malaria, Tuberculosis, Lower respiratory infections, HIV/AIDS
 
-Total number of deaths in South Asian countries from year 1990 - 2019:
+Non-communicable diseases are often chronic and long-tern illness which includes Neoplasms (cancer), Maternal disorders, Neonatal disorders, Alcohol use disorders, Diabetes mellitus, Cardiovascular diseases, Chronic kidney disease, Chronic respiratory diseases, Cirrhosis and other chronic liver diseases, Digestive diseases, Alzheimer's disease and other dementias, Parkinson's disease
+
+Injuries include Fire, heat, and hot substances, Drowning, Interpersonal violence, Road injuries, Exposure to forces of nature, Environmental heat and cold exposure, Self-harm, Poisonings, Terrorism (deaths), Acute hepatitis, Number of executions (Amnesty International)
+
+Dividing the datasets in 3 parts :
 ```{r}
-sum(south_asian_death_dataset$NumberOfDeaths)
+#extracting rows which has a communicable disease as the cause of death
+communicable_disease_death_dataset <- death_dataset[death_dataset$Cause== (alist('Meningitis', 'Malaria', 'Tuberculosis', 'Lower respiratory infections', 'HIV/AIDS')),]
+
+#extracting rows which has a non - communicable disease as the cause of death
+non_communicable_disease_death_dataset <- death_dataset[death_dataset$Cause== (alist('Neoplasms', 'Maternal disorders', 'Neonatal disorders', 'Alcohol use disorders', 'Diabetes mellitus', 'Cardiovascular diseases', 'Chronic kidney disease', 'Chronic respiratory diseases', 'Cirrhosis and other chronic liver diseases', 'Digestive diseases', "Alzheimer's disease and other dementias", "Parkinson's disease")),]
+
+#extracting rows which has injuries as the cause of death
+injuries_death_dataset <- death_dataset[death_dataset$Cause== (alist('Fire, heat, and hot substances', 'Drowning', 'Interpersonal violence', 'Road injuries', 'Exposure to forces of nature', 'Environmental heat and cold exposure', 'Self-harm', 'Poisonings', 'Terrorism (deaths)', 'Acute hepatitis', 'Number of executions (Amnesty International)')),]
+
+#Getting total number of deaths for every individual year for all 3 groups of diseases
+communicable_disease_death_dataset <- communicable_disease_death_dataset %>%
+  group_by(Year)%>%
+  summarise(deaths_due_to_communicable_diseases = sum(NumberOfDeaths))
+
+non_communicable_disease_death_dataset <- non_communicable_disease_death_dataset %>%
+  group_by(Year)%>%
+  summarise(deaths_due_to_non_communicable_diseases = sum(NumberOfDeaths))
+
+injuries_death_dataset <- injuries_death_dataset %>%
+  group_by(Year)%>%
+  summarise(deaths_due_to_injuries = sum(NumberOfDeaths))
+
+#joining all the three tables created above to analyze it further
+intermiddent_joined_table <- full_join(x = communicable_disease_death_dataset, y= non_communicable_disease_death_dataset, by = 'Year')
+
+disease_group_death_dataset <- full_join(x = intermiddent_joined_table, y = injuries_death_dataset, by = 'Year')
+
+library(janitor)
+# Generating the percentage of deaths contributed by each of the group of causes of deaths worldwide from the years 1990 to 2019 - communicable, non-communicable and injuries.
+disease_group_death_dataset <- disease_group_death_dataset %>% 
+  adorn_percentages(denominator = "row") %>% 
+  adorn_pct_formatting(digits = 2)
+
+#converting percentages as numeric
+disease_group_death_dataset$deaths_due_to_communicable_diseases <- as.numeric(sub("%", "", disease_group_death_dataset$deaths_due_to_communicable_diseases))
+
+disease_group_death_dataset$deaths_due_to_non_communicable_diseases <- as.numeric(sub("%", "", disease_group_death_dataset$deaths_due_to_non_communicable_diseases))
+
+disease_group_death_dataset$deaths_due_to_injuries <- as.numeric(sub("%", "", disease_group_death_dataset$deaths_due_to_injuries))
+
+#calculating cumulative death numbers for communicable and non-communicable diseases for all the years.
+disease_group_death_dataset$cummulative_deaths <- disease_group_death_dataset$deaths_due_to_non_communicable_diseases + disease_group_death_dataset$deaths_due_to_communicable_diseases
+
+#Creating a graph to represent the percentage of deaths contributed by each of the disease or cause group globally over the years 1990 to 2019
+ggplot(disease_group_death_dataset, aes(x = Year)) + 
+  geom_point(aes(y = deaths_due_to_communicable_diseases)) +
+  geom_smooth(se=FALSE, method ="lm", aes(x = Year, y = deaths_due_to_communicable_diseases)) +
+  
+  geom_point(aes(y = cummulative_deaths)) +
+  geom_smooth(se=FALSE, method ="lm", aes(x = Year, y = cummulative_deaths)) +
+
+  #shade the regions for better visualizations
+  geom_ribbon(aes(x = Year,
+                  ymin = 0,
+                  ymax = predict(loess(deaths_due_to_communicable_diseases~Year))),
+              fill = "pink") +
+  
+  geom_ribbon(aes(x = Year,
+                  ymin = predict(loess(deaths_due_to_communicable_diseases~Year)),
+                  ymax = predict(loess(cummulative_deaths~Year))),
+              fill = "lightblue") +
+  
+  geom_ribbon(aes(x = Year,
+                  ymin = predict(loess(cummulative_deaths~Year)),
+                  ymax = 100),
+              fill = "lightgreen") +
+
+  scale_x_continuous(breaks = seq(1990, 2019, 5), minor_breaks = T) + 
+  scale_y_continuous(breaks = seq(0, 100, 20)) + 
+  labs(title = "Percentage of deaths contributed by the group of diseases from the year 1990 to 2019", 
+       x = "Year", 
+       y = "Percentage of Deaths") +
+  annotate("text", x = 2000, y=20, label= "Deaths due to communicable diseases", fontface = 3) +
+  annotate("text", x = 2000, y=60, label= "Deaths due to non communicable diseases", fontface = 3) +
+  annotate("text", x = 2000, y=97, label= "Deaths due to injuries", fontface = 3) 
+  
+```
+At a global level, we can see that the majority of deaths have been due to non-communicable diseases.
+
+Over the years, we know that many countries have undergone a shift in disease patterns - that is, there has been a decrease in infectious diseases and increase in chronic diseases. As societies develop and living conditions improve, people experience demographic and lifestyle changes that contributes to a higher prevalence of non-communicable diseases (NCDs). These changes include aging populations, urbanization, unhealthy diets, tobacco and alchol use, etc.
+
+On the other hand, there have been global efforts such as vaccination programs, improved sanitation, and access to healthcare which have helped to prevent and treat infectious diseases effectively. As a result, the proportion of deaths due to communicable diseases has decreased in many countries.
+
+We can also see that the number of deaths due to injuries have decreased in the recent years. This is due to several factors - many countries have implemented measures to enhance road safety, including stricter traffic regulations, improved infrastructure, and public awareness campaigns. There has also been advancement in emergency medical services and trauma. Faster response times, better pre-hospital care and specialized trauma centers have increased the chances of survival for individuals with severe injuries. Many safety regulations have been enforced for workplace safety.Public health interventions, such as improved access to clean water, sanitation and hygiene practices, have helped reduce the incidence of injuries caused by environmental factors.
+
+Representing the above data in a more tidy format by creating a key-value pair across multiple column values:
+```{r}
+gather(disease_group_death_dataset, key = "GroupOfDisease", value = "PercentageOfDeathsContributed", deaths_due_to_communicable_diseases, deaths_due_to_non_communicable_diseases, deaths_due_to_injuries)
+```
+We have created two columns - which represents the group of disease and the percentage it contributed to the overall death rate instead of having death rates for each group in a different column. It is more convenient to have the data in long format instead of wide. For example, for using group_by() and summarize() functions.
+
+
+Total number of deaths worldwide from the year 1990 to 2019
+```{r}
+#Total death numbers worldwide for each individual year from 1990 to 2019
+death_dataset %>%
+  group_by(Year)%>%
+  summarise(deaths = sum(NumberOfDeaths))%>%
+  ggplot(aes(x = Year, y = deaths)) + 
+  geom_point(alpha = 1) + 
+  geom_smooth(se = F, span = 0.2) + 
+  scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
+  labs(title = "Number of Deaths from year 1990 to 2019", 
+       x = "Year", 
+       y = "Number of Deaths", 
+       col = "Country")
+
+#Total number of deaths from 1990 to 2019
+sum(death_dataset$NumberOfDeaths)
 ```
 
-Representing Number of Deaths in South Asian countries over the years:
+For every year, fetching the top 5 countries with highest number of deaths
 ```{r}
-south_asian_death_dataset %>%
+#Calculating the total number of deaths after grouping the data by year and then country, then fetching the top 5 countries from it. This will help us get the countries with the highest number of deaths from the year 1990 to 2019.
+country_with_highest_death_numbers_for_every_year <- death_dataset %>%
+  group_by(Year, Country)%>%
+  summarise(deaths = sum(NumberOfDeaths)) %>%
+  top_n(5, deaths)
+
+#Unique values of the countries with highest death rates from 1990 to 2019
+unique(country_with_highest_death_numbers_for_every_year$Country)
+
+#Number of unique countries with highest death rates from 1990 to 2019
+length(unique(country_with_highest_death_numbers_for_every_year$Country))
+
+#visualizing the above extracted data in the form of graph
+country_with_highest_death_numbers_for_every_year %>%
+  ggplot(aes(x = Year, y = deaths, col = Country)) + 
+  geom_point(alpha = 1) + 
+  geom_smooth(se = F, span = 0.2) + 
+  scale_x_continuous(breaks = seq(1990, 2019, 2), minor_breaks = T) + 
+  labs(title = "Countries with highest number of deaths during the years 1990 - 2019", 
+       x = "Year", 
+       y = "Number of Deaths", 
+       col = "Country")
+```
+As we can see above, there are only 6 countries that consistently had the highest number of deaths for every year from 1990 to 2019.
+The following are the countries - China, India, United States, Russia, Indonesia and Nigeria.
+
+The annual death rate in China and India is a lot more than the other countries. One of the reasons for this is because they are densely populated when compared to other countries. The other reasons include the differences in affordability, access and quality of healthcare services, income levels, education and living conditions, etc.
+
+We see that the death numbers are almost similar in Indonesia and Nigeria. The health systems and reporting mechanisms in them have similarities in terms of data collection, registration of deaths, and reporting practices. The population structure and age distribution is also similar in these countries. 
+
+Fetching the 5 countries with lowest number of deaths from year 1990 to 2019
+```{r}
+#Calculating the total number of deaths after grouping the data by year and then country, then fetching the lowest death numbers countries from it. 
+country_with_lowest_death_numbers_for_every_year <- death_dataset %>%
+  group_by(Year, Country)%>%
+  summarise(deaths = sum(NumberOfDeaths)) %>%
+  top_n(-5, deaths)
+
+#Unique values of the countries with highest death rates from 1990 to 2019
+unique(country_with_lowest_death_numbers_for_every_year$Country)
+
+#Number of unique countries with lowest death rates from 1990 to 2019
+length(unique(country_with_lowest_death_numbers_for_every_year$Country))
+
+#visualizing the above extracted data in the form of graph
+country_with_lowest_death_numbers_for_every_year %>%
+  ggplot(aes(x = Year, y = deaths, col = Country)) + 
+  geom_point(alpha = 1) + 
+  geom_smooth(se = F, span = 0.2) + 
+  scale_x_continuous(breaks = seq(1990, 2019, 2), minor_breaks = T) + 
+  labs(title = "Countries with lowest number of deaths during the years 1990 - 2019", 
+       x = "Year", 
+       y = "Number of Deaths", 
+       col = "Country")
+```
+We can see that there are 17 unique countries over the years 1990 to 2019 which have had the lowest number of deaths. 
+These countries have relatively small populations. For example, Tuvalu is a small island nation in the Pacific with a population of around 11,000 people whereas population of India is around 1.4 billion. They have good access to healthcare services including preventive care, early detection, and quality medical treatments. They emphasize strongly on public health measures. These regions have relatively younger populations with lower motality rates compared to countries with older populations.
+
+For further analyses, lets consider the following countries - China, India, United States, Tuvalu, Hong Kong.
+We are selecting these countries so that we can analyze the trends for the countries with different death rates. China, India and United States represent the ones that have higher annual deaths and Hong Kong and Tuvalu represent the ones that have lesser annual deaths for the years 1990 to 2019.
+```{r}
+death_data_subset <- death_dataset[death_dataset$Country== (alist('United States', 'India', 'China', 'Nigeria', 'Tuvalu')),]
+
+# Dimensions of the subset
+dim(death_data_subset)
+
+#summary of the subset dataset
+summary(death_data_subset)
+```
+
+
+Leading causes of deaths worldwide for the years 1990 to 2019 :
+```{r}
+head(frequency_of_causes %>% arrange(desc(deaths)), n=10)
+```
+We can see that the top 3 causes of death worldwide for the years 1990 to 2019 are Cardiovascular diseases, Neoplasms and Chronic respiratory diseases
+
+To further analyze, I am extracting the trends of each of the top causes of death for the years for the subset we created.
+
+Representing Number of Deaths in the extracted dataset at the country level over the years:
+```{r}
+death_data_subset %>%
   group_by(Country, Year)%>%
   summarise(deaths = sum(NumberOfDeaths))%>%
   ggplot(aes(x = Year, y = deaths, col = Country)) + 
   geom_point(alpha = 1) + 
   geom_smooth(se = F, span = 0.2) + 
   scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
-  labs(title = "Number of Deaths in South Asian Countries", 
+  labs(title = "Number of Deaths in the extracted dataset", 
        subtitle = "1990 - 2019", 
        x = "Year", 
        y = "Number of Deaths", 
        col = "Country")
 ```
-We can see that the number of Deaths are highest in India consistently over the years whereas it is consistenly lower in countries like Sri lanka, Bhutan and Maldives.
-One of the reasons for this is because India is densely populated when compared to other South Asian countries. The other reasons include the differences in affordability, access and quality of healthcare services, income levels, education and living conditions, etc.
+We can see that the highest number of deaths are in China. The second highest in India. The lowest number of death among these countries is in Tuvalu. This is because of the population density, lifestyle, healthcare infrastructure, etc in these countries. China and India have around 1.4 billion population, so it should definitely be having more number of deaths.
 
-Representing the most common causes of death in South Asian counteries as table and as a histogram:
 ```{r}
-most_common_diseases <- south_asian_death_dataset%>%
-group_by(Cause) %>%
-summarise(deaths = sum(NumberOfDeaths)) %>%
-arrange(desc(deaths)) %>%
-ungroup() %>%
-mutate(Cause = reorder(Cause, deaths))
-most_common_diseases <- head(most_common_diseases)
-barplot(height = most_common_diseases$deaths, names = most_common_diseases$Cause, las = 2, ylab = "Number of Deaths", cex.axis = 0.8, main = "Most Common Causes of Death in South Asian Countries", col = "pink")
-most_common_diseases
-```
-We can see that the top 3 causes of death in South Asian countries are - Cardiovascular diseases, Diarrheal diseases and Chronic respiratory diseases
+cardio_dataset <- death_data_subset[death_data_subset$'Cause'=='Cardiovascular diseases',]
 
-For further analysis, we are analyzing the trends of each of the top causes of death for the years across South Asian Countries:
-```{r}
-cardio_sa_dataset <- south_asian_death_dataset[south_asian_death_dataset$'Cause'=='Cardiovascular diseases',]
-
-cardio_sa_dataset%>%
+cardio_dataset%>%
   group_by(Country, Year, NumberOfDeaths)%>%
   ggplot(aes(x = Year, y = NumberOfDeaths, col = Country)) + 
   geom_point(alpha = 0.5) + 
   geom_smooth(se = F, span = 1.5) + 
   scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
-  labs(title = "Number of Deaths due to Cardiovascular diseases in South Asian Countries",
+  scale_y_continuous(breaks = seq(0, 5000000, 200000), minor_breaks = T) + 
+  labs(title = "Number of Deaths due to Cardiovascular diseases in extracted subset",
        subtitle = "1990 - 2019", 
        x = "Year", 
        y = "Number of Deaths", 
        col = "Country")
 ```
-We see that the number of deaths due to cardiovascular diseases has increased steeply in India whereas there is only a slight increase in other countries. The increase in deaths can be because of changes in lifestyle, economic development, rapid urbanization, etc
-
-```{r}
-diarr_sa_dataset <- south_asian_death_dataset[south_asian_death_dataset$'Cause'=='Diarrheal diseases',]
-
-diarr_sa_dataset%>%
-  group_by(Country, Year, NumberOfDeaths)%>%
-  ggplot(aes(x = Year, y = NumberOfDeaths, col = Country)) + 
-  geom_point(alpha = 0.5) + 
-  geom_smooth(se = F, span = 1.5) + 
-  scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
-  labs(title = "Number of Deaths due to Diarrheal diseases in South Asian Countries",
-       subtitle = "1990 - 2019", 
-       x = "Year", 
-       y = "Number of Deaths", 
-       col = "Country")
-```
-We see a steep decrease in diarrheal diseases in India, but there is very slight decrease in other countries. This shows that whatever interventions and policies implemented to address this specific cause of death has successfully worked over the years. In future, if there is an increase in this disease in any other part of the world, these proofs will help us control the disease soon.
-
-```{r}
-chronic_sa_dataset <- south_asian_death_dataset[south_asian_death_dataset$'Cause'=='Chronic respiratory diseases',]
-
-chronic_sa_dataset%>%
-  group_by(Country, Year, NumberOfDeaths)%>%
-  ggplot(aes(x = Year, y = NumberOfDeaths, col = Country)) + 
-  geom_point(alpha = 0.5) + 
-  geom_smooth(se = F, span = 1.5) + 
-  scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
-  labs(title = "Number of Deaths due to Chronic respiratory diseases in South Asian Countries",
-       subtitle = "1990 - 2019", 
-       x = "Year", 
-       y = "Number of Deaths", 
-       col = "Country")
-```
-We see that the number of deaths increases significantly in case of india but there is hardly any change in case of other countries. The increase observed in India may be because of air pollution, especially in urban areas and indoor air pollution from the use of solid fuels for cooking and heating.
-
-United States:
-
-Total number of deaths in United States from year 1990 - 2019:
-```{r}
-sum(us_death_dataset$NumberOfDeaths)
-```
-
-Representing Number of Deaths in United States over the years:
-```{r}
-us_death_dataset %>%
-  group_by(Country, Year)%>%
-  summarise(deaths = sum(NumberOfDeaths))%>%
-  ggplot(aes(x = Year, y = deaths, col = Country)) + 
-  geom_point(alpha = 1) + 
-  geom_smooth(se = F, span = 0.2) + 
-  scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
-  labs(title = "Number of Deaths in United States Countries", 
-       subtitle = "1990 - 2019", 
-       x = "Year", 
-       y = "Number of Deaths", 
-       col = "Country")
-```
-We can see that the number of Deaths have increased exponentially over the years in United States.
-
-Representing the most common causes of death in United States as table and as a histogram:
-```{r}
-most_common_diseases <- us_death_dataset%>%
-group_by(Cause) %>%
-summarise(deaths = sum(NumberOfDeaths)) %>%
-arrange(desc(deaths)) %>%
-ungroup() %>%
-mutate(Cause = reorder(Cause, deaths))
-most_common_diseases <- head(most_common_diseases)
-barplot(height = most_common_diseases$deaths, names = most_common_diseases$Cause, las = 2, ylab = "Number of Deaths", cex.axis = 0.7, main = "Most Common Causes of Death in United States", col = "pink")
-most_common_diseases
-```
-We can see that the top causes of death in United States is  Cardiovascular diseases and Neoplasms
-
-For further analysis, we are analyzing the trends of each of the top causes of death for the years across United States:
-```{r}
-cardio_us_dataset <- us_death_dataset[us_death_dataset$'Cause'=='Cardiovascular diseases',]
-
-cardio_us_dataset%>%
-  group_by(Country, Year, NumberOfDeaths)%>%
-  ggplot(aes(x = Year, y = NumberOfDeaths, col = Country)) + 
-  geom_point(alpha = 0.5) + 
-  geom_smooth(se = F, span = 1.5) + 
-  scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
-  labs(title = "Number of Deaths due to Cardiovascular diseases in United States",
-       subtitle = "1990 - 2019", 
-       x = "Year", 
-       y = "Number of Deaths", 
-       col = "Country")
-```
-We see that the number of deaths due to cardiovascular diseases in United States reduced from the year 1990 to 2010. After that, we see an exponential increase in the number of deaths. 
+We see that the number of deaths due to cardiovascular diseases has increased steeply in India and China whereas in United States it reduces at first and then increases. In the remaining 2 countries there is hardly any change in the number of deaths.
 Advances made in medical treatments and awareness about the risks of the disease decreases the risk of cardiovascular diseases whereas aging population (as the population ages the risk of cardiovascular disease also increases) increases the risk of it. The risk factors have changed over time, such as obesity rates, unhealthy dietary patterns, sedentary lifestyles, etc because of which we are seeing the above trend.
+The increase in deaths can be because of changes in lifestyle, economic development, rapid urbanization, etc. 
 
 ```{r}
-neo_us_dataset <- us_death_dataset[us_death_dataset$'Cause'=='Neoplasms',]
+neo_dataset <- death_data_subset[death_data_subset$'Cause'=='Neoplasms',]
 
-neo_us_dataset%>%
+neo_dataset%>%
   group_by(Country, Year, NumberOfDeaths)%>%
   ggplot(aes(x = Year, y = NumberOfDeaths, col = Country)) + 
   geom_point(alpha = 0.5) + 
   geom_smooth(se = F, span = 1.5) + 
   scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
-  labs(title = "Number of Deaths due to Neoplasms in United States",
+  scale_y_continuous(breaks = seq(0, 5000000, 200000), minor_breaks = T) + 
+  labs(title = "Number of Deaths due to Neoplasms in the extracted subset",
        subtitle = "1990 - 2019", 
        x = "Year", 
        y = "Number of Deaths", 
        col = "Country")
 ```
-We see a steep increase in the number of deaths due to Neoplasms over the years in United States. This may be because of lifestyle factors such as excessive alcohol comsumption, tobacco use, etc. 
+We see that the number of deaths due to Neoplasms has increased steeply in India, China, United States and has increased in Nigeria whereas there is hardly any change in Tuvalu.
+The increase in death numbers may be because of lifestyle factors such as excessive alcohol comsumption, tobacco use, etc. In smaller countries, more importance is given to public health safety and enough measures are enforced to make sure of it and therefore there is very less change in them.
 
 ```{r}
-frequency_of_deaths <- us_death_dataset%>%
-group_by(Year) %>%
-summarise(deaths = sum(NumberOfDeaths)) %>%
-arrange(desc(deaths)) %>%
-ungroup() %>%
-mutate(Year = reorder(Year, deaths))
-barplot(height = frequency_of_deaths$deaths, names = frequency_of_deaths$Year, las = 2, ylab = "Number of Deaths", cex.axis = 0.6, main = "Most Common Causes of Death in United States", col = "pink", cex.lab = 1, width = 35)
+chronic_dataset <- death_data_subset[death_data_subset$'Cause'=='Chronic respiratory diseases',]
+
+chronic_dataset%>%
+  group_by(Country, Year, NumberOfDeaths)%>%
+  ggplot(aes(x = Year, y = NumberOfDeaths, col = Country)) + 
+  geom_point(alpha = 0.5) + 
+  geom_smooth(se = F, span = 1.5) + 
+  scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
+  scale_y_continuous(breaks = seq(0, 5000000, 200000), minor_breaks = T) + 
+  labs(title = "Number of Deaths due to Chronic respiratory diseases in extracted subset",
+       subtitle = "1990 - 2019", 
+       x = "Year", 
+       y = "Number of Deaths", 
+       col = "Country")
 ```
-We can see that the number of death have increased from 1990 to 2019 in United States. Therefore, the lowest n umber of deaths were in 1990 and highest in 2019
+We see that the number of deaths increases significantly in case of India and United States but there is hardly any change in case of Nigeria and Tuvalu. The increase is because air pollution, especially in urban areas and indoor air pollution from the use of solid fuels for cooking and heating. 
+We also see a decrease in the number of deaths due to Chronic respiratory diseases in China. This is because it has implemented various measures to address air pollution which is a significant contributor to chronic respiratory diseases. These measures include stricter regulations on industrial emissions, promotion of clean energy sources, and implementation of pollution control policies. Improved air quality reduces exposure to harmful pollutants and subsequently decreases the risk of respiratory diseases.
+
 
 Mental illness significantly affects individual well-being, quality of life, and overall functioning. It can lead to emotional distress, impaired cognitive functioning, and difficulties in maintaining relationships, work, and daily activities. It is a leading cause of disability worldwide and contributes to a substantial burden of disease. By addressing mental health issues, societies can reduce the overall burden of disease and promote healthier communities.
-It has a significant impact on public health. A lot of causes related to mental illness have been specified in the dataset. We are considering "Drug use disorders", "Alcohol use disorders" and "Self-harm" to analyze the number of deaths due to mental health in United States:
+It has a significant impact on public health. A lot of causes related to mental illness have been specified in the dataset. We are considering "Drug use disorders", "Alcohol use disorders" and "Self-harm" to analyze the number of deaths due to mental health in the extracted dataset:
 ```{r}
-mi_us_dataset <- us_death_dataset[us_death_dataset$'Cause'== (alist("Alcohol use disorders","Drug use disorders","Self-harm")),]
+mi_dataset <- death_data_subset[death_data_subset$'Cause'== (alist("Alcohol use disorders","Drug use disorders","Self-harm")),]
 
-mi_us_dataset%>%
-  group_by(Cause, Year, NumberOfDeaths)%>%
-  ggplot(aes(x = Year, y = NumberOfDeaths, col = Cause)) + 
+mi_dataset%>%
+  group_by(Cause, Year, Country)%>%
+  summarise(deaths = sum(NumberOfDeaths)) %>%
+  ggplot(aes(x = Year, y = deaths, col = Country)) + 
   geom_point(alpha = 0.5) + 
   geom_smooth(se = F, span = 1.5) + 
   scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
-  labs(title = "Number of Deaths due to Mental Illness in United States",
+  labs(title = "Number of Deaths due to Mental Illness in extracted subset",
        subtitle = "1990 - 2019", 
        x = "Year", 
        y = "Number of Deaths", 
        col = "Cause")
 ```
-We can see that the number of deaths due to mental illness (all 3 underlying considered causes) has increased over the years.
+We see a increase and the decrease in number of deaths in India due to mental illness. This is because of the mental health policies and legislations which focuses on promoting mental well-being.The same reason applies to Nigeria as well. Over time, there has been a growing awareness and recognition of mental health in both India and Nigeria.
+Due to proper healthcare infrastructure and less population, we hardly see any change in Tuvalu.
+We see a decrease and then steep increase in the number of deaths due to mental illness in China and we can also see an exponential increase in US. This is because of inadequate access to mental health services, including insufficient availability of mental health professionals, limited insurance coverage for mental treatment, etc. Increases in substance abuse or any other drug-related problems, can exacerbate mental health issues increasing the risk of mortality.
+
+Number of Deaths per year 
+```{r}
+#Extracting the year with the highest number of deaths for every country
+death_numbers_by_country_year <- death_dataset %>%
+  group_by(Country, Year)%>%
+  summarise(deaths = sum(NumberOfDeaths)) %>%
+  top_n(1, deaths)
+
+#Representing the above result using histogram
+ggplot(death_numbers_by_country_year, aes(x = Year)) + geom_histogram(color="black", fill="pink")
+```
+We can see from the graph that majority of countries have the highest number of deaths in the year of 2019.
 
 ## Part 7. Conclusion and Discussion
-
-After the above analysis, we know that there were approximately 37 million deaths over the years in South Asian Countries. The highest number of deaths were in India and the lowest were in Bhutan, Sri Lanka and Maldives. The most common cause of death is Cardiovascular diseases. We were also able to see that the number of deaths changed significantly for the years for India but not as much for other countries.
-
-Approximately 71 million people died in united States over the years. The most common cause of death was Cardiovascular which started increasing only after 2010 (It was reducing before that). We also analysed the tren of Neoplasms and could see that the number of deaths increased steeply over the years. The number of deaths are increasing rapidly over the years. As mental health is as important as the physical well being, we analysed the data for it. We could see an increase in death due to mental illness as well over the years.
-
-This dataset can be used to do an in-depth analyses on the causes of death, like relating obesity rate with cardiovascular disease, etc. This dataset in corelation with other variables can be utilized to investigate the underlying causes of mortality. This will improve our understanding of public health challenges and inform future research directions.
+After analyzing this dataset, we were able to see that Non-communicable diseases caused the majority of deaths across the world during the years 1990 to 2019. The number of deaths have increased from 1990 to 2019 globally. Countries with denser population had higher number of deaths whereas countries with lesser population and better healthcare infrastructure had fewer number of deaths. The leading cause of death is Cardiovascular diseases throughout the world during the years 1990 to 2019. Deaths caused due to mental illness have also increased over the years.
+This dataset can be used to do an in-depth analyses on the causes of death, like relating obesity rate with cardiovascular disease, etc. This dataset in corelation with other variables (subset of age groups and genders) can be utilized to investigate the underlying causes of mortality. This will improve our understanding of public health challenges and help control or prevent the number of deaths throughout the world. This will definitely aid in future research directions.
 
 ## Part 8. Bibliography
 - https://ourworldindata.org/causes-of-death

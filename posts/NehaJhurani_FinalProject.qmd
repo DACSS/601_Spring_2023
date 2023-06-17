@@ -164,16 +164,17 @@ c) Dropping 'Causes Full Description' because that column mentions that the data
 
 d) We saw above that Number of deaths are missing in a lot of rows. GBD study provides detailed information about the data sources used, the methodology employed and any known data gaps or limitations. Further researching on GBD study, the following are the possible reasons why we see missing or NA values for number of deaths in GBD study. 
 
-- There are limitations in data collection processes in countries with limited healthcare infrastructure. This has lead to incomplete death reporting, lack of standardized tests, etc. 
+    - There are limitations in data collection processes in countries with limited healthcare infrastructure. This has lead to incomplete death reporting, lack of standardized tests, etc. 
 
-- Vital registration systems, which records births, death, and causes of death, may be less developed or incomplete in some countries. So, lack of reporting system can lead to missing values.
+    - Vital registration systems, which records births, death, and causes of death, may be less developed or incomplete in some countries. So, lack of reporting system can lead to missing values.
 
-- The source of data is of inadequate quality or is unreliable.
+    - The source of data is of inadequate quality or is unreliable.
 
-- Access to mortality data may be restricted due to legal or privacy considerations, especially in cases where individual-level data is involved. This can result in missing values for specific years or regions.
+    - Access to mortality data may be restricted due to legal or privacy considerations, especially in cases where individual-level data is involved. This can result in missing values for specific years or regions.
 
-- As the study is dynamic and ever evolving, delay in reporting can also lead to NA or missing values.
-For our analysis we will drop those rows. This is because we are more concerned about analyzing the established causes of death rather than analyzing the gaps in the data collection. Also, Dropping the rows is more appropriate than making them 0 because there are no deaths for that particular cause or that particular cause of death is non existent describes the same case. 
+    - As the study is dynamic and ever evolving, delay in reporting can also lead to NA or missing values.
+
+    For our analysis we will drop those rows. This is because we are more concerned about analyzing the established causes of death rather than analyzing the gaps in the data collection. Also, Dropping the rows is more appropriate than making them 0 because there are no deaths for that particular cause or that particular cause of death is non existent describes the same case. 
 
 ```{r}
 #extracting the unique values of Causes Full Description column
@@ -191,7 +192,7 @@ death_dataset <- death_dataset%>%drop_na('NumberOfDeaths')
 sum(is.na(death_dataset$NumberOfDeaths))
 ```
 
-## Part 5. Analyses Plan
+## Part 5. Analysis Plan
 
 We will analyze the above dataset to answer the following granular questions:
 
@@ -237,7 +238,7 @@ Frequency of specific cause of death analyzes -  I will extract the data for the
 
 ## Part 6. Statistical Analysis and Visualizations
 
-**Research question answered - *What is the distribution of deaths globally from the year 1990 to 2019?***
+**Research question answered - ** *What is the distribution of deaths globally from the year 1990 to 2019?*
 
 Generating a line graph to visually depict the changing pattern of global deaths over the time period from 1990 to 2019.
 ```{r}
@@ -263,7 +264,7 @@ sum(death_dataset$NumberOfDeaths)
 ```
 The cumulative number of deaths worldwide, spanning the years 1990 to 2019, amounts to approximately 1.46 billion individuals.
 
-**Research question answered - *What is the proportion of global deaths contributed by each group of diseases (communicable, non-communicable, and injuries) as a percentage from 1990 to 2019?***
+**Research question answered -** *What is the proportion of global deaths contributed by each group of diseases (communicable, non-communicable, and injuries) as a percentage from 1990 to 2019?*
 
 To analyze the contribution of different disease categories to the highest number of deaths across countries from 1990 to 2019, the dataset can be divided into three groups:
 
@@ -337,7 +338,8 @@ ggplot(disease_group_death_dataset, aes(x = Year)) +
   geom_point(aes(y = cummulative_deaths)) +
   geom_smooth(se=FALSE, method ="lm", aes(x = Year, y = cummulative_deaths)) +
 
-  #shade the regions for better visualizations
+  #shading the regions for better visualizations
+  
   geom_ribbon(aes(x = Year,
                   ymin = 0,
                   ymax = predict(loess(deaths_due_to_communicable_diseases~Year))),
@@ -381,7 +383,7 @@ gather(disease_group_death_dataset, key = "GroupOfDisease", value = "PercentageO
 
 In this representation, each row represents a different group of diseases (communicable, non-communicable, injuries), and the corresponding percentage indicates the contribution of each group to the overall death rate. This long format allows for easier data manipulation and analysis using functions such as group_by() and summarize().
 
-**Research question answered - *Which countries consistently report the highest number of deaths each year?***
+**Research question answered -** *Which countries consistently report the highest number of deaths each year?*
 
 We are identifying the top 5 countries that exhibit the highest number of deaths across the years 1990 to 2019.
 
@@ -422,7 +424,7 @@ China and India stand out with significantly higher annual death rates compared 
 
 On the other hand, Indonesia and Nigeria exhibit similar death numbers. These countries share similarities in terms of their health systems, data collection practices, registration of deaths, and reporting mechanisms. The population structures and age distributions in Indonesia and Nigeria also bear a resemblance, which may contribute to the comparable death rates observed in these nations.
 
-**Research question answered - *Which countries consistently report the lowest number of deaths each year?***
+**Research question answered -** *Which countries consistently report the lowest number of deaths each year?*
 
 We are identifying the top 5 countries that consistently exhibit the lowest number of deaths across the years 1990 to 2019.
 
@@ -463,7 +465,7 @@ These countries are characterized by relatively small populations. For instance,
 
 The countries with the lowest number of deaths demonstrate good access to healthcare services, including preventive care, early detection of diseases, and high-quality medical treatments. They prioritize public health measures to ensure the well-being of their populations. Additionally, these regions tend to have relatively younger populations, resulting in lower mortality rates compared to countries with older populations.
 
-**Research question answered - *Which cause of death had the highest prevalence globally during the time period from 1990 to 2019?***
+**Research question answered - ** *Which cause of death had the highest prevalence globally during the time period from 1990 to 2019?*
 
 ```{r}
 #During the initial data description, we calculated the frequency of deaths worldwide from 1990 to 2019. Using this information to identify the top causes of death across the globe.
@@ -472,7 +474,7 @@ head(frequency_of_causes %>% arrange(desc(deaths)), n=10)
 ```
 Upon analyzing the data for the years 1990 to 2019, it is evident that the three leading causes of death on a global scale are Cardiovascular diseases, Neoplasms (cancer), and Chronic respiratory diseases.
 
-**Research question answered - *For a selection of countries with both the highest and lowest number of deaths, what was the trend in the occurrence of the three most common causes of death from 1990 to 2019?***
+**Research question answered - ** *For a selection of countries with both the highest and lowest number of deaths, what was the trend in the occurrence of the three most common causes of death from 1990 to 2019?*
 
 For further analysis, we have chosen a selection of countries with varying death rates: China, India, United States, Tuvalu, and Hong Kong. These countries have been specifically selected to represent different trends in annual death rates from 1990 to 2019.
 
@@ -582,7 +584,7 @@ chronic_dataset%>%
 
 Upon analyzing the above line graph, we can see that India and the United States have experienced a significant increase in deaths, likely due to air pollution, both outdoors in urban areas and indoors from solid fuel use. In contrast, Nigeria and Tuvalu have seen minimal change in death rates. China, on the other hand, has witnessed a decrease in deaths attributed to Chronic respiratory diseases. This can be attributed to the implementation of measures to address air pollution, including stricter regulations, promotion of clean energy sources, and pollution control policies. Improved air quality has resulted in reduced exposure to harmful pollutants, thus lowering the risk of respiratory diseases.
 
-**Research question answered - *How does the prevalence of mental illness correlate with the number of deaths over the years in a selection of countries with both the highest and lowest mortality rates?***
+**Research question answered - ** *How does the prevalence of mental illness correlate with the number of deaths over the years in a selection of countries with both the highest and lowest mortality rates?*
 
 Mental illness has profound implications for individual well-being, quality of life, and overall functioning. It can result in emotional distress, impaired cognitive abilities, and challenges in maintaining relationships, work, and daily activities. With its substantial contribution to disability and overall disease burden, addressing mental health issues is crucial for fostering healthier communities and reducing the burden on public health systems. In the selected dataset, we are focusing on specific causes related to mental illness, namely "Drug use disorders," "Alcohol use disorders," and "Self-harm," to examine the number of deaths associated with mental health in the selected dataset.
 
@@ -596,7 +598,7 @@ mi_dataset%>%
   geom_point(alpha = 0.5) + 
   geom_smooth(se = F, span = 1.5) + 
   scale_x_continuous(breaks = seq(1990, 2019, 3), minor_breaks = T) + 
-  scale_x_continuous(labels = label_number(suffix = " K", scale = 1e-3)) +
+  scale_y_continuous(labels = label_number(suffix = " K", scale = 1e-3)) +
   labs(title = "Number of Deaths due to Mental Illness in the extracted subset",
        subtitle = "1990 - 2019", 
        x = "Year", 
@@ -616,7 +618,7 @@ In the United States, we observe an exponential increase in the number of deaths
 
 These trends highlight the importance of prioritizing mental health support, improving access to mental health services, and addressing the underlying factors contributing to mental illness-related deaths in different countries.
 
-**Research question answered - *How does the distribution of deaths vary globally for the leading cause of death during the year with the highest number of deaths?***
+**Research question answered - ** *How does the distribution of deaths vary globally for the leading cause of death during the year with the highest number of deaths?*
 
 By filtering the dataset specifically for the year 2019 and focusing on deaths attributed to cardiovascular diseases, we can analyze the distribution of deaths for the leading cause during the year with the highest number of fatalities.
 

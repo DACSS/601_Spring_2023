@@ -16,8 +16,8 @@ categories:
 editor_options: 
   chunk_output_type: console
 ---
-
-
+  
+  
 ```{r}
 #| label: setup
 #| warning: false
@@ -37,12 +37,12 @@ In this project I study how COVID-19 affected each nation differently. Numerous 
 ## Dataset Introduction and Description:
 
 I have used five datasets, the source of all datasets is the official data released by Google Health and is available on https://health.google.com/covid-19/open-data/. The data has been updated till September 15, 2022. The datasets are as follows:
-
- * Index : The names and codes of nations, useful for joining with other datasets
- * Demographics : The population statistics regarding the distribution of population 
- * Epidemiology : COVID-19 cases, deaths, recoveries and tests
- * Vaccinations : Trends in persons vaccinated and population vaccination rate regarding various Covid-19 vaccines.
- * Health : Health indicators for the region like smoking prevalence
+  
+* Index : The names and codes of nations, useful for joining with other datasets
+* Demographics : The population statistics regarding the distribution of population 
+* Epidemiology : COVID-19 cases, deaths, recoveries and tests
+* Vaccinations : Trends in persons vaccinated and population vaccination rate regarding various Covid-19 vaccines.
+* Health : Health indicators for the region like smoking prevalence
 
 
 We clean, preprocess and merge the datasets. We preserve relevant columns in each dataset and omit the columns we do not need for our analysis. We also remove the entries that are corrupt, by omitting rows with NA.  
@@ -62,6 +62,12 @@ Epidemiology
 The epidemiology dataset has entries for each person deceased and confirmed by date. We need cumulative data for our study so we pick the row with the latest/highest cumulative data.
 ```{r}
 library(data.table)
+
+#Due to being unable to upload the raw data, the following two lines are commented
+#epidemiology <- read_csv("MeghaShishodia_FinalProjectData/epidemiology_raw.csv")
+#epidemiology <- epidemiology %>% group_by(location_key) %>% top_n(1, cumulative_confirmed)
+
+#We are straightaway using the processed data
 epidemiology <- read_csv("MeghaShishodia_FinalProjectData/epidemiology.csv")
 epidemiology = subset(epidemiology, select = c(location_key,cumulative_confirmed, cumulative_deceased))
 na.omit(epidemiology)
@@ -87,31 +93,34 @@ Vaccinations
 The vaccination dataset, similar to the epidemiology, has entries for each person vaccinated by date. We need cumulative data for our study so we pick the row with the latest/highest cumulative data. This dataset also contains duplicated entries that we remove for cleaning our data.
 
 ```{r}
+#Due to being unable to upload the raw data, the following two lines are commented
+#vaccinations <- read_csv("MeghaShishodia_FinalProjectData/vaccinations_raw.csv")
+#vaccinations <- vaccinations %>% group_by(location_key) %>% top_n(1, cumulative_persons_fully_vaccinated)
+
+
+#We are straightaway using the processed data
 vaccinations <- read_csv("MeghaShishodia_FinalProjectData/vaccinations.csv")
 vaccinations = subset(vaccinations, select = c(location_key,cumulative_persons_fully_vaccinated))
 vaccinations = vaccinations[!duplicated(vaccinations), ]
 na.omit(vaccinations)
-
 ```
-
 
 The datasets contain information for not only countries but the regions within a country. For our study, we only focus on nations so I have removed the entries with information on specific regions. This is done by removing rows with underscore in location_key because the format for location_key of states and regions is like "US_CA" and for nations is like "US".
 
 ```{r}
-index <- index[!grepl("_", index$location_key),]
+index = filter(index, !str_detect(location_key, "_")) 
 ```
 
 Next, we merge our datasets and omit duplicates and corrupt entries, if any. 
 
 ```{r}
-df = merge(index, health, by = "location_key", all = FALSE)
-df = merge(df, vaccinations, by = "location_key", all = FALSE)
-df = merge(df, epidemiology, by = "location_key", all = FALSE)
-df = merge(df, demographics, by = "location_key", all = FALSE)
+list_df = list(index, health, vaccinations, epidemiology, demographics)
+df <- list_df %>% reduce(inner_join, by='location_key')
+
 df = df[!duplicated(df), ]
 na.omit(df)
 df <- df %>% 
-        filter(across(everything(), ~ . > 0))
+  filter(across(everything(), ~ . > 0))
 print(head(df))
 ```
 
@@ -119,19 +128,19 @@ We add some more columns to our dataset in order to gain better insight into the
 
 
 ```{r}
-df <- transform(df, cumulative_persons_fully_vaccinated_per_capita = cumulative_persons_fully_vaccinated / population)
-df <- transform(df, cumulative_deceased_per_capita = cumulative_deceased / population)
-df <- transform(df, deceased_to_confirmed = cumulative_deceased / cumulative_confirmed)
-df <- transform(df, cumulative_confirmed_per_capita = cumulative_confirmed / population)
-df <- transform(df, older_per_capita = ( + population_age_70_79 + population_age_80_and_older)/population)
-df <- transform(df, eighty_or_older_per_capita = population_age_80_and_older / population)
-df <- transform(df, population_rural_per_capita = population_rural / population)
+df <- df%>%mutate(cumulative_persons_fully_vaccinated_per_capita = cumulative_persons_fully_vaccinated / population,
+                  cumulative_deceased_per_capita = cumulative_deceased / population,
+                  deceased_to_confirmed = cumulative_deceased / cumulative_confirmed, 
+                  cumulative_confirmed_per_capita = cumulative_confirmed / population, 
+                  older_per_capita = (population_age_60_69 + population_age_70_79 + population_age_80_and_older)/population,
+                  eighty_or_older_per_capita = population_age_80_and_older / population, 
+                  population_rural_per_capita = population_rural / population)
 ```
 
 Data Description:
-
+  
 The final dataset has 12 columns and the description of the columns is as follows:
-
+  
 * location_key : Nation that this row represents
 * country_name : Name of the nation that the row represents
 * smoking_prevalence : Percentage of smokers in population
@@ -164,9 +173,8 @@ We plot the deceased population on the world map.
 ```{r}
 library(tidyverse)
 library(ggthemes)
-WorldData <- map_data('world') %>% filter(region != "Antarctica") %>% fortify
-world_map = map_data("world") %>% 
-  filter(! long > 180)
+WorldData <- map_data("world") %>% filter(region != "Antarctica") %>% fortify
+world_map = map_data("world") %>% filter(! long > 180)
 
 countries = world_map %>% 
   distinct(region) %>% 
@@ -215,12 +223,63 @@ countries %>%
   coord_map("moll") +
   labs(fill="vaccinated per capita") +
   theme_map()
+```
+
+We can see a pattern in all the maps above for the regions which are colored darker or lighter, So, we should delve deep into the statistics of a few countries to be able to appreciate this pattern so we study two nations in depth (New Zealand and Mexico).  
+
+```{r}
+tempdf = subset(df, select = c(location_key, older_per_capita, smoking_prevalence, cumulative_persons_fully_vaccinated_per_capita, human_development_index, cumulative_deceased_per_capita) )
+tempdf <- tempdf %>% 
+  rename("deceased" = "cumulative_deceased_per_capita", 
+         "HDI" = "human_development_index",
+         "vaccinated" = "cumulative_persons_fully_vaccinated_per_capita",
+         "older_people" = "older_per_capita",
+         "smoking" = "smoking_prevalence")
 
 ```
 
-We need more granular insight into this data so we study correlations now.
+We compute the mean of all the countries, so that we can use this mean to scale and compare the values better. We will filter on the countries after calculating mean.  
 
-Studying the correlation between various variables in the data will give us an idea of what factors impacted the outcomes of the pandemic. 
+
+```{r}
+mean <- colMeans(subset(tempdf, select = -c(location_key)))
+meandf = as.data.frame.list(mean)
+meandf$location_key <- c("AVG")
+tempdf = tempdf[(tempdf$location_key == "NZ" | tempdf$location_key == "MX"),]
+
+meandf
+tempdf
+
+df_merged <- rbind(tempdf, meandf)
+df_merged
+
+df_two_nations <- data.frame(t(df_merged[-1]))
+colnames(df_two_nations) <- as.matrix(df_merged[1])
+df_two_nations
+
+```
+
+We divide all the values by the average to scale the values better, otherwise it is difficult to plot and compare. Then we plot the  
+
+```{r}
+df_two_nations <- df_two_nations%>%mutate(MX = MX / AVG, NZ = NZ / AVG)
+
+df_two_nations <- subset(df_two_nations, select = -c(AVG))
+t(as.matrix(df_two_nations))
+barplot(t(as.matrix(df_two_nations)), legend.text = colnames(df_two_nations), beside=TRUE, las=2, cex.names = 0.7)
+
+```
+
+In the plot we can see that the deceased people per capita in Mexico is much higher than in New Zealand. 
+
+If we look at factors that describe the vulnerability of the population, we can consider smoking people and older people to make the population more vulnerable to the infection. We see that both these factors are higher in New Zealand, which means that the vulnerability of COVID is higher in the population of New Zealand. 
+
+Now, looking at factors that affect the response and preparedness of a nation to the pandemic. The first factor we can consider is vaccination rate per capita which clearly is higher in New Zealand than Mexico. We can also look at the Human Development Index, which would translate to better healthcare facilities and better education meaning awareness. The HDI is higher for New Zealand too. New Zealand's response to the crisis was better, due to higher HDI and more vaccinated people.
+
+We can see that the population of New Zealand was more vulnerable, but due to its better response and preparedness it was able to handle the pandemic better than Mexico. This led to fewer deaths.
+
+
+Next, to get an overall effect of these factors on all the nations, we will be studying the correlation between various variables in the data. This will give us an idea of what factors impacted the outcomes of the pandemic. 
 
 ### Smoking
 
@@ -398,23 +457,6 @@ On studying this Covid-19 data, we were able to gain pretty interesting insights
 1. https://github.com/GoogleCloudPlatform/covid-19-open-data#aggregated-table
 2. https://health.google.com/covid-19/open-data/
 3. https://www.rdocumentation.org/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
